@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "accessibility/carbon.h"
+#include "accessibility/workspace.h"
 #include "accessibility/event.h"
 
 // NOTE(koekeishiya): Application-related callbacks.
@@ -23,12 +24,27 @@ EVENT_CALLBACK(Callback_ChunkWM_ApplicationTerminated)
 
 EVENT_CALLBACK(Callback_ChunkWM_ApplicationActivated)
 {
+    workspace_application_details *Info =
+        (workspace_application_details *) Event->Context;
+
+    printf("%d: Activated '%s'\n", Info->PID, Info->ProcessName);
+    EndWorkspaceApplicationDetails(Info);
 }
 EVENT_CALLBACK(Callback_ChunkWM_ApplicationVisible)
 {
+    workspace_application_details *Info =
+        (workspace_application_details *) Event->Context;
+
+    printf("%d: Show '%s'\n", Info->PID, Info->ProcessName);
+    EndWorkspaceApplicationDetails(Info);
 }
 EVENT_CALLBACK(Callback_ChunkWM_ApplicationHidden)
 {
+    workspace_application_details *Info =
+        (workspace_application_details *) Event->Context;
+
+    printf("%d: Hide '%s'\n", Info->PID, Info->ProcessName);
+    EndWorkspaceApplicationDetails(Info);
 }
 
 // NOTE(koekeishiya): Window-related callbacks
