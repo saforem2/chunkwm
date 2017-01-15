@@ -3,8 +3,9 @@
 #include <unistd.h>
 #include <dlfcn.h>
 #include <string.h>
+#include <pthread.h>
 
-#include "../api/plugin_api.h"
+#include "plugin.h"
 #define internal static
 
 struct loaded_plugin
@@ -13,6 +14,9 @@ struct loaded_plugin
     plugin *Plugin;
     plugin_details *Info;
 };
+
+internal pthread_mutex_t Mutexes[chunkwm_export_application_end];
+internal plugin_list ExportedPlugins[chunkwm_export_application_end];
 
 internal bool
 VerifyPluginABI(plugin_details *Info)
@@ -35,6 +39,45 @@ PrintPluginDetails(plugin_details *Info)
             Info->PluginVersion);
 }
 
+plugin_list *BeginPluginList(chunkwm_plugin_export Export)
+{
+    pthread_mutex_lock(&Mutexes[Export]);
+    return &ExportedPlugins[Export];
+}
+
+void EndPluginList(chunkwm_plugin_export Export)
+{
+    pthread_mutex_unlock(&Mutexes[Export]);
+}
+
+internal void
+SubscribeToEvent(plugin *Plugin, chunkwm_plugin_export Export)
+{
+    plugin_list *List = BeginPluginList(Export);
+
+    plugin_list_iter It = List->find(Plugin);
+    if(It == List->end())
+    {
+       (*List)[Plugin] = true;
+    }
+
+    EndPluginList(Export);
+}
+
+internal void
+UnsubscribeFromEvent(plugin *Plugin, chunkwm_plugin_export Export)
+{
+    plugin_list *List = BeginPluginList(Export);
+
+    plugin_list_iter It = List->find(Plugin);
+    if(It != List->end())
+    {
+        List->erase(It);
+    }
+
+    EndPluginList(Export);
+}
+
 internal void
 HookPlugin(loaded_plugin *LoadedPlugin)
 {
@@ -47,24 +90,14 @@ HookPlugin(loaded_plugin *LoadedPlugin)
             switch(*Export)
             {
                 case chunkwm_export_application_launched:
-                {
-                    printf("Plugin '%s' subscribed to chunkwm_export_application_launched\n",
-                           LoadedPlugin->Info->PluginName);
-                } break;
                 case chunkwm_export_application_terminated:
-                {
-                    printf("Plugin '%s' subscribed to chunkwm_export_application_terminated\n",
-                           LoadedPlugin->Info->PluginName);
-                } break;
                 case chunkwm_export_application_hidden:
-                {
-                    printf("Plugin '%s' subscribed to chunkwm_export_application_hidden\n",
-                           LoadedPlugin->Info->PluginName);
-                } break;
                 case chunkwm_export_application_unhidden:
                 {
-                    printf("Plugin '%s' subscribed to chunkwm_export_application_unhidden\n",
-                           LoadedPlugin->Info->PluginName);
+                    printf("Plugin '%s' subscribed to '%s'\n",
+                           LoadedPlugin->Info->PluginName,
+                           chunkwm_plugin_export_str[*Export]);
+                    SubscribeToEvent(Plugin, *Export);
                 } break;
                 default:
                 {
@@ -85,6 +118,15 @@ UnhookPlugin(loaded_plugin *LoadedPlugin)
     plugin *Plugin = LoadedPlugin->Plugin;
     if(Plugin->Subscriptions)
     {
+        chunkwm_plugin_export *Export = Plugin->Subscriptions;
+        while(*Export != chunkwm_export_application_end)
+        {
+            printf("Plugin '%s' unsubscribed from '%s'\n",
+                   LoadedPlugin->Info->PluginName,
+                   chunkwm_plugin_export_str[*Export]);
+            UnsubscribeFromEvent(Plugin, *Export);
+            ++Export;
+        }
     }
 }
 
@@ -141,59 +183,34 @@ bool UnloadPlugin(loaded_plugin *LoadedPlugin)
     return Result;
 }
 
-#if 0
-inline bool
-StringsAreEqual(const char *A, const char *B)
-{
-    bool Result = (strcmp(A, B) == 0);
-    return Result;
-}
-
-// TODO(koekeishiya): ??
-void *SearchPluginVTable(plugin *Plugin, const char *Search)
-{
-    plugin_vtable *VTable = Plugin->VTable;
-    while(VTable->Func)
-    {
-        if(StringsAreEqual(VTable->Name, Search))
-        {
-            return (void *) VTable->Func;
-        }
-
-        ++VTable;
-    }
-
-    return NULL;
-}
-#endif
-
 bool BeginPlugins()
 {
+    for(int Index = 0;
+        Index < chunkwm_export_application_end;
+        ++Index)
+    {
+        if(pthread_mutex_init(&Mutexes[Index], NULL) != 0)
+        {
+            return false;
+        }
+    }
+
     loaded_plugin LoadedPlugin;
     if(LoadPlugin("plugins/testplugin.so", &LoadedPlugin))
     {
 #if 0
-        typedef void (*FuncPtr)();
-        FuncPtr Func = (FuncPtr) SearchPluginVTable(LoadedPlugin.Plugin, "Test");
-        if(Func)
-        {
-            Func();
-        }
+        UnloadPlugin(&LoadedPlugin);
 #endif
-        plugin *Plugin = LoadedPlugin.Plugin;
-        if(Plugin->Run(Plugin, "__test", "some:data:thingy", 16))
-        {
-            printf("    Plugin->Run(..) success!\n");
-        }
-        else
-        {
-            printf("    Plugin->Run(..) failed!\n");
-        }
+    }
 
+    loaded_plugin LoadedPluginX;
+    if(LoadPlugin("plugins/testpluginx.so", &LoadedPluginX))
+    {
 #if 0
         UnloadPlugin(&LoadedPlugin);
 #endif
     }
+
 
     return true;
 }
