@@ -5,7 +5,7 @@ SRC				= ./src/core/chunkwm.cpp ./src/core/callback.cpp \
 				  ./src/core/accessibility/carbon.cpp ./src/core/accessibility/event.cpp \
 				  ./src/core/accessibility/workspace.mm
 BINS			= $(BUILD_PATH)/chunkwm
-LINK			= -ldl -framework Carbon -framework Cocoa
+LINK			= -ldl -lpthread -framework Carbon -framework Cocoa
 
 all: $(BINS)
 
