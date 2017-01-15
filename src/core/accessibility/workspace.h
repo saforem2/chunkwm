@@ -12,11 +12,6 @@ struct workspace_application_details
 };
 
 void BeginSharedWorkspace();
-
-void SharedWorkspaceActivateApplication(pid_t PID);
-bool SharedWorkspaceIsApplicationActive(pid_t PID);
-bool SharedWorkspaceIsApplicationHidden(pid_t PID);
-
 void EndWorkspaceApplicationDetails(workspace_application_details *Info);
 
 #endif
