@@ -118,7 +118,12 @@ bool BeginCarbonEventHandler(carbon_event_handler *Carbon)
     Carbon->EventType[1].eventClass = kEventClassApplication;
     Carbon->EventType[1].eventKind = kEventAppTerminated;
 
-    return InstallEventHandler(Carbon->EventTarget, Carbon->EventHandler, 2, Carbon->EventType, NULL, &Carbon->CurHandler) == noErr;
+    return InstallEventHandler(Carbon->EventTarget,
+                               Carbon->EventHandler,
+                               2,
+                               Carbon->EventType,
+                               NULL,
+                               &Carbon->CurHandler) == noErr;
 }
 
 bool EndCarbonEventHandler(carbon_event_handler *Carbon)
