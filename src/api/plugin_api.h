@@ -14,6 +14,16 @@ typedef PLUGIN_FUNC(plugin_deinit_func);
             unsigned int DataSize)
 typedef PLUGIN_MAIN_FUNC(plugin_main_func);
 
+
+static const char *chunkwm_plugin_export_str[] =
+{
+    "chunkwm_export_application_launched",
+    "chunkwm_export_application_terminated",
+    "chunkwm_export_application_hidden",
+    "chunkwm_export_application_unhidden",
+
+    "chunkwm_export_application_end",
+};
 enum chunkwm_plugin_export
 {
     chunkwm_export_application_launched,
