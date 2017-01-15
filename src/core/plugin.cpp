@@ -15,8 +15,8 @@ struct loaded_plugin
     plugin_details *Info;
 };
 
-internal pthread_mutex_t Mutexes[chunkwm_export_application_end];
-internal plugin_list ExportedPlugins[chunkwm_export_application_end];
+internal pthread_mutex_t Mutexes[chunkwm_export_end];
+internal plugin_list ExportedPlugins[chunkwm_export_end];
 
 internal bool
 VerifyPluginABI(plugin_details *Info)
@@ -85,7 +85,7 @@ HookPlugin(loaded_plugin *LoadedPlugin)
     if(Plugin->Subscriptions)
     {
         chunkwm_plugin_export *Export = Plugin->Subscriptions;
-        while(*Export != chunkwm_export_application_end)
+        while(*Export != chunkwm_export_end)
         {
             switch(*Export)
             {
@@ -119,7 +119,7 @@ UnhookPlugin(loaded_plugin *LoadedPlugin)
     if(Plugin->Subscriptions)
     {
         chunkwm_plugin_export *Export = Plugin->Subscriptions;
-        while(*Export != chunkwm_export_application_end)
+        while(*Export != chunkwm_export_end)
         {
             printf("Plugin '%s' unsubscribed from '%s'\n",
                    LoadedPlugin->Info->PluginName,
@@ -186,7 +186,7 @@ bool UnloadPlugin(loaded_plugin *LoadedPlugin)
 bool BeginPlugins()
 {
     for(int Index = 0;
-        Index < chunkwm_export_application_end;
+        Index < chunkwm_export_end;
         ++Index)
     {
         if(pthread_mutex_init(&Mutexes[Index], NULL) != 0)

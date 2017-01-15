@@ -22,7 +22,7 @@ static const char *chunkwm_plugin_export_str[] =
     "chunkwm_export_application_hidden",
     "chunkwm_export_application_unhidden",
 
-    "chunkwm_export_application_end",
+    "chunkwm_export_end",
 };
 enum chunkwm_plugin_export
 {
@@ -31,7 +31,7 @@ enum chunkwm_plugin_export
     chunkwm_export_application_hidden,
     chunkwm_export_application_unhidden,
 
-    chunkwm_export_application_end,
+    chunkwm_export_end,
 };
 
 struct plugin
