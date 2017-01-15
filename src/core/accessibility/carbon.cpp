@@ -60,16 +60,22 @@ CopyPascalStringToC(ConstStr255Param Source, char *Destination)
     Destination[Source[0]] = '\0';
 }
 
-internal void
-ExtractCarbonDetails(ProcessSerialNumber PSN, carbon_application_details *Info)
+internal carbon_application_details *
+BeginCarbonApplicationDetails(ProcessSerialNumber PSN)
 {
+    carbon_application_details *Info =
+        (carbon_application_details *) malloc(sizeof(carbon_application_details));
+    memset(Info, 0, sizeof(carbon_application_details));
+
     Str255 ProcessName = {};
     ProcessInfoRec ProcessInfo = {};
     ProcessInfo.processInfoLength = sizeof(ProcessInfoRec);
     ProcessInfo.processName = ProcessName;
 
     /* NOTE(koekeishiya): Deprecated, consider switching to
-     * CFDictionaryRef ProcessInformationCopyDictionary(const ProcessSerialNumber *PSN, UInt32 infoToReturn) */
+     * CFDictionaryRef ProcessInformationCopyDictionary(const ProcessSerialNumber *PSN,
+     *                                                  UInt32 infoToReturn);
+     * */
     GetProcessInformation(&PSN, &ProcessInfo);
 
     Info->PSN = PSN;
@@ -85,16 +91,7 @@ ExtractCarbonDetails(ProcessSerialNumber PSN, carbon_application_details *Info)
     {
         Info->ProcessName = strdup("<Unknown Name>");
     }
-}
 
-internal carbon_application_details *
-BeginCarbonApplicationDetails(ProcessSerialNumber PSN)
-{
-    carbon_application_details *Info =
-        (carbon_application_details *) malloc(sizeof(carbon_application_details));
-    memset(Info, 0, sizeof(carbon_application_details));
-
-    ExtractCarbonDetails(PSN, Info);
     if((Info->ProcessMode & modeOnlyBackground) != 0)
     {
         EndCarbonApplicationDetails(Info);
