@@ -6,7 +6,7 @@
 // NOTE(koekeishiya): Increment upon ABI breaking changes!
 #define CHUNKWM_PLUGIN_API_VERSION 1
 
-// NOTE(koekeishiya): This struct must be defined externally.
+// NOTE(koekeishiya): This struct is defined externally.
 struct plugin;
 
 CHUNKWM_EXTERN typedef plugin *(*plugin_func)();

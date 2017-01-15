@@ -34,23 +34,11 @@ enum chunkwm_plugin_export
     chunkwm_export_application_end,
 };
 
-/* TODO(koekeishiya): ?? */
-#if 0
-struct plugin_vtable
-{
-    void (*Func)();
-    const char *Name;
-};
-#endif
-
 struct plugin
 {
     plugin_init_func *Init;
     plugin_deinit_func *DeInit;
     plugin_main_func *Run;
-#if 0
-    plugin_vtable *VTable;
-#endif
 
     chunkwm_plugin_export *Subscriptions;
 };
