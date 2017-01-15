@@ -1,7 +1,56 @@
 #include "carbon.h"
 #include "event.h"
 #include <string.h>
+#include <map>
 #define internal static
+
+/*
+ * NOTE(koekeishiya): By the time our application has received the kEventAppTerminated event,
+ * the terminating application has already quit. Thus we can't get information about that
+ * application using GetProcessInformation and have to cache the information in advance.
+ * */
+struct carbon_psn_compare
+{
+    bool operator() (const ProcessSerialNumber &Lhs,
+                     const ProcessSerialNumber &Rhs) const
+    {
+        Boolean Result;
+        SameProcess(&Lhs, &Rhs, &Result);
+        return Result;
+    }
+};
+
+typedef std::map<ProcessSerialNumber, carbon_application_details *, carbon_psn_compare> carbon_application_cache;
+typedef std::map<ProcessSerialNumber, carbon_application_details *, carbon_psn_compare>::iterator carbon_application_cache_iter;
+internal carbon_application_cache CarbonApplicationCache;
+
+internal carbon_application_details *
+CopyCarbonApplicationDetails(carbon_application_details *Info)
+{
+    carbon_application_details *Result =
+        (carbon_application_details *) malloc(sizeof(carbon_application_details));
+
+    Result->PID = Info->PID;
+    Result->PSN = Info->PSN;
+    Result->ProcessMode = Info->ProcessMode;
+    Result->ProcessName = strdup(Info->ProcessName);
+
+    return Result;
+}
+
+internal carbon_application_details *
+SearchCarbonApplicationDetailsCache(ProcessSerialNumber PSN)
+{
+    carbon_application_details *Result = NULL;
+
+    carbon_application_cache_iter It = CarbonApplicationCache.find(PSN);
+    if(It != CarbonApplicationCache.end())
+    {
+        Result = It->second;
+    }
+
+    return Result;
+}
 
 /* NOTE(koekeishiya): A pascal string has the size of the string stored as the first byte. */
 internal inline void
@@ -69,6 +118,26 @@ void EndCarbonApplicationDetails(carbon_application_details *Info)
     }
 }
 
+/*
+ * NOTE(koekeishiya): We have to cache information about processes that have
+ * already been launched before us, such that we can properly perform our lookup
+ * and report when any of these applications are terminated.
+ * */
+internal void
+CacheRunningProcesses()
+{
+    ProcessSerialNumber PSN = { kNoProcess, kNoProcess };
+    while(GetNextProcess(&PSN) == noErr)
+    {
+        carbon_application_details *Info = BeginCarbonApplicationDetails(PSN);
+        if(Info)
+        {
+            printf("%d: Process '%s'\n", Info->PID, Info->ProcessName);
+            CarbonApplicationCache[PSN] = Info;
+        }
+    }
+}
+
 internal OSStatus
 CarbonApplicationEventHandler(EventHandlerCallRef HandlerCallRef, EventRef Event, void *Refcon)
 {
@@ -93,14 +162,17 @@ CarbonApplicationEventHandler(EventHandlerCallRef HandlerCallRef, EventRef Event
             carbon_application_details *Info = BeginCarbonApplicationDetails(PSN);
             if(Info)
             {
+                carbon_application_details *Copy = CopyCarbonApplicationDetails(Info);
+                CarbonApplicationCache[Info->PSN] = Copy;
                 ConstructEvent(ChunkWM_ApplicationLaunched, Info, false);
             }
         } break;
         case kEventAppTerminated:
         {
-            carbon_application_details *Info = BeginCarbonApplicationDetails(PSN);
+            carbon_application_details *Info = SearchCarbonApplicationDetailsCache(PSN);
             if(Info)
             {
+                CarbonApplicationCache.erase(PSN);
                 ConstructEvent(ChunkWM_ApplicationTerminated, Info, false);
             }
         } break;
@@ -111,6 +183,8 @@ CarbonApplicationEventHandler(EventHandlerCallRef HandlerCallRef, EventRef Event
 
 bool BeginCarbonEventHandler(carbon_event_handler *Carbon)
 {
+    CacheRunningProcesses();
+
     Carbon->EventTarget = GetApplicationEventTarget();
     Carbon->EventHandler = NewEventHandlerUPP(CarbonApplicationEventHandler);
     Carbon->EventType[0].eventClass = kEventClassApplication;
