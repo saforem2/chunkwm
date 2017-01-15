@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include "../api/plugin_api.h"
@@ -71,6 +72,15 @@ void InitPluginVTable(plugin *Plugin)
     };
     Plugin->VTable = VTable;
 #endif
+    int SubscriptionCount = 4;
+    Plugin->Subscriptions =
+        (chunkwm_plugin_export *) malloc(SubscriptionCount * sizeof(chunkwm_plugin_export) + 1);
+    Plugin->Subscriptions[SubscriptionCount] = chunkwm_export_application_end;
+
+    Plugin->Subscriptions[--SubscriptionCount] = chunkwm_export_application_unhidden;
+    Plugin->Subscriptions[--SubscriptionCount] = chunkwm_export_application_hidden;
+    Plugin->Subscriptions[--SubscriptionCount] = chunkwm_export_application_terminated;
+    Plugin->Subscriptions[--SubscriptionCount] = chunkwm_export_application_launched;
 }
 
 // NOTE(koekeishiya): Enable to manually trigger ABI mismatch

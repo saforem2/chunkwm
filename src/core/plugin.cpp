@@ -2,41 +2,27 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <dlfcn.h>
-
-#include <stdarg.h>
-
 #include <string.h>
-#include "plugin_api.h"
+
+#include "../api/plugin_api.h"
+#define internal static
 
 struct loaded_plugin
 {
     void *Handle;
     plugin *Plugin;
+    plugin_details *Info;
 };
 
-void Error(const char *Format, ...)
+internal bool
+VerifyPluginABI(plugin_details *Info)
 {
-    va_list Args;
-    va_start(Args, Format);
-    vfprintf(stderr, Format, Args);
-    va_end(Args);
-    exit(EXIT_FAILURE);
-}
-
-inline bool
-StringsAreEqual(const char *A, const char *B)
-{
-    bool Result = (strcmp(A, B) == 0);
+    bool Result = (Info->ApiVersion == CHUNKWM_PLUGIN_API_VERSION);
     return Result;
 }
 
-bool VerifyPluginABI(plugin_details *Info)
-{
-    bool Result = (Info->ApiVersion == PLUGIN_API_VERSION);
-    return Result;
-}
-
-void PrintPluginDetails(plugin_details *Info)
+internal void
+PrintPluginDetails(plugin_details *Info)
 {
     printf("Plugin Details\n"
            "API Version %d\n"
@@ -49,6 +35,59 @@ void PrintPluginDetails(plugin_details *Info)
             Info->PluginVersion);
 }
 
+internal void
+HookPlugin(loaded_plugin *LoadedPlugin)
+{
+    plugin *Plugin = LoadedPlugin->Plugin;
+    if(Plugin->Subscriptions)
+    {
+        chunkwm_plugin_export *Export = Plugin->Subscriptions;
+        while(*Export != chunkwm_export_application_end)
+        {
+            switch(*Export)
+            {
+                case chunkwm_export_application_launched:
+                {
+                    printf("Plugin '%s' subscribed to chunkwm_export_application_launched\n",
+                           LoadedPlugin->Info->PluginName);
+                } break;
+                case chunkwm_export_application_terminated:
+                {
+                    printf("Plugin '%s' subscribed to chunkwm_export_application_terminated\n",
+                           LoadedPlugin->Info->PluginName);
+                } break;
+                case chunkwm_export_application_hidden:
+                {
+                    printf("Plugin '%s' subscribed to chunkwm_export_application_hidden\n",
+                           LoadedPlugin->Info->PluginName);
+                } break;
+                case chunkwm_export_application_unhidden:
+                {
+                    printf("Plugin '%s' subscribed to chunkwm_export_application_unhidden\n",
+                           LoadedPlugin->Info->PluginName);
+                } break;
+                default:
+                {
+                    fprintf(stderr,
+                            "Plugin '%s' contains invalid subscription!\n",
+                            LoadedPlugin->Info->PluginName);
+                } break;
+            }
+
+            ++Export;
+        }
+    }
+}
+
+internal void
+UnhookPlugin(loaded_plugin *LoadedPlugin)
+{
+    plugin *Plugin = LoadedPlugin->Plugin;
+    if(Plugin->Subscriptions)
+    {
+    }
+}
+
 bool LoadPlugin(const char *File, loaded_plugin *LoadedPlugin)
 {
     void *Handle = dlopen(File, RTLD_LAZY);
@@ -57,23 +96,29 @@ bool LoadPlugin(const char *File, loaded_plugin *LoadedPlugin)
         plugin_details *Info = (plugin_details *) dlsym(Handle, "Exports");
         if(Info)
         {
-            if(!VerifyPluginABI(Info))
+            if(VerifyPluginABI(Info))
             {
-                Error("Plugin '%s' ABI mismatch; expected %d, was %d\n",
-                      Info->PluginName, PLUGIN_API_VERSION, Info->ApiVersion);
+                plugin *Plugin = Info->Initialize();
+                LoadedPlugin->Handle = Handle;
+                LoadedPlugin->Plugin = Plugin;
+                LoadedPlugin->Info = Info;
+                PrintPluginDetails(Info);
+
+                HookPlugin(LoadedPlugin);
+                Plugin->Init(Plugin);
+                return true;
             }
-
-            plugin *Plugin = Info->Initialize();
-            LoadedPlugin->Handle = Handle;
-            LoadedPlugin->Plugin = Plugin;
-            PrintPluginDetails(Info);
-
-            Plugin->Init(Plugin);
-            return true;
+            else
+            {
+                dlclose(Handle);
+                fprintf(stderr, "Plugin '%s' ABI mismatch; expected %d, was %d\n",
+                        Info->PluginName, CHUNKWM_PLUGIN_API_VERSION, Info->ApiVersion);
+            }
         }
         else
         {
             dlclose(Handle);
+            fprintf(stderr, "Plugin details missing!\n");
         }
     }
 
@@ -85,8 +130,11 @@ bool UnloadPlugin(loaded_plugin *LoadedPlugin)
     bool Result = false;
     if(LoadedPlugin->Handle)
     {
+        UnhookPlugin(LoadedPlugin);
+
         plugin *Plugin = LoadedPlugin->Plugin;
         Plugin->DeInit(Plugin);
+
         Result = dlclose(LoadedPlugin->Handle) == 0;
     }
 
@@ -94,6 +142,13 @@ bool UnloadPlugin(loaded_plugin *LoadedPlugin)
 }
 
 #if 0
+inline bool
+StringsAreEqual(const char *A, const char *B)
+{
+    bool Result = (strcmp(A, B) == 0);
+    return Result;
+}
+
 // TODO(koekeishiya): ??
 void *SearchPluginVTable(plugin *Plugin, const char *Search)
 {
@@ -112,7 +167,7 @@ void *SearchPluginVTable(plugin *Plugin, const char *Search)
 }
 #endif
 
-int main(int Count, char **Args)
+bool BeginPlugins()
 {
     loaded_plugin LoadedPlugin;
     if(LoadPlugin("plugins/testplugin.so", &LoadedPlugin))
@@ -135,8 +190,10 @@ int main(int Count, char **Args)
             printf("    Plugin->Run(..) failed!\n");
         }
 
+#if 0
         UnloadPlugin(&LoadedPlugin);
+#endif
     }
 
-    return EXIT_SUCCESS;
+    return true;
 }

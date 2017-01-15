@@ -14,6 +14,16 @@ typedef PLUGIN_FUNC(plugin_deinit_func);
             unsigned int DataSize)
 typedef PLUGIN_MAIN_FUNC(plugin_main_func);
 
+enum chunkwm_plugin_export
+{
+    chunkwm_export_application_launched,
+    chunkwm_export_application_terminated,
+    chunkwm_export_application_hidden,
+    chunkwm_export_application_unhidden,
+
+    chunkwm_export_application_end,
+};
+
 /* TODO(koekeishiya): ?? */
 #if 0
 struct plugin_vtable
@@ -31,6 +41,8 @@ struct plugin
 #if 0
     plugin_vtable *VTable;
 #endif
+
+    chunkwm_plugin_export *Subscriptions;
 };
 
 #endif
