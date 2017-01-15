@@ -12,7 +12,8 @@ StringsAreEqual(const char *A, const char *B)
 
 /*
  * NOTE(koekeishiya):
- * Param: plugin *Plugin
+ * param: plugin *Plugin
+ * return: void
  */
 PLUGIN_FUNC(PluginInit)
 {
@@ -21,7 +22,8 @@ PLUGIN_FUNC(PluginInit)
 
 /*
  * NOTE(koekeishiya):
- * Param: plugin *Plugin
+ * param: plugin *Plugin
+ * return: void
  */
 PLUGIN_FUNC(PluginDeInit)
 {
@@ -34,14 +36,16 @@ PLUGIN_FUNC(PluginDeInit)
  * const char *Node
  * const char *Data
  * unsigned int DataSize
+ *
+ * return: bool
  * */
 PLUGIN_MAIN_FUNC(PluginMain)
 {
     if(Node)
     {
-        if(StringsAreEqual(Node, "__test"))
+        if(StringsAreEqual(Node, "chunkwm_export_application_launched"))
         {
-            printf("__test: '%.*s'\n", DataSize, Data);
+            printf("inside plugin: launched: '%.*s'\n", DataSize, Data);
             return true;
         }
     }
@@ -51,27 +55,12 @@ PLUGIN_MAIN_FUNC(PluginMain)
 
 void InitPluginVTable(plugin *Plugin)
 {
+    // NOTE(koekeishiya): Initialize plugin function pointers.
     Plugin->Init = PluginInit;
     Plugin->DeInit = PluginDeInit;
     Plugin->Run = PluginMain;
-#if 0
-    static plugin_vtable VTable[] =
-    {
-        {
-            Test,
-            "Test"
-        },
-        {
-            WhatTheFuck,
-            "WhatTheFuck"
-        },
-        {
-            NULL,
-            "VTABLE_END"
-        }
-    };
-    Plugin->VTable = VTable;
-#endif
+
+    // NOTE(koekeishiya): Subscribe to ChunkWM events!
     int SubscriptionCount = 4;
     Plugin->Subscriptions =
         (chunkwm_plugin_export *) malloc(SubscriptionCount * sizeof(chunkwm_plugin_export) + 1);
