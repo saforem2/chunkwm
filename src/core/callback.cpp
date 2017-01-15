@@ -1,7 +1,7 @@
 #include <stdio.h>
-#include "accessibility/carbon.h"
-#include "accessibility/workspace.h"
-#include "accessibility/event.h"
+#include "dispatch/carbon.h"
+#include "dispatch/workspace.h"
+#include "dispatch/event.h"
 
 #include "plugin.h"
 
