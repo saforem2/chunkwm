@@ -38,9 +38,11 @@ struct plugin_details
           };                                                     \
       }
 
-#define PLUGIN_FUNC(name) void name(plugin *Plugin)
-typedef PLUGIN_FUNC(plugin_init_func);
-typedef PLUGIN_FUNC(plugin_deinit_func);
+#define PLUGIN_INIT_FUNC(name) bool name(plugin *Plugin)
+typedef PLUGIN_INIT_FUNC(plugin_init_func);
+
+#define PLUGIN_DEINIT_FUNC(name) void name(plugin *Plugin)
+typedef PLUGIN_DEINIT_FUNC(plugin_deinit_func);
 
 #define PLUGIN_MAIN_FUNC(name) \
     bool name(plugin *Plugin,\

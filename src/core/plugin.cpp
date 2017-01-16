@@ -148,21 +148,33 @@ bool LoadPlugin(const char *File, loaded_plugin *LoadedPlugin)
                 PrintPluginDetails(Info);
 
                 HookPlugin(LoadedPlugin);
-                Plugin->Init(Plugin);
-                return true;
+                if(Plugin->Init(Plugin))
+                {
+                    return true;
+                }
+                else
+                {
+                    fprintf(stderr, "Plugin '%s' init failed!\n", Info->PluginName);
+                    UnhookPlugin(LoadedPlugin);
+                    dlclose(Handle);
+                }
             }
             else
             {
-                dlclose(Handle);
                 fprintf(stderr, "Plugin '%s' ABI mismatch; expected %d, was %d\n",
                         Info->PluginName, CHUNKWM_PLUGIN_API_VERSION, Info->ApiVersion);
+                dlclose(Handle);
             }
         }
         else
         {
-            dlclose(Handle);
             fprintf(stderr, "Plugin details missing!\n");
+            dlclose(Handle);
         }
+    }
+    else
+    {
+        fprintf(stderr, "dlopen '%s' failed!\n", File);
     }
 
     return false;
@@ -205,7 +217,7 @@ bool BeginPlugins()
     }
 
     loaded_plugin LoadedPluginX;
-    if(LoadPlugin("plugins/testpluginx.so", &LoadedPluginX))
+    if(LoadPlugin("plugins/tiling.so", &LoadedPluginX))
     {
 #if 0
         UnloadPlugin(&LoadedPlugin);
