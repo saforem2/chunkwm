@@ -59,18 +59,20 @@ void ApplicationLaunchedHandler(const char *Data, unsigned int DataSize)
     carbon_application_details *Info =
         (carbon_application_details *) Data;
 
-    if(!Application)
+    printf("inside plugin: launched: '%s'\n", Info->ProcessName);
+    if(Application)
     {
-        printf("inside plugin: launched: '%s'\n", Info->ProcessName);
-        Application = AXLibConstructApplication(Info->PID, Info->ProcessName);
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.5 * NSEC_PER_SEC), dispatch_get_main_queue(),
-        ^{
-            if(AXLibAddApplicationObserver(Application, Callback))
-            {
-                printf("subscribed to application notifications\n");
-            }
-        });
+        AXLibDestroyApplication(Application);
     }
+
+    Application = AXLibConstructApplication(Info->PSN, Info->PID, Info->ProcessName);
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.5 * NSEC_PER_SEC), dispatch_get_main_queue(),
+    ^{
+        if(AXLibAddApplicationObserver(Application, Callback))
+        {
+            printf("subscribed to application notifications\n");
+        }
+    });
 }
 
 /*
