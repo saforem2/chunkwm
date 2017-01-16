@@ -91,6 +91,7 @@ HookPlugin(loaded_plugin *LoadedPlugin)
             {
                 case chunkwm_export_application_launched:
                 case chunkwm_export_application_terminated:
+                case chunkwm_export_application_activated:
                 case chunkwm_export_application_hidden:
                 case chunkwm_export_application_unhidden:
                 {

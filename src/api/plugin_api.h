@@ -54,6 +54,7 @@ static const char *chunkwm_plugin_export_str[] =
 {
     "chunkwm_export_application_launched",
     "chunkwm_export_application_terminated",
+    "chunkwm_export_application_activated",
     "chunkwm_export_application_hidden",
     "chunkwm_export_application_unhidden",
 
@@ -63,6 +64,7 @@ enum chunkwm_plugin_export
 {
     chunkwm_export_application_launched,
     chunkwm_export_application_terminated,
+    chunkwm_export_application_activated,
     chunkwm_export_application_hidden,
     chunkwm_export_application_unhidden,
 
