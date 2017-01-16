@@ -75,6 +75,11 @@ void EndWorkspaceApplicationDetails(workspace_application_details *Info)
                 object:nil];
 
        [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver:self
+                selector:@selector(didDeactivateApplication:)
+                name:NSWorkspaceDidDeactivateApplicationNotification
+                object:nil];
+
+       [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver:self
                 selector:@selector(didHideApplication:)
                 name:NSWorkspaceDidHideApplicationNotification
                 object:nil];
@@ -108,6 +113,12 @@ void EndWorkspaceApplicationDetails(workspace_application_details *Info)
 {
     workspace_application_details *Info = BeginWorkspaceApplicationDetails(notification);
     ConstructEvent(ChunkWM_ApplicationActivated, Info, false);
+}
+
+- (void)didDeactivateApplication:(NSNotification *)notification
+{
+    workspace_application_details *Info = BeginWorkspaceApplicationDetails(notification);
+    ConstructEvent(ChunkWM_ApplicationDeactivated, Info, false);
 }
 
 - (void)didHideApplication:(NSNotification *)notification

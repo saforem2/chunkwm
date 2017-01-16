@@ -45,6 +45,16 @@ EVENT_CALLBACK(Callback_ChunkWM_ApplicationActivated)
 
     EndWorkspaceApplicationDetails(Info);
 }
+
+EVENT_CALLBACK(Callback_ChunkWM_ApplicationDeactivated)
+{
+    workspace_application_details *Info =
+        (workspace_application_details *) Event->Context;
+    printf("%d: Deactivated '%s'\n", Info->PID, Info->ProcessName);
+
+    EndWorkspaceApplicationDetails(Info);
+}
+
 EVENT_CALLBACK(Callback_ChunkWM_ApplicationVisible)
 {
     workspace_application_details *Info =

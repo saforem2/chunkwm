@@ -12,6 +12,7 @@ typedef EVENT_CALLBACK(EventCallback);
 extern EVENT_CALLBACK(Callback_ChunkWM_ApplicationLaunched);
 extern EVENT_CALLBACK(Callback_ChunkWM_ApplicationTerminated);
 extern EVENT_CALLBACK(Callback_ChunkWM_ApplicationActivated);
+extern EVENT_CALLBACK(Callback_ChunkWM_ApplicationDeactivated);
 extern EVENT_CALLBACK(Callback_ChunkWM_ApplicationVisible);
 extern EVENT_CALLBACK(Callback_ChunkWM_ApplicationHidden);
 
@@ -36,6 +37,7 @@ enum event_type
     ChunkWM_ApplicationLaunched,
     ChunkWM_ApplicationTerminated,
     ChunkWM_ApplicationActivated,
+    ChunkWM_ApplicationDeactivated,
     ChunkWM_ApplicationVisible,
     ChunkWM_ApplicationHidden,
 
