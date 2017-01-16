@@ -1,13 +1,99 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+
 #include "../api/plugin_api.h"
+#include "../common/accessibility/application.h"
+#include "../common/accessibility/observer.h"
+#include "../common/dispatch/carbon.h"
 
 inline bool
 StringsAreEqual(const char *A, const char *B)
 {
     bool Result = (strcmp(A, B) == 0);
     return Result;
+}
+
+static
+OBSERVER_CALLBACK(Callback)
+{
+    ax_application *Application = (ax_application *) Reference;
+
+    if(CFEqual(Notification, kAXWindowCreatedNotification))
+    {
+        printf("kAXWindowCreatedNotification\n");
+    }
+    else if(CFEqual(Notification, kAXUIElementDestroyedNotification))
+    {
+        printf("kAXUIElementDestroyedNotification\n");
+    }
+    else if(CFEqual(Notification, kAXFocusedWindowChangedNotification))
+    {
+        printf("kAXFocusedWindowChangedNotification\n");
+    }
+    else if(CFEqual(Notification, kAXWindowMiniaturizedNotification))
+    {
+        printf("kAXWindowMiniaturizedNotification\n");
+    }
+    else if(CFEqual(Notification, kAXWindowDeminiaturizedNotification))
+    {
+        printf("kAXWindowDeminiaturizedNotification\n");
+    }
+    else if(CFEqual(Notification, kAXWindowMovedNotification))
+    {
+        printf("kAXWindowMovedNotification\n");
+    }
+    else if(CFEqual(Notification, kAXWindowResizedNotification))
+    {
+        printf("kAXWindowResizedNotification\n");
+    }
+    else if(CFEqual(Notification, kAXTitleChangedNotification))
+    {
+        printf("kAXWindowTitleChangedNotification\n");
+    }
+}
+
+ax_application *Application;
+void ApplicationLaunchedHandler(const char *Data, unsigned int DataSize)
+{
+    carbon_application_details *Info =
+        (carbon_application_details *) Data;
+
+    if(!Application)
+    {
+        printf("inside plugin: launched: '%s'\n", Info->ProcessName);
+        Application = AXLibConstructApplication(Info->PID, Info->ProcessName);
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.5 * NSEC_PER_SEC), dispatch_get_main_queue(),
+        ^{
+            if(AXLibAddApplicationObserver(Application, Callback))
+            {
+                printf("subscribed to application notifications\n");
+            }
+        });
+    }
+}
+
+/*
+ * NOTE(koekeishiya): Function parameters
+ * plugin *Plugin
+ * const char *Node
+ * const char *Data
+ * unsigned int DataSize
+ *
+ * return: bool
+ * */
+PLUGIN_MAIN_FUNC(PluginMain)
+{
+    if(Node)
+    {
+        if(StringsAreEqual(Node, "chunkwm_export_application_launched"))
+        {
+            ApplicationLaunchedHandler(Data, DataSize);
+            return true;
+        }
+    }
+
+    return false;
 }
 
 /*
@@ -28,29 +114,6 @@ PLUGIN_FUNC(PluginInit)
 PLUGIN_FUNC(PluginDeInit)
 {
     printf("Plugin DeInit!\n");
-}
-
-/*
- * NOTE(koekeishiya): Function parameters
- * plugin *Plugin
- * const char *Node
- * const char *Data
- * unsigned int DataSize
- *
- * return: bool
- * */
-PLUGIN_MAIN_FUNC(PluginMain)
-{
-    if(Node)
-    {
-        if(StringsAreEqual(Node, "chunkwm_export_application_launched"))
-        {
-            printf("inside plugin: launched: '%.*s'\n", DataSize, Data);
-            return true;
-        }
-    }
-
-    return false;
 }
 
 void InitPluginVTable(plugin *Plugin)
