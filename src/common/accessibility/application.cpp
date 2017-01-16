@@ -99,14 +99,14 @@ AXLibRemoveApplicationObserver(ax_application *Application)
     }
 }
 
-ax_application *AXLibConstructApplication(pid_t PID, char *Name)
+ax_application *AXLibConstructApplication(ProcessSerialNumber PSN, pid_t PID, char *Name)
 {
     ax_application *Application = (ax_application *) malloc(sizeof(ax_application));
     memset(Application, 0, sizeof(ax_application));
 
     Application->Ref = AXUIElementCreateApplication(PID);
-    GetProcessForPID(PID, &Application->PSN);
     Application->Name = strdup(Name);
+    Application->PSN = PSN;
     Application->PID = PID;
 
     return Application;

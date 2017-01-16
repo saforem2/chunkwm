@@ -15,7 +15,7 @@ struct ax_application
     uint32_t Notifications;
 };
 
-ax_application *AXLibConstructApplication(pid_t PID, char *Name);
+ax_application *AXLibConstructApplication(ProcessSerialNumber PSN, pid_t PID, char *Name);
 void AXLibDestroyApplication(ax_application *Application);
 bool AXLibAddApplicationObserver(ax_application *Application, ObserverCallback Callback);
 
