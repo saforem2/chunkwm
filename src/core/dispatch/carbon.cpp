@@ -129,7 +129,6 @@ CacheRunningProcesses()
         carbon_application_details *Info = BeginCarbonApplicationDetails(PSN);
         if(Info)
         {
-            printf("%d: Process '%s'\n", Info->PID, Info->ProcessName);
             CarbonApplicationCache[PSN] = Info;
         }
     }
