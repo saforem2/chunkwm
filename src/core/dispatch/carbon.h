@@ -2,7 +2,7 @@
 #define CHUNKWM_OSX_CARBON_H
 
 #include <Carbon/Carbon.h>
-#include <unistd.h>
+#include "../../common/dispatch/carbon.h"
 
 struct carbon_event_handler
 {
@@ -10,14 +10,6 @@ struct carbon_event_handler
     EventHandlerUPP EventHandler;
     EventTypeSpec EventType[2];
     EventHandlerRef CurHandler;
-};
-
-struct carbon_application_details
-{
-    char *ProcessName;
-    uint32_t ProcessMode;
-    ProcessSerialNumber PSN;
-    pid_t PID;
 };
 
 bool BeginCarbonEventHandler(carbon_event_handler *Carbon);
