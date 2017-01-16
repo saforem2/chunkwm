@@ -20,8 +20,8 @@ EVENT_CALLBACK(Callback_ChunkWM_ApplicationLaunched)
         plugin *Plugin = It->first;
         Plugin->Run(Plugin,
                     "chunkwm_export_application_launched",
-                    Info->ProcessName,
-                    strlen(Info->ProcessName));
+                    (char *)Info,
+                    sizeof(*Info));
     }
     EndPluginList(chunkwm_export_application_launched);
 
