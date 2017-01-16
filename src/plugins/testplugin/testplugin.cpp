@@ -2,10 +2,10 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "../api/plugin_api.h"
-#include "../common/accessibility/application.h"
-#include "../common/accessibility/observer.h"
-#include "../common/dispatch/carbon.h"
+#include "../../api/plugin_api.h"
+#include "../../common/accessibility/application.h"
+#include "../../common/accessibility/observer.h"
+#include "../../common/dispatch/carbon.h"
 
 inline bool
 StringsAreEqual(const char *A, const char *B)
