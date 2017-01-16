@@ -19,10 +19,4 @@ ax_application *AXLibConstructApplication(pid_t PID, char *Name);
 void AXLibDestroyApplication(ax_application *Application);
 bool AXLibAddApplicationObserver(ax_application *Application, ObserverCallback Callback);
 
-bool AXLibInitializeApplication(pid_t PID);
-void AXLibInitializedApplication(ax_application *Application);
-
-void AXLibAddApplicationWindows(ax_application *Application);
-void AXLibRemoveApplicationWindows(ax_application *Application);
-
 #endif
