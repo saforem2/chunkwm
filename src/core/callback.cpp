@@ -5,7 +5,7 @@
 
 #include "plugin.h"
 
-#define ProcessPluginExport(plugin_export)                 \
+#define ProcessPluginList(plugin_export)                   \
     plugin_list *List = BeginPluginList(plugin_export);    \
     for(plugin_list_iter It = List->begin();               \
         It != List->end();                                 \
@@ -27,7 +27,7 @@ EVENT_CALLBACK(Callback_ChunkWM_ApplicationLaunched)
         (carbon_application_details *) Event->Context;
     printf("%d: Launched '%s'\n", Info->PID, Info->ProcessName);
 
-    ProcessPluginExport(chunkwm_export_application_launched);
+    ProcessPluginList(chunkwm_export_application_launched);
 
     EndCarbonApplicationDetails(Info);
 }
@@ -38,7 +38,7 @@ EVENT_CALLBACK(Callback_ChunkWM_ApplicationTerminated)
         (carbon_application_details *) Event->Context;
     printf("%d: Terminated '%s'\n", Info->PID, Info->ProcessName);
 
-    ProcessPluginExport(chunkwm_export_application_terminated);
+    ProcessPluginList(chunkwm_export_application_terminated);
 
     EndCarbonApplicationDetails(Info);
 }
@@ -49,7 +49,7 @@ EVENT_CALLBACK(Callback_ChunkWM_ApplicationActivated)
         (workspace_application_details *) Event->Context;
     printf("%d: Activated '%s'\n", Info->PID, Info->ProcessName);
 
-    ProcessPluginExport(chunkwm_export_application_activated);
+    ProcessPluginList(chunkwm_export_application_activated);
 
     EndWorkspaceApplicationDetails(Info);
 }
@@ -60,7 +60,7 @@ EVENT_CALLBACK(Callback_ChunkWM_ApplicationDeactivated)
         (workspace_application_details *) Event->Context;
     printf("%d: Deactivated '%s'\n", Info->PID, Info->ProcessName);
 
-    ProcessPluginExport(chunkwm_export_application_deactivated);
+    ProcessPluginList(chunkwm_export_application_deactivated);
 
     EndWorkspaceApplicationDetails(Info);
 }
@@ -71,7 +71,7 @@ EVENT_CALLBACK(Callback_ChunkWM_ApplicationVisible)
         (workspace_application_details *) Event->Context;
     printf("%d: Show '%s'\n", Info->PID, Info->ProcessName);
 
-    ProcessPluginExport(chunkwm_export_application_unhidden);
+    ProcessPluginList(chunkwm_export_application_unhidden);
 
     EndWorkspaceApplicationDetails(Info);
 }
@@ -81,7 +81,7 @@ EVENT_CALLBACK(Callback_ChunkWM_ApplicationHidden)
         (workspace_application_details *) Event->Context;
     printf("%d: Hide '%s'\n", Info->PID, Info->ProcessName);
 
-    ProcessPluginExport(chunkwm_export_application_hidden);
+    ProcessPluginList(chunkwm_export_application_hidden);
 
     EndWorkspaceApplicationDetails(Info);
 }
