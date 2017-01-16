@@ -1,5 +1,4 @@
 #include "application.h"
-#include "element.h"
 #define internal static
 
 enum ax_application_notifications
