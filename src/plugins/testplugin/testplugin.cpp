@@ -101,11 +101,12 @@ PLUGIN_MAIN_FUNC(PluginMain)
 /*
  * NOTE(koekeishiya):
  * param: plugin *Plugin
- * return: void
+ * return: bool -> true if startup succeeded
  */
-PLUGIN_FUNC(PluginInit)
+PLUGIN_INIT_FUNC(PluginInit)
 {
     printf("Plugin Init!\n");
+    return true;
 }
 
 /*
@@ -113,7 +114,7 @@ PLUGIN_FUNC(PluginInit)
  * param: plugin *Plugin
  * return: void
  */
-PLUGIN_FUNC(PluginDeInit)
+PLUGIN_DEINIT_FUNC(PluginDeInit)
 {
     printf("Plugin DeInit!\n");
 }
