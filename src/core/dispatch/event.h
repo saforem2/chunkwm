@@ -15,15 +15,6 @@ extern EVENT_CALLBACK(Callback_ChunkWM_ApplicationActivated);
 extern EVENT_CALLBACK(Callback_ChunkWM_ApplicationVisible);
 extern EVENT_CALLBACK(Callback_ChunkWM_ApplicationHidden);
 
-extern EVENT_CALLBACK(Callback_ChunkWM_WindowCreated);
-extern EVENT_CALLBACK(Callback_ChunkWM_WindowDestroyed);
-extern EVENT_CALLBACK(Callback_ChunkWM_WindowFocused);
-extern EVENT_CALLBACK(Callback_ChunkWM_WindowMoved);
-extern EVENT_CALLBACK(Callback_ChunkWM_WindowResized);
-extern EVENT_CALLBACK(Callback_ChunkWM_WindowMinimized);
-extern EVENT_CALLBACK(Callback_ChunkWM_WindowDeminimized);
-extern EVENT_CALLBACK(Callback_ChunkWM_WindowTitleChanged);
-
 extern EVENT_CALLBACK(Callback_ChunkWM_DisplayAdded);
 extern EVENT_CALLBACK(Callback_ChunkWM_DisplayRemoved);
 extern EVENT_CALLBACK(Callback_ChunkWM_DisplayMoved);
@@ -47,16 +38,6 @@ enum event_type
     ChunkWM_ApplicationActivated,
     ChunkWM_ApplicationVisible,
     ChunkWM_ApplicationHidden,
-
-    ChunkWM_WindowCreated,
-    ChunkWM_WindowDestroyed,
-
-    ChunkWM_WindowFocused,
-    ChunkWM_WindowMoved,
-    ChunkWM_WindowResized,
-    ChunkWM_WindowMinimized,
-    ChunkWM_WindowDeminimized,
-    ChunkWM_WindowTitleChanged,
 
     ChunkWM_DisplayAdded,
     ChunkWM_DisplayRemoved,

@@ -62,32 +62,6 @@ EVENT_CALLBACK(Callback_ChunkWM_ApplicationHidden)
     EndWorkspaceApplicationDetails(Info);
 }
 
-// NOTE(koekeishiya): Window-related callbacks
-EVENT_CALLBACK(Callback_ChunkWM_WindowCreated)
-{
-}
-EVENT_CALLBACK(Callback_ChunkWM_WindowDestroyed)
-{
-}
-EVENT_CALLBACK(Callback_ChunkWM_WindowFocused)
-{
-}
-EVENT_CALLBACK(Callback_ChunkWM_WindowMoved)
-{
-}
-EVENT_CALLBACK(Callback_ChunkWM_WindowResized)
-{
-}
-EVENT_CALLBACK(Callback_ChunkWM_WindowMinimized)
-{
-}
-EVENT_CALLBACK(Callback_ChunkWM_WindowDeminimized)
-{
-}
-EVENT_CALLBACK(Callback_ChunkWM_WindowTitleChanged)
-{
-}
-
 // NOTE(koekeishiya): Display-related callbacks
 EVENT_CALLBACK(Callback_ChunkWM_DisplayAdded)
 {
