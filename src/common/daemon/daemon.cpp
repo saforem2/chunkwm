@@ -19,7 +19,8 @@ internal bool IsRunning;
 internal pthread_t Thread;
 internal daemon_callback *ConnectionCallback;
 
-char *ReadFromSocket(int SockFD)
+internal char *
+ReadFromSocket(int SockFD)
 {
     int Length = 256;
     char *Result = (char *) malloc(Length);
@@ -77,7 +78,7 @@ HandleConnection(void *)
 void StopDaemon()
 {
     IsRunning = false;
-    close(DaemonSockFD);
+    CloseSocket(DaemonSockFD);
 }
 
 bool StartDaemon(int Port, daemon_callback *Callback)
