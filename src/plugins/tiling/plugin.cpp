@@ -8,7 +8,7 @@
 #include "../../common/accessibility/application.h"
 #include "../../common/accessibility/observer.h"
 #include "../../common/dispatch/carbon.h"
-#include "../../common/daemon/daemon.h"
+#include "../../common/ipc/daemon.h"
 
 #define internal static
 

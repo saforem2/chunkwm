@@ -3,7 +3,7 @@ BUILD_PATH		= ./../../../plugins
 SRC				= ./plugin.cpp \
 				  ./../../common/accessibility/application.cpp \
 				  ./../../common/accessibility/observer.cpp \
-				  ./../../common/daemon/daemon.cpp
+				  ./../../common/ipc/daemon.cpp
 BINS			= $(BUILD_PATH)/tiling.so
 LINK			= -shared -fPIC -framework Carbon -framework ApplicationServices
 
