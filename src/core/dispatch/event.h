@@ -5,32 +5,24 @@
 #include <queue>
 
 struct chunk_event;
-#define EVENT_CALLBACK(name) void name(chunk_event *Event)
-typedef EVENT_CALLBACK(EventCallback);
+#define CHUNKWM_CALLBACK(name) void name(chunk_event *Event)
+typedef CHUNKWM_CALLBACK(chunkwm_callback);
 
 /* NOTE(koekeishiya): Declare chunk_event_type callbacks as external functions. */
-extern EVENT_CALLBACK(Callback_ChunkWM_ApplicationLaunched);
-extern EVENT_CALLBACK(Callback_ChunkWM_ApplicationTerminated);
-extern EVENT_CALLBACK(Callback_ChunkWM_ApplicationActivated);
-extern EVENT_CALLBACK(Callback_ChunkWM_ApplicationDeactivated);
-extern EVENT_CALLBACK(Callback_ChunkWM_ApplicationVisible);
-extern EVENT_CALLBACK(Callback_ChunkWM_ApplicationHidden);
+extern CHUNKWM_CALLBACK(Callback_ChunkWM_ApplicationLaunched);
+extern CHUNKWM_CALLBACK(Callback_ChunkWM_ApplicationTerminated);
+extern CHUNKWM_CALLBACK(Callback_ChunkWM_ApplicationActivated);
+extern CHUNKWM_CALLBACK(Callback_ChunkWM_ApplicationDeactivated);
+extern CHUNKWM_CALLBACK(Callback_ChunkWM_ApplicationVisible);
+extern CHUNKWM_CALLBACK(Callback_ChunkWM_ApplicationHidden);
 
-extern EVENT_CALLBACK(Callback_ChunkWM_DisplayAdded);
-extern EVENT_CALLBACK(Callback_ChunkWM_DisplayRemoved);
-extern EVENT_CALLBACK(Callback_ChunkWM_DisplayMoved);
-extern EVENT_CALLBACK(Callback_ChunkWM_DisplayResized);
+extern CHUNKWM_CALLBACK(Callback_ChunkWM_DisplayAdded);
+extern CHUNKWM_CALLBACK(Callback_ChunkWM_DisplayRemoved);
+extern CHUNKWM_CALLBACK(Callback_ChunkWM_DisplayMoved);
+extern CHUNKWM_CALLBACK(Callback_ChunkWM_DisplayResized);
+extern CHUNKWM_CALLBACK(Callback_ChunkWM_DisplayChanged);
 
-extern EVENT_CALLBACK(Callback_ChunkWM_DisplayChanged);
-extern EVENT_CALLBACK(Callback_ChunkWM_SpaceChanged);
-
-extern EVENT_CALLBACK(Callback_ChunkWM_MouseMoved);
-extern EVENT_CALLBACK(Callback_ChunkWM_LeftMouseDragged);
-extern EVENT_CALLBACK(Callback_ChunkWM_LeftMouseDown);
-extern EVENT_CALLBACK(Callback_ChunkWM_LeftMouseUp);
-extern EVENT_CALLBACK(Callback_ChunkWM_RightMouseDragged);
-extern EVENT_CALLBACK(Callback_ChunkWM_RightMouseDown);
-extern EVENT_CALLBACK(Callback_ChunkWM_RightMouseUp);
+extern CHUNKWM_CALLBACK(Callback_ChunkWM_SpaceChanged);
 
 enum event_type
 {
@@ -60,7 +52,7 @@ enum event_type
 
 struct chunk_event
 {
-    EventCallback *Handle;
+    chunkwm_callback *Handle;
     bool Intrinsic;
     void *Context;
 };
