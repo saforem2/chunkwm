@@ -1,5 +1,5 @@
-#ifndef CHUNKWM_OSX_CGEVENTTAP_H
-#define CHUNKWM_OSX_CGEVENTTAP_H
+#ifndef CHUNKWM_COMMON_EVENTTAP_H
+#define CHUNKWM_COMMON_EVENTTAP_H
 
 #include <Carbon/Carbon.h>
 
