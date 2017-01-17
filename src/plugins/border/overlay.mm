@@ -2,6 +2,9 @@
 #include "overlay.h"
 
 static int CornerRadius = 6;
+static int BorderWidth = 2;
+static int Inset = BorderWidth / 2;
+
 @interface OverlayView : NSView
 {
 }
@@ -22,9 +25,9 @@ static int CornerRadius = 6;
     if(Rect.size.height < Frame.size.height)
         return;
 
-    NSRect BorderRect = NSMakeRect(Rect.origin.x+1, Rect.origin.y+1, Rect.size.width-2, Rect.size.height-2);
+    NSRect BorderRect = CGRectInset(Frame, Inset, Inset);
     NSBezierPath *Border = [NSBezierPath bezierPathWithRoundedRect:BorderRect xRadius:CornerRadius yRadius:CornerRadius];
-    [Border setLineWidth:4];
+    [Border setLineWidth:BorderWidth];
     [[NSColor redColor] set];
     [Border stroke];
 }
@@ -68,5 +71,5 @@ InvertY(int Y, int Height)
 }
 void UpdateBorder(int X, int Y, int W, int H)
 {
-    [BorderWindow setFrame:NSMakeRect(X, InvertY(Y, H), W, H) display:YES animate:NO];
+    [BorderWindow setFrame:NSMakeRect(X - Inset, InvertY(Y + Inset, H), W + (2 * Inset), H + (2 * Inset)) display:YES animate:NO];
 }
