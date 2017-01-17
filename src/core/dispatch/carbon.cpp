@@ -153,7 +153,7 @@ CarbonApplicationEventHandler(EventHandlerCallRef HandlerCallRef, EventRef Event
             if(Info)
             {
                 carbon_application_details *Copy = CopyCarbonApplicationDetails(Info);
-                CarbonApplicationCache[Info->PSN] = Copy;
+                CarbonApplicationCache[PSN] = Copy;
                 ConstructEvent(ChunkWM_ApplicationLaunched, Info, false);
             }
         } break;
