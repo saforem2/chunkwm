@@ -44,7 +44,6 @@ enum event_type
 struct chunk_event
 {
     chunkwm_callback *Handle;
-    bool Intrinsic;
     void *Context;
 };
 
@@ -67,10 +66,9 @@ void ResumeEventLoop();
 void AddEvent(chunk_event Event);
 
 /* NOTE(koekeishiya): Construct a chunk_event with the appropriate callback through macro expansion. */
-#define ConstructEvent(EventType, EventContext, EventIntrinsic) \
+#define ConstructEvent(EventType, EventContext) \
     do { chunk_event Event = {}; \
          Event.Context = EventContext; \
-         Event.Intrinsic = EventIntrinsic; \
          Event.Handle = &Callback_##EventType; \
          AddEvent(Event); \
        } while(0)

@@ -101,36 +101,36 @@ void EndWorkspaceApplicationDetails(workspace_application_details *Info)
 
 - (void)activeDisplayDidChange:(NSNotification *)notification
 {
-    ConstructEvent(ChunkWM_DisplayChanged, NULL, false);
+    ConstructEvent(ChunkWM_DisplayChanged, NULL);
 }
 
 - (void)activeSpaceDidChange:(NSNotification *)notification
 {
-    ConstructEvent(ChunkWM_SpaceChanged, NULL, false);
+    ConstructEvent(ChunkWM_SpaceChanged, NULL);
 }
 
 - (void)didActivateApplication:(NSNotification *)notification
 {
     workspace_application_details *Info = BeginWorkspaceApplicationDetails(notification);
-    ConstructEvent(ChunkWM_ApplicationActivated, Info, false);
+    ConstructEvent(ChunkWM_ApplicationActivated, Info);
 }
 
 - (void)didDeactivateApplication:(NSNotification *)notification
 {
     workspace_application_details *Info = BeginWorkspaceApplicationDetails(notification);
-    ConstructEvent(ChunkWM_ApplicationDeactivated, Info, false);
+    ConstructEvent(ChunkWM_ApplicationDeactivated, Info);
 }
 
 - (void)didHideApplication:(NSNotification *)notification
 {
     workspace_application_details *Info = BeginWorkspaceApplicationDetails(notification);
-    ConstructEvent(ChunkWM_ApplicationHidden, Info, false);
+    ConstructEvent(ChunkWM_ApplicationHidden, Info);
 }
 
 - (void)didUnhideApplication:(NSNotification *)notification
 {
     workspace_application_details *Info = BeginWorkspaceApplicationDetails(notification);
-    ConstructEvent(ChunkWM_ApplicationVisible, Info, false);
+    ConstructEvent(ChunkWM_ApplicationVisible, Info);
 }
 
 @end

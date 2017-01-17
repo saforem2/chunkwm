@@ -173,7 +173,7 @@ CarbonApplicationEventHandler(EventHandlerCallRef HandlerCallRef, EventRef Event
             {
                 carbon_application_details *Copy = CopyCarbonApplicationDetails(Info);
                 CarbonApplicationCache[PSN] = Copy;
-                ConstructEvent(ChunkWM_ApplicationLaunched, Info, false);
+                ConstructEvent(ChunkWM_ApplicationLaunched, Info);
             }
         } break;
         case kEventAppTerminated:
@@ -182,7 +182,7 @@ CarbonApplicationEventHandler(EventHandlerCallRef HandlerCallRef, EventRef Event
             if(Info)
             {
                 CarbonApplicationCache.erase(PSN);
-                ConstructEvent(ChunkWM_ApplicationTerminated, Info, false);
+                ConstructEvent(ChunkWM_ApplicationTerminated, Info);
             }
         } break;
     }
