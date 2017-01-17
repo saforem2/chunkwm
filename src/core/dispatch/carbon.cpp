@@ -68,6 +68,17 @@ CopyPascalStringToC(ConstStr255Param Source, char *Destination)
     Destination[Source[0]] = '\0';
 }
 
+internal inline void
+PrintCarbonApplicationDetails(carbon_application_details *Info)
+{
+    printf("PID: %d\nPSN: %d %d\nMode: %d\nName: %s\n\n",
+            Info->PID,
+            Info->PSN.lowLongOfPSN,
+            Info->PSN.highLongOfPSN,
+            Info->ProcessMode,
+            Info->ProcessName);
+}
+
 internal carbon_application_details *
 BeginCarbonApplicationDetails(ProcessSerialNumber PSN)
 {
@@ -131,6 +142,7 @@ CacheRunningProcesses()
         carbon_application_details *Info = BeginCarbonApplicationDetails(PSN);
         if(Info)
         {
+            PrintCarbonApplicationDetails(Info);
             CarbonApplicationCache[PSN] = Info;
         }
     }
