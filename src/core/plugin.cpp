@@ -87,27 +87,19 @@ HookPlugin(loaded_plugin *LoadedPlugin)
         chunkwm_plugin_export *Export = Plugin->Subscriptions;
         while(*Export != chunkwm_export_end)
         {
-            switch(*Export)
+            if(*Export >= 0)
             {
-                case chunkwm_export_application_launched:
-                case chunkwm_export_application_terminated:
-                case chunkwm_export_application_activated:
-                case chunkwm_export_application_hidden:
-                case chunkwm_export_application_unhidden:
-                {
-                    printf("Plugin '%s' subscribed to '%s'\n",
-                           LoadedPlugin->Info->PluginName,
-                           chunkwm_plugin_export_str[*Export]);
-                    SubscribeToEvent(Plugin, *Export);
-                } break;
-                default:
-                {
-                    fprintf(stderr,
-                            "Plugin '%s' contains invalid subscription!\n",
-                            LoadedPlugin->Info->PluginName);
-                } break;
+                printf("Plugin '%s' subscribed to '%s'\n",
+                       LoadedPlugin->Info->PluginName,
+                       chunkwm_plugin_export_str[*Export]);
+                SubscribeToEvent(Plugin, *Export);
             }
-
+            else
+            {
+                fprintf(stderr,
+                        "Plugin '%s' contains invalid subscription!\n",
+                        LoadedPlugin->Info->PluginName);
+            }
             ++Export;
         }
     }
@@ -122,10 +114,13 @@ UnhookPlugin(loaded_plugin *LoadedPlugin)
         chunkwm_plugin_export *Export = Plugin->Subscriptions;
         while(*Export != chunkwm_export_end)
         {
-            printf("Plugin '%s' unsubscribed from '%s'\n",
-                   LoadedPlugin->Info->PluginName,
-                   chunkwm_plugin_export_str[*Export]);
-            UnsubscribeFromEvent(Plugin, *Export);
+            if(*Export >= 0)
+            {
+                printf("Plugin '%s' unsubscribed from '%s'\n",
+                       LoadedPlugin->Info->PluginName,
+                       chunkwm_plugin_export_str[*Export]);
+                UnsubscribeFromEvent(Plugin, *Export);
+            }
             ++Export;
         }
     }
