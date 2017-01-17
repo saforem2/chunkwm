@@ -86,6 +86,14 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_ApplicationHidden)
     EndWorkspaceApplicationDetails(Info);
 }
 
+CHUNKWM_CALLBACK(Callback_ChunkWM_SpaceChanged)
+{
+    /* NOTE(koekeishiya): The expanded macro expects a variable 'Info'.
+     * This event does not take an argument, so we pass NULL. */
+    char *Info = NULL;
+    ProcessPluginList(chunkwm_export_space_changed);
+}
+
 // NOTE(koekeishiya): Display-related callbacks
 CHUNKWM_CALLBACK(Callback_ChunkWM_DisplayAdded)
 {
@@ -107,6 +115,3 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_DisplayChanged)
 {
 }
 
-CHUNKWM_CALLBACK(Callback_ChunkWM_SpaceChanged)
-{
-}
