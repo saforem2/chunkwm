@@ -37,17 +37,8 @@ enum event_type
     ChunkWM_DisplayRemoved,
     ChunkWM_DisplayMoved,
     ChunkWM_DisplayResized,
-
     ChunkWM_DisplayChanged,
     ChunkWM_SpaceChanged,
-
-    ChunkWM_MouseMoved,
-    ChunkWM_LeftMouseDragged,
-    ChunkWM_LeftMouseDown,
-    ChunkWM_LeftMouseUp,
-    ChunkWM_RightMouseDragged,
-    ChunkWM_RightMouseDown,
-    ChunkWM_RightMouseUp,
 };
 
 struct chunk_event
