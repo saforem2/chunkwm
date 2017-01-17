@@ -84,7 +84,6 @@ BeginCarbonApplicationDetails(ProcessSerialNumber PSN)
 {
     carbon_application_details *Info =
         (carbon_application_details *) malloc(sizeof(carbon_application_details));
-    memset(Info, 0, sizeof(carbon_application_details));
 
     Str255 ProcessName = {};
     ProcessInfoRec ProcessInfo = {};
@@ -103,7 +102,7 @@ BeginCarbonApplicationDetails(ProcessSerialNumber PSN)
 
     if(ProcessInfo.processName)
     {
-        Info->ProcessName = (char *) malloc(256);
+        Info->ProcessName = (char *) malloc(ProcessInfo.processName[0] + 1);
         CopyPascalStringToC(ProcessInfo.processName, Info->ProcessName);
     }
     else
