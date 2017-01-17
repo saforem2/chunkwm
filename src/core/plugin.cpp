@@ -204,7 +204,7 @@ bool BeginPlugins()
     }
 
     loaded_plugin LoadedPlugin;
-    if(LoadPlugin("plugins/testplugin.so", &LoadedPlugin))
+    if(LoadPlugin("plugins/border.so", &LoadedPlugin))
     {
 #if 0
         UnloadPlugin(&LoadedPlugin);
