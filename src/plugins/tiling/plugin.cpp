@@ -226,6 +226,11 @@ PLUGIN_MAIN_FUNC(PluginMain)
             ApplicationTerminatedHandler(Data, DataSize);
             return true;
         }
+        else if(StringsAreEqual(Node, "chunkwm_export_space_changed"))
+        {
+            printf("Active Space Changed\n");
+            return true;
+        }
     }
 
     return false;
@@ -287,7 +292,7 @@ void InitPluginVTable(plugin *Plugin)
     Plugin->Run = PluginMain;
 
     // NOTE(koekeishiya): Subscribe to ChunkWM events!
-    int SubscriptionCount = 4;
+    int SubscriptionCount = 5;
     Plugin->Subscriptions =
         (chunkwm_plugin_export *) malloc((SubscriptionCount + 1) * sizeof(chunkwm_plugin_export));
     Plugin->Subscriptions[SubscriptionCount] = chunkwm_export_end;
@@ -296,6 +301,7 @@ void InitPluginVTable(plugin *Plugin)
     Plugin->Subscriptions[--SubscriptionCount] = chunkwm_export_application_hidden;
     Plugin->Subscriptions[--SubscriptionCount] = chunkwm_export_application_terminated;
     Plugin->Subscriptions[--SubscriptionCount] = chunkwm_export_application_launched;
+    Plugin->Subscriptions[--SubscriptionCount] = chunkwm_export_space_changed;
 }
 
 // NOTE(koekeishiya): Enable to manually trigger ABI mismatch
