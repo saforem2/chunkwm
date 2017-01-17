@@ -2,7 +2,6 @@
 #include "dispatch/carbon.h"
 #include "dispatch/workspace.h"
 #include "dispatch/event.h"
-
 #include "plugin.h"
 
 #define ProcessPluginList(plugin_export)                   \
@@ -21,7 +20,7 @@
 
 
 // NOTE(koekeishiya): Application-related callbacks.
-EVENT_CALLBACK(Callback_ChunkWM_ApplicationLaunched)
+CHUNKWM_CALLBACK(Callback_ChunkWM_ApplicationLaunched)
 {
     carbon_application_details *Info =
         (carbon_application_details *) Event->Context;
@@ -32,7 +31,7 @@ EVENT_CALLBACK(Callback_ChunkWM_ApplicationLaunched)
     EndCarbonApplicationDetails(Info);
 }
 
-EVENT_CALLBACK(Callback_ChunkWM_ApplicationTerminated)
+CHUNKWM_CALLBACK(Callback_ChunkWM_ApplicationTerminated)
 {
     carbon_application_details *Info =
         (carbon_application_details *) Event->Context;
@@ -43,7 +42,7 @@ EVENT_CALLBACK(Callback_ChunkWM_ApplicationTerminated)
     EndCarbonApplicationDetails(Info);
 }
 
-EVENT_CALLBACK(Callback_ChunkWM_ApplicationActivated)
+CHUNKWM_CALLBACK(Callback_ChunkWM_ApplicationActivated)
 {
     workspace_application_details *Info =
         (workspace_application_details *) Event->Context;
@@ -54,7 +53,7 @@ EVENT_CALLBACK(Callback_ChunkWM_ApplicationActivated)
     EndWorkspaceApplicationDetails(Info);
 }
 
-EVENT_CALLBACK(Callback_ChunkWM_ApplicationDeactivated)
+CHUNKWM_CALLBACK(Callback_ChunkWM_ApplicationDeactivated)
 {
     workspace_application_details *Info =
         (workspace_application_details *) Event->Context;
@@ -65,7 +64,7 @@ EVENT_CALLBACK(Callback_ChunkWM_ApplicationDeactivated)
     EndWorkspaceApplicationDetails(Info);
 }
 
-EVENT_CALLBACK(Callback_ChunkWM_ApplicationVisible)
+CHUNKWM_CALLBACK(Callback_ChunkWM_ApplicationVisible)
 {
     workspace_application_details *Info =
         (workspace_application_details *) Event->Context;
@@ -75,7 +74,8 @@ EVENT_CALLBACK(Callback_ChunkWM_ApplicationVisible)
 
     EndWorkspaceApplicationDetails(Info);
 }
-EVENT_CALLBACK(Callback_ChunkWM_ApplicationHidden)
+
+CHUNKWM_CALLBACK(Callback_ChunkWM_ApplicationHidden)
 {
     workspace_application_details *Info =
         (workspace_application_details *) Event->Context;
@@ -87,47 +87,26 @@ EVENT_CALLBACK(Callback_ChunkWM_ApplicationHidden)
 }
 
 // NOTE(koekeishiya): Display-related callbacks
-EVENT_CALLBACK(Callback_ChunkWM_DisplayAdded)
-{
-}
-EVENT_CALLBACK(Callback_ChunkWM_DisplayRemoved)
-{
-}
-EVENT_CALLBACK(Callback_ChunkWM_DisplayMoved)
-{
-}
-EVENT_CALLBACK(Callback_ChunkWM_DisplayResized)
+CHUNKWM_CALLBACK(Callback_ChunkWM_DisplayAdded)
 {
 }
 
-EVENT_CALLBACK(Callback_ChunkWM_DisplayChanged)
-{
-}
-EVENT_CALLBACK(Callback_ChunkWM_SpaceChanged)
+CHUNKWM_CALLBACK(Callback_ChunkWM_DisplayRemoved)
 {
 }
 
-// NOTE(koekeishiya): Mouse-related callbacks
-EVENT_CALLBACK(Callback_ChunkWM_MouseMoved)
+CHUNKWM_CALLBACK(Callback_ChunkWM_DisplayMoved)
 {
 }
 
-EVENT_CALLBACK(Callback_ChunkWM_LeftMouseDown)
-{
-}
-EVENT_CALLBACK(Callback_ChunkWM_LeftMouseDragged)
-{
-}
-EVENT_CALLBACK(Callback_ChunkWM_LeftMouseUp)
+CHUNKWM_CALLBACK(Callback_ChunkWM_DisplayResized)
 {
 }
 
-EVENT_CALLBACK(Callback_ChunkWM_RightMouseDown)
+CHUNKWM_CALLBACK(Callback_ChunkWM_DisplayChanged)
 {
 }
-EVENT_CALLBACK(Callback_ChunkWM_RightMouseDragged)
-{
-}
-EVENT_CALLBACK(Callback_ChunkWM_RightMouseUp)
+
+CHUNKWM_CALLBACK(Callback_ChunkWM_SpaceChanged)
 {
 }
