@@ -79,7 +79,7 @@ DAEMON_CALLBACK(DaemonCallback)
 internal
 EVENTTAP_CALLBACK(EventCallback)
 {
-    event_tap *EventTap = (event_tap *) Context;
+    event_tap *EventTap = (event_tap *) Reference;
 
     switch(Type)
     {

@@ -14,7 +14,7 @@ struct event_tap
     CGEventRef name(CGEventTapProxy Proxy, \
                     CGEventType Type, \
                     CGEventRef Event, \
-                    void *Context)
+                    void *Reference)
 typedef EVENTTAP_CALLBACK(eventtap_callback);
 
 bool BeginEventTap(event_tap *EventTap, eventtap_callback *Callback);
