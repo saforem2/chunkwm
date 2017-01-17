@@ -157,10 +157,10 @@ void InitPluginVTable(plugin *Plugin)
         (chunkwm_plugin_export *) malloc((SubscriptionCount + 1) * sizeof(chunkwm_plugin_export));
     Plugin->Subscriptions[SubscriptionCount] = chunkwm_export_end;
 
-    Plugin->Subscriptions[--SubscriptionCount] = chunkwm_export_application_unhidden;
     Plugin->Subscriptions[--SubscriptionCount] = chunkwm_export_application_hidden;
     Plugin->Subscriptions[--SubscriptionCount] = chunkwm_export_application_terminated;
     Plugin->Subscriptions[--SubscriptionCount] = chunkwm_export_application_launched;
+    Plugin->Subscriptions[--SubscriptionCount] = (chunkwm_plugin_export)-1; // chunkwm_export_application_unhidden;
 }
 
 // NOTE(koekeishiya): Enable to manually trigger ABI mismatch
