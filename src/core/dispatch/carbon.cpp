@@ -1,35 +1,29 @@
 #include "carbon.h"
 #include "event.h"
 #include <string.h>
-#include <map>
+#include <unordered_map>
 #define internal static
 
-bool operator <(const ProcessSerialNumber &Lhs,
+struct psn_hash {
+size_t operator() (const ProcessSerialNumber &PSN) const
+{
+    size_t Result = 17;
+    Result = (Result << 5) - Result + std::hash<unsigned long>()(PSN.lowLongOfPSN);
+    Result = (Result << 5) - Result + std::hash<unsigned long>()(PSN.highLongOfPSN);
+    return Result;
+}
+};
+
+bool operator==(const ProcessSerialNumber &Lhs,
                 const ProcessSerialNumber &Rhs)
 {
-    /* NOTE(koekeishiya): std::map can not be implemented with an equality comparator.
-     * According to the Carbon documentation, we should be using 'SameProcess(..)'
-     * when comparing ProcessSerialNumbers, due to how they are represented internally
-     * in the process manager.
-     *
-     * Boolean Result;
-     * SameProcess(&Lhs, &Rhs, &Result);
-     * return Result == 1;
-     */
-    if(Lhs.lowLongOfPSN < Rhs.lowLongOfPSN)
-        return true;
-    if(Lhs.lowLongOfPSN > Rhs.lowLongOfPSN)
-        return false;
-    if(Lhs.highLongOfPSN < Rhs.highLongOfPSN)
-        return true;
-    if(Lhs.highLongOfPSN > Rhs.highLongOfPSN)
-        return false;
-
-    return false; // NOTE(koekeishiya): Silence compiler warning..
+    Boolean Result;
+    SameProcess(&Lhs, &Rhs, &Result);
+    return Result == 1;
 }
 
-typedef std::map<ProcessSerialNumber, carbon_application_details *> carbon_application_cache;
-typedef std::map<ProcessSerialNumber, carbon_application_details *>::iterator carbon_application_cache_iter;
+typedef std::unordered_map<ProcessSerialNumber, carbon_application_details *, psn_hash> carbon_application_cache;
+typedef std::unordered_map<ProcessSerialNumber, carbon_application_details *, psn_hash>::iterator carbon_application_cache_iter;
 
 /*
  * NOTE(koekeishiya): By the time our application has received the kEventAppTerminated event,
@@ -166,21 +160,6 @@ CarbonApplicationEventHandler(EventHandlerCallRef HandlerCallRef, EventRef Event
             carbon_application_details *Info = BeginCarbonApplicationDetails(PSN);
             if(Info)
             {
-#if 1
-                // NOTE(koekeishiya): Debug code to check if the PSN comparator is usable.
-                carbon_application_details *Cache = SearchCarbonApplicationDetailsCache(PSN);
-                if(Cache)
-                {
-                    printf("Carbon: CACHE COLLISION!\n");
-                    printf("Carbon: CACHE COLLISION!\n");
-                    printf("Carbon: CACHE COLLISION!\n");
-                    printf("Carbon: CACHE COLLISION!\n");
-                    printf("PSN LOW:  %d\nPSN HIGH: %d\n",
-                            PSN.lowLongOfPSN, PSN.highLongOfPSN);
-                    CarbonApplicationCache.erase(PSN);
-                    EndCarbonApplicationDetails(Cache);
-                }
-#endif
                 carbon_application_details *Copy = CopyCarbonApplicationDetails(Info);
                 CarbonApplicationCache[PSN] = Copy;
                 ConstructEvent(ChunkWM_ApplicationLaunched, Info, false);
@@ -194,13 +173,6 @@ CarbonApplicationEventHandler(EventHandlerCallRef HandlerCallRef, EventRef Event
                 CarbonApplicationCache.erase(PSN);
                 ConstructEvent(ChunkWM_ApplicationTerminated, Info, false);
             }
-#if 1
-            // NOTE(koekeishiya): Debug code to check if the PSN comparator is usable.
-            else
-            {
-                printf("Carbon: app terminated, no cache entry found!\n");
-            }
-#endif
         } break;
     }
 
