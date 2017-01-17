@@ -8,6 +8,7 @@
 #include "../../common/accessibility/application.h"
 #include "../../common/accessibility/observer.h"
 #include "../../common/dispatch/carbon.h"
+#include "../../common/dispatch/cgeventtap.h"
 #include "../../common/ipc/daemon.h"
 
 #define internal static
@@ -15,6 +16,7 @@
 typedef std::map<pid_t, ax_application *> ax_application_map;
 typedef std::map<pid_t, ax_application *>::iterator ax_application_map_iter;
 
+internal event_tap EventTap;
 internal ax_application_map Applications;
 internal pthread_mutex_t ApplicationsMutex;
 
@@ -74,19 +76,51 @@ DAEMON_CALLBACK(DaemonCallback)
     printf("    plugin daemon: %s\n", Message);
 }
 
-internal bool
-Init()
+internal
+EVENTTAP_CALLBACK(EventCallback)
 {
-    int Port = 4020;
-    bool Result = (pthread_mutex_init(&ApplicationsMutex, NULL) == 0) &&
-                  (StartDaemon(Port, &DaemonCallback));
-    return Result;
-}
+    event_tap *EventTap = (event_tap *) Context;
 
-internal void
-Deinit()
-{
-    StopDaemon();
+    switch(Type)
+    {
+        case kCGEventTapDisabledByTimeout:
+        case kCGEventTapDisabledByUserInput:
+        {
+            CGEventTapEnable(EventTap->Handle, true);
+        } break;
+        case kCGEventMouseMoved:
+        {
+            printf("kCGEventMouseMoved\n");
+        } break;
+        case kCGEventLeftMouseDown:
+        {
+            printf("kCGEventLeftMouseDown\n");
+        } break;
+        case kCGEventLeftMouseUp:
+        {
+            printf("kCGEventLeftMouseUp\n");
+        } break;
+        case kCGEventLeftMouseDragged:
+        {
+            printf("kCGEventLeftMouseDragged\n");
+        } break;
+        case kCGEventRightMouseDown:
+        {
+            printf("kCGEventRightMouseDown\n");
+        } break;
+        case kCGEventRightMouseUp:
+        {
+            printf("kCGEventRightMouseUp\n");
+        } break;
+        case kCGEventRightMouseDragged:
+        {
+            printf("kCGEventRightMouseDragged\n");
+        } break;
+
+        default: {} break;
+    }
+
+    return Event;
 }
 
 internal
@@ -195,6 +229,32 @@ PLUGIN_MAIN_FUNC(PluginMain)
     }
 
     return false;
+}
+
+internal bool
+Init()
+{
+    int Port = 4020;
+    EventTap.Mask = ((1 << kCGEventMouseMoved) |
+                     (1 << kCGEventLeftMouseDragged) |
+                     (1 << kCGEventLeftMouseDown) |
+                     (1 << kCGEventLeftMouseUp) |
+                     (1 << kCGEventRightMouseDragged) |
+                     (1 << kCGEventRightMouseDown) |
+                     (1 << kCGEventRightMouseUp));
+
+    bool Result = ((pthread_mutex_init(&ApplicationsMutex, NULL) == 0) &&
+                   (StartDaemon(Port, &DaemonCallback)) &&
+                   (BeginEventTap(&EventTap, &EventCallback)));
+    return Result;
+}
+
+internal void
+Deinit()
+{
+    StopDaemon();
+    EndEventTap(&EventTap);
+    pthread_mutex_destroy(&ApplicationsMutex);
 }
 
 /*
