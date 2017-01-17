@@ -92,12 +92,6 @@ BeginCarbonApplicationDetails(ProcessSerialNumber PSN)
         Info->ProcessName = strdup("<Unknown Name>");
     }
 
-    if((Info->ProcessMode & modeOnlyBackground) != 0)
-    {
-        EndCarbonApplicationDetails(Info);
-        return NULL;
-    }
-
     return Info;
 }
 
