@@ -203,22 +203,29 @@ bool BeginPlugins()
         }
     }
 
-    loaded_plugin LoadedPlugin;
-    if(LoadPlugin("plugins/border.so", &LoadedPlugin))
+    loaded_plugin LoadedPluginTemplate;
+    if(LoadPlugin("plugins/template.so", &LoadedPluginTemplate))
     {
 #if 0
-        UnloadPlugin(&LoadedPlugin);
+        UnloadPlugin(&LoadedPluginTemplate);
 #endif
     }
 
-    loaded_plugin LoadedPluginX;
-    if(LoadPlugin("plugins/tiling.so", &LoadedPluginX))
+    loaded_plugin LoadedPluginBorder;
+    if(LoadPlugin("plugins/border.so", &LoadedPluginBorder))
     {
 #if 0
-        UnloadPlugin(&LoadedPlugin);
+        UnloadPlugin(&LoadedPluginBorder);
 #endif
     }
 
+    loaded_plugin LoadedPluginTiling;
+    if(LoadPlugin("plugins/tiling.so", &LoadedPluginTiling))
+    {
+#if 0
+        UnloadPlugin(&LoadedPluginTiling);
+#endif
+    }
 
     return true;
 }
