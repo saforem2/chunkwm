@@ -170,6 +170,11 @@ PLUGIN_MAIN_FUNC(PluginMain)
             ApplicationLaunchedHandler(Data, DataSize);
             return true;
         }
+        else if(StringsAreEqual(Node, "chunkwm_export_space_changed"))
+        {
+            UpdateBorder(0, 0, 0, 0);
+            return true;
+        }
     }
 
     return false;
@@ -213,6 +218,7 @@ chunkwm_plugin_export Subscriptions[] =
 {
     chunkwm_export_application_activated,
     chunkwm_export_application_launched,
+    chunkwm_export_space_changed,
 };
 CHUNKWM_PLUGIN_SUBSCRIBE(Subscriptions)
 
