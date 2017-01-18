@@ -6,12 +6,14 @@
 #include "../../common/accessibility/application.h"
 #include "../../common/accessibility/element.h"
 #include "../../common/accessibility/observer.h"
+#include "../../common/dispatch/carbon.h"
 #include "../../common/dispatch/workspace.h"
 #include "overlay.h"
 
 #define internal static
 
 internal ax_application *Application;
+internal pid_t LastLaunchedPID;
 
 internal
 OBSERVER_CALLBACK(Callback)
@@ -58,10 +60,76 @@ OBSERVER_CALLBACK(Callback)
     */
 }
 
+internal void
+UpdateBorderHelper(ax_application *Application)
+{
+    AXUIElementRef WindowRef = (AXUIElementRef) AXLibGetWindowProperty(Application->Ref, kAXFocusedWindowAttribute);
+    if(WindowRef)
+    {
+        CGPoint Position = AXLibGetWindowPosition(WindowRef);
+        CGSize Size = AXLibGetWindowSize(WindowRef);
+        UpdateBorder(Position.x, Position.y, Size.width, Size.height);
+        CFRelease(WindowRef);
+    }
+    else
+    {
+        UpdateBorder(0, 0, 0, 0);
+    }
+
+    if(AXLibAddApplicationObserver(Application, Callback))
+    {
+        printf("    plugin: subscribed to '%s' notifications\n", Application->Name);
+    }
+}
+
+ax_application *FrontApplication()
+{
+    pid_t PID;
+    ProcessSerialNumber PSN;
+    GetFrontProcess(&PSN);
+    GetProcessPID(&PSN, &PID);
+
+    CFStringRef ProcessName = NULL;
+    CopyProcessName(&PSN, &ProcessName);
+
+    char *Name = CopyCFStringToC(ProcessName, true);
+    if(!Name)
+        Name = CopyCFStringToC(ProcessName, false);
+
+    ax_application *Result = AXLibConstructApplication(PSN, PID, Name);
+    if(Result)
+    {
+        if(LastLaunchedPID == PID)
+        {
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.5 * NSEC_PER_SEC), dispatch_get_main_queue(),
+            ^{
+                UpdateBorderHelper(Result);
+            });
+            LastLaunchedPID = 0;
+        }
+        else
+        {
+            UpdateBorderHelper(Result);
+        }
+    }
+    else
+    {
+        UpdateBorder(0, 0, 0, 0);
+    }
+    return Result;
+}
+
+void ApplicationLaunchedHandler(const char *Data, unsigned int DataSize)
+{
+    carbon_application_details *Info =
+        (carbon_application_details *) Data;
+    LastLaunchedPID = Info->PID;
+}
+
 void ApplicationActivatedHandler(const char *Data, unsigned int DataSize)
 {
-    workspace_application_details *Info =
-        (workspace_application_details *) Data;
+    /*workspace_application_details *Info =
+        (workspace_application_details *) Data;*/
 
     if(Application)
     {
@@ -69,26 +137,7 @@ void ApplicationActivatedHandler(const char *Data, unsigned int DataSize)
         Application = NULL;
     }
 
-    Application = AXLibConstructApplication(Info->PSN, Info->PID, Info->ProcessName);
-    if(Application)
-    {
-        AXUIElementRef WindowRef = (AXUIElementRef) AXLibGetWindowProperty(Application->Ref, kAXFocusedWindowAttribute);
-        if(WindowRef)
-        {
-            CGPoint Position = AXLibGetWindowPosition(WindowRef);
-            CGSize Size = AXLibGetWindowSize(WindowRef);
-            UpdateBorder(Position.x, Position.y, Size.width, Size.height);
-            CFRelease(WindowRef);
-        }
-
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.5 * NSEC_PER_SEC), dispatch_get_main_queue(),
-        ^{
-            if(AXLibAddApplicationObserver(Application, Callback))
-            {
-                printf("    plugin: subscribed to '%s' notifications\n", Application->Name);
-            }
-        });
-    }
+    Application = FrontApplication();
 }
 
 inline bool
@@ -116,6 +165,11 @@ PLUGIN_MAIN_FUNC(PluginMain)
             ApplicationActivatedHandler(Data, DataSize);
             return true;
         }
+        else if(StringsAreEqual(Node, "chunkwm_export_application_launched"))
+        {
+            ApplicationLaunchedHandler(Data, DataSize);
+            return true;
+        }
     }
 
     return false;
@@ -131,43 +185,8 @@ PLUGIN_INIT_FUNC(PluginInit)
 {
     printf("Plugin Init!\n");
 
-    pid_t PID;
-    ProcessSerialNumber PSN;
-    GetFrontProcess(&PSN);
-    GetProcessPID(&PSN, &PID);
-
-    CFStringRef ProcessName;
-    CopyProcessName(&PSN, &ProcessName);
-
-    char *Name = CopyCFStringToC(ProcessName, true);
-    if(!Name)
-        Name = CopyCFStringToC(ProcessName, false);
-
-    Application = AXLibConstructApplication(PSN, PID, Name);
-    if(Application)
-    {
-        AXUIElementRef WindowRef = (AXUIElementRef) AXLibGetWindowProperty(Application->Ref, kAXFocusedWindowAttribute);
-        if(WindowRef)
-        {
-            CGPoint Position = AXLibGetWindowPosition(WindowRef);
-            CGSize Size = AXLibGetWindowSize(WindowRef);
-            CreateBorder(Position.x, Position.y, Size.width, Size.height);
-            CFRelease(WindowRef);
-        }
-
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.5 * NSEC_PER_SEC), dispatch_get_main_queue(),
-        ^{
-            if(AXLibAddApplicationObserver(Application, Callback))
-            {
-                printf("    plugin: subscribed to '%s' notifications\n", Application->Name);
-            }
-        });
-    }
-    else
-    {
-        CreateBorder(0, 0, 0, 0);
-    }
-
+    CreateBorder(0, 0, 0, 0);
+    Application = FrontApplication();
     return true;
 }
 
@@ -189,12 +208,13 @@ void InitPluginVTable(plugin *Plugin)
     Plugin->Run = PluginMain;
 
     // NOTE(koekeishiya): Subscribe to ChunkWM events!
-    int SubscriptionCount = 1;
+    int SubscriptionCount = 2;
     Plugin->Subscriptions =
         (chunkwm_plugin_export *) malloc((SubscriptionCount + 1) * sizeof(chunkwm_plugin_export));
     Plugin->Subscriptions[SubscriptionCount] = chunkwm_export_end;
 
     Plugin->Subscriptions[--SubscriptionCount] = chunkwm_export_application_activated;
+    Plugin->Subscriptions[--SubscriptionCount] = chunkwm_export_application_launched;
 }
 
 // NOTE(koekeishiya): Enable to manually trigger ABI mismatch
