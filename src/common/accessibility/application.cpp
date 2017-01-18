@@ -118,6 +118,8 @@ ax_application *AXLibGetFocusedApplication()
     CFRelease(CFProcessName);
 
     ax_application *Result = AXLibConstructApplication(PSN, PID, ProcessName);
+    free(ProcessName);
+
     return Result;
 }
 
@@ -138,6 +140,6 @@ void AXLibDestroyApplication(ax_application *Application)
 {
     AXLibRemoveApplicationObserver(Application);
     CFRelease(Application->Ref);
-    Application->Ref = NULL;
+    free(Application->Name);
     free(Application);
 }
