@@ -8,7 +8,7 @@
 // NOTE(koekeishiya): Increment upon ABI breaking changes!
 #define CHUNKWM_PLUGIN_API_VERSION 1
 
-//NOTE(koekeishiya): Forward-declare struct
+// NOTE(koekeishiya): Forward-declare struct
 struct plugin;
 
 #define PLUGIN_BOOL_FUNC(name) bool name(plugin *Plugin)
@@ -18,9 +18,9 @@ typedef PLUGIN_BOOL_FUNC(plugin_bool_func);
 typedef PLUGIN_VOID_FUNC(plugin_void_func);
 
 #define PLUGIN_MAIN_FUNC(name) \
-    bool name(plugin *Plugin,\
-            const char *Node,\
-            const char *Data,\
+    bool name(plugin *Plugin,  \
+            const char *Node,  \
+            const char *Data,  \
             unsigned int DataSize)
 typedef PLUGIN_MAIN_FUNC(plugin_main_func);
 
@@ -44,12 +44,12 @@ struct plugin_details
     plugin_func Initialize;
 };
 
-#define CHUNKWM_PLUGIN_VTABLE(PluginInit, PluginDeInit, PluginMain) \
-    void InitPluginVTable(plugin *Plugin)\
-    {\
-        Plugin->Init = PluginInit;\
-        Plugin->DeInit = PluginDeInit;\
-        Plugin->Run = PluginMain;\
+#define CHUNKWM_PLUGIN_VTABLE(PlInit, PlDeInit, PlMain)          \
+    void InitPluginVTable(plugin *Plugin)                        \
+    {                                                            \
+        Plugin->Init = PlInit;                                   \
+        Plugin->DeInit = PlDeInit;                               \
+        Plugin->Run = PlMain;                                    \
     }
 
 #define ArrayCount(array) (sizeof(array) / sizeof(*(array)))
