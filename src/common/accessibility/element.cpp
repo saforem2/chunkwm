@@ -1,5 +1,6 @@
 #include "element.h"
 
+// NOTE(koekeishiya): Caller frees memory.
 char *CopyCFStringToC(CFStringRef String, bool UTF8)
 {
     char *Result = NULL;
