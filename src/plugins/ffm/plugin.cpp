@@ -122,6 +122,7 @@ void FocusWindowBelowCursor()
     AXUIElementCopyAttributeValue(ApplicationRef, kAXWindowsAttribute, (CFTypeRef*)&WindowList);
     if(!WindowList)
     {
+        CFRelease(ApplicationRef);
         return;
     }
 
