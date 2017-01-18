@@ -19,8 +19,7 @@ internal bool IsRunning;
 internal pthread_t Thread;
 internal daemon_callback *ConnectionCallback;
 
-internal char *
-ReadFromSocket(int SockFD)
+char *ReadFromSocket(int SockFD)
 {
     int Length = 256;
     char *Result = (char *) malloc(Length);
@@ -75,10 +74,21 @@ HandleConnection(void *)
     return NULL;
 }
 
-void StopDaemon()
+bool ConnectToDaemon(int *SockFD, int Port)
 {
-    IsRunning = false;
-    CloseSocket(DaemonSockFD);
+    struct sockaddr_in SrvAddr;
+    struct hostent *Server;
+
+    if((*SockFD = socket(PF_INET, SOCK_STREAM, 0)) == -1)
+        return false;
+
+    Server = gethostbyname("localhost");
+    SrvAddr.sin_family = AF_INET;
+    SrvAddr.sin_port = htons(Port);
+    memcpy(&SrvAddr.sin_addr.s_addr, Server->h_addr, Server->h_length);
+    memset(&SrvAddr.sin_zero, '\0', 8);
+
+    return connect(*SockFD, (struct sockaddr*) &SrvAddr, sizeof(struct sockaddr)) != -1;
 }
 
 bool StartDaemon(int Port, daemon_callback *Callback)
@@ -108,4 +118,10 @@ bool StartDaemon(int Port, daemon_callback *Callback)
     IsRunning = true;
     pthread_create(&Thread, NULL, &HandleConnection, NULL);
     return true;
+}
+
+void StopDaemon()
+{
+    IsRunning = false;
+    CloseSocket(DaemonSockFD);
 }
