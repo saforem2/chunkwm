@@ -82,7 +82,7 @@ UpdateBorderHelper(ax_application *Application)
 
 ax_application *FrontApplication()
 {
-    ax_application *Result = AXLibGetFocusedApplication();
+    ax_application *Result = AXLibConstructFocusedApplication();
     if(Result)
     {
         if(LastLaunchedPID == Result->PID)
