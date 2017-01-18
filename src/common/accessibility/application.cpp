@@ -1,4 +1,5 @@
 #include "application.h"
+#include "element.h"
 #define internal static
 
 enum ax_application_notifications
@@ -105,7 +106,8 @@ ax_application *AXLibGetFocusedApplication()
     GetFrontProcess(&PSN);
     GetProcessPID(&PSN, &PID);
 
-    CFString CFProcessName = NULL;
+    CFStringRef CFProcessName;
+    CopyProcessName(&PSN, &CFProcessName);
 
     // NOTE(koekeishiya): Try UTF-8 encoding first.
     char *ProcessName = CopyCFStringToC(CFProcessName, true);
