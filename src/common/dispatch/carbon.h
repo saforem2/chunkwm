@@ -1,6 +1,8 @@
 #ifndef CHUNKWM_COMMON_CARBON_H
 #define CHUNKWM_COMMON_CARBON_H
 
+#include <Carbon/Carbon.h>
+
 struct carbon_application_details
 {
     char *ProcessName;
