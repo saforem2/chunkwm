@@ -19,7 +19,6 @@ BeginWorkspaceApplicationDetails(NSNotification *Notification)
 {
     workspace_application_details *Info =
                     (workspace_application_details *) malloc(sizeof(workspace_application_details));
-    memset(Info, 0, sizeof(workspace_application_details));
 
     const char *Name = [[[Notification.userInfo objectForKey:NSWorkspaceApplicationKey] localizedName] UTF8String];
     Info->PID = [[Notification.userInfo objectForKey:NSWorkspaceApplicationKey] processIdentifier];
