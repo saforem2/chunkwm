@@ -142,15 +142,14 @@ bool LoadPlugin(const char *File, loaded_plugin *LoadedPlugin)
                 LoadedPlugin->Info = Info;
                 PrintPluginDetails(Info);
 
-                HookPlugin(LoadedPlugin);
                 if(Plugin->Init(Plugin))
                 {
+                    HookPlugin(LoadedPlugin);
                     return true;
                 }
                 else
                 {
                     fprintf(stderr, "Plugin '%s' init failed!\n", Info->PluginName);
-                    UnhookPlugin(LoadedPlugin);
                     dlclose(Handle);
                 }
             }
