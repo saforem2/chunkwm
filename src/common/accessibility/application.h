@@ -18,6 +18,6 @@ struct ax_application
 ax_application *AXLibConstructApplication(ProcessSerialNumber PSN, pid_t PID, char *Name);
 void AXLibDestroyApplication(ax_application *Application);
 bool AXLibAddApplicationObserver(ax_application *Application, ObserverCallback Callback);
-ax_application *AXLibGetFocusedApplication();
+ax_application *AXLibConstructFocusedApplication();
 
 #endif

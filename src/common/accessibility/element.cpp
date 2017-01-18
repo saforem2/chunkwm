@@ -61,6 +61,15 @@ void AXLibSetFocusedWindow(AXUIElementRef WindowRef)
     AXUIElementPerformAction(WindowRef, kAXRaiseAction);
 }
 
+AXUIElementRef AXLibGetFocusedApplication()
+{
+    pid_t PID;
+    ProcessSerialNumber PSN;
+    GetFrontProcess(&PSN);
+    GetProcessPID(&PSN, &PID);
+    return AXUIElementCreateApplication(PID);
+}
+
 // NOTE(koekeishiya): The process with the given PSN will become the frontmost application.
 void AXLibSetFocusedApplication(ProcessSerialNumber PSN)
 {

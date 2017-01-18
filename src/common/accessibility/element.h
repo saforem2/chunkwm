@@ -22,6 +22,7 @@ AXError AXLibSetWindowProperty(AXUIElementRef WindowRef, CFStringRef Property, C
 AXUIElementRef AXLibGetFocusedWindow(AXUIElementRef ApplicationRef);
 void AXLibSetFocusedWindow(AXUIElementRef WindowRef);
 
+AXUIElementRef AXLibGetFocusedApplication();
 void AXLibSetFocusedApplication(ProcessSerialNumber PSN);
 void AXLibSetFocusedApplication(pid_t PID);
 

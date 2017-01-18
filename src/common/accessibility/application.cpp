@@ -99,7 +99,8 @@ AXLibRemoveApplicationObserver(ax_application *Application)
     }
 }
 
-ax_application *AXLibGetFocusedApplication()
+// NOTE(koekeishiya): Wraps the frontmost application inside an ax_application struct.
+ax_application *AXLibConstructFocusedApplication()
 {
     pid_t PID;
     ProcessSerialNumber PSN;
