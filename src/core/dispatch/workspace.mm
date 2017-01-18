@@ -39,6 +39,7 @@ BeginWorkspaceApplicationDetails(NSNotification *Notification)
     return Info;
 }
 
+// NOTE(koekeishiya): Make sure that the correct module frees memory.
 void EndWorkspaceApplicationDetails(workspace_application_details *Info)
 {
     if(Info)
