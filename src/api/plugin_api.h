@@ -75,8 +75,13 @@ struct plugin_details
           plugin *GetPlugin()                                    \
           {                                                      \
               static plugin Singleton;                           \
-              InitPluginVTable(&Singleton);                      \
-              InitPluginSubscriptions(&Singleton);               \
+              static bool Initialized = false;                   \
+              if(!Initialized)                                   \
+              {                                                  \
+                  InitPluginVTable(&Singleton);                  \
+                  InitPluginSubscriptions(&Singleton);           \
+                  Initialized = true;                            \
+              }                                                  \
               return &Singleton;                                 \
           }                                                      \
           plugin_details Exports =                               \
