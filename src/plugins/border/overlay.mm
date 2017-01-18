@@ -4,6 +4,16 @@
 static int CornerRadius = 6;
 static int BorderWidth = 2;
 static int Inset = BorderWidth / 2;
+unsigned int HexColor = 0xddd5c4a1;
+
+NSColor *ColorFromHex(unsigned int Color)
+{
+    float Red = ((Color >> 16) & 0xff) / 255.0;
+    float Green = ((Color >> 8) & 0xff) / 255.0;
+    float Blue = ((Color >> 0) & 0xff) / 255.0;
+    float Alpha = ((Color >> 24) & 0xff) / 255.0;
+    return [NSColor colorWithCalibratedRed:(Red) green:(Green) blue:(Blue) alpha:Alpha];
+}
 
 @interface OverlayView : NSView
 {
@@ -28,7 +38,8 @@ static int Inset = BorderWidth / 2;
     NSRect BorderRect = CGRectInset(Frame, Inset, Inset);
     NSBezierPath *Border = [NSBezierPath bezierPathWithRoundedRect:BorderRect xRadius:CornerRadius yRadius:CornerRadius];
     [Border setLineWidth:BorderWidth];
-    [[NSColor redColor] set];
+    NSColor *Color = ColorFromHex(HexColor);
+    [Color set]; // <-- Important
     [Border stroke];
 }
 @end
