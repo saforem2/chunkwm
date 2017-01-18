@@ -85,7 +85,7 @@ ax_application *FrontApplication()
     ax_application *Result = AXLibGetFocusedApplication();
     if(Result)
     {
-        if(LastLaunchedPID == PID)
+        if(LastLaunchedPID == Result->PID)
         {
             dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.5 * NSEC_PER_SEC), dispatch_get_main_queue(),
             ^{
