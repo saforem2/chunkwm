@@ -35,13 +35,21 @@ static int Inset = BorderWidth / 2;
 
 NSWindow *BorderWindow = nil;
 NSView *BorderView  = nil;
-NSRect GraphicsRect;
+
+static int
+InvertY(int Y, int Height)
+{
+    static NSScreen *MainScreen = [NSScreen mainScreen];
+    static NSRect Rect = [MainScreen frame];
+    int InvertedY = Rect.size.height - (Y + Height);
+    return InvertedY;
+}
 
 void CreateBorder(int X, int Y, int W, int H)
 {
     NSAutoreleasePool *Pool = [[NSAutoreleasePool alloc] init];
 
-    GraphicsRect = NSMakeRect(X, Y, W, H);
+    NSRect GraphicsRect = NSMakeRect(X - Inset, InvertY(Y + Inset, H), W + (2 * Inset), H + (2 * Inset));
     BorderWindow = [[NSWindow alloc]
            initWithContentRect: GraphicsRect
            styleMask: NSFullSizeContentViewWindowMask
@@ -61,14 +69,6 @@ void CreateBorder(int X, int Y, int W, int H)
     [Pool release];
 }
 
-static int
-InvertY(int Y, int Height)
-{
-    static NSScreen *MainScreen = [NSScreen mainScreen];
-    static NSRect Rect = [MainScreen frame];
-    int InvertedY = Rect.size.height - (Y + Height);
-    return InvertedY;
-}
 void UpdateBorder(int X, int Y, int W, int H)
 {
     [BorderWindow setFrame:NSMakeRect(X - Inset, InvertY(Y + Inset, H), W + (2 * Inset), H + (2 * Inset)) display:YES animate:NO];

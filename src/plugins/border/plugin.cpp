@@ -129,8 +129,45 @@ PLUGIN_MAIN_FUNC(PluginMain)
  */
 PLUGIN_INIT_FUNC(PluginInit)
 {
-    CreateBorder(200, 200, 400, 400);
     printf("Plugin Init!\n");
+
+    pid_t PID;
+    ProcessSerialNumber PSN;
+    GetFrontProcess(&PSN);
+    GetProcessPID(&PSN, &PID);
+
+    CFStringRef ProcessName;
+    CopyProcessName(&PSN, &ProcessName);
+
+    char *Name = CopyCFStringToC(ProcessName, true);
+    if(!Name)
+        Name = CopyCFStringToC(ProcessName, false);
+
+    Application = AXLibConstructApplication(PSN, PID, Name);
+    if(Application)
+    {
+        AXUIElementRef WindowRef = (AXUIElementRef) AXLibGetWindowProperty(Application->Ref, kAXFocusedWindowAttribute);
+        if(WindowRef)
+        {
+            CGPoint Position = AXLibGetWindowPosition(WindowRef);
+            CGSize Size = AXLibGetWindowSize(WindowRef);
+            CreateBorder(Position.x, Position.y, Size.width, Size.height);
+            CFRelease(WindowRef);
+        }
+
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.5 * NSEC_PER_SEC), dispatch_get_main_queue(),
+        ^{
+            if(AXLibAddApplicationObserver(Application, Callback))
+            {
+                printf("    plugin: subscribed to '%s' notifications\n", Application->Name);
+            }
+        });
+    }
+    else
+    {
+        CreateBorder(0, 0, 0, 0);
+    }
+
     return true;
 }
 
