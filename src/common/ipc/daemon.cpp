@@ -19,6 +19,7 @@ internal bool IsRunning;
 internal pthread_t Thread;
 internal daemon_callback *ConnectionCallback;
 
+// NOTE(koekeishiya): Caller frees memory.
 char *ReadFromSocket(int SockFD)
 {
     int Length = 256;
