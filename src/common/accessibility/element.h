@@ -19,6 +19,8 @@ bool AXLibSetWindowSize(AXUIElementRef WindowRef, int Width, int Height);
 CFTypeRef AXLibGetWindowProperty(AXUIElementRef WindowRef, CFStringRef Property);
 AXError AXLibSetWindowProperty(AXUIElementRef WindowRef, CFStringRef Property, CFTypeRef Value);
 
+AXUIElementRef AXLibGetFocusedWindow(AXUIElementRef ApplicationRef);
+
 char *AXLibGetWindowTitle(AXUIElementRef WindowRef);
 CGPoint AXLibGetWindowPosition(AXUIElementRef WindowRef);
 CGSize AXLibGetWindowSize(AXUIElementRef WindowRef);

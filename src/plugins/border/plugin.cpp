@@ -18,8 +18,6 @@ internal pid_t LastLaunchedPID;
 internal
 OBSERVER_CALLBACK(Callback)
 {
-    // ax_application *Application = (ax_application *) Reference;
-
     if(CFEqual(Notification, kAXFocusedWindowChangedNotification))
     {
         CGPoint Position = AXLibGetWindowPosition(Element);
@@ -28,7 +26,7 @@ OBSERVER_CALLBACK(Callback)
     }
     else if(CFEqual(Notification, kAXWindowMovedNotification))
     {
-        AXUIElementRef WindowRef = (AXUIElementRef) AXLibGetWindowProperty(Application->Ref, kAXFocusedWindowAttribute);
+        AXUIElementRef WindowRef = AXLibGetFocusedWindow(Application->Ref);
         if(CFEqual(WindowRef, Element))
         {
             CGPoint Position = AXLibGetWindowPosition(WindowRef);
@@ -39,7 +37,7 @@ OBSERVER_CALLBACK(Callback)
     }
     else if(CFEqual(Notification, kAXWindowResizedNotification))
     {
-        AXUIElementRef WindowRef = (AXUIElementRef) AXLibGetWindowProperty(Application->Ref, kAXFocusedWindowAttribute);
+        AXUIElementRef WindowRef = AXLibGetFocusedWindow(Application->Ref);
         if(CFEqual(WindowRef, Element))
         {
             CGPoint Position = AXLibGetWindowPosition(WindowRef);
@@ -63,7 +61,7 @@ OBSERVER_CALLBACK(Callback)
 internal void
 UpdateBorderHelper(ax_application *Application)
 {
-    AXUIElementRef WindowRef = (AXUIElementRef) AXLibGetWindowProperty(Application->Ref, kAXFocusedWindowAttribute);
+    AXUIElementRef WindowRef = AXLibGetFocusedWindow(Application->Ref);
     if(WindowRef)
     {
         CGPoint Position = AXLibGetWindowPosition(WindowRef);
@@ -84,20 +82,7 @@ UpdateBorderHelper(ax_application *Application)
 
 ax_application *FrontApplication()
 {
-    pid_t PID;
-    ProcessSerialNumber PSN;
-    GetFrontProcess(&PSN);
-    GetProcessPID(&PSN, &PID);
-
-    CFStringRef ProcessName = NULL;
-    CopyProcessName(&PSN, &ProcessName);
-
-    char *Name = CopyCFStringToC(ProcessName, true);
-    if(!Name)
-        Name = CopyCFStringToC(ProcessName, false);
-
-    CFRelease(ProcessName);
-    ax_application *Result = AXLibConstructApplication(PSN, PID, Name);
+    ax_application *Result = AXLibGetFocusedApplication();
     if(Result)
     {
         if(LastLaunchedPID == PID)
@@ -117,6 +102,7 @@ ax_application *FrontApplication()
     {
         UpdateBorder(0, 0, 0, 0);
     }
+
     return Result;
 }
 
@@ -129,9 +115,6 @@ void ApplicationLaunchedHandler(const char *Data, unsigned int DataSize)
 
 void ApplicationActivatedHandler(const char *Data, unsigned int DataSize)
 {
-    /*workspace_application_details *Info =
-        (workspace_application_details *) Data;*/
-
     if(Application)
     {
         AXLibDestroyApplication(Application);

@@ -47,6 +47,11 @@ AXError AXLibSetWindowProperty(AXUIElementRef WindowRef, CFStringRef Property, C
     return AXUIElementSetAttributeValue(WindowRef, Property, Value);
 }
 
+AXUIElementRef AXLibGetFocusedWindow(AXUIElementRef ApplicationRef)
+{
+    return (AXUIElementRef) AXLibGetWindowProperty(ApplicationRef, kAXFocusedWindowAttribute);
+}
+
 bool AXLibIsWindowMinimized(AXUIElementRef WindowRef)
 {
     bool Result = true;

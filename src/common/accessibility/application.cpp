@@ -98,6 +98,27 @@ AXLibRemoveApplicationObserver(ax_application *Application)
     }
 }
 
+ax_application *AXLibGetFocusedApplication()
+{
+    pid_t PID;
+    ProcessSerialNumber PSN;
+    GetFrontProcess(&PSN);
+    GetProcessPID(&PSN, &PID);
+
+    CFString CFProcessName = NULL;
+
+    // NOTE(koekeishiya): Try UTF-8 encoding first.
+    char *ProcessName = CopyCFStringToC(CFProcessName, true);
+    if(!ProcessName)
+    {
+        ProcessName = CopyCFStringToC(CFProcessName, false);
+    }
+    CFRelease(CFProcessName);
+
+    ax_application *Result = AXLibConstructApplication(PSN, PID, ProcessName);
+    return Result;
+}
+
 ax_application *AXLibConstructApplication(ProcessSerialNumber PSN, pid_t PID, char *Name)
 {
     ax_application *Application = (ax_application *) malloc(sizeof(ax_application));
