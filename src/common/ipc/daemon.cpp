@@ -123,6 +123,10 @@ bool StartDaemon(int Port, daemon_callback *Callback)
 
 void StopDaemon()
 {
-    IsRunning = false;
-    CloseSocket(DaemonSockFD);
+    if(IsRunning)
+    {
+        IsRunning = false;
+        CloseSocket(DaemonSockFD);
+        DaemonSockFD = 0;
+    }
 }
