@@ -15,6 +15,8 @@ NSColor *ColorFromHex(unsigned int Color)
     return [NSColor colorWithCalibratedRed:(Red) green:(Green) blue:(Blue) alpha:Alpha];
 }
 
+NSColor *Color = ColorFromHex(HexColor);
+
 @interface OverlayView : NSView
 {
 }
@@ -38,8 +40,7 @@ NSColor *ColorFromHex(unsigned int Color)
     NSRect BorderRect = CGRectInset(Frame, Inset, Inset);
     NSBezierPath *Border = [NSBezierPath bezierPathWithRoundedRect:BorderRect xRadius:CornerRadius yRadius:CornerRadius];
     [Border setLineWidth:BorderWidth];
-    NSColor *Color = ColorFromHex(HexColor);
-    [Color set]; // <-- Important
+    [Color set];
     [Border stroke];
 }
 @end
