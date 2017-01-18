@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "../../api/plugin_api.h"
+#include "../../common/accessibility/application.h"
 #include "../../common/accessibility/element.h"
 #include "../../common/dispatch/cgeventtap.h"
 
@@ -91,6 +92,22 @@ window_info GetWindowBelowCursor()
 
 void FocusWindowBelowCursor()
 {
+    ax_application *Application = AXLibGetFocusedApplication();
+    AXUIElementRef WindowRef = AXLibGetFocusedWindow(Application->Ref);
+    if(WindowRef)
+    {
+        CGRect WindowRect = { AXLibGetWindowPosition(WindowRef),
+                              AXLibGetWindowSize(WindowRef) };
+        CFRelease(WindowRef);
+        CGPoint Cursor = AXLibGetCursorPos();
+        if(IsPointInsideRect(&Cursor, &WindowRect))
+        {
+            AXLibDestroyApplication(Application);
+            return;
+        }
+    }
+    AXLibDestroyApplication(Application);
+
     window_info Window = GetWindowBelowCursor();
     if(Window.ID == 0)
     {
