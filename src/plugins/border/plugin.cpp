@@ -96,6 +96,7 @@ ax_application *FrontApplication()
     if(!Name)
         Name = CopyCFStringToC(ProcessName, false);
 
+    CFRelease(ProcessName);
     ax_application *Result = AXLibConstructApplication(PSN, PID, Name);
     if(Result)
     {
