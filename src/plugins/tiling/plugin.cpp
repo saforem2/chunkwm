@@ -267,7 +267,7 @@ Deinit()
  * param: plugin *Plugin
  * return: bool -> true if startup succeeded
  */
-PLUGIN_INIT_FUNC(PluginInit)
+PLUGIN_BOOL_FUNC(PluginInit)
 {
     printf("Plugin Init!\n");
     return Init();
@@ -278,30 +278,10 @@ PLUGIN_INIT_FUNC(PluginInit)
  * param: plugin *Plugin
  * return: void
  */
-PLUGIN_DEINIT_FUNC(PluginDeInit)
+PLUGIN_VOID_FUNC(PluginDeInit)
 {
     printf("Plugin DeInit!\n");
     Deinit();
-}
-
-void InitPluginVTable(plugin *Plugin)
-{
-    // NOTE(koekeishiya): Initialize plugin function pointers.
-    Plugin->Init = PluginInit;
-    Plugin->DeInit = PluginDeInit;
-    Plugin->Run = PluginMain;
-
-    // NOTE(koekeishiya): Subscribe to ChunkWM events!
-    int SubscriptionCount = 5;
-    Plugin->Subscriptions =
-        (chunkwm_plugin_export *) malloc((SubscriptionCount + 1) * sizeof(chunkwm_plugin_export));
-    Plugin->Subscriptions[SubscriptionCount] = chunkwm_export_end;
-
-    Plugin->Subscriptions[--SubscriptionCount] = chunkwm_export_application_unhidden;
-    Plugin->Subscriptions[--SubscriptionCount] = chunkwm_export_application_hidden;
-    Plugin->Subscriptions[--SubscriptionCount] = chunkwm_export_application_terminated;
-    Plugin->Subscriptions[--SubscriptionCount] = chunkwm_export_application_launched;
-    Plugin->Subscriptions[--SubscriptionCount] = chunkwm_export_space_changed;
 }
 
 // NOTE(koekeishiya): Enable to manually trigger ABI mismatch
@@ -310,4 +290,19 @@ void InitPluginVTable(plugin *Plugin)
 #define PLUGIN_API_VERSION 0
 #endif
 
+// NOTE(koekeishiya): Initialize plugin function pointers.
+CHUNKWM_PLUGIN_VTABLE(PluginInit, PluginDeInit, PluginMain)
+
+// NOTE(koekeishiya): Subscribe to ChunkWM events!
+chunkwm_plugin_export Subscriptions[] =
+{
+    chunkwm_export_application_unhidden,
+    chunkwm_export_application_hidden,
+    chunkwm_export_application_terminated,
+    chunkwm_export_application_launched,
+    chunkwm_export_space_changed,
+};
+CHUNKWM_PLUGIN_SUBSCRIBE(Subscriptions)
+
+// NOTE(koekeishiya): Generate plugin
 CHUNKWM_PLUGIN("Tiling", "0.0.1")

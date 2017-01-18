@@ -175,13 +175,12 @@ PLUGIN_MAIN_FUNC(PluginMain)
     return false;
 }
 
-
 /*
  * NOTE(koekeishiya):
  * param: plugin *Plugin
  * return: bool -> true if startup succeeded
  */
-PLUGIN_INIT_FUNC(PluginInit)
+PLUGIN_BOOL_FUNC(PluginInit)
 {
     printf("Plugin Init!\n");
 
@@ -195,26 +194,9 @@ PLUGIN_INIT_FUNC(PluginInit)
  * param: plugin *Plugin
  * return: void
  */
-PLUGIN_DEINIT_FUNC(PluginDeInit)
+PLUGIN_VOID_FUNC(PluginDeInit)
 {
     printf("Plugin DeInit!\n");
-}
-
-void InitPluginVTable(plugin *Plugin)
-{
-    // NOTE(koekeishiya): Initialize plugin function pointers.
-    Plugin->Init = PluginInit;
-    Plugin->DeInit = PluginDeInit;
-    Plugin->Run = PluginMain;
-
-    // NOTE(koekeishiya): Subscribe to ChunkWM events!
-    int SubscriptionCount = 2;
-    Plugin->Subscriptions =
-        (chunkwm_plugin_export *) malloc((SubscriptionCount + 1) * sizeof(chunkwm_plugin_export));
-    Plugin->Subscriptions[SubscriptionCount] = chunkwm_export_end;
-
-    Plugin->Subscriptions[--SubscriptionCount] = chunkwm_export_application_activated;
-    Plugin->Subscriptions[--SubscriptionCount] = chunkwm_export_application_launched;
 }
 
 // NOTE(koekeishiya): Enable to manually trigger ABI mismatch
@@ -223,4 +205,16 @@ void InitPluginVTable(plugin *Plugin)
 #define PLUGIN_API_VERSION 0
 #endif
 
+// NOTE(koekeishiya): Initialize plugin function pointers.
+CHUNKWM_PLUGIN_VTABLE(PluginInit, PluginDeInit, PluginMain)
+
+// NOTE(koekeishiya): Subscribe to ChunkWM events!
+chunkwm_plugin_export Subscriptions[] =
+{
+    chunkwm_export_application_activated,
+    chunkwm_export_application_launched,
+};
+CHUNKWM_PLUGIN_SUBSCRIBE(Subscriptions)
+
+// NOTE(koekeishiya): Generate plugin
 CHUNKWM_PLUGIN("Border", "0.0.1")
