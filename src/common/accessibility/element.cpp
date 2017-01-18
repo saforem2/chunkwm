@@ -53,6 +53,28 @@ AXUIElementRef AXLibGetFocusedWindow(AXUIElementRef ApplicationRef)
     return (AXUIElementRef) AXLibGetWindowProperty(ApplicationRef, kAXFocusedWindowAttribute);
 }
 
+// NOTE(koekeishiya): The passed window will become the key-window of its application.
+void AXLibSetFocusedWindow(AXUIElementRef WindowRef)
+{
+    AXUIElementSetAttributeValue(WindowRef, kAXMainAttribute, kCFBooleanTrue);
+    AXUIElementSetAttributeValue(WindowRef, kAXFocusedAttribute, kCFBooleanTrue);
+    AXUIElementPerformAction(WindowRef, kAXRaiseAction);
+}
+
+// NOTE(koekeishiya): The process with the given PSN will become the frontmost application.
+void AXLibSetFocusedApplication(ProcessSerialNumber PSN)
+{
+    SetFrontProcessWithOptions(&PSN, kSetFrontProcessFrontWindowOnly);
+}
+
+// NOTE(koekeishiya): The process with the given PID will become the frontmost application.
+void AXLibSetFocusedApplication(pid_t PID)
+{
+    ProcessSerialNumber PSN;
+    GetProcessForPID(PID, &PSN);
+    AXLibSetFocusedApplication(PSN);
+}
+
 bool AXLibIsWindowMinimized(AXUIElementRef WindowRef)
 {
     bool Result = true;

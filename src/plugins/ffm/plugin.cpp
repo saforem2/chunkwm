@@ -3,9 +3,8 @@
 #include <string.h>
 
 #include "../../api/plugin_api.h"
+#include "../../common/accessibility/element.h"
 #include "../../common/dispatch/cgeventtap.h"
-
-extern "C" AXError _AXUIElementGetWindow(AXUIElementRef Window, int *WindowID);
 
 #define internal static
 internal event_tap EventTap;
@@ -22,15 +21,6 @@ IsPointInsideRect(CGPoint *Point, CGRect *Rect)
     return false;
 }
 
-internal CGPoint
-GetCursorPos()
-{
-    CGEventRef Event = CGEventCreate(NULL);
-    CGPoint Cursor = CGEventGetLocation(Event);
-    CFRelease(Event);
-    return Cursor;
-}
-
 #define CONTEXT_MENU_LAYER 101
 struct window_info
 {
@@ -43,7 +33,7 @@ window_info GetWindowBelowCursor()
     static CGWindowListOption WindowListOption = kCGWindowListOptionOnScreenOnly |
                                                  kCGWindowListExcludeDesktopElements;
     window_info Result = {};
-    CGPoint Cursor = GetCursorPos();
+    CGPoint Cursor = AXLibGetCursorPos();
 
     CFArrayRef WindowList = CGWindowListCopyWindowInfo(WindowListOption, kCGNullWindowID);
     if(WindowList)
@@ -129,17 +119,11 @@ void FocusWindowBelowCursor()
         AXUIElementRef WindowRef = (AXUIElementRef)CFArrayGetValueAtIndex(WindowList, Index);
         if(WindowRef)
         {
-            int WindowRefWID = -1;
-            _AXUIElementGetWindow(WindowRef, &WindowRefWID);
+            int WindowRefWID = AXLibGetWindowID(WindowRef);
             if(WindowRefWID == Window.ID)
             {
-                AXUIElementSetAttributeValue(WindowRef, kAXMainAttribute, kCFBooleanTrue);
-                AXUIElementSetAttributeValue(WindowRef, kAXFocusedAttribute, kCFBooleanTrue);
-                AXUIElementPerformAction(WindowRef, kAXRaiseAction);
-
-                ProcessSerialNumber PSN;
-                GetProcessForPID(Window.PID, &PSN);
-                SetFrontProcessWithOptions(&PSN, kSetFrontProcessFrontWindowOnly);
+                AXLibSetFocusedWindow(WindowRef);
+                AXLibSetFocusedApplication(Window.PID);
                 break;
             }
         }

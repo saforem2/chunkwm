@@ -20,6 +20,10 @@ CFTypeRef AXLibGetWindowProperty(AXUIElementRef WindowRef, CFStringRef Property)
 AXError AXLibSetWindowProperty(AXUIElementRef WindowRef, CFStringRef Property, CFTypeRef Value);
 
 AXUIElementRef AXLibGetFocusedWindow(AXUIElementRef ApplicationRef);
+void AXLibSetFocusedWindow(AXUIElementRef WindowRef);
+
+void AXLibSetFocusedApplication(ProcessSerialNumber PSN);
+void AXLibSetFocusedApplication(pid_t PID);
 
 char *AXLibGetWindowTitle(AXUIElementRef WindowRef);
 CGPoint AXLibGetWindowPosition(AXUIElementRef WindowRef);
