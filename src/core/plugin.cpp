@@ -218,6 +218,14 @@ bool BeginPlugins()
 #endif
     }
 
+    loaded_plugin LoadedPluginFFM;
+    if(LoadPlugin("plugins/ffm.so", &LoadedPluginFFM))
+    {
+#if 0
+        UnloadPlugin(&LoadedPluginFFM);
+#endif
+    }
+
     loaded_plugin LoadedPluginTiling;
     if(LoadPlugin("plugins/tiling.so", &LoadedPluginTiling))
     {
