@@ -40,9 +40,9 @@ struct window_info
 
 window_info GetWindowBelowCursor()
 {
+    static CGWindowListOption WindowListOption = kCGWindowListOptionOnScreenOnly |
+                                                 kCGWindowListExcludeDesktopElements;
     window_info Result = {};
-    CGWindowListOption WindowListOption = kCGWindowListOptionOnScreenOnly |
-                                          kCGWindowListExcludeDesktopElements;
     CGPoint Cursor = GetCursorPos();
 
     CFArrayRef WindowList = CGWindowListCopyWindowInfo(WindowListOption, kCGNullWindowID);
@@ -51,23 +51,18 @@ window_info GetWindowBelowCursor()
         CFIndex WindowCount = CFArrayGetCount(WindowList);
         for(size_t Index = 0; Index < WindowCount; ++Index)
         {
-            uint32_t WindowID;
-            uint32_t WindowLayer;
-            uint32_t WindowPID;
             CGRect WindowRect = {};
-            CFNumberRef CFWindowNumber;
-            CFNumberRef CFWindowLayer;
-            CFNumberRef CFWindowPID;
-            CFDictionaryRef CFWindowBounds;
+            uint32_t WindowID, WindowLayer, WindowPID;
             CFDictionaryRef Elem = (CFDictionaryRef)CFArrayGetValueAtIndex(WindowList, Index);
-            CFWindowNumber = (CFNumberRef) CFDictionaryGetValue(Elem, CFSTR("kCGWindowNumber"));
-            CFWindowPID = (CFNumberRef) CFDictionaryGetValue(Elem, CFSTR("kCGWindowOwnerPID"));
-            CFWindowLayer = (CFNumberRef) CFDictionaryGetValue(Elem, CFSTR("kCGWindowLayer"));
-            CFWindowBounds = (CFDictionaryRef) CFDictionaryGetValue(Elem, CFSTR("kCGWindowBounds"));
+            CFDictionaryRef CFWindowBounds = (CFDictionaryRef) CFDictionaryGetValue(Elem, CFSTR("kCGWindowBounds"));
+            CFNumberRef CFWindowNumber = (CFNumberRef) CFDictionaryGetValue(Elem, CFSTR("kCGWindowNumber"));
+            CFNumberRef CFWindowPID = (CFNumberRef) CFDictionaryGetValue(Elem, CFSTR("kCGWindowOwnerPID"));
+            CFNumberRef CFWindowLayer = (CFNumberRef) CFDictionaryGetValue(Elem, CFSTR("kCGWindowLayer"));
             CFNumberGetValue(CFWindowNumber, kCFNumberSInt32Type, &WindowID);
             CFNumberGetValue(CFWindowPID, kCFNumberIntType, &WindowPID);
             CFNumberGetValue(CFWindowLayer, kCFNumberSInt32Type, &WindowLayer);
             CFRelease(CFWindowNumber);
+            CFRelease(CFWindowPID);
             CFRelease(CFWindowLayer);
             if(CFWindowBounds)
             {
@@ -118,7 +113,7 @@ void FocusWindowBelowCursor()
         return;
     }
 
-    CFArrayRef WindowList;
+    CFArrayRef WindowList = NULL;
     AXUIElementCopyAttributeValue(ApplicationRef, kAXWindowsAttribute, (CFTypeRef*)&WindowList);
     if(!WindowList)
     {
