@@ -142,7 +142,7 @@ bool LoadPlugin(const char *File, loaded_plugin *LoadedPlugin)
                 LoadedPlugin->Info = Info;
                 PrintPluginDetails(Info);
 
-                if(Plugin->Init(Plugin))
+                if(Plugin->Init())
                 {
                     HookPlugin(LoadedPlugin);
                     return true;
@@ -182,7 +182,7 @@ bool UnloadPlugin(loaded_plugin *LoadedPlugin)
         UnhookPlugin(LoadedPlugin);
 
         plugin *Plugin = LoadedPlugin->Plugin;
-        Plugin->DeInit(Plugin);
+        Plugin->DeInit();
 
         Result = dlclose(LoadedPlugin->Handle) == 0;
     }

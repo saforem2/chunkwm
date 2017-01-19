@@ -11,8 +11,7 @@
         ++It)                                              \
     {                                                      \
         plugin *Plugin = It->first;                        \
-        Plugin->Run(Plugin,                                \
-                    #plugin_export,                        \
+        Plugin->Run(#plugin_export,                        \
                     (char *)Info,                          \
                     sizeof(*Info));                        \
     }                                                      \

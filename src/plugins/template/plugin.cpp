@@ -14,7 +14,6 @@ StringsAreEqual(const char *A, const char *B)
 
 /*
  * NOTE(koekeishiya): Function parameters
- * plugin *Plugin
  * const char *Node
  * const char *Data
  * unsigned int DataSize
@@ -47,7 +46,6 @@ PLUGIN_MAIN_FUNC(PluginMain)
 
 /*
  * NOTE(koekeishiya):
- * param: plugin *Plugin
  * return: bool -> true if startup succeeded
  */
 PLUGIN_BOOL_FUNC(PluginInit)
@@ -56,11 +54,6 @@ PLUGIN_BOOL_FUNC(PluginInit)
     return true;
 }
 
-/*
- * NOTE(koekeishiya):
- * param: plugin *Plugin
- * return: void
- */
 PLUGIN_VOID_FUNC(PluginDeInit)
 {
     printf("Plugin DeInit!\n");
