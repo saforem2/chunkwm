@@ -212,23 +212,20 @@ StringsAreEqual(const char *A, const char *B)
  * */
 PLUGIN_MAIN_FUNC(PluginMain)
 {
-    if(Node)
+    if(StringsAreEqual(Node, "chunkwm_export_application_launched"))
     {
-        if(StringsAreEqual(Node, "chunkwm_export_application_launched"))
-        {
-            ApplicationLaunchedHandler(Data, DataSize);
-            return true;
-        }
-        else if(StringsAreEqual(Node, "chunkwm_export_application_terminated"))
-        {
-            ApplicationTerminatedHandler(Data, DataSize);
-            return true;
-        }
-        else if(StringsAreEqual(Node, "chunkwm_export_space_changed"))
-        {
-            printf("Active Space Changed\n");
-            return true;
-        }
+        ApplicationLaunchedHandler(Data, DataSize);
+        return true;
+    }
+    else if(StringsAreEqual(Node, "chunkwm_export_application_terminated"))
+    {
+        ApplicationTerminatedHandler(Data, DataSize);
+        return true;
+    }
+    else if(StringsAreEqual(Node, "chunkwm_export_space_changed"))
+    {
+        printf("Active Space Changed\n");
+        return true;
     }
 
     return false;

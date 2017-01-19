@@ -178,11 +178,6 @@ EVENTTAP_CALLBACK(EventTapCallback)
  * */
 PLUGIN_MAIN_FUNC(PluginMain)
 {
-    if(Node)
-    {
-        return true;
-    }
-
     return false;
 }
 

@@ -140,23 +140,20 @@ StringsAreEqual(const char *A, const char *B)
  * */
 PLUGIN_MAIN_FUNC(PluginMain)
 {
-    if(Node)
+    if(StringsAreEqual(Node, "chunkwm_export_application_activated"))
     {
-        if(StringsAreEqual(Node, "chunkwm_export_application_activated"))
-        {
-            ApplicationActivatedHandler(Data, DataSize);
-            return true;
-        }
-        else if(StringsAreEqual(Node, "chunkwm_export_application_launched"))
-        {
-            ApplicationLaunchedHandler(Data, DataSize);
-            return true;
-        }
-        else if(StringsAreEqual(Node, "chunkwm_export_space_changed"))
-        {
-            UpdateBorder(0, 0, 0, 0);
-            return true;
-        }
+        ApplicationActivatedHandler(Data, DataSize);
+        return true;
+    }
+    else if(StringsAreEqual(Node, "chunkwm_export_application_launched"))
+    {
+        ApplicationLaunchedHandler(Data, DataSize);
+        return true;
+    }
+    else if(StringsAreEqual(Node, "chunkwm_export_space_changed"))
+    {
+        UpdateBorder(0, 0, 0, 0);
+        return true;
     }
 
     return false;

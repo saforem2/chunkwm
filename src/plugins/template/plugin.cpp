@@ -21,24 +21,21 @@ StringsAreEqual(const char *A, const char *B)
  * */
 PLUGIN_MAIN_FUNC(PluginMain)
 {
-    if(Node)
+    if(StringsAreEqual(Node, "chunkwm_export_application_launched"))
     {
-        if(StringsAreEqual(Node, "chunkwm_export_application_launched"))
-        {
-            carbon_application_details *Info =
-                (carbon_application_details *) Data;
+        carbon_application_details *Info =
+            (carbon_application_details *) Data;
 
-            printf("    plugin template: launched: '%s'\n", Info->ProcessName);
-            return true;
-        }
-        else if(StringsAreEqual(Node, "chunkwm_export_application_terminated"))
-        {
-            carbon_application_details *Info =
-                (carbon_application_details *) Data;
+        printf("    plugin template: launched: '%s'\n", Info->ProcessName);
+        return true;
+    }
+    else if(StringsAreEqual(Node, "chunkwm_export_application_terminated"))
+    {
+        carbon_application_details *Info =
+            (carbon_application_details *) Data;
 
-            printf("    plugin template: terminated: '%s'\n", Info->ProcessName);
-            return true;
-        }
+        printf("    plugin template: terminated: '%s'\n", Info->ProcessName);
+        return true;
     }
 
     return false;
