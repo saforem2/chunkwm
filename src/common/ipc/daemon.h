@@ -10,5 +10,6 @@ void StopDaemon();
 
 void WriteToSocket(const char *Message, int SockFD);
 char *ReadFromSocket(int SockFD);
+void CloseSocket(int SockFD);
 
 #endif
