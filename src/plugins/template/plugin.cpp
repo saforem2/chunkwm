@@ -16,7 +16,6 @@ StringsAreEqual(const char *A, const char *B)
  * NOTE(koekeishiya): Function parameters
  * const char *Node
  * const char *Data
- * unsigned int DataSize
  * return: bool
  * */
 PLUGIN_MAIN_FUNC(PluginMain)

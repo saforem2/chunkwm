@@ -162,7 +162,7 @@ OBSERVER_CALLBACK(Callback)
     }
 }
 
-void ApplicationLaunchedHandler(const char *Data, unsigned int DataSize)
+void ApplicationLaunchedHandler(const char *Data)
 {
     carbon_application_details *Info =
         (carbon_application_details *) Data;
@@ -182,7 +182,7 @@ void ApplicationLaunchedHandler(const char *Data, unsigned int DataSize)
     }
 }
 
-void ApplicationTerminatedHandler(const char *Data, unsigned int DataSize)
+void ApplicationTerminatedHandler(const char *Data)
 {
     carbon_application_details *Info =
         (carbon_application_details *) Data;
@@ -207,19 +207,18 @@ StringsAreEqual(const char *A, const char *B)
  * NOTE(koekeishiya): Function parameters
  * const char *Node
  * const char *Data
- * unsigned int DataSize
  * return: bool
  * */
 PLUGIN_MAIN_FUNC(PluginMain)
 {
     if(StringsAreEqual(Node, "chunkwm_export_application_launched"))
     {
-        ApplicationLaunchedHandler(Data, DataSize);
+        ApplicationLaunchedHandler(Data);
         return true;
     }
     else if(StringsAreEqual(Node, "chunkwm_export_application_terminated"))
     {
-        ApplicationTerminatedHandler(Data, DataSize);
+        ApplicationTerminatedHandler(Data);
         return true;
     }
     else if(StringsAreEqual(Node, "chunkwm_export_space_changed"))

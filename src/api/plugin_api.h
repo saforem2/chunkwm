@@ -19,8 +19,7 @@ typedef PLUGIN_VOID_FUNC(plugin_void_func);
 
 #define PLUGIN_MAIN_FUNC(name)   \
     bool name(const char *Node,  \
-              const char *Data,  \
-              unsigned int DataSize)
+              const char *Data)
 typedef PLUGIN_MAIN_FUNC(plugin_main_func);
 
 struct plugin

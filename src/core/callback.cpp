@@ -17,8 +17,7 @@
     {                                                      \
         plugin *Plugin = It->first;                        \
         Plugin->Run(#plugin_export,                        \
-                    (char *)Info,                          \
-                    sizeof(*Info));                        \
+                    (char *) Event->Context);              \
     }                                                      \
     EndPluginList(plugin_export)
 
@@ -56,10 +55,8 @@ internal
 WORK_QUEUE_CALLBACK(PluginWorkCallback)
 {
     plugin_work *Work = (plugin_work *) Data;
-
     Work->Plugin->Run(Work->Export,
-                      Work->Data,
-                      sizeof(*Work->Data));
+                      Work->Data);
 }
 
 void BeginCallbackThreads(int Count)
@@ -174,10 +171,8 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_ApplicationHidden)
 
 CHUNKWM_CALLBACK(Callback_ChunkWM_SpaceChanged)
 {
-    /* NOTE(koekeishiya): The expanded macro expects a variable 'Info'.
-     * This event does not take an argument, so we pass NULL. */
+    /* NOTE(koekeishiya): This event does not take an argument. */
 #if 0
-    char *Info = NULL;
     ProcessPluginList(chunkwm_export_space_changed);
 #else
     ProcessPluginListThreaded(chunkwm_export_space_changed);

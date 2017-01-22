@@ -106,14 +106,14 @@ ax_application *FrontApplication()
     return Result;
 }
 
-void ApplicationLaunchedHandler(const char *Data, unsigned int DataSize)
+void ApplicationLaunchedHandler(const char *Data)
 {
     carbon_application_details *Info =
         (carbon_application_details *) Data;
     LastLaunchedPID = Info->PID;
 }
 
-void ApplicationActivatedHandler(const char *Data, unsigned int DataSize)
+void ApplicationActivatedHandler(const char *Data)
 {
     if(Application)
     {
@@ -135,19 +135,18 @@ StringsAreEqual(const char *A, const char *B)
  * NOTE(koekeishiya): Function parameters
  * const char *Node
  * const char *Data
- * unsigned int DataSize
  * return: bool
  * */
 PLUGIN_MAIN_FUNC(PluginMain)
 {
     if(StringsAreEqual(Node, "chunkwm_export_application_activated"))
     {
-        ApplicationActivatedHandler(Data, DataSize);
+        ApplicationActivatedHandler(Data);
         return true;
     }
     else if(StringsAreEqual(Node, "chunkwm_export_application_launched"))
     {
-        ApplicationLaunchedHandler(Data, DataSize);
+        ApplicationLaunchedHandler(Data);
         return true;
     }
     else if(StringsAreEqual(Node, "chunkwm_export_space_changed"))

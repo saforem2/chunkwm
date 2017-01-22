@@ -173,7 +173,6 @@ EVENTTAP_CALLBACK(EventTapCallback)
  * NOTE(koekeishiya): Function parameters
  * const char *Node
  * const char *Data
- * unsigned int DataSize
  * return: bool
  * */
 PLUGIN_MAIN_FUNC(PluginMain)
