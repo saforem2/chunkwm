@@ -38,8 +38,8 @@
                           &PluginWorkCallback,             \
                           Work);                           \
     }                                                      \
-    CompleteWorkQueue(&Queue);                             \
-    EndPluginList(plugin_export)                           \
+    EndPluginList(plugin_export);                          \
+    CompleteWorkQueue(&Queue)                              \
 
 #define internal static
 
