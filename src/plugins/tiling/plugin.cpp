@@ -162,6 +162,7 @@ OBSERVER_CALLBACK(Callback)
     }
 }
 
+#define MICROSEC_PER_SEC 1e6
 void ApplicationLaunchedHandler(const char *Data)
 {
     carbon_application_details *Info =
@@ -172,13 +173,28 @@ void ApplicationLaunchedHandler(const char *Data)
     {
         printf("    plugin: launched '%s'\n", Info->ProcessName);
         AddApplication(Application);
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.5 * NSEC_PER_SEC), dispatch_get_main_queue(),
-        ^{
-            if(AXLibAddApplicationObserver(Application, Callback))
-            {
-                printf("    plugin: subscribed to '%s' notifications\n", Application->Name);
-            }
-        });
+
+        /* NOTE(koekeishiya): We need to wait for some amount of time before we can try to
+         * observe the launched application. The time to wait depends on how long the
+         * application in question takes to finish. Half a second is good enough for
+         * most applications so we 'usleep()' as a temporary fix for now, but we need a way
+         * to properly defer the creation of observers for applications that require more time.
+         *
+         * We cannot simply defer the creation automatically using dispatch_after, because
+         * there is simply no way to remove a dispatched event once it has been created.
+         * We need a way to tell a dispatched event to NOT execute and be rendered invalid,
+         * because some applications only live for a very very short amount of time.
+         * The dispatched event will then be triggered after a potential 'terminated' event
+         * has been received, in which the application reference has been freed.
+         *
+         * Passing an invalid reference to the AXObserver API does not simply trigger an error,
+         * but causes a full on segmentation fault. */
+
+        usleep(0.5 * MICROSEC_PER_SEC);
+        if(AXLibAddApplicationObserver(Application, Callback))
+        {
+            printf("    plugin: subscribed to '%s' notifications\n", Application->Name);
+        }
     }
 }
 
