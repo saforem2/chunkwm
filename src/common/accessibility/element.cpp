@@ -187,21 +187,25 @@ uint32_t AXLibGetWindowID(AXUIElementRef WindowRef)
 // NOTE(koekeishiya): Caller frees memory.
 char *AXLibGetWindowTitle(AXUIElementRef WindowRef)
 {
-    CFStringRef WindowTitleRef = (CFStringRef) AXLibGetWindowProperty(WindowRef, kAXTitleAttribute);
-    char *WindowTitle = NULL;
+    char *Result = "<unknown>";
 
+    CFStringRef WindowTitleRef = (CFStringRef) AXLibGetWindowProperty(WindowRef, kAXTitleAttribute);
     if(WindowTitleRef)
     {
-        WindowTitle = CopyCFStringToC(WindowTitleRef, true);
+        char *WindowTitle = CopyCFStringToC(WindowTitleRef, true);
         if(!WindowTitle)
         {
             WindowTitle = CopyCFStringToC(WindowTitleRef, false);
         }
-
         CFRelease(WindowTitleRef);
+
+        if(WindowTitle)
+        {
+            Result = WindowTitle;
+        }
     }
 
-    return WindowTitle;
+    return Result;
 }
 
 CGPoint AXLibGetWindowPosition(AXUIElementRef WindowRef)
