@@ -2,22 +2,22 @@
 #define AXLIB_APPLICATION_H
 
 #include <Carbon/Carbon.h>
-#include <unistd.h>
+
 #include "observer.h"
 
-struct ax_application
+struct macos_application
 {
     AXUIElementRef Ref;
-    ax_observer Observer;
+    macos_observer Observer;
+
     char *Name;
     pid_t PID;
     ProcessSerialNumber PSN;
-    uint32_t Notifications;
 };
 
-ax_application *AXLibConstructApplication(ProcessSerialNumber PSN, pid_t PID, char *Name);
-void AXLibDestroyApplication(ax_application *Application);
-bool AXLibAddApplicationObserver(ax_application *Application, ObserverCallback Callback);
-ax_application *AXLibConstructFocusedApplication();
+macos_application *AXLibConstructFocusedApplication();
+macos_application *AXLibConstructApplication(ProcessSerialNumber PSN, pid_t PID, char *Name);
+void AXLibDestroyApplication(macos_application *Application);
+bool AXLibAddApplicationObserver(macos_application *Application, ObserverCallback Callback);
 
 #endif

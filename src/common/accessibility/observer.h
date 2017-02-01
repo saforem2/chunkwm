@@ -7,21 +7,21 @@
                                           CFStringRef Notification, void *Reference)
 typedef OBSERVER_CALLBACK(ObserverCallback);
 
-struct ax_application;
-struct ax_observer
+struct macos_application;
+struct macos_observer
 {
-    ax_application *Application;
     AXObserverRef Ref;
+    bool Enabled;
     bool Valid;
 };
 
-void AXLibConstructObserver(ax_application *Application, ObserverCallback Callback);
-void AXLibDestroyObserver(ax_observer *Observer);
+void AXLibConstructObserver(macos_application *Application, ObserverCallback Callback);
+void AXLibDestroyObserver(macos_observer *Observer);
 
-void AXLibStartObserver(ax_observer *Observer);
-void AXLibStopObserver(ax_observer *Observer);
+void AXLibStartObserver(macos_observer *Observer);
+void AXLibStopObserver(macos_observer *Observer);
 
-AXError AXLibAddObserverNotification(ax_observer *Observer, AXUIElementRef Ref, CFStringRef Notification, void *Reference);
-void AXLibRemoveObserverNotification(ax_observer *Observer, AXUIElementRef Ref, CFStringRef Notification);
+AXError AXLibAddObserverNotification(macos_observer *Observer, AXUIElementRef Ref, CFStringRef Notification, void *Reference);
+void AXLibRemoveObserverNotification(macos_observer *Observer, AXUIElementRef Ref, CFStringRef Notification);
 
 #endif

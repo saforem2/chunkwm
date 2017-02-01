@@ -1,16 +1,18 @@
 #include "application.h"
 #include "element.h"
+
 #define internal static
 
-enum ax_application_notifications
+enum macos_application_notifications
 {
-    AXApplication_Notification_WindowCreated,
-    AXApplication_Notification_WindowFocused,
-    AXApplication_Notification_WindowMoved,
-    AXApplication_Notification_WindowResized,
-    AXApplication_Notification_WindowTitle,
-
-    AXApplication_Notification_Count
+    Application_Notification_WindowCreated,
+    Application_Notification_WindowFocused,
+    Application_Notification_WindowMoved,
+    Application_Notification_WindowResized,
+    Application_Notification_WindowMinimized,
+    Application_Notification_WindowDeminimized,
+    Application_Notification_WindowTitleChanged,
+    Application_Notification_Count
 };
 
 internal inline CFStringRef
@@ -18,23 +20,31 @@ AXNotificationFromEnum(int Type)
 {
     switch(Type)
     {
-        case AXApplication_Notification_WindowCreated:
+        case Application_Notification_WindowCreated:
         {
             return kAXWindowCreatedNotification;
         } break;
-        case AXApplication_Notification_WindowFocused:
+        case Application_Notification_WindowFocused:
         {
             return kAXFocusedWindowChangedNotification;
         } break;
-        case AXApplication_Notification_WindowMoved:
+        case Application_Notification_WindowMoved:
         {
             return kAXWindowMovedNotification;
         } break;
-        case AXApplication_Notification_WindowResized:
+        case Application_Notification_WindowResized:
         {
             return kAXWindowResizedNotification;
         } break;
-        case AXApplication_Notification_WindowTitle:
+        case Application_Notification_WindowMinimized:
+        {
+            return kAXWindowMiniaturizedNotification;
+        } break;
+        case Application_Notification_WindowDeminimized:
+        {
+            return kAXWindowDeminiaturizedNotification;
+        } break;
+        case Application_Notification_WindowTitleChanged:
         {
             return kAXTitleChangedNotification;
         } break;
@@ -42,65 +52,63 @@ AXNotificationFromEnum(int Type)
     }
 }
 
-internal inline bool
-AXLibHasApplicationObserverNotification(ax_application *Application)
-{
-    for(int Notification = AXApplication_Notification_WindowCreated;
-            Notification < AXApplication_Notification_Count;
-            ++Notification)
-    {
-        if(!(Application->Notifications & (1 << Notification)))
-        {
-            return false;
-        }
-    }
-
-    return true;
-}
-
-bool AXLibAddApplicationObserver(ax_application *Application, ObserverCallback Callback)
+/* NOTE(koekeishiya): The caller is responsible for making sure that a valid application is passed! */
+bool AXLibAddApplicationObserver(macos_application *Application, ObserverCallback Callback)
 {
     AXLibConstructObserver(Application, Callback);
-    if(Application->Observer.Valid)
+    bool Result = Application->Observer.Valid;
+    if(Result)
     {
-        for(int Notification = AXApplication_Notification_WindowCreated;
-                Notification < AXApplication_Notification_Count;
-                ++Notification)
+        for(uint32_t Notification = Application_Notification_WindowCreated;
+                     Notification < Application_Notification_Count;
+                     ++Notification)
         {
-            /* NOTE(koekeishiya): Mark the notification as successful. */
-            if(AXLibAddObserverNotification(&Application->Observer, Application->Ref, AXNotificationFromEnum(Notification), Application) == kAXErrorSuccess)
+            /* TODO(koekeishiya): Calling this function for applications that only
+             * live for a very very short amount of time causes a segmentation fault.
+             * This is really weird, as we have already confirmed that the observer itself
+             * is valid. If the application reference is no longer valid, we are supposed
+             * to get a return code != kAXErrorSuccess. */
+            AXError Success = AXLibAddObserverNotification(&Application->Observer,
+                                                           Application->Ref,
+                                                           AXNotificationFromEnum(Notification),
+                                                           Application);
+#if 1
+            if(Success == kAXErrorInvalidUIElementObserver)
+                printf("OBSERVER ERRROR (%s): The observer is not a valid AXObserverRef type.\n", Application->Name);
+
+            if(Success == kAXErrorIllegalArgument)
+                printf("OBSERVER ERROR (%s): One or more of the arguments is an illegal value or the length of the notification name is greater than 1024.\n", Application->Name);
+
+            if(Success == kAXErrorNotificationUnsupported)
+                printf("OBSERVER ERROR (%s): The accessibility object does not support notifications (note that the system-wide accessibility object does not support notifications).\n", Application->Name);
+
+            if(Success == kAXErrorNotificationAlreadyRegistered)
+                printf("OBSERVER ERROR (%s): The notification has already been registered.\n", Application->Name);
+
+            if(Success == kAXErrorCannotComplete)
+                printf("OBSERVER ERROR (%s): The function cannot complete because messaging has failed in some way.\n", Application->Name);
+
+            if(Success == kAXErrorFailure)
+                printf("OBSERVER ERROR (%s): There is some sort of system memory failure.\n", Application->Name);
+#endif
+            if(Success != kAXErrorSuccess)
             {
-                Application->Notifications |= (1 << Notification);
+                Result = false;
+                break;
             }
         }
 
-        AXLibStartObserver(&Application->Observer);
-        return AXLibHasApplicationObserverNotification(Application);
-    }
-
-    return false;
-}
-
-internal void
-AXLibRemoveApplicationObserver(ax_application *Application)
-{
-    if(Application->Observer.Valid)
-    {
-        AXLibStopObserver(&Application->Observer);
-
-        for(int Notification = AXApplication_Notification_WindowCreated;
-                Notification < AXApplication_Notification_Count;
-                ++Notification)
+        if(Result)
         {
-            AXLibRemoveObserverNotification(&Application->Observer, Application->Ref, AXNotificationFromEnum(Notification));
+            AXLibStartObserver(&Application->Observer);
         }
-
-        AXLibDestroyObserver(&Application->Observer);
     }
+
+    return Result;
 }
 
-// NOTE(koekeishiya): Wraps the frontmost application inside an ax_application struct.
-ax_application *AXLibConstructFocusedApplication()
+// NOTE(koekeishiya): Wrap the frontmost application inside a macos_application struct.
+macos_application *AXLibConstructFocusedApplication()
 {
     pid_t PID;
     ProcessSerialNumber PSN;
@@ -118,16 +126,16 @@ ax_application *AXLibConstructFocusedApplication()
     }
     CFRelease(CFProcessName);
 
-    ax_application *Result = AXLibConstructApplication(PSN, PID, ProcessName);
+    macos_application *Result = AXLibConstructApplication(PSN, PID, ProcessName);
     free(ProcessName);
 
     return Result;
 }
 
-ax_application *AXLibConstructApplication(ProcessSerialNumber PSN, pid_t PID, char *Name)
+macos_application *AXLibConstructApplication(ProcessSerialNumber PSN, pid_t PID, char *Name)
 {
-    ax_application *Application = (ax_application *) malloc(sizeof(ax_application));
-    memset(Application, 0, sizeof(ax_application));
+    macos_application *Application = (macos_application *) malloc(sizeof(macos_application));
+    memset(Application, 0, sizeof(macos_application));
 
     Application->Ref = AXUIElementCreateApplication(PID);
     Application->Name = strdup(Name);
@@ -137,9 +145,14 @@ ax_application *AXLibConstructApplication(ProcessSerialNumber PSN, pid_t PID, ch
     return Application;
 }
 
-void AXLibDestroyApplication(ax_application *Application)
+/* NOTE(koekeishiya): The caller is responsible for making sure that a valid application is passed! */
+void AXLibDestroyApplication(macos_application *Application)
 {
-    AXLibRemoveApplicationObserver(Application);
+    if(Application->Observer.Valid)
+    {
+        AXLibDestroyObserver(&Application->Observer);
+    }
+
     CFRelease(Application->Ref);
     free(Application->Name);
     free(Application);

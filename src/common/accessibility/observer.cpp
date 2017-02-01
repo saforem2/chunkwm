@@ -1,38 +1,58 @@
 #include "observer.h"
 #include "application.h"
 
-void AXLibConstructObserver(ax_application *Application, ObserverCallback Callback)
+void AXLibConstructObserver(macos_application *Application, ObserverCallback Callback)
 {
-    AXError Result = AXObserverCreate(Application->PID, Callback, &Application->Observer.Ref);
-    Application->Observer.Valid = (Result == kAXErrorSuccess);
-    Application->Observer.Application = Application;
+    macos_observer *Observer = &Application->Observer;
+    Observer->Enabled = false;
+
+    AXError Result = AXObserverCreate(Application->PID, Callback, &Observer->Ref);
+    Observer->Valid = (Result == kAXErrorSuccess);
 }
 
-void AXLibStartObserver(ax_observer *Observer)
+/* NOTE(koekeishiya): The caller is responsible for making sure that a valid observer is passed! */
+void AXLibStartObserver(macos_observer *Observer)
 {
-    if(!CFRunLoopContainsSource(CFRunLoopGetMain(), AXObserverGetRunLoopSource(Observer->Ref), kCFRunLoopDefaultMode))
-        CFRunLoopAddSource(CFRunLoopGetMain(), AXObserverGetRunLoopSource(Observer->Ref), kCFRunLoopDefaultMode);
+    if(!CFRunLoopContainsSource(CFRunLoopGetMain(),
+                                AXObserverGetRunLoopSource(Observer->Ref),
+                                kCFRunLoopDefaultMode))
+    {
+        Observer->Enabled = true;
+        CFRunLoopAddSource(CFRunLoopGetMain(),
+                           AXObserverGetRunLoopSource(Observer->Ref),
+                           kCFRunLoopDefaultMode);
+    }
 }
 
-AXError AXLibAddObserverNotification(ax_observer *Observer, AXUIElementRef Ref, CFStringRef Notification, void *Reference)
+/* NOTE(koekeishiya): The caller is responsible for making sure that a valid observer is passed! */
+AXError AXLibAddObserverNotification(macos_observer *Observer, AXUIElementRef Ref,
+                                     CFStringRef Notification, void *Reference)
 {
     return AXObserverAddNotification(Observer->Ref, Ref, Notification, Reference);
 }
 
-void AXLibRemoveObserverNotification(ax_observer *Observer, AXUIElementRef Ref, CFStringRef Notification)
+/* NOTE(koekeishiya): The caller is responsible for making sure that a valid observer is passed! */
+void AXLibRemoveObserverNotification(macos_observer *Observer, AXUIElementRef Ref, CFStringRef Notification)
 {
     AXObserverRemoveNotification(Observer->Ref, Ref, Notification);
 }
 
-void AXLibStopObserver(ax_observer *Observer)
+/* NOTE(koekeishiya): The caller is responsible for making sure that a valid observer is passed! */
+void AXLibStopObserver(macos_observer *Observer)
 {
+    Observer->Enabled = false;
     CFRunLoopSourceInvalidate(AXObserverGetRunLoopSource(Observer->Ref));
 }
 
-void AXLibDestroyObserver(ax_observer *Observer)
+/* NOTE(koekeishiya): The caller is responsible for making sure that a valid observer is passed! */
+void AXLibDestroyObserver(macos_observer *Observer)
 {
-    if(Observer->Ref)
-        CFRelease(Observer->Ref);
+    if(Observer->Enabled)
+    {
+        AXLibStopObserver(Observer);
+    }
 
+    CFRelease(Observer->Ref);
     Observer->Valid = false;
+    Observer->Ref = NULL;
 }
