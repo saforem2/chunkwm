@@ -9,6 +9,7 @@ AddFlags(macos_window *Window, uint32_t Flag)
     Window->Flags |= Flag;
 }
 
+// NOTE(koekeishiya): Caller is responsible for calling 'AXLibDestroyWindow()'. */
 macos_window *AXLibConstructWindow(macos_application *Application, AXUIElementRef WindowRef)
 {
     macos_window *Window = (macos_window *) malloc(sizeof(macos_window));
@@ -37,6 +38,7 @@ macos_window *AXLibConstructWindow(macos_application *Application, AXUIElementRe
     return Window;
 }
 
+/* NOTE(koekeishiya): The caller is responsible for passing a valid window! */
 bool AXLibIsWindowStandard(macos_window *Window)
 {
     bool Result = ((Window->Mainrole && CFEqual(Window->Mainrole, kAXWindowRole)) &&
@@ -44,6 +46,7 @@ bool AXLibIsWindowStandard(macos_window *Window)
     return Result;
 }
 
+/* NOTE(koekeishiya): The caller is responsible for passing a valid window! */
 bool AXLibWindowHasRole(macos_window *Window, CFTypeRef Role)
 {
     bool Result = ((Window->Mainrole && CFEqual(Window->Mainrole, Role)) ||

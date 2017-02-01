@@ -31,6 +31,7 @@ CGPoint AXLibGetCursorPos()
     return Cursor;
 }
 
+// NOTE(koekeishiya): Caller is responsible for calling 'CFRelease()'. */
 CFTypeRef AXLibGetWindowProperty(AXUIElementRef WindowRef, CFStringRef Property)
 {
     CFTypeRef TypeRef;
@@ -50,6 +51,7 @@ AXError AXLibSetWindowProperty(AXUIElementRef WindowRef, CFStringRef Property, C
     return AXUIElementSetAttributeValue(WindowRef, Property, Value);
 }
 
+// NOTE(koekeishiya): Caller is responsible for calling 'CFRelease()'. */
 AXUIElementRef AXLibGetFocusedWindow(AXUIElementRef ApplicationRef)
 {
     return (AXUIElementRef) AXLibGetWindowProperty(ApplicationRef, kAXFocusedWindowAttribute);
@@ -63,6 +65,7 @@ void AXLibSetFocusedWindow(AXUIElementRef WindowRef)
     AXUIElementPerformAction(WindowRef, kAXRaiseAction);
 }
 
+// NOTE(koekeishiya): Caller is responsible for calling 'CFRelease()'. */
 AXUIElementRef AXLibGetFocusedApplication()
 {
     pid_t PID;
@@ -236,12 +239,14 @@ CGSize AXLibGetWindowSize(AXUIElementRef WindowRef)
     return WindowSize;
 }
 
+// NOTE(koekeishiya): Caller is responsible for calling 'CFRelease()'. */
 bool AXLibGetWindowRole(AXUIElementRef WindowRef, CFTypeRef *Role)
 {
     *Role = AXLibGetWindowProperty(WindowRef, kAXRoleAttribute);
     return *Role != NULL;
 }
 
+// NOTE(koekeishiya): Caller is responsible for calling 'CFRelease()'. */
 bool AXLibGetWindowSubrole(AXUIElementRef WindowRef, CFTypeRef *Subrole)
 {
     *Subrole = AXLibGetWindowProperty(WindowRef, kAXSubroleAttribute);

@@ -1,6 +1,7 @@
 #include "observer.h"
 #include "application.h"
 
+// NOTE(koekeishiya): Caller is responsible for calling 'AXLibDestroyObserver()'. */
 void AXLibConstructObserver(macos_application *Application, ObserverCallback Callback)
 {
     macos_observer *Observer = &Application->Observer;

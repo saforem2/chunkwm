@@ -63,18 +63,13 @@ bool AXLibAddApplicationObserver(macos_application *Application, ObserverCallbac
                      Notification < Application_Notification_Count;
                      ++Notification)
         {
-            /* TODO(koekeishiya): Calling this function for applications that only
-             * live for a very very short amount of time causes a segmentation fault.
-             * This is really weird, as we have already confirmed that the observer itself
-             * is valid. If the application reference is no longer valid, we are supposed
-             * to get a return code != kAXErrorSuccess. */
             AXError Success = AXLibAddObserverNotification(&Application->Observer,
                                                            Application->Ref,
                                                            AXNotificationFromEnum(Notification),
                                                            Application);
 #if 1
             if(Success == kAXErrorInvalidUIElementObserver)
-                printf("OBSERVER ERRROR (%s): The observer is not a valid AXObserverRef type.\n", Application->Name);
+                printf("OBSERVER ERROR (%s): The observer is not a valid AXObserverRef type.\n", Application->Name);
 
             if(Success == kAXErrorIllegalArgument)
                 printf("OBSERVER ERROR (%s): One or more of the arguments is an illegal value or the length of the notification name is greater than 1024.\n", Application->Name);
@@ -107,7 +102,8 @@ bool AXLibAddApplicationObserver(macos_application *Application, ObserverCallbac
     return Result;
 }
 
-// NOTE(koekeishiya): Wrap the frontmost application inside a macos_application struct.
+/* NOTE(koekeishiya): Wrap the frontmost application inside a macos_application struct.
+ * The caller is responsible for calling 'AXLibDestroyApplication()'. */
 macos_application *AXLibConstructFocusedApplication()
 {
     pid_t PID;
@@ -132,6 +128,7 @@ macos_application *AXLibConstructFocusedApplication()
     return Result;
 }
 
+/* NOTE(koekeishiya): The caller is responsible for calling 'AXLibDestroyApplication()'. */
 macos_application *AXLibConstructApplication(ProcessSerialNumber PSN, pid_t PID, char *Name)
 {
     macos_application *Application = (macos_application *) malloc(sizeof(macos_application));
