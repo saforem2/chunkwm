@@ -13,14 +13,14 @@
 
 #define internal static
 
-typedef std::map<pid_t, ax_application *> ax_application_map;
-typedef std::map<pid_t, ax_application *>::iterator ax_application_map_iter;
+typedef std::map<pid_t, macos_application *> macos_application_map;
+typedef macos_application_map::iterator macos_application_map_it;
 
 internal event_tap EventTap;
-internal ax_application_map Applications;
+internal macos_application_map Applications;
 internal pthread_mutex_t ApplicationsMutex;
 
-ax_application_map *BeginApplications()
+macos_application_map *BeginApplications()
 {
     pthread_mutex_lock(&ApplicationsMutex);
     return &Applications;
@@ -31,12 +31,12 @@ void EndApplications()
     pthread_mutex_unlock(&ApplicationsMutex);
 }
 
-ax_application *GetApplicationFromPID(pid_t PID)
+macos_application *GetApplicationFromPID(pid_t PID)
 {
-    ax_application *Result = NULL;
+    macos_application *Result = NULL;
 
     BeginApplications();
-    ax_application_map_iter It = Applications.find(PID);
+    macos_application_map_it It = Applications.find(PID);
     if(It != Applications.end())
     {
         Result = It->second;
@@ -47,10 +47,10 @@ ax_application *GetApplicationFromPID(pid_t PID)
 }
 
 internal void
-AddApplication(ax_application *Application)
+AddApplication(macos_application *Application)
 {
     BeginApplications();
-    ax_application_map_iter It = Applications.find(Application->PID);
+    macos_application_map_it It = Applications.find(Application->PID);
     if(It == Applications.end())
     {
         Applications[Application->PID] = Application;
@@ -62,7 +62,7 @@ internal void
 RemoveApplication(pid_t PID)
 {
     BeginApplications();
-    ax_application_map_iter It = Applications.find(PID);
+    macos_application_map_it It = Applications.find(PID);
     if(It != Applications.end())
     {
         Applications.erase(It);
@@ -126,7 +126,7 @@ EVENTTAP_CALLBACK(EventCallback)
 internal
 OBSERVER_CALLBACK(Callback)
 {
-    ax_application *Application = (ax_application *) Reference;
+    macos_application *Application = (macos_application *) Reference;
 
     if(CFEqual(Notification, kAXWindowCreatedNotification))
     {
@@ -167,7 +167,7 @@ void ApplicationLaunchedHandler(const char *Data)
     carbon_application_details *Info =
         (carbon_application_details *) Data;
 
-    ax_application *Application = AXLibConstructApplication(Info->PSN, Info->PID, Info->ProcessName);
+    macos_application *Application = AXLibConstructApplication(Info->PSN, Info->PID, Info->ProcessName);
     if(Application)
     {
         printf("    plugin: launched '%s'\n", Info->ProcessName);
@@ -187,7 +187,7 @@ void ApplicationTerminatedHandler(const char *Data)
     carbon_application_details *Info =
         (carbon_application_details *) Data;
 
-    ax_application *Application = GetApplicationFromPID(Info->PID);
+    macos_application *Application = GetApplicationFromPID(Info->PID);
     if(Application)
     {
         printf("    plugin: terminated '%s'\n", Info->ProcessName);
@@ -233,6 +233,7 @@ PLUGIN_MAIN_FUNC(PluginMain)
 internal bool
 Init()
 {
+#if 0
     int Port = 4020;
     EventTap.Mask = ((1 << kCGEventMouseMoved) |
                      (1 << kCGEventLeftMouseDragged) |
@@ -245,14 +246,19 @@ Init()
     bool Result = ((pthread_mutex_init(&ApplicationsMutex, NULL) == 0) &&
                    (StartDaemon(Port, &DaemonCallback)) &&
                    (BeginEventTap(&EventTap, &EventCallback)));
+#else
+    bool Result = (pthread_mutex_init(&ApplicationsMutex, NULL) == 0);
+#endif
     return Result;
 }
 
 internal void
 Deinit()
 {
+#if 0
     StopDaemon();
     EndEventTap(&EventTap);
+#endif
     pthread_mutex_destroy(&ApplicationsMutex);
 }
 

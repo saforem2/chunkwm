@@ -12,7 +12,7 @@
 
 #define internal static
 
-internal ax_application *Application;
+internal macos_application *Application;
 internal pid_t LastLaunchedPID;
 
 internal
@@ -59,7 +59,7 @@ OBSERVER_CALLBACK(Callback)
 }
 
 internal void
-UpdateBorderHelper(ax_application *Application)
+UpdateBorderHelper(macos_application *Application)
 {
     AXUIElementRef WindowRef = AXLibGetFocusedWindow(Application->Ref);
     if(WindowRef)
@@ -80,9 +80,9 @@ UpdateBorderHelper(ax_application *Application)
     }
 }
 
-ax_application *FrontApplication()
+macos_application *FrontApplication()
 {
-    ax_application *Result = AXLibConstructFocusedApplication();
+    macos_application *Result = AXLibConstructFocusedApplication();
     if(Result)
     {
         if(LastLaunchedPID == Result->PID)
