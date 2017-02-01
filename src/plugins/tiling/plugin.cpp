@@ -5,9 +5,12 @@
 #include <map>
 
 #include "../../api/plugin_api.h"
+#include "../../common/accessibility/element.h"
 #include "../../common/accessibility/application.h"
+#include "../../common/accessibility/window.h"
 #include "../../common/accessibility/observer.h"
 #include "../../common/dispatch/carbon.h"
+#include "../../common/dispatch/workspace.h"
 #include "../../common/dispatch/cgeventtap.h"
 #include "../../common/ipc/daemon.h"
 
@@ -70,6 +73,150 @@ RemoveApplication(pid_t PID)
     EndApplications();
 }
 
+internal macos_window **
+ApplicationWindowList(macos_application *Application)
+{
+    macos_window **WindowList = NULL;
+
+    CFArrayRef Windows = (CFArrayRef) AXLibGetWindowProperty(Application->Ref, kAXWindowsAttribute);
+    if(Windows)
+    {
+        CFIndex Count = CFArrayGetCount(Windows);
+        WindowList = (macos_window **) malloc((Count + 1) * sizeof(macos_window *));
+        WindowList[Count] = NULL;
+
+        printf("%s windowlist:\n", Application->Name);
+        for(CFIndex Index = 0; Index < Count; ++Index)
+        {
+            AXUIElementRef Ref = (AXUIElementRef) CFArrayGetValueAtIndex(Windows, Index);
+
+            macos_window *Window = AXLibConstructWindow(Application, Ref);
+            printf("    %s\n", Window->Name);
+            AXLibDestroyWindow(Window);
+        }
+
+        CFRelease(Windows);
+    }
+
+    return WindowList;
+}
+
+internal
+OBSERVER_CALLBACK(Callback)
+{
+    macos_application *Application = (macos_application *) Reference;
+
+    if(CFEqual(Notification, kAXWindowCreatedNotification))
+    {
+        printf("%s: kAXWindowCreatedNotification\n", Application->Name);
+    }
+    else if(CFEqual(Notification, kAXUIElementDestroyedNotification))
+    {
+        printf("%s: kAXUIElementDestroyedNotification\n", Application->Name);
+    }
+    else if(CFEqual(Notification, kAXFocusedWindowChangedNotification))
+    {
+        printf("%s: kAXFocusedWindowChangedNotification\n", Application->Name);
+    }
+    else if(CFEqual(Notification, kAXWindowMiniaturizedNotification))
+    {
+        printf("%s: kAXWindowMiniaturizedNotification\n", Application->Name);
+    }
+    else if(CFEqual(Notification, kAXWindowDeminiaturizedNotification))
+    {
+        printf("%s: kAXWindowDeminiaturizedNotification\n", Application->Name);
+    }
+    else if(CFEqual(Notification, kAXWindowMovedNotification))
+    {
+        printf("%s: kAXWindowMovedNotification\n", Application->Name);
+    }
+    else if(CFEqual(Notification, kAXWindowResizedNotification))
+    {
+        printf("%s: kAXWindowResizedNotification\n", Application->Name);
+    }
+    else if(CFEqual(Notification, kAXTitleChangedNotification))
+    {
+        printf("%s: kAXWindowTitleChangedNotification\n", Application->Name);
+    }
+}
+
+#define MICROSEC_PER_SEC 1e6
+void ApplicationLaunchedHandler(const char *Data)
+{
+    carbon_application_details *Info =
+        (carbon_application_details *) Data;
+
+    macos_application *Application = AXLibConstructApplication(Info->PSN, Info->PID, Info->ProcessName);
+    if(Application)
+    {
+        printf("    plugin: launched '%s'\n", Info->ProcessName);
+        AddApplication(Application);
+
+        /* NOTE(koekeishiya): We need to wait for some amount of time before we can try to
+         * observe the launched application. The time to wait depends on how long the
+         * application in question takes to finish. Half a second is good enough for
+         * most applications so we 'usleep()' as a temporary fix for now, but we need a way
+         * to properly defer the creation of observers for applications that require more time.
+         *
+         * We cannot simply defer the creation automatically using dispatch_after, because
+         * there is simply no way to remove a dispatched event once it has been created.
+         * We need a way to tell a dispatched event to NOT execute and be rendered invalid,
+         * because some applications only live for a very very short amount of time.
+         * The dispatched event will then be triggered after a potential 'terminated' event
+         * has been received, in which the application reference has been freed.
+         *
+         * Passing an invalid reference to the AXObserver API does not simply trigger an error,
+         * but causes a full on segmentation fault. */
+
+        usleep(0.5 * MICROSEC_PER_SEC);
+        if(AXLibAddApplicationObserver(Application, Callback))
+        {
+            printf("    plugin: subscribed to '%s' notifications\n", Application->Name);
+        }
+
+        macos_window **WindowList = ApplicationWindowList(Application);
+        free(WindowList);
+    }
+}
+
+void ApplicationTerminatedHandler(const char *Data)
+{
+    carbon_application_details *Info =
+        (carbon_application_details *) Data;
+
+    macos_application *Application = GetApplicationFromPID(Info->PID);
+    if(Application)
+    {
+        printf("    plugin: terminated '%s'\n", Info->ProcessName);
+        RemoveApplication(Application->PID);
+        AXLibDestroyApplication(Application);
+    }
+}
+
+void ApplicationHiddenHandler(const char *Data)
+{
+    workspace_application_details *Info =
+        (workspace_application_details *) Data;
+
+    macos_application *Application = GetApplicationFromPID(Info->PID);
+    if(Application)
+    {
+        printf("    plugin: hidden '%s'\n", Info->ProcessName);
+    }
+}
+
+void ApplicationUnhiddenHandler(const char *Data)
+{
+    workspace_application_details *Info =
+        (workspace_application_details *) Data;
+
+    macos_application *Application = GetApplicationFromPID(Info->PID);
+    if(Application)
+    {
+        printf("    plugin: unhidden '%s'\n", Info->ProcessName);
+    }
+}
+
 internal
 DAEMON_CALLBACK(DaemonCallback)
 {
@@ -123,95 +270,6 @@ EVENTTAP_CALLBACK(EventCallback)
     return Event;
 }
 
-internal
-OBSERVER_CALLBACK(Callback)
-{
-    macos_application *Application = (macos_application *) Reference;
-
-    if(CFEqual(Notification, kAXWindowCreatedNotification))
-    {
-        printf("kAXWindowCreatedNotification\n");
-    }
-    else if(CFEqual(Notification, kAXUIElementDestroyedNotification))
-    {
-        printf("kAXUIElementDestroyedNotification\n");
-    }
-    else if(CFEqual(Notification, kAXFocusedWindowChangedNotification))
-    {
-        printf("kAXFocusedWindowChangedNotification\n");
-    }
-    else if(CFEqual(Notification, kAXWindowMiniaturizedNotification))
-    {
-        printf("kAXWindowMiniaturizedNotification\n");
-    }
-    else if(CFEqual(Notification, kAXWindowDeminiaturizedNotification))
-    {
-        printf("kAXWindowDeminiaturizedNotification\n");
-    }
-    else if(CFEqual(Notification, kAXWindowMovedNotification))
-    {
-        printf("kAXWindowMovedNotification\n");
-    }
-    else if(CFEqual(Notification, kAXWindowResizedNotification))
-    {
-        printf("kAXWindowResizedNotification\n");
-    }
-    else if(CFEqual(Notification, kAXTitleChangedNotification))
-    {
-        printf("kAXWindowTitleChangedNotification\n");
-    }
-}
-
-#define MICROSEC_PER_SEC 1e6
-void ApplicationLaunchedHandler(const char *Data)
-{
-    carbon_application_details *Info =
-        (carbon_application_details *) Data;
-
-    macos_application *Application = AXLibConstructApplication(Info->PSN, Info->PID, Info->ProcessName);
-    if(Application)
-    {
-        printf("    plugin: launched '%s'\n", Info->ProcessName);
-        AddApplication(Application);
-
-        /* NOTE(koekeishiya): We need to wait for some amount of time before we can try to
-         * observe the launched application. The time to wait depends on how long the
-         * application in question takes to finish. Half a second is good enough for
-         * most applications so we 'usleep()' as a temporary fix for now, but we need a way
-         * to properly defer the creation of observers for applications that require more time.
-         *
-         * We cannot simply defer the creation automatically using dispatch_after, because
-         * there is simply no way to remove a dispatched event once it has been created.
-         * We need a way to tell a dispatched event to NOT execute and be rendered invalid,
-         * because some applications only live for a very very short amount of time.
-         * The dispatched event will then be triggered after a potential 'terminated' event
-         * has been received, in which the application reference has been freed.
-         *
-         * Passing an invalid reference to the AXObserver API does not simply trigger an error,
-         * but causes a full on segmentation fault. */
-
-        usleep(0.5 * MICROSEC_PER_SEC);
-        if(AXLibAddApplicationObserver(Application, Callback))
-        {
-            printf("    plugin: subscribed to '%s' notifications\n", Application->Name);
-        }
-    }
-}
-
-void ApplicationTerminatedHandler(const char *Data)
-{
-    carbon_application_details *Info =
-        (carbon_application_details *) Data;
-
-    macos_application *Application = GetApplicationFromPID(Info->PID);
-    if(Application)
-    {
-        printf("    plugin: terminated '%s'\n", Info->ProcessName);
-        RemoveApplication(Application->PID);
-        AXLibDestroyApplication(Application);
-    }
-}
-
 inline bool
 StringsAreEqual(const char *A, const char *B)
 {
@@ -235,6 +293,16 @@ PLUGIN_MAIN_FUNC(PluginMain)
     else if(StringsAreEqual(Node, "chunkwm_export_application_terminated"))
     {
         ApplicationTerminatedHandler(Data);
+        return true;
+    }
+    else if(StringsAreEqual(Node, "chunkwm_export_application_hidden"))
+    {
+        ApplicationHiddenHandler(Data);
+        return true;
+    }
+    else if(StringsAreEqual(Node, "chunkwm_export_application_unhidden"))
+    {
+        ApplicationUnhiddenHandler(Data);
         return true;
     }
     else if(StringsAreEqual(Node, "chunkwm_export_space_changed"))
@@ -306,10 +374,10 @@ CHUNKWM_PLUGIN_VTABLE(PluginInit, PluginDeInit, PluginMain)
 // NOTE(koekeishiya): Subscribe to ChunkWM events!
 chunkwm_plugin_export Subscriptions[] =
 {
-    chunkwm_export_application_unhidden,
-    chunkwm_export_application_hidden,
-    chunkwm_export_application_terminated,
     chunkwm_export_application_launched,
+    chunkwm_export_application_terminated,
+    chunkwm_export_application_hidden,
+    chunkwm_export_application_unhidden,
     chunkwm_export_space_changed,
 };
 CHUNKWM_PLUGIN_SUBSCRIBE(Subscriptions)
