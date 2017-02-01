@@ -1,7 +1,8 @@
-BUILD_FLAGS		= -O0 -g -std=c++11 -Wall
+BUILD_FLAGS		= -O0 -g -std=c++11 -Wall -Wno-deprecated
 BUILD_PATH		= ./../../../plugins
 SRC				= ./plugin.cpp \
 				  ./../../common/accessibility/application.cpp \
+				  ./../../common/accessibility/window.cpp \
 				  ./../../common/accessibility/element.cpp \
 				  ./../../common/accessibility/observer.cpp \
 				  ./../../common/dispatch/cgeventtap.cpp \
