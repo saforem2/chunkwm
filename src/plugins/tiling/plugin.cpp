@@ -25,6 +25,9 @@
 typedef std::map<pid_t, macos_application *> macos_application_map;
 typedef macos_application_map::iterator macos_application_map_it;
 
+typedef std::map<uint32_t, macos_window *> macos_window_map;
+typedef macos_window_map::iterator macos_window_map_it;
+
 #define CGSDefaultConnection _CGSDefaultConnection()
 typedef int CGSConnectionID;
 extern "C" CGSConnectionID _CGSDefaultConnection(void);
@@ -39,32 +42,25 @@ internal unsigned DisplayCount;
 internal macos_display **DisplayList;
 internal macos_display *MainDisplay;
 
-internal macos_window **WindowList;
+internal macos_window_map Windows;
 
 /* TODO(koekeishiya): Lookup space storage using macos_space. */
 internal node *Tree;
 
 /* NOTE(koekeishiya): We need a way to retrieve AXUIElementRef from a CGWindowID.
  * There is no way to do this, without caching AXUIElementRef references.
- * Here we iterate through a cache of macos_window structs. */
+ * Here we perform a lookup of macos_window structs. */
 macos_window *GetWindowByID(uint32_t Id)
 {
-    if(WindowList)
-    {
-        macos_window **List = WindowList;
-        macos_window *Window = *List;
-        while(Window)
-        {
-            if(Window->Id == Id)
-            {
-                return Window;
-            }
+    macos_window_map_it It = Windows.find(Id);
+    return It != Windows.end() ? It->second : NULL;
+}
 
-            Window = *List++;
-        }
-    }
-
-    return NULL;
+// NOTE(koekeishiya): Caller is responsible for making sure that the window is not a dupe.
+internal void
+AddWindowToCollection(macos_window *Window)
+{
+    Windows[Window->Id] = Window;
 }
 
 #include <vector>
@@ -211,6 +207,26 @@ RemoveApplication(pid_t PID)
     EndApplications();
 }
 
+/* NOTE(koekeishiya): Iterate through an application window-list (macos_window **)
+ * and store them in our collection of valid windows. If we do not add a window,
+ * free the allocated memory. */
+internal void
+AppendApplicationWindowList(macos_window **List)
+{
+    macos_window *Window = NULL;
+    while((Window = *List++))
+    {
+        if(GetWindowByID(Window->Id))
+        {
+            AXLibDestroyWindow(Window);
+        }
+        else
+        {
+            AddWindowToCollection(Window);
+        }
+    }
+}
+
 internal macos_window **
 ApplicationWindowList(macos_application *Application)
 {
@@ -226,7 +242,6 @@ ApplicationWindowList(macos_application *Application)
         for(CFIndex Index = 0; Index < Count; ++Index)
         {
             AXUIElementRef Ref = (AXUIElementRef) CFArrayGetValueAtIndex(Windows, Index);
-
             macos_window *Window = AXLibConstructWindow(Application, Ref);
             WindowList[Index] = Window;
         }
@@ -475,8 +490,15 @@ Init()
     DisplayList = AXLibDisplayList(&DisplayCount);
     Assert(DisplayCount != 0);
     MainDisplay = DisplayList[0];
+
     macos_application *Application = AXLibConstructFocusedApplication();
-    WindowList = ApplicationWindowList(Application);
+    macos_window **WindowList = ApplicationWindowList(Application);
+
+    AppendApplicationWindowList(WindowList);
+
+    AXLibDestroyApplication(Application);
+    free(WindowList);
+
     CreateWindowTree(MainDisplay);
 #if 0
     int Port = 4020;
