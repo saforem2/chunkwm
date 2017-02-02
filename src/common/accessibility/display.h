@@ -1,5 +1,5 @@
-#ifndef PLUGIN_DISPLAY_H
-#define PLUGIN_DISPLAY_H
+#ifndef AXLIB_DISPLAY_H
+#define AXLIB_DISPLAY_H
 
 #include <Carbon/Carbon.h>
 
