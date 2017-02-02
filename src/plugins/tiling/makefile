@@ -1,6 +1,6 @@
 BUILD_FLAGS		= -O0 -g -std=c++11 -Wall -Wno-deprecated
 BUILD_PATH		= ./../../../plugins
-SRC				= ./plugin.cpp \
+SRC				= ./plugin.cpp ./node.cpp ./region.cpp ./display.mm \
 				  ./../../common/accessibility/application.cpp \
 				  ./../../common/accessibility/window.cpp \
 				  ./../../common/accessibility/element.cpp \
@@ -8,7 +8,7 @@ SRC				= ./plugin.cpp \
 				  ./../../common/dispatch/cgeventtap.cpp \
 				  ./../../common/ipc/daemon.cpp
 BINS			= $(BUILD_PATH)/tiling.so
-LINK			= -shared -fPIC -framework Carbon -framework ApplicationServices
+LINK			= -shared -fPIC -framework Carbon -framework Cocoa -framework ApplicationServices
 
 all: $(BINS)
 

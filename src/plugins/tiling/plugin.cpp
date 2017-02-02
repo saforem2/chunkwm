@@ -14,7 +14,12 @@
 #include "../../common/dispatch/cgeventtap.h"
 #include "../../common/ipc/daemon.h"
 
+#include "region.h"
+#include "display.h"
+#include "assert.h"
+
 #define internal static
+#define local_persist static
 
 typedef std::map<pid_t, macos_application *> macos_application_map;
 typedef macos_application_map::iterator macos_application_map_it;
@@ -22,6 +27,25 @@ typedef macos_application_map::iterator macos_application_map_it;
 internal event_tap EventTap;
 internal macos_application_map Applications;
 internal pthread_mutex_t ApplicationsMutex;
+
+internal unsigned DisplayCount;
+internal macos_display **DisplayList;
+internal macos_display *MainDisplay;
+
+region_offset *FindSpaceOffset(CGDirectDisplayID Display, CGSSpaceID Space)
+{
+    local_persist region_offset *Offset =
+        (region_offset *) malloc(sizeof(region_offset));
+
+    Offset->Left = 50;
+    Offset->Right = 50;
+    Offset->Top = 70;
+    Offset->Bottom = 50;
+    Offset->X = 30;
+    Offset->Y = 30;
+
+    return Offset;
+}
 
 macos_application_map *BeginApplications()
 {
@@ -131,7 +155,7 @@ OBSERVER_CALLBACK(Callback)
          *
          * At the very least, we need to know the windowid of the destroyed window. */
 
-        printf("%s: kAXUIElementDestroyedNotification %d\n", Application->Name);
+        printf("%s: kAXUIElementDestroyedNotification\n", Application->Name);
     }
     else if(CFEqual(Notification, kAXFocusedWindowChangedNotification))
     {
@@ -336,6 +360,9 @@ PLUGIN_MAIN_FUNC(PluginMain)
 internal bool
 Init()
 {
+    DisplayList = AXLibDisplayList(&DisplayCount);
+    Assert(DisplayCount != 0);
+    MainDisplay = DisplayList[0];
 #if 0
     int Port = 4020;
     EventTap.Mask = ((1 << kCGEventMouseMoved) |
