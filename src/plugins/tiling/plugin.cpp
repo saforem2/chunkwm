@@ -14,8 +14,9 @@
 #include "../../common/dispatch/cgeventtap.h"
 #include "../../common/ipc/daemon.h"
 
-#include "region.h"
 #include "display.h"
+#include "region.h"
+#include "node.h"
 #include "assert.h"
 
 #define internal static
@@ -23,6 +24,12 @@
 
 typedef std::map<pid_t, macos_application *> macos_application_map;
 typedef macos_application_map::iterator macos_application_map_it;
+
+#define CGSDefaultConnection _CGSDefaultConnection()
+typedef int CGSConnectionID;
+extern "C" CGSConnectionID _CGSDefaultConnection(void);
+extern "C" CGError CGSGetOnScreenWindowCount(const CGSConnectionID CID, CGSConnectionID TID, int *Count);
+extern "C" CGError CGSGetOnScreenWindowList(const CGSConnectionID CID, CGSConnectionID TID, int Count, int *List, int *OutCount);
 
 internal event_tap EventTap;
 internal macos_application_map Applications;
@@ -32,19 +39,126 @@ internal unsigned DisplayCount;
 internal macos_display **DisplayList;
 internal macos_display *MainDisplay;
 
+internal macos_window **WindowList;
+
+/* TODO(koekeishiya): Lookup space storage using macos_space. */
+internal node *Tree;
+
+/* NOTE(koekeishiya): We need a way to retrieve AXUIElementRef from a CGWindowID.
+ * There is no way to do this, without caching AXUIElementRef references.
+ * Here we iterate through a cache of macos_window structs. */
+macos_window *GetWindowByID(uint32_t Id)
+{
+    if(WindowList)
+    {
+        macos_window **List = WindowList;
+        macos_window *Window = *List;
+        while(Window)
+        {
+            if(Window->Id == Id)
+            {
+                return Window;
+            }
+
+            Window = *List++;
+        }
+    }
+
+    return NULL;
+}
+
+#include <vector>
+#include <queue>
+
+node *FindFirstMinDepthLeafNode(node *Root)
+{
+    std::queue<node *> Queue;
+    Queue.push(Root);
+
+    while(!Queue.empty())
+    {
+        node *Node = Queue.front();
+        Queue.pop();
+
+        if(!Node->Left && !Node->Right)
+            return Node;
+
+        if(Node->Left)
+            Queue.push(Node->Left);
+
+        if(Node->Right)
+            Queue.push(Node->Right);
+    }
+
+    /* NOTE(koekeishiya): Unreachable return;
+     * the binary-tree is always proper.
+     * Silence compiler warning.. */
+    return NULL;
+}
+
+/* NOTE(koekeishiya): Returns a vector of CGWindowIDs. */
+std::vector<uint32_t> GetAllVisibleWindows()
+{
+    std::vector<uint32_t> Windows;
+
+    int WindowCount = 0;
+    CGError Error = CGSGetOnScreenWindowCount(CGSDefaultConnection, 0, &WindowCount);
+    if(Error == kCGErrorSuccess)
+    {
+        int WindowList[WindowCount];
+        Error = CGSGetOnScreenWindowList(CGSDefaultConnection, 0, WindowCount, WindowList, &WindowCount);
+        if(Error == kCGErrorSuccess)
+        {
+            for(int Index = 0;
+                Index < WindowCount;
+                ++Index)
+            {
+                /* NOTE(koekeishiya): The onscreenwindowlist can contain windowids
+                 * that we do not care about. Check that the window in question is
+                 * in our cache. */
+                if(GetWindowByID(WindowList[Index]))
+                {
+                    Windows.push_back(WindowList[Index]);
+                }
+            }
+        }
+    }
+
+    return Windows;
+}
+
+internal void
+CreateWindowTree(macos_display *Display)
+{
+    macos_space *Space = AXLibActiveSpace(Display->Ref);
+    if(Space->Type != kCGSSpaceUser)
+        return;
+
+    std::vector<uint32_t> Windows = GetAllVisibleWindows();
+    if(!Windows.empty())
+    {
+        node *Root = CreateRootNode(Display);
+        Root->WindowId = Windows[0];
+
+        for(size_t Index = 1;
+            Index < Windows.size();
+            ++Index)
+        {
+            node *Node = FindFirstMinDepthLeafNode(Root);
+            Assert(Node != NULL);
+
+            CreateLeafNodePair(Display, Node, Node->WindowId, Windows[Index], OptimalSplitMode(Node));
+        }
+
+        Tree = Root;
+        ApplyNodeRegion(Tree);
+    }
+}
+
+internal region_offset Offset = { 50, 50, 70, 50, 30, 30 };
 region_offset *FindSpaceOffset(CGDirectDisplayID Display, CGSSpaceID Space)
 {
-    local_persist region_offset *Offset =
-        (region_offset *) malloc(sizeof(region_offset));
-
-    Offset->Left = 50;
-    Offset->Right = 50;
-    Offset->Top = 70;
-    Offset->Bottom = 50;
-    Offset->X = 30;
-    Offset->Y = 30;
-
-    return Offset;
+    return &Offset;
 }
 
 macos_application_map *BeginApplications()
@@ -109,14 +223,12 @@ ApplicationWindowList(macos_application *Application)
         WindowList = (macos_window **) malloc((Count + 1) * sizeof(macos_window *));
         WindowList[Count] = NULL;
 
-        printf("%s windowlist:\n", Application->Name);
         for(CFIndex Index = 0; Index < Count; ++Index)
         {
             AXUIElementRef Ref = (AXUIElementRef) CFArrayGetValueAtIndex(Windows, Index);
 
             macos_window *Window = AXLibConstructWindow(Application, Ref);
-            printf("    %s\n", Window->Name);
-            AXLibDestroyWindow(Window);
+            WindowList[Index] = Window;
         }
 
         CFRelease(Windows);
@@ -217,8 +329,8 @@ void ApplicationLaunchedHandler(const char *Data)
             printf("    plugin: subscribed to '%s' notifications\n", Application->Name);
         }
 
-        macos_window **WindowList = ApplicationWindowList(Application);
-        free(WindowList);
+        // macos_window **WindowList = ApplicationWindowList(Application);
+        // free(WindowList);
     }
 }
 
@@ -363,6 +475,9 @@ Init()
     DisplayList = AXLibDisplayList(&DisplayCount);
     Assert(DisplayCount != 0);
     MainDisplay = DisplayList[0];
+    macos_application *Application = AXLibConstructFocusedApplication();
+    WindowList = ApplicationWindowList(Application);
+    CreateWindowTree(MainDisplay);
 #if 0
     int Port = 4020;
     EventTap.Mask = ((1 << kCGEventMouseMoved) |

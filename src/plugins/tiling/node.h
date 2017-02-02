@@ -26,6 +26,11 @@ struct node
     region Region;
 };
 
+struct macos_display;
 node_split OptimalSplitMode(node *Node);
+node *CreateRootNode(macos_display *Display);
+
+void CreateLeafNodePair(macos_display *Display, node *Parent, uint32_t FirstWindowID, uint32_t SecondWindowID, node_split Split);
+void ApplyNodeRegion(node *Node);
 
 #endif

@@ -30,4 +30,8 @@ struct region_offset
     float X, Y;
 };
 
+struct node;
+struct macos_display;
+void CreateNodeRegion(macos_display *Display, node *Node, region_type Type);
+
 #endif
