@@ -17,46 +17,25 @@ DisplayCallback(CGDirectDisplayID DisplayId, CGDisplayChangeSummaryFlags Flags, 
         printf("%d: Display added\n", DisplayId);
         ConstructEvent(ChunkWM_DisplayAdded, Context);
     }
-
-    if(Flags & kCGDisplayRemoveFlag)
+    else if(Flags & kCGDisplayRemoveFlag)
     {
         printf("%d: Display removed\n", DisplayId);
         ConstructEvent(ChunkWM_DisplayRemoved, Context);
     }
-
-    if(Flags & kCGDisplayMovedFlag)
+    else if(Flags & kCGDisplayMovedFlag)
     {
         printf("%d: Display moved\n", DisplayId);
         ConstructEvent(ChunkWM_DisplayMoved, Context);
     }
-
-    if(Flags & kCGDisplayDesktopShapeChangedFlag)
+    else if(Flags & kCGDisplayDesktopShapeChangedFlag)
     {
         printf("%d: Display resolution changed\n", DisplayId);
         ConstructEvent(ChunkWM_DisplayResized, Context);
     }
-
-#if 0
-    if(Flags & kCGDisplaySetMainFlag)
+    else
     {
-        printf("%d: Display became main\n", DisplayID);
+        free(Context);
     }
-
-    if(Flags & kCGDisplaySetModeFlag)
-    {
-        printf("%d: Display changed mode\n", DisplayID);
-    }
-
-    if(Flags & kCGDisplayEnabledFlag)
-    {
-        printf("%d: Display enabled\n", DisplayID);
-    }
-
-    if(Flags & kCGDisplayDisabledFlag)
-    {
-        printf("%d: Display disabled\n", DisplayID);
-    }
-#endif
 }
 
 bool BeginDisplayHandler()
