@@ -6,6 +6,7 @@
 enum macos_application_notifications
 {
     Application_Notification_WindowCreated,
+    Application_Notification_WindowDestroyed,
     Application_Notification_WindowFocused,
     Application_Notification_WindowMoved,
     Application_Notification_WindowResized,
@@ -23,6 +24,10 @@ AXNotificationFromEnum(int Type)
         case Application_Notification_WindowCreated:
         {
             return kAXWindowCreatedNotification;
+        } break;
+        case Application_Notification_WindowDestroyed:
+        {
+            return kAXUIElementDestroyedNotification;
         } break;
         case Application_Notification_WindowFocused:
         {

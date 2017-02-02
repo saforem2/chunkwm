@@ -112,7 +112,26 @@ OBSERVER_CALLBACK(Callback)
     }
     else if(CFEqual(Notification, kAXUIElementDestroyedNotification))
     {
-        printf("%s: kAXUIElementDestroyedNotification\n", Application->Name);
+        /* TODO(koekeishiya): If this is an actual window, it should be associated
+         * with a valid CGWindowID. HOWEVER, because the window in question has been
+         * destroyed. We are unable to utilize this window reference with the AX API.
+         *
+         * The 'CFEqual()' function can still be used to compare this AXUIElementRef
+         * with any existing window refs that we may have. There are a couple of ways
+         * we can use to track if an actual window is closed.
+         *
+         *   a) Store all window AXUIElementRefs in a local cache that we update upon
+         *      creation and removal. Requires unsorted container with custom comparator
+         *      that uses 'CFEqual()' to match AXUIElementRefs.
+         *
+         *   b) Instead of tracking 'kAXUIElementDestroyedNotification' for an application,
+         *      we have to register this notification separately for every window created.
+         *      By doing this, we can pass our own data containing the information necessary
+         *      to properly identify and report which window was destroyed.
+         *
+         * At the very least, we need to know the windowid of the destroyed window. */
+
+        printf("%s: kAXUIElementDestroyedNotification %d\n", Application->Name);
     }
     else if(CFEqual(Notification, kAXFocusedWindowChangedNotification))
     {
