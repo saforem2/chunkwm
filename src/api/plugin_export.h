@@ -12,6 +12,11 @@ static const char *chunkwm_plugin_export_str[] =
 
     "chunkwm_export_space_changed",
 
+    "chunkwm_export_display_added",
+    "chunkwm_export_display_removed",
+    "chunkwm_export_display_moved",
+    "chunkwm_export_display_resized",
+
     "chunkwm_export_end",
 };
 enum chunkwm_plugin_export
@@ -24,6 +29,11 @@ enum chunkwm_plugin_export
     chunkwm_export_application_unhidden,
 
     chunkwm_export_space_changed,
+
+    chunkwm_export_display_added,
+    chunkwm_export_display_removed,
+    chunkwm_export_display_moved,
+    chunkwm_export_display_resized,
 
     chunkwm_export_end,
 };

@@ -3,6 +3,7 @@
 
 #include "dispatch/carbon.h"
 #include "dispatch/workspace.h"
+#include "dispatch/display.h"
 #include "dispatch/event.h"
 
 #include "callback.h"
@@ -17,11 +18,13 @@ int main(int Count, char **Args)
     if(BeginCarbonEventHandler(&Carbon))
     {
         BeginCallbackThreads(4);
-        BeginPlugins();
         BeginSharedWorkspace();
+        BeginDisplayHandler();
+
+        BeginPlugins();
+
         StartEventLoop();
         CFRunLoopRun();
-
     }
 
     return EXIT_SUCCESS;

@@ -182,20 +182,61 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_SpaceChanged)
 // NOTE(koekeishiya): Display-related callbacks
 CHUNKWM_CALLBACK(Callback_ChunkWM_DisplayAdded)
 {
+    CGDirectDisplayID *DisplayId
+        = (CGDirectDisplayID *) Event->Context;
+
+#if 0
+    ProcessPluginList(chunkwm_export_display_added);
+#else
+    ProcessPluginListThreaded(chunkwm_export_display_added);
+#endif
+
+    free(DisplayId);
 }
 
 CHUNKWM_CALLBACK(Callback_ChunkWM_DisplayRemoved)
 {
+    CGDirectDisplayID *DisplayId
+        = (CGDirectDisplayID *) Event->Context;
+
+#if 0
+    ProcessPluginList(chunkwm_export_display_removed);
+#else
+    ProcessPluginListThreaded(chunkwm_export_display_removed);
+#endif
+
+    free(DisplayId);
 }
 
 CHUNKWM_CALLBACK(Callback_ChunkWM_DisplayMoved)
 {
+    CGDirectDisplayID *DisplayId
+        = (CGDirectDisplayID *) Event->Context;
+
+#if 0
+    ProcessPluginList(chunkwm_export_display_moved);
+#else
+    ProcessPluginListThreaded(chunkwm_export_display_moved);
+#endif
+
+    free(DisplayId);
 }
 
 CHUNKWM_CALLBACK(Callback_ChunkWM_DisplayResized)
 {
+    CGDirectDisplayID *DisplayId
+        = (CGDirectDisplayID *) Event->Context;
+
+#if 0
+    ProcessPluginList(chunkwm_export_display_resized);
+#else
+    ProcessPluginListThreaded(chunkwm_export_display_resized);
+#endif
+
+    free(DisplayId);
 }
 
 CHUNKWM_CALLBACK(Callback_ChunkWM_DisplayChanged)
 {
+    /* NOTE(koekeishiya): This event does not take an argument. */
 }
