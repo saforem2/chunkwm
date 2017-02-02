@@ -282,6 +282,9 @@ OBSERVER_CALLBACK(Callback)
          *
          * At the very least, we need to know the windowid of the destroyed window. */
 
+        /* NOTE(koekeishiya): Option 'b' seems to be the best choice, as it will allow us to
+         * pass a pointer to the macos_window struct, containing all the information we need. */
+
         printf("%s: kAXUIElementDestroyedNotification\n", Application->Name);
     }
     else if(CFEqual(Notification, kAXFocusedWindowChangedNotification))
