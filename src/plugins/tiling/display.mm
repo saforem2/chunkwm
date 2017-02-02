@@ -10,7 +10,7 @@ extern "C" CGSConnectionID _CGSDefaultConnection(void);
 extern "C" CGSSpaceType CGSSpaceGetType(CGSConnectionID Connection, CGSSpaceID Id);
 extern "C" CFArrayRef CGSCopyManagedDisplaySpaces(const CGSConnectionID Connection);
 
-/* NOTE(koekeishiya): Find the UUID for a given CGDirectDisplayID. */
+/* NOTE(koekeishiya): Find the UUID associated with a CGDirectDisplayID. */
 internal CFStringRef
 AXLibDisplayIdentifier(CGDirectDisplayID Id)
 {
@@ -25,6 +25,7 @@ AXLibDisplayIdentifier(CGDirectDisplayID Id)
     return NULL;
 }
 
+/* NOTE(koekeishiya): Caller is responsible for calling 'AXLibDestroyDisplay()'. */
 macos_display *AXLibConstructDisplay(CGDirectDisplayID Id, unsigned Arrangement)
 {
     macos_display *Display = (macos_display *) malloc(sizeof(macos_display));
@@ -44,12 +45,14 @@ macos_display *AXLibConstructDisplay(CGDirectDisplayID Id, unsigned Arrangement)
     return Display;
 }
 
+/* NOTE(koekeishiya): Caller is responsible for passing a valid display! */
 void AXLibDestroyDisplay(macos_display *Display)
 {
     CFRelease(Display->Ref);
     free(Display);
 }
 
+/* NOTE(koekeishiya): Caller is responsible for all memory (list and entries). */
 #define MAX_DISPLAY_COUNT 10
 macos_display **AXLibDisplayList(unsigned *Count)
 {
@@ -74,6 +77,28 @@ macos_display **AXLibDisplayList(unsigned *Count)
     return DisplayList;
 }
 
+internal CGSSpaceID
+AXLibActiveSpaceIdentifier(CFStringRef DisplayRef, CFStringRef *SpaceRef)
+{
+    CGSSpaceID ActiveSpaceId = 0;
+    NSString *CurrentIdentifier = (__bridge NSString *) DisplayRef;
+
+    CFArrayRef DisplayDictionaries = CGSCopyManagedDisplaySpaces(CGSDefaultConnection);
+    for(NSDictionary *DisplayDictionary in (__bridge NSArray *) DisplayDictionaries)
+    {
+        NSString *DisplayIdentifier = DisplayDictionary[@"Display Identifier"];
+        if([DisplayIdentifier isEqualToString:CurrentIdentifier])
+        {
+            *SpaceRef = (__bridge CFStringRef) [[NSString alloc] initWithString:DisplayDictionary[@"Current Space"][@"uuid"]];
+            ActiveSpaceId = [DisplayDictionary[@"Current Space"][@"id64"] intValue];
+            break;
+        }
+    }
+
+    CFRelease(DisplayDictionaries);
+    return ActiveSpaceId;
+}
+
 internal macos_space *
 AXLibConstructSpace(CFStringRef Ref, CGSSpaceID Id, CGSSpaceType Type)
 {
@@ -86,62 +111,20 @@ AXLibConstructSpace(CFStringRef Ref, CGSSpaceID Id, CGSSpaceType Type)
     return Space;
 }
 
-internal CFStringRef
-AXLibActiveSpaceIdentifier(CFStringRef DisplayRef)
-{
-    CFStringRef ActiveSpace = NULL;
-    NSString *CurrentIdentifier = (__bridge NSString *)DisplayRef;
-
-    CFArrayRef DisplayDictionaries = CGSCopyManagedDisplaySpaces(CGSDefaultConnection);
-    for(NSDictionary *DisplayDictionary in (__bridge NSArray *)DisplayDictionaries)
-    {
-        NSString *DisplayIdentifier = DisplayDictionary[@"Display Identifier"];
-        if([DisplayIdentifier isEqualToString:CurrentIdentifier])
-        {
-            ActiveSpace = (__bridge CFStringRef) [[NSString alloc] initWithString:DisplayDictionary[@"Current Space"][@"uuid"]];
-            break;
-        }
-    }
-
-    CFRelease(DisplayDictionaries);
-    return ActiveSpace;
-}
-
-internal CGSSpaceID
-AXLibActiveSpaceID(CFStringRef DisplayRef)
-{
-    CGSSpaceID ActiveSpace = 0;
-    NSString *CurrentIdentifier = (__bridge NSString *)DisplayRef;
-
-    CFArrayRef DisplayDictionaries = CGSCopyManagedDisplaySpaces(CGSDefaultConnection);
-    for(NSDictionary *DisplayDictionary in (__bridge NSArray *)DisplayDictionaries)
-    {
-        NSString *DisplayIdentifier = DisplayDictionary[@"Display Identifier"];
-        if([DisplayIdentifier isEqualToString:CurrentIdentifier])
-        {
-            ActiveSpace = [DisplayDictionary[@"Current Space"][@"id64"] intValue];
-            break;
-        }
-    }
-
-    CFRelease(DisplayDictionaries);
-    return ActiveSpace;
-}
-
+/* NOTE(koekeishiya): Caller is responsible for calling 'AXLibDestroySpace()'. */
 macos_space *AXLibActiveSpace(CFStringRef DisplayRef)
 {
-    CGSSpaceID SpaceId = AXLibActiveSpaceID(DisplayRef);
-    CFStringRef SpaceRef = AXLibActiveSpaceIdentifier(DisplayRef);
+    CFStringRef SpaceRef;
+    CGSSpaceID SpaceId = AXLibActiveSpaceIdentifier(DisplayRef, &SpaceRef);
     CGSSpaceType SpaceType = CGSSpaceGetType(CGSDefaultConnection, SpaceId);
 
     macos_space *Space = AXLibConstructSpace(SpaceRef, SpaceId, SpaceType);
     return Space;
 }
 
+/* NOTE(koekeishiya): Caller is responsible for passing a valid space! */
 void AXLibDestroySpace(macos_space *Space)
 {
     CFRelease(Space->Ref);
     free(Space);
 }
-
-// CGDisplayRegisterReconfigurationCallback(AXDisplayReconfigurationCallBack, NULL);
