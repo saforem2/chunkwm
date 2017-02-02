@@ -1,7 +1,7 @@
 #include "region.h"
 #include "node.h"
-#include "display.h"
 #include "assert.h"
+#include "../../common/accessibility/display.h"
 
 #include <stdio.h>
 
@@ -15,15 +15,13 @@ FullscreenRegion(macos_display *Display)
     macos_space *Space = AXLibActiveSpace(Display->Ref);
     Assert(Space);
 
-    region *Region = &Display->Region;
     region_offset *Offset = FindSpaceOffset(Display->Id, Space->Id);
-
     region Result;
 
-    Result.X = Region->X + Offset->Left;
-    Result.Y = Region->Y + Offset->Top;
-    Result.Width = Region->Width - Offset->Left - Offset->Right;
-    Result.Height = Region->Height - Offset->Top - Offset->Bottom;
+    Result.X = Display->X + Offset->Left;
+    Result.Y = Display->Y + Offset->Top;
+    Result.Width = Display->Width - Offset->Left - Offset->Right;
+    Result.Height = Display->Height - Offset->Top - Offset->Bottom;
 
     AXLibDestroySpace(Space);
     return Result;
@@ -32,10 +30,10 @@ FullscreenRegion(macos_display *Display)
 internal region
 LeftVerticalRegion(macos_display *Display, node *Node)
 {
-    Assert(Node);
-
     macos_space *Space = AXLibActiveSpace(Display->Ref);
+
     Assert(Space);
+    Assert(Node);
 
     region *Region = &Node->Region;
     region_offset *Offset = FindSpaceOffset(Display->Id, Space->Id);
@@ -55,10 +53,10 @@ LeftVerticalRegion(macos_display *Display, node *Node)
 internal region
 RightVerticalRegion(macos_display *Display, node *Node)
 {
-    Assert(Node);
-
     macos_space *Space = AXLibActiveSpace(Display->Ref);
+
     Assert(Space);
+    Assert(Node);
 
     region *Region = &Node->Region;
     region_offset *Offset = FindSpaceOffset(Display->Id, Space->Id);
@@ -78,10 +76,10 @@ RightVerticalRegion(macos_display *Display, node *Node)
 internal region
 UpperHorizontalRegion(macos_display *Display, node *Node)
 {
-    Assert(Node);
-
     macos_space *Space = AXLibActiveSpace(Display->Ref);
+
     Assert(Space);
+    Assert(Node);
 
     region *Region = &Node->Region;
     region_offset *Offset = FindSpaceOffset(Display->Id, Space->Id);
@@ -101,10 +99,10 @@ UpperHorizontalRegion(macos_display *Display, node *Node)
 internal region
 LowerHorizontalRegion(macos_display *Display, node *Node)
 {
-    Assert(Node);
-
     macos_space *Space = AXLibActiveSpace(Display->Ref);
+
     Assert(Space);
+    Assert(Node);
 
     region *Region = &Node->Region;
     region_offset *Offset = FindSpaceOffset(Display->Id, Space->Id);

@@ -1,9 +1,9 @@
 #include "node.h"
-#include "display.h"
 #include "assert.h"
 
-#include "../../common/accessibility/element.h"
+#include "../../common/accessibility/display.h"
 #include "../../common/accessibility/window.h"
+#include "../../common/accessibility/element.h"
 
 #define internal static
 

@@ -5,16 +5,16 @@
 #include <map>
 
 #include "../../api/plugin_api.h"
-#include "../../common/accessibility/element.h"
+#include "../../common/accessibility/display.h"
 #include "../../common/accessibility/application.h"
 #include "../../common/accessibility/window.h"
+#include "../../common/accessibility/element.h"
 #include "../../common/accessibility/observer.h"
 #include "../../common/dispatch/carbon.h"
 #include "../../common/dispatch/workspace.h"
 #include "../../common/dispatch/cgeventtap.h"
 #include "../../common/ipc/daemon.h"
 
-#include "display.h"
 #include "region.h"
 #include "node.h"
 #include "assert.h"
