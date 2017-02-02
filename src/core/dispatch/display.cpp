@@ -14,22 +14,18 @@ DisplayCallback(CGDirectDisplayID DisplayId, CGDisplayChangeSummaryFlags Flags, 
 
     if(Flags & kCGDisplayAddFlag)
     {
-        printf("%d: Display added\n", DisplayId);
         ConstructEvent(ChunkWM_DisplayAdded, Context);
     }
     else if(Flags & kCGDisplayRemoveFlag)
     {
-        printf("%d: Display removed\n", DisplayId);
         ConstructEvent(ChunkWM_DisplayRemoved, Context);
     }
     else if(Flags & kCGDisplayMovedFlag)
     {
-        printf("%d: Display moved\n", DisplayId);
         ConstructEvent(ChunkWM_DisplayMoved, Context);
     }
     else if(Flags & kCGDisplayDesktopShapeChangedFlag)
     {
-        printf("%d: Display resolution changed\n", DisplayId);
         ConstructEvent(ChunkWM_DisplayResized, Context);
     }
     else

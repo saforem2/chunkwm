@@ -184,6 +184,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_DisplayAdded)
 {
     CGDirectDisplayID *DisplayId
         = (CGDirectDisplayID *) Event->Context;
+    printf("%d: Display added\n", *DisplayId);
 
 #if 0
     ProcessPluginList(chunkwm_export_display_added);
@@ -198,6 +199,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_DisplayRemoved)
 {
     CGDirectDisplayID *DisplayId
         = (CGDirectDisplayID *) Event->Context;
+    printf("%d: Display removed\n", *DisplayId);
 
 #if 0
     ProcessPluginList(chunkwm_export_display_removed);
@@ -212,6 +214,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_DisplayMoved)
 {
     CGDirectDisplayID *DisplayId
         = (CGDirectDisplayID *) Event->Context;
+    printf("%d: Display moved\n", *DisplayId);
 
 #if 0
     ProcessPluginList(chunkwm_export_display_moved);
@@ -226,6 +229,8 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_DisplayResized)
 {
     CGDirectDisplayID *DisplayId
         = (CGDirectDisplayID *) Event->Context;
+    printf("%d: Display resolution changed\n", *DisplayId);
+
 
 #if 0
     ProcessPluginList(chunkwm_export_display_resized);
