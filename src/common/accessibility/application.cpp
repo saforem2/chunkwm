@@ -1,5 +1,4 @@
 #include "application.h"
-#include "element.h"
 #include "../dispatch/workspace.h"
 
 #define internal static
@@ -7,7 +6,6 @@
 /*
  * NOTE(koekeishiya): The following files must also be linked against:
  *
- * common/accessibility/element.cpp
  * common/accessibility/observer.cpp
  * common/dispatch/workspace.mm
  *
