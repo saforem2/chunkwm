@@ -4,7 +4,9 @@
 
 #define internal static
 #define Assert(Condition) do { if(!(Condition)) *(int volatile *)0 = 0; } while(0)
+#ifndef ArrayCount
 #define ArrayCount(Array) (sizeof(Array) / sizeof(*(Array)))
+#endif
 
 internal bool
 DoNextWorkQueueEntry(work_queue *Queue)
