@@ -60,7 +60,26 @@ macos_window *GetWindowByID(uint32_t Id)
 internal void
 AddWindowToCollection(macos_window *Window)
 {
-    Windows[Window->Id] = Window;
+    AXError Success = AXLibAddObserverNotification(&Window->Owner->Observer,
+                                                   Window->Ref,
+                                                   kAXUIElementDestroyedNotification,
+                                                   Window);
+    if(Success == kAXErrorSuccess)
+    {
+        Windows[Window->Id] = Window;
+    }
+    else
+    {
+        printf("%d: Window '%s' is not destructible, ignore!\n", Window->Id, Window->Name);
+        AXLibDestroyWindow(Window);
+    }
+}
+
+internal void
+RemoveWindowFromCollection(macos_window *Window)
+{
+    Windows.erase(Window->Id);
+    AXLibRemoveObserverNotification(&Window->Owner->Observer, Window->Ref, kAXUIElementDestroyedNotification);
 }
 
 #include <vector>
@@ -290,11 +309,15 @@ OBSERVER_CALLBACK(Callback)
 
     if(CFEqual(Notification, kAXWindowCreatedNotification))
     {
-        printf("%s: kAXWindowCreatedNotification\n", Application->Name);
+        printf("%s: Window Created\n", Application->Name);
+        macos_window *Window = AXLibConstructWindow(Application, Element);
+
+        // TODO(koekeishiya): This probably has to be thread-safe.
+        AddWindowToCollection(Window);
     }
     else if(CFEqual(Notification, kAXUIElementDestroyedNotification))
     {
-        /* TODO(koekeishiya): If this is an actual window, it should be associated
+        /* NOTE(koekeishiya): If this is an actual window, it should be associated
          * with a valid CGWindowID. HOWEVER, because the window in question has been
          * destroyed. We are unable to utilize this window reference with the AX API.
          *
@@ -313,34 +336,39 @@ OBSERVER_CALLBACK(Callback)
          *
          * At the very least, we need to know the windowid of the destroyed window. */
 
-        /* NOTE(koekeishiya): Option 'b' seems to be the best choice, as it will allow us to
-         * pass a pointer to the macos_window struct, containing all the information we need. */
+        /* NOTE(koekeishiya): Option 'b' has been implemented. Leaving note for future reference. */
 
-        printf("%s: kAXUIElementDestroyedNotification\n", Application->Name);
+        macos_window *Window = (macos_window *) Reference;
+        printf("%s: Window Destroyed\n", Window->Owner->Name);
+
+        // TODO(koekeishiya): This probably has to be thread-safe.
+        RemoveWindowFromCollection(Window);
+
+        AXLibDestroyWindow(Window);
     }
     else if(CFEqual(Notification, kAXFocusedWindowChangedNotification))
     {
-        printf("%s: kAXFocusedWindowChangedNotification\n", Application->Name);
+        printf("%s: Focused Window Changed\n", Application->Name);
     }
     else if(CFEqual(Notification, kAXWindowMiniaturizedNotification))
     {
-        printf("%s: kAXWindowMiniaturizedNotification\n", Application->Name);
+        printf("%s: Window Minimized\n", Application->Name);
     }
     else if(CFEqual(Notification, kAXWindowDeminiaturizedNotification))
     {
-        printf("%s: kAXWindowDeminiaturizedNotification\n", Application->Name);
+        printf("%s: Window Deminimized\n", Application->Name);
     }
     else if(CFEqual(Notification, kAXWindowMovedNotification))
     {
-        printf("%s: kAXWindowMovedNotification\n", Application->Name);
+        printf("%s: Window Moved\n", Application->Name);
     }
     else if(CFEqual(Notification, kAXWindowResizedNotification))
     {
-        printf("%s: kAXWindowResizedNotification\n", Application->Name);
+        printf("%s: Window Resized\n", Application->Name);
     }
     else if(CFEqual(Notification, kAXTitleChangedNotification))
     {
-        printf("%s: kAXWindowTitleChangedNotification\n", Application->Name);
+        printf("%s: Window Title Changed\n", Application->Name);
     }
 }
 
@@ -381,8 +409,12 @@ void ApplicationLaunchedHandler(const char *Data)
                 printf("    plugin: subscribed to '%s' notifications\n", Application->Name);
             }
 
-            // macos_window **WindowList = ApplicationWindowList(Application);
-            // free(WindowList);
+            macos_window **WindowList = ApplicationWindowList(Application);
+            if(WindowList)
+            {
+                AppendApplicationWindowList(WindowList);
+                free(WindowList);
+            }
         }
     }
 }
@@ -533,20 +565,19 @@ Init()
     for(size_t Index = 0; Index < Applications.size(); ++Index)
     {
         macos_application *Application = Applications[Index];
-        macos_window **WindowList = ApplicationWindowList(Application);
-
         AddApplication(Application);
         AXLibAddApplicationObserver(Application, Callback);
 
+        macos_window **WindowList = ApplicationWindowList(Application);
         if(WindowList)
         {
             AppendApplicationWindowList(WindowList);
+            free(WindowList);
         }
-
-        free(WindowList);
     }
 
-    CreateWindowTree(MainDisplay);
+    /* NOTE(koekeishiya): Tile windows visible on the current space using binary space partitioning.
+     * CreateWindowTree(MainDisplay); */
 #if 0
     int Port = 4020;
     EventTap.Mask = ((1 << kCGEventMouseMoved) |
