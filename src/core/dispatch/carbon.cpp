@@ -40,7 +40,8 @@ CopyCarbonApplicationDetails(carbon_application_details *Info)
 
     Result->PID = Info->PID;
     Result->PSN = Info->PSN;
-    Result->ProcessMode = Info->ProcessMode;
+    Result->ProcessPolicy = Info->ProcessPolicy;
+    Result->ProcessBackground = Info->ProcessBackground;
     Result->ProcessName = strdup(Info->ProcessName);
 
     return Result;
@@ -60,71 +61,16 @@ SearchCarbonApplicationDetailsCache(ProcessSerialNumber PSN)
     return Result;
 }
 
-/* NOTE(koekeishiya): A pascal string has the size of the string stored as the first byte. */
-internal inline void
-CopyPascalStringToC(ConstStr255Param Source, char *Destination)
-{
-    strncpy(Destination, (char *) Source + 1, Source[0]);
-    Destination[Source[0]] = '\0';
-}
-
 internal inline void
 PrintCarbonApplicationDetails(carbon_application_details *Info)
 {
-    printf("PID: %d\nPSN: %d %d\nMode: %d\nName: %s\n\n",
+    printf("PID: %d\nPSN: %d %d\nPolicy: %d\nBackground: %d\nName: %s\n\n",
             Info->PID,
             Info->PSN.lowLongOfPSN,
             Info->PSN.highLongOfPSN,
-            Info->ProcessMode,
+            Info->ProcessPolicy,
+            Info->ProcessBackground,
             Info->ProcessName);
-}
-
-internal carbon_application_details *
-BeginCarbonApplicationDetails(ProcessSerialNumber PSN)
-{
-    carbon_application_details *Info =
-        (carbon_application_details *) malloc(sizeof(carbon_application_details));
-
-    Str255 ProcessName = {};
-    ProcessInfoRec ProcessInfo = {};
-    ProcessInfo.processInfoLength = sizeof(ProcessInfoRec);
-    ProcessInfo.processName = ProcessName;
-
-    /* NOTE(koekeishiya): Deprecated, consider switching to
-     * CFDictionaryRef ProcessInformationCopyDictionary(const ProcessSerialNumber *PSN,
-     *                                                  UInt32 infoToReturn);
-     * */
-    GetProcessInformation(&PSN, &ProcessInfo);
-
-    Info->PSN = PSN;
-    GetProcessPID(&Info->PSN, &Info->PID);
-    Info->ProcessMode = ProcessInfo.processMode;
-
-    if(ProcessInfo.processName)
-    {
-        Info->ProcessName = (char *) malloc(ProcessInfo.processName[0] + 1);
-        CopyPascalStringToC(ProcessInfo.processName, Info->ProcessName);
-    }
-    else
-    {
-        Info->ProcessName = strdup("<Unknown Name>");
-    }
-
-    return Info;
-}
-
-// NOTE(koekeishiya): Make sure that the correct module frees memory.
-void EndCarbonApplicationDetails(carbon_application_details *Info)
-{
-    if(Info)
-    {
-        if(Info->ProcessName)
-        {
-            free(Info->ProcessName);
-        }
-
-        free(Info);
-    }
 }
 
 /*
@@ -139,11 +85,8 @@ CacheRunningProcesses()
     while(GetNextProcess(&PSN) == noErr)
     {
         carbon_application_details *Info = BeginCarbonApplicationDetails(PSN);
-        if(Info)
-        {
-            PrintCarbonApplicationDetails(Info);
-            CarbonApplicationCache[PSN] = Info;
-        }
+        PrintCarbonApplicationDetails(Info);
+        CarbonApplicationCache[PSN] = Info;
     }
 }
 
@@ -169,12 +112,9 @@ CarbonApplicationEventHandler(EventHandlerCallRef HandlerCallRef, EventRef Event
         case kEventAppLaunched:
         {
             carbon_application_details *Info = BeginCarbonApplicationDetails(PSN);
-            if(Info)
-            {
-                carbon_application_details *Copy = CopyCarbonApplicationDetails(Info);
-                CarbonApplicationCache[PSN] = Copy;
-                ConstructEvent(ChunkWM_ApplicationLaunched, Info);
-            }
+            carbon_application_details *Copy = CopyCarbonApplicationDetails(Info);
+            CarbonApplicationCache[PSN] = Copy;
+            ConstructEvent(ChunkWM_ApplicationLaunched, Info);
         } break;
         case kEventAppTerminated:
         {

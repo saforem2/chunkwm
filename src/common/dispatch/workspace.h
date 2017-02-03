@@ -10,4 +10,7 @@ struct workspace_application_details
     pid_t PID;
 };
 
+char *WorkspaceCopyProcessNameAndPolicy(pid_t PID, uint32_t *ProcessPolicy);
+char *WorkspaceCopyProcessName(pid_t PID);
+
 #endif
