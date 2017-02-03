@@ -1,7 +1,17 @@
 #include "application.h"
 #include "element.h"
+#include "../dispatch/workspace.h"
 
 #define internal static
+
+/*
+ * NOTE(koekeishiya): The following files must also be linked against:
+ *
+ * common/accessibility/element.cpp
+ * common/accessibility/observer.cpp
+ * common/dispatch/workspace.mm
+ *
+ * */
 
 enum macos_application_notifications
 {
@@ -115,17 +125,7 @@ macos_application *AXLibConstructFocusedApplication()
     ProcessSerialNumber PSN;
     GetFrontProcess(&PSN);
     GetProcessPID(&PSN, &PID);
-
-    CFStringRef CFProcessName;
-    CopyProcessName(&PSN, &CFProcessName);
-
-    // NOTE(koekeishiya): Try UTF-8 encoding first.
-    char *ProcessName = CopyCFStringToC(CFProcessName, true);
-    if(!ProcessName)
-    {
-        ProcessName = CopyCFStringToC(CFProcessName, false);
-    }
-    CFRelease(CFProcessName);
+    char *ProcessName = WorkspaceCopyProcessName(PID);
 
     macos_application *Result = AXLibConstructApplication(PSN, PID, ProcessName);
     free(ProcessName);
