@@ -34,6 +34,6 @@ bool AXLibGetWindowRole(AXUIElementRef WindowRef, CFTypeRef *Role);
 bool AXLibGetWindowSubrole(AXUIElementRef WindowRef, CFTypeRef *Subrole);
 
 CGPoint AXLibGetCursorPos();
-char *CopyCFStringToC(CFStringRef String, bool UTF8);
+char *CopyCFStringToC(CFStringRef String);
 
 #endif

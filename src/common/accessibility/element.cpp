@@ -1,11 +1,11 @@
 #include "element.h"
 
 // NOTE(koekeishiya): Caller frees memory.
-char *CopyCFStringToC(CFStringRef String, bool UTF8)
+char *CopyCFStringToC(CFStringRef String)
 {
     char *Result = NULL;
-    CFStringEncoding Encoding = UTF8 ? kCFStringEncodingUTF8 : kCFStringEncodingMacRoman;
 
+    CFStringEncoding Encoding = kCFStringEncodingUTF8;
     CFIndex Length = CFStringGetLength(String);
     CFIndex Bytes = CFStringGetMaximumSizeForEncoding(Length, Encoding);
 
@@ -195,11 +195,7 @@ char *AXLibGetWindowTitle(AXUIElementRef WindowRef)
     CFStringRef WindowTitleRef = (CFStringRef) AXLibGetWindowProperty(WindowRef, kAXTitleAttribute);
     if(WindowTitleRef)
     {
-        char *WindowTitle = CopyCFStringToC(WindowTitleRef, true);
-        if(!WindowTitle)
-        {
-            WindowTitle = CopyCFStringToC(WindowTitleRef, false);
-        }
+        char *WindowTitle = CopyCFStringToC(WindowTitleRef);
         CFRelease(WindowTitleRef);
 
         if(WindowTitle)
