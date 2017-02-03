@@ -1,6 +1,13 @@
 #include "observer.h"
 #include "application.h"
 
+/*
+ * NOTE(koekeishiya): The following files must also be linked against:
+ *
+ * common/accessibility/application.cpp
+ *
+ * */
+
 // NOTE(koekeishiya): Caller is responsible for calling 'AXLibDestroyObserver()'. */
 void AXLibConstructObserver(macos_application *Application, ObserverCallback Callback)
 {
