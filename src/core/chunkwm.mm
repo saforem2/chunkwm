@@ -10,10 +10,12 @@
 #include "plugin.h"
 #include "wqueue.h"
 
+#include "../common/dispatch/carbon.cpp"
 #include "../common/dispatch/workspace.mm"
+
 #include "dispatch/carbon.cpp"
-#include "dispatch/event.cpp"
 #include "dispatch/workspace.mm"
+#include "dispatch/event.cpp"
 #include "dispatch/display.cpp"
 
 #include "callback.cpp"
