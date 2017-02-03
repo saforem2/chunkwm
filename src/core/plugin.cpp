@@ -162,7 +162,7 @@ bool LoadPlugin(const char *File, loaded_plugin *LoadedPlugin)
         }
         else
         {
-            fprintf(stderr, "Plugin details missing!\n");
+            fprintf(stderr, "dlsym '%s' plugin details missing!\n", File);
             dlclose(Handle);
         }
     }
