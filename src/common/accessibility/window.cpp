@@ -3,6 +3,13 @@
 
 #define internal static
 
+/*
+ * NOTE(koekeishiya): The following files must also be linked against:
+ *
+ * common/accessibility/element.cpp
+ *
+ * */
+
 internal inline void
 AddFlags(macos_window *Window, uint32_t Flag)
 {
