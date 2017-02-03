@@ -350,36 +350,40 @@ void ApplicationLaunchedHandler(const char *Data)
     carbon_application_details *Info =
         (carbon_application_details *) Data;
 
-    macos_application *Application = AXLibConstructApplication(Info->PSN, Info->PID, Info->ProcessName);
-    if(Application)
+    if((Info->ProcessBackground == 0) &&
+       (Info->ProcessPolicy != 2))
     {
-        printf("    plugin: launched '%s'\n", Info->ProcessName);
-        AddApplication(Application);
-
-        /* NOTE(koekeishiya): We need to wait for some amount of time before we can try to
-         * observe the launched application. The time to wait depends on how long the
-         * application in question takes to finish. Half a second is good enough for
-         * most applications so we 'usleep()' as a temporary fix for now, but we need a way
-         * to properly defer the creation of observers for applications that require more time.
-         *
-         * We cannot simply defer the creation automatically using dispatch_after, because
-         * there is simply no way to remove a dispatched event once it has been created.
-         * We need a way to tell a dispatched event to NOT execute and be rendered invalid,
-         * because some applications only live for a very very short amount of time.
-         * The dispatched event will then be triggered after a potential 'terminated' event
-         * has been received, in which the application reference has been freed.
-         *
-         * Passing an invalid reference to the AXObserver API does not simply trigger an error,
-         * but causes a full on segmentation fault. */
-
-        usleep(0.5 * MICROSEC_PER_SEC);
-        if(AXLibAddApplicationObserver(Application, Callback))
+        macos_application *Application = AXLibConstructApplication(Info->PSN, Info->PID, Info->ProcessName);
+        if(Application)
         {
-            printf("    plugin: subscribed to '%s' notifications\n", Application->Name);
-        }
+            printf("    plugin: launched '%s'\n", Info->ProcessName);
+            AddApplication(Application);
 
-        // macos_window **WindowList = ApplicationWindowList(Application);
-        // free(WindowList);
+            /* NOTE(koekeishiya): We need to wait for some amount of time before we can try to
+             * observe the launched application. The time to wait depends on how long the
+             * application in question takes to finish. Half a second is good enough for
+             * most applications so we 'usleep()' as a temporary fix for now, but we need a way
+             * to properly defer the creation of observers for applications that require more time.
+             *
+             * We cannot simply defer the creation automatically using dispatch_after, because
+             * there is simply no way to remove a dispatched event once it has been created.
+             * We need a way to tell a dispatched event to NOT execute and be rendered invalid,
+             * because some applications only live for a very very short amount of time.
+             * The dispatched event will then be triggered after a potential 'terminated' event
+             * has been received, in which the application reference has been freed.
+             *
+             * Passing an invalid reference to the AXObserver API does not simply trigger an error,
+             * but causes a full on segmentation fault. */
+
+            usleep(0.5 * MICROSEC_PER_SEC);
+            if(AXLibAddApplicationObserver(Application, Callback))
+            {
+                printf("    plugin: subscribed to '%s' notifications\n", Application->Name);
+            }
+
+            // macos_window **WindowList = ApplicationWindowList(Application);
+            // free(WindowList);
+        }
     }
 }
 
