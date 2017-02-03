@@ -3,7 +3,8 @@ BUILD_PATH		= ./../../../plugins
 SRC				= ./plugin.cpp ./overlay.mm \
 				  ./../../common/accessibility/application.cpp \
 				  ./../../common/accessibility/element.cpp \
-				  ./../../common/accessibility/observer.cpp
+				  ./../../common/accessibility/observer.cpp \
+				  ./../../common/dispatch/workspace.mm
 BINS			= $(BUILD_PATH)/border.so
 LINK			= -shared -fPIC -framework Carbon -framework Cocoa -framework ApplicationServices
 
