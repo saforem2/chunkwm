@@ -8,8 +8,18 @@
 
 #include "callback.h"
 #include "plugin.h"
+#include "wqueue.h"
 
-extern "C" void NSApplicationLoad();
+#include "../common/dispatch/workspace.mm"
+#include "dispatch/carbon.cpp"
+#include "dispatch/event.cpp"
+#include "dispatch/workspace.mm"
+#include "dispatch/display.cpp"
+
+#include "callback.cpp"
+#include "plugin.cpp"
+#include "wqueue.cpp"
+
 int main(int Count, char **Args)
 {
     NSApplicationLoad();

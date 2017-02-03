@@ -1,9 +1,6 @@
 BUILD_FLAGS		= -O0 -g -std=c++11 -Wall -Wno-deprecated
 BUILD_PATH		= ./bin
-SRC				= ./src/core/chunkwm.cpp ./src/core/callback.cpp \
-				  ./src/core/plugin.cpp ./src/core/wqueue.cpp \
-				  ./src/core/dispatch/carbon.cpp ./src/core/dispatch/event.cpp \
-				  ./src/core/dispatch/workspace.mm ./src/core/dispatch/display.cpp
+SRC				= ./src/core/chunkwm.mm
 BINS			= $(BUILD_PATH)/chunkwm
 LINK			= -ldl -lpthread -framework Carbon -framework Cocoa
 
