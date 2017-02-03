@@ -66,6 +66,37 @@ AddWindowToCollection(macos_window *Window)
 #include <vector>
 #include <queue>
 
+internal std::vector<macos_application *>
+RunningProcesses()
+{
+    std::vector<macos_application *> Applications;
+    ProcessSerialNumber PSN = { kNoProcess, kNoProcess };
+    while(GetNextProcess(&PSN) == noErr)
+    {
+        carbon_application_details *Info = BeginCarbonApplicationDetails(PSN);
+
+        /* NOTE(koekeishiya):
+         * ProcessPolicy == 0     -> Appears in Dock, default for bundled applications.
+         * ProcessPolicy == 1     -> Does not appear in Dock. Can create windows.
+         *                           LSUIElement is set to 1.
+         * ProcessPolicy == 2     -> Does not appear in Dock, cannot create windows.
+         *                           LSBackgroundOnly is set to 1.
+         * ProcessBackground == 1 -> Process is a background only process. */
+
+        if((Info->ProcessBackground == 0) &&
+           (Info->ProcessPolicy != 2))
+        {
+            macos_application *Application =
+                AXLibConstructApplication(Info->PSN, Info->PID, Info->ProcessName);
+            Applications.push_back(Application);
+        }
+
+        EndCarbonApplicationDetails(Info);
+    }
+
+    return Applications;
+}
+
 node *FindFirstMinDepthLeafNode(node *Root)
 {
     std::queue<node *> Queue;
@@ -494,13 +525,22 @@ Init()
     Assert(DisplayCount != 0);
     MainDisplay = DisplayList[0];
 
-    macos_application *Application = AXLibConstructFocusedApplication();
-    macos_window **WindowList = ApplicationWindowList(Application);
+    std::vector<macos_application *> Applications = RunningProcesses();
+    for(size_t Index = 0; Index < Applications.size(); ++Index)
+    {
+        macos_application *Application = Applications[Index];
+        macos_window **WindowList = ApplicationWindowList(Application);
 
-    AppendApplicationWindowList(WindowList);
+        AddApplication(Application);
+        AXLibAddApplicationObserver(Application, Callback);
 
-    AXLibDestroyApplication(Application);
-    free(WindowList);
+        if(WindowList)
+        {
+            AppendApplicationWindowList(WindowList);
+        }
+
+        free(WindowList);
+    }
 
     CreateWindowTree(MainDisplay);
 #if 0
