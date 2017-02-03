@@ -15,47 +15,44 @@
 internal macos_application *Application;
 internal pid_t LastLaunchedPID;
 
+internal void
+UpdateWindow(AXUIElementRef WindowRef)
+{
+    CGPoint Position = AXLibGetWindowPosition(WindowRef);
+    CGSize Size = AXLibGetWindowSize(WindowRef);
+    UpdateBorder(Position.x, Position.y, Size.width, Size.height);
+}
+
+internal void
+UpdateIfFocusedWindow(AXUIElementRef Element)
+{
+    AXUIElementRef WindowRef = AXLibGetFocusedWindow(Application->Ref);
+    if(CFEqual(WindowRef, Element))
+    {
+        UpdateWindow(WindowRef);
+    }
+    CFRelease(WindowRef);
+}
+
 internal
 OBSERVER_CALLBACK(Callback)
 {
     if(CFEqual(Notification, kAXFocusedWindowChangedNotification))
     {
-        CGPoint Position = AXLibGetWindowPosition(Element);
-        CGSize Size = AXLibGetWindowSize(Element);
-        UpdateBorder(Position.x, Position.y, Size.width, Size.height);
+        UpdateWindow(Element);
     }
     else if(CFEqual(Notification, kAXWindowMovedNotification))
     {
-        AXUIElementRef WindowRef = AXLibGetFocusedWindow(Application->Ref);
-        if(CFEqual(WindowRef, Element))
-        {
-            CGPoint Position = AXLibGetWindowPosition(WindowRef);
-            CGSize Size = AXLibGetWindowSize(WindowRef);
-            UpdateBorder(Position.x, Position.y, Size.width, Size.height);
-        }
-        CFRelease(WindowRef);
+        UpdateIfFocusedWindow(Element);
     }
     else if(CFEqual(Notification, kAXWindowResizedNotification))
     {
-        AXUIElementRef WindowRef = AXLibGetFocusedWindow(Application->Ref);
-        if(CFEqual(WindowRef, Element))
-        {
-            CGPoint Position = AXLibGetWindowPosition(WindowRef);
-            CGSize Size = AXLibGetWindowSize(WindowRef);
-            UpdateBorder(Position.x, Position.y, Size.width, Size.height);
-        }
-        CFRelease(WindowRef);
+        UpdateIfFocusedWindow(Element);
     }
-    /*
     else if(CFEqual(Notification, kAXWindowMiniaturizedNotification))
     {
-        printf("kAXWindowMiniaturizedNotification\n");
+        UpdateIfFocusedWindow(Element);
     }
-    else if(CFEqual(Notification, kAXWindowDeminiaturizedNotification))
-    {
-        printf("kAXWindowDeminiaturizedNotification\n");
-    }
-    */
 }
 
 internal void
@@ -64,9 +61,7 @@ UpdateBorderHelper(macos_application *Application)
     AXUIElementRef WindowRef = AXLibGetFocusedWindow(Application->Ref);
     if(WindowRef)
     {
-        CGPoint Position = AXLibGetWindowPosition(WindowRef);
-        CGSize Size = AXLibGetWindowSize(WindowRef);
-        UpdateBorder(Position.x, Position.y, Size.width, Size.height);
+        UpdateWindow(WindowRef);
         CFRelease(WindowRef);
     }
     else
@@ -80,6 +75,7 @@ UpdateBorderHelper(macos_application *Application)
     }
 }
 
+#define MICROSEC_PER_SEC 1e6
 macos_application *FrontApplication()
 {
     macos_application *Result = AXLibConstructFocusedApplication();
@@ -87,10 +83,8 @@ macos_application *FrontApplication()
     {
         if(LastLaunchedPID == Result->PID)
         {
-            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.5 * NSEC_PER_SEC), dispatch_get_main_queue(),
-            ^{
-                UpdateBorderHelper(Result);
-            });
+            usleep(0.5 * MICROSEC_PER_SEC);
+            UpdateBorderHelper(Result);
             LastLaunchedPID = 0;
         }
         else
