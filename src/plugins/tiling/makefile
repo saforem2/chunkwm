@@ -6,6 +6,8 @@ SRC				= ./plugin.cpp ./node.cpp ./region.cpp \
 				  ./../../common/accessibility/window.cpp \
 				  ./../../common/accessibility/element.cpp \
 				  ./../../common/accessibility/observer.cpp \
+				  ./../../common/dispatch/carbon.cpp \
+				  ./../../common/dispatch/workspace.mm \
 				  ./../../common/dispatch/cgeventtap.cpp \
 				  ./../../common/ipc/daemon.cpp
 BINS			= $(BUILD_PATH)/tiling.so
