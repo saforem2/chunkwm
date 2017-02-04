@@ -1,4 +1,5 @@
 #include "application.h"
+#include "../dispatch/carbon.h"
 #include "../dispatch/workspace.h"
 
 #define internal static
@@ -7,6 +8,7 @@
  * NOTE(koekeishiya): The following files must also be linked against:
  *
  * common/accessibility/observer.cpp
+ * common/dispatch/carbon.cpp
  * common/dispatch/workspace.mm
  *
  * */
@@ -109,6 +111,53 @@ bool AXLibAddApplicationObserver(macos_application *Application, ObserverCallbac
 
     return Result;
 }
+
+/* NOTE(koekeishiya): Passing 'Process_Policy_Regular | Process_Policy_LSUIElement'
+ * will filter out any process marked as background-only. */
+std::vector<macos_application *> AXLibRunningProcesses(uint32_t ProcessFlags)
+{
+    std::vector<macos_application *> Applications;
+    ProcessSerialNumber PSN = { kNoProcess, kNoProcess };
+    while(GetNextProcess(&PSN) == noErr)
+    {
+        carbon_application_details *Info = BeginCarbonApplicationDetails(PSN);
+
+        bool ValidateProcessPolicy = true;
+        bool ValidateProcessBackground = true;
+
+        if(!(ProcessFlags & Process_Policy_Regular))
+        {
+            ValidateProcessPolicy = Info->ProcessPolicy != PROCESS_POLICY_REGULAR;
+        }
+
+        if(!(ProcessFlags & Process_Policy_LSUIElement))
+        {
+            ValidateProcessPolicy = Info->ProcessPolicy != PROCESS_POLICY_LSUIELEMENT;
+        }
+
+        if(!(ProcessFlags & Process_Policy_LSBackgroundOnly))
+        {
+            ValidateProcessPolicy = Info->ProcessPolicy != PROCESS_POLICY_LSBACKGROUND_ONLY;
+        }
+
+        if(!(ProcessFlags & Process_Policy_CarbonBackgroundOnly))
+        {
+            ValidateProcessBackground = Info->ProcessBackground == false;
+        }
+
+        if(ValidateProcessPolicy && ValidateProcessBackground)
+        {
+            macos_application *Application =
+                AXLibConstructApplication(Info->PSN, Info->PID, Info->ProcessName);
+            Applications.push_back(Application);
+        }
+
+        EndCarbonApplicationDetails(Info);
+    }
+
+    return Applications;
+}
+
 
 /* NOTE(koekeishiya): Wrap the frontmost application inside a macos_application struct.
  * The caller is responsible for calling 'AXLibDestroyApplication()'. */
