@@ -532,7 +532,7 @@ Init()
 
     uint32_t ProcessPolicy = Process_Policy_Regular | Process_Policy_LSUIElement;
     std::vector<macos_application *> Applications = AXLibRunningProcesses(ProcessPolicy);
-    printf("GOT %ld PROCESSES\n", Applications.size());
+
     for(size_t Index = 0; Index < Applications.size(); ++Index)
     {
         macos_application *Application = Applications[Index];
