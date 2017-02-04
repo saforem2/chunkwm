@@ -347,8 +347,9 @@ void ApplicationLaunchedHandler(const char *Data)
     carbon_application_details *Info =
         (carbon_application_details *) Data;
 
-    if((Info->ProcessBackground == 0) &&
-       (Info->ProcessPolicy != 2))
+    // NOTE(koekeishiya): We do not care about background-only applications.
+    if((!Info->ProcessBackground) &&
+       (Info->ProcessPolicy != PROCESS_POLICY_LSBACKGROUND_ONLY))
     {
         macos_application *Application = AXLibConstructApplication(Info->PSN, Info->PID, Info->ProcessName);
         if(Application)
