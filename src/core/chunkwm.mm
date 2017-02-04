@@ -22,9 +22,26 @@
 #include "plugin.cpp"
 #include "wqueue.cpp"
 
+#define internal static
+#define local_persist static
+
+internal inline AXUIElementRef
+SystemWideElement()
+{
+    local_persist AXUIElementRef Element;
+    local_persist dispatch_once_t Token;
+
+    dispatch_once(&Token, ^{
+        Element = AXUIElementCreateSystemWide();
+    });
+
+    return Element;
+}
+
 int main(int Count, char **Args)
 {
     NSApplicationLoad();
+    AXUIElementSetMessagingTimeout(SystemWideElement(), 1.0);
 
     carbon_event_handler Carbon = {};
     if(BeginCarbonEventHandler(&Carbon))
