@@ -83,7 +83,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_ApplicationLaunched)
 {
     carbon_application_details *Info =
         (carbon_application_details *) Event->Context;
-    printf("%d: Launched '%s'\n", Info->PID, Info->ProcessName);
+    printf("%d:%s launched\n", Info->PID, Info->ProcessName);
 
 #if 0
     ProcessPluginList(chunkwm_export_application_launched);
@@ -98,7 +98,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_ApplicationTerminated)
 {
     carbon_application_details *Info =
         (carbon_application_details *) Event->Context;
-    printf("%d: Terminated '%s'\n", Info->PID, Info->ProcessName);
+    printf("%d:%s terminated\n", Info->PID, Info->ProcessName);
 
 #if 0
     ProcessPluginList(chunkwm_export_application_terminated);
@@ -113,7 +113,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_ApplicationActivated)
 {
     workspace_application_details *Info =
         (workspace_application_details *) Event->Context;
-    printf("%d: Activated '%s'\n", Info->PID, Info->ProcessName);
+    printf("%d:%s activated\n", Info->PID, Info->ProcessName);
 
 #if 0
     ProcessPluginList(chunkwm_export_application_activated);
@@ -128,7 +128,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_ApplicationDeactivated)
 {
     workspace_application_details *Info =
         (workspace_application_details *) Event->Context;
-    printf("%d: Deactivated '%s'\n", Info->PID, Info->ProcessName);
+    printf("%d:%s deactivated\n", Info->PID, Info->ProcessName);
 
 #if 0
     ProcessPluginList(chunkwm_export_application_deactivated);
@@ -143,7 +143,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_ApplicationVisible)
 {
     workspace_application_details *Info =
         (workspace_application_details *) Event->Context;
-    printf("%d: Show '%s'\n", Info->PID, Info->ProcessName);
+    printf("%d:%s visible\n", Info->PID, Info->ProcessName);
 
 #if 0
     ProcessPluginList(chunkwm_export_application_unhidden);
@@ -158,7 +158,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_ApplicationHidden)
 {
     workspace_application_details *Info =
         (workspace_application_details *) Event->Context;
-    printf("%d: Hide '%s'\n", Info->PID, Info->ProcessName);
+    printf("%d:%s hidden\n", Info->PID, Info->ProcessName);
 
 #if 0
     ProcessPluginList(chunkwm_export_application_hidden);
@@ -184,7 +184,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_DisplayAdded)
 {
     CGDirectDisplayID *DisplayId
         = (CGDirectDisplayID *) Event->Context;
-    printf("%d: Display added\n", *DisplayId);
+    printf("%d: display added\n", *DisplayId);
 
 #if 0
     ProcessPluginList(chunkwm_export_display_added);
@@ -199,7 +199,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_DisplayRemoved)
 {
     CGDirectDisplayID *DisplayId
         = (CGDirectDisplayID *) Event->Context;
-    printf("%d: Display removed\n", *DisplayId);
+    printf("%d: display removed\n", *DisplayId);
 
 #if 0
     ProcessPluginList(chunkwm_export_display_removed);
@@ -214,7 +214,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_DisplayMoved)
 {
     CGDirectDisplayID *DisplayId
         = (CGDirectDisplayID *) Event->Context;
-    printf("%d: Display moved\n", *DisplayId);
+    printf("%d: display moved\n", *DisplayId);
 
 #if 0
     ProcessPluginList(chunkwm_export_display_moved);
@@ -229,7 +229,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_DisplayResized)
 {
     CGDirectDisplayID *DisplayId
         = (CGDirectDisplayID *) Event->Context;
-    printf("%d: Display resolution changed\n", *DisplayId);
+    printf("%d: display resolution changed\n", *DisplayId);
 
 
 #if 0
