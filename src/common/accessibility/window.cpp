@@ -11,12 +11,6 @@
  *
  * */
 
-internal inline void
-AddFlags(macos_window *Window, uint32_t Flag)
-{
-    Window->Flags |= Flag;
-}
-
 // NOTE(koekeishiya): Caller is responsible for calling 'AXLibDestroyWindow()'. */
 macos_window *AXLibConstructWindow(macos_application *Application, AXUIElementRef WindowRef)
 {
@@ -35,13 +29,13 @@ macos_window *AXLibConstructWindow(macos_application *Application, AXUIElementRe
     Window->Size = AXLibGetWindowSize(Window->Ref);
 
     if(AXLibIsWindowMovable(Window->Ref))
-        AddFlags(Window, Window_Movable);
+        AXLibAddFlags(Window, Window_Movable);
 
     if(AXLibIsWindowResizable(Window->Ref))
-        AddFlags(Window, Window_Resizable);
+        AXLibAddFlags(Window, Window_Resizable);
 
     if(AXLibIsWindowMinimized(Window->Ref))
-        AddFlags(Window, Window_Minimized);
+        AXLibAddFlags(Window, Window_Minimized);
 
     return Window;
 }

@@ -43,4 +43,23 @@ macos_window **AXLibWindowListForApplication(macos_application *Application);
  * bool AXLibWindowHasCustomRole(macos_window *Window, CFTypeRef Role);
  * */
 
+inline void
+AXLibAddFlags(macos_window *Window, uint32_t Flag)
+{
+    Window->Flags |= Flag;
+}
+
+inline void
+AXLibClearFlags(macos_window *Window, uint32_t Flag)
+{
+    Window->Flags &= ~Flag;
+}
+
+inline bool
+AXLibHasFlags(macos_window *Window, uint32_t Flag)
+{
+    bool Result = ((Window->Flags & Flag) != 0);
+    return Result;
+}
+
 #endif
