@@ -25,11 +25,14 @@ internal void
 UpdateIfFocusedWindow(AXUIElementRef Element)
 {
     AXUIElementRef WindowRef = AXLibGetFocusedWindow(Application->Ref);
-    if(CFEqual(WindowRef, Element))
+    if(WindowRef)
     {
-        UpdateWindow(WindowRef);
+        if(CFEqual(WindowRef, Element))
+        {
+            UpdateWindow(WindowRef);
+        }
+        CFRelease(WindowRef);
     }
-    CFRelease(WindowRef);
 }
 
 internal void
