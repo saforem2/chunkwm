@@ -1,7 +1,9 @@
 #include "carbon.h"
 #include "event.h"
+
 #include <string.h>
 #include <unordered_map>
+
 #define internal static
 
 struct psn_hash {
@@ -31,21 +33,6 @@ typedef std::unordered_map<ProcessSerialNumber, carbon_application_details *, ps
  * application using GetProcessInformation and have to cache the information in advance.
  * */
 internal carbon_application_cache CarbonApplicationCache;
-
-internal carbon_application_details *
-CopyCarbonApplicationDetails(carbon_application_details *Info)
-{
-    carbon_application_details *Result =
-        (carbon_application_details *) malloc(sizeof(carbon_application_details));
-
-    Result->PID = Info->PID;
-    Result->PSN = Info->PSN;
-    Result->ProcessPolicy = Info->ProcessPolicy;
-    Result->ProcessBackground = Info->ProcessBackground;
-    Result->ProcessName = strdup(Info->ProcessName);
-
-    return Result;
-}
 
 internal carbon_application_details *
 SearchCarbonApplicationDetailsCache(ProcessSerialNumber PSN)
@@ -112,8 +99,7 @@ CarbonApplicationEventHandler(EventHandlerCallRef HandlerCallRef, EventRef Event
         case kEventAppLaunched:
         {
             carbon_application_details *Info = BeginCarbonApplicationDetails(PSN);
-            carbon_application_details *Copy = CopyCarbonApplicationDetails(Info);
-            CarbonApplicationCache[PSN] = Copy;
+            CarbonApplicationCache[PSN] = Info;
             ConstructEvent(ChunkWM_ApplicationLaunched, Info);
         } break;
         case kEventAppTerminated:

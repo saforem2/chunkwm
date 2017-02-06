@@ -4,16 +4,14 @@
 
 #include "../../api/plugin_api.h"
 #include "../../common/accessibility/application.h"
+#include "../../common/accessibility/window.h"
 #include "../../common/accessibility/element.h"
-#include "../../common/accessibility/observer.h"
-#include "../../common/dispatch/carbon.h"
-#include "../../common/dispatch/workspace.h"
+
 #include "overlay.h"
 
 #define internal static
 
 internal macos_application *Application;
-internal pid_t LastLaunchedPID;
 
 internal void
 UpdateWindow(AXUIElementRef WindowRef)
@@ -34,30 +32,12 @@ UpdateIfFocusedWindow(AXUIElementRef Element)
     CFRelease(WindowRef);
 }
 
-internal
-OBSERVER_CALLBACK(Callback)
-{
-    if(CFEqual(Notification, kAXFocusedWindowChangedNotification))
-    {
-        UpdateWindow(Element);
-    }
-    else if(CFEqual(Notification, kAXWindowMovedNotification))
-    {
-        UpdateIfFocusedWindow(Element);
-    }
-    else if(CFEqual(Notification, kAXWindowResizedNotification))
-    {
-        UpdateIfFocusedWindow(Element);
-    }
-    else if(CFEqual(Notification, kAXWindowMiniaturizedNotification))
-    {
-        UpdateIfFocusedWindow(Element);
-    }
-}
-
 internal void
-UpdateBorderHelper(macos_application *Application)
+ApplicationActivatedHandler(const char *Data)
 {
+    macos_application *Context = (macos_application *) Data;
+    Application = Context;
+
     AXUIElementRef WindowRef = AXLibGetFocusedWindow(Application->Ref);
     if(WindowRef)
     {
@@ -68,54 +48,69 @@ UpdateBorderHelper(macos_application *Application)
     {
         UpdateBorder(0, 0, 0, 0);
     }
+}
 
-    if(AXLibAddApplicationObserver(Application, Callback))
+internal void
+ApplicationDeactivatedHandler(const char *Data)
+{
+    macos_application *Context = (macos_application *) Data;
+    if(Application == Context)
     {
-        printf("    plugin: subscribed to '%s' notifications\n", Application->Name);
+        Application = NULL;
+        UpdateBorder(0, 0, 0, 0);
     }
 }
 
-#define MICROSEC_PER_SEC 1e6
-macos_application *FrontApplication()
+internal void
+WindowFocusedHandler(const char *Data)
 {
-    macos_application *Result = AXLibConstructFocusedApplication();
-    if(Result)
+    macos_window *Window = (macos_window *) Data;
+    if((Window->Owner == Application) &&
+       (AXLibIsWindowStandard(Window)))
     {
-        if(LastLaunchedPID == Result->PID)
+        UpdateWindow(Window->Ref);
+    }
+}
+
+internal void
+WindowDestroyedHandler(const char *Data)
+{
+    macos_window *Window = (macos_window *) Data;
+
+    if(Window->Owner == Application)
+    {
+        AXUIElementRef WindowRef = AXLibGetFocusedWindow(Window->Owner->Ref);
+        if(WindowRef)
         {
-            usleep(0.5 * MICROSEC_PER_SEC);
-            UpdateBorderHelper(Result);
-            LastLaunchedPID = 0;
+            UpdateWindow(WindowRef);
+            CFRelease(WindowRef);
         }
         else
         {
-            UpdateBorderHelper(Result);
+            UpdateBorder(0, 0, 0, 0);
         }
     }
-    else
-    {
-        UpdateBorder(0, 0, 0, 0);
-    }
-
-    return Result;
 }
 
-void ApplicationLaunchedHandler(const char *Data)
+internal void
+WindowMovedHandler(const char *Data)
 {
-    carbon_application_details *Info =
-        (carbon_application_details *) Data;
-    LastLaunchedPID = Info->PID;
+    macos_window *Window = (macos_window *) Data;
+    UpdateIfFocusedWindow(Window->Ref);
 }
 
-void ApplicationActivatedHandler(const char *Data)
+internal void
+WindowResizedHandler(const char *Data)
 {
-    if(Application)
-    {
-        AXLibDestroyApplication(Application);
-        Application = NULL;
-    }
+    macos_window *Window = (macos_window *) Data;
+    UpdateIfFocusedWindow(Window->Ref);
+}
 
-    Application = FrontApplication();
+internal void
+WindowMinimizedHandler(const char *Data)
+{
+    macos_window *Window = (macos_window *) Data;
+    UpdateIfFocusedWindow(Window->Ref);
 }
 
 inline bool
@@ -138,9 +133,34 @@ PLUGIN_MAIN_FUNC(PluginMain)
         ApplicationActivatedHandler(Data);
         return true;
     }
-    else if(StringsAreEqual(Node, "chunkwm_export_application_launched"))
+    else if(StringsAreEqual(Node, "chunkwm_export_application_deactivated"))
     {
-        ApplicationLaunchedHandler(Data);
+        ApplicationDeactivatedHandler(Data);
+        return true;
+    }
+    else if(StringsAreEqual(Node, "chunkwm_export_window_destroyed"))
+    {
+        WindowDestroyedHandler(Data);
+        return true;
+    }
+    else if(StringsAreEqual(Node, "chunkwm_export_window_focused"))
+    {
+        WindowFocusedHandler(Data);
+        return true;
+    }
+    else if(StringsAreEqual(Node, "chunkwm_export_window_moved"))
+    {
+        WindowMovedHandler(Data);
+        return true;
+    }
+    else if(StringsAreEqual(Node, "chunkwm_export_window_resized"))
+    {
+        WindowResizedHandler(Data);
+        return true;
+    }
+    else if(StringsAreEqual(Node, "chunkwm_export_window_minimized"))
+    {
+        WindowMinimizedHandler(Data);
         return true;
     }
     else if(StringsAreEqual(Node, "chunkwm_export_space_changed"))
@@ -161,7 +181,6 @@ PLUGIN_BOOL_FUNC(PluginInit)
     printf("Plugin Init!\n");
 
     CreateBorder(0, 0, 0, 0);
-    Application = FrontApplication();
     return true;
 }
 
@@ -183,7 +202,14 @@ CHUNKWM_PLUGIN_VTABLE(PluginInit, PluginDeInit, PluginMain)
 chunkwm_plugin_export Subscriptions[] =
 {
     chunkwm_export_application_activated,
-    chunkwm_export_application_launched,
+    chunkwm_export_application_deactivated,
+
+    chunkwm_export_window_focused,
+    chunkwm_export_window_destroyed,
+    chunkwm_export_window_moved,
+    chunkwm_export_window_resized,
+    chunkwm_export_window_minimized,
+
     chunkwm_export_space_changed,
 };
 CHUNKWM_PLUGIN_SUBSCRIBE(Subscriptions)

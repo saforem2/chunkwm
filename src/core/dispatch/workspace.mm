@@ -1,5 +1,6 @@
 #import <Cocoa/Cocoa.h>
-#import "workspace.h"
+
+#include "workspace.h"
 #include "event.h"
 
 #define internal static
@@ -33,7 +34,7 @@ BeginWorkspaceApplicationDetails(NSNotification *Notification)
     }
     else
     {
-        Info->ProcessName = strdup("<Unknown Name>");
+        Info->ProcessName = strdup("<unknown>");
     }
 
     return Info;

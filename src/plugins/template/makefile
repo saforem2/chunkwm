@@ -2,7 +2,7 @@ BUILD_FLAGS		= -O0 -g -std=c++11 -Wall
 BUILD_PATH		= ./../../../plugins
 SRC				= ./plugin.cpp
 BINS			= $(BUILD_PATH)/template.so
-LINK			= -shared -fPIC -framework Carbon -framework ApplicationServices
+LINK			= -shared -fPIC -framework Carbon -framework Cocoa -framework ApplicationServices
 
 all: $(BINS)
 

@@ -6,9 +6,15 @@
 #include "dispatch/display.h"
 #include "dispatch/event.h"
 
+#include "state.h"
 #include "callback.h"
 #include "plugin.h"
 #include "wqueue.h"
+
+#include "../common/accessibility/observer.cpp"
+#include "../common/accessibility/application.cpp"
+#include "../common/accessibility/window.cpp"
+#include "../common/accessibility/element.cpp"
 
 #include "../common/dispatch/carbon.cpp"
 #include "../common/dispatch/workspace.mm"
@@ -18,6 +24,7 @@
 #include "dispatch/event.cpp"
 #include "dispatch/display.cpp"
 
+#include "state.cpp"
 #include "callback.cpp"
 #include "plugin.cpp"
 #include "wqueue.cpp"
@@ -52,8 +59,19 @@ int main(int Count, char **Args)
 
         BeginPlugins();
 
-        StartEventLoop();
-        CFRunLoopRun();
+        if(InitState())
+        {
+            StartEventLoop();
+            CFRunLoopRun();
+        }
+        else
+        {
+            fprintf(stderr, "chunkwm: failed to initialize critical mutex! abort..\n");
+        }
+    }
+    else
+    {
+        fprintf(stderr, "chunkwm: failed to install carbon eventhandler! abort..\n");
     }
 
     return EXIT_SUCCESS;

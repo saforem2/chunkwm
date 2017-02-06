@@ -190,7 +190,7 @@ uint32_t AXLibGetWindowID(AXUIElementRef WindowRef)
 // NOTE(koekeishiya): Caller frees memory.
 char *AXLibGetWindowTitle(AXUIElementRef WindowRef)
 {
-    char *Result = strdup("<unknown>");
+    char *Result = NULL;
 
     CFStringRef WindowTitleRef = (CFStringRef) AXLibGetWindowProperty(WindowRef, kAXTitleAttribute);
     if(WindowTitleRef)
@@ -202,6 +202,11 @@ char *AXLibGetWindowTitle(AXUIElementRef WindowRef)
         {
             Result = WindowTitle;
         }
+    }
+
+    if(!Result)
+    {
+        Result = strdup("<unknown>");
     }
 
     return Result;

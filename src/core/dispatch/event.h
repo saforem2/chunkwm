@@ -24,6 +24,17 @@ extern CHUNKWM_CALLBACK(Callback_ChunkWM_DisplayChanged);
 
 extern CHUNKWM_CALLBACK(Callback_ChunkWM_SpaceChanged);
 
+extern CHUNKWM_CALLBACK(Callback_ChunkWM_WindowCreated);
+extern CHUNKWM_CALLBACK(Callback_ChunkWM_WindowDestroyed);
+extern CHUNKWM_CALLBACK(Callback_ChunkWM_WindowFocused);
+extern CHUNKWM_CALLBACK(Callback_ChunkWM_WindowMoved);
+extern CHUNKWM_CALLBACK(Callback_ChunkWM_WindowResized);
+extern CHUNKWM_CALLBACK(Callback_ChunkWM_WindowMinimized);
+extern CHUNKWM_CALLBACK(Callback_ChunkWM_WindowDeminimized);
+
+// NOTE(koekeishiya): This property is not exposed to plugins
+extern CHUNKWM_CALLBACK(Callback_ChunkWM_WindowTitleChanged);
+
 enum event_type
 {
     ChunkWM_ApplicationLaunched,
@@ -39,6 +50,17 @@ enum event_type
     ChunkWM_DisplayResized,
     ChunkWM_DisplayChanged,
     ChunkWM_SpaceChanged,
+
+    ChunkWM_WindowCreated,
+    ChunkWM_WindowDestroyed,
+    ChunkWM_WindowFocused,
+    ChunkWM_WindowMoved,
+    ChunkWM_WindowResized,
+    ChunkWM_WindowMinimized,
+    ChunkWM_WindowDeminimized,
+
+    // NOTE(koekeishiya): This property is not exposed to plugins
+    ChunkWM_WindowTitleChanged,
 };
 
 struct chunk_event

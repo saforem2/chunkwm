@@ -3,7 +3,7 @@
 #include <string.h>
 
 #include "../../api/plugin_api.h"
-#include "../../common/dispatch/carbon.h"
+#include "../../common/accessibility/application.h"
 
 inline bool
 StringsAreEqual(const char *A, const char *B)
@@ -22,18 +22,14 @@ PLUGIN_MAIN_FUNC(PluginMain)
 {
     if(StringsAreEqual(Node, "chunkwm_export_application_launched"))
     {
-        carbon_application_details *Info =
-            (carbon_application_details *) Data;
-
-        printf("    plugin template: launched: '%s'\n", Info->ProcessName);
+        macos_application *Application = (macos_application *) Data;
+        printf("    plugin template: launched: '%s'\n", Application->Name);
         return true;
     }
     else if(StringsAreEqual(Node, "chunkwm_export_application_terminated"))
     {
-        carbon_application_details *Info =
-            (carbon_application_details *) Data;
-
-        printf("    plugin template: terminated: '%s'\n", Info->ProcessName);
+        macos_application *Application = (macos_application *) Data;
+        printf("    plugin template: terminated: '%s'\n", Application->Name);
         return true;
     }
 
