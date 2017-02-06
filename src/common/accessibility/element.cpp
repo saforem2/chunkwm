@@ -8,10 +8,11 @@ char *CopyCFStringToC(CFStringRef String)
     CFStringEncoding Encoding = kCFStringEncodingUTF8;
     CFIndex Length = CFStringGetLength(String);
     CFIndex Bytes = CFStringGetMaximumSizeForEncoding(Length, Encoding);
-
     char *CString = (char *) malloc(Bytes + 1);
-    CFStringGetCString(String, CString, Bytes + 1, Encoding);
-    if(CString)
+
+    // NOTE(koekeishiya): Boolean: typedef -> unsigned char; false = 0, true != 0
+    Boolean Success = CFStringGetCString(String, CString, Bytes + 1, Encoding);
+    if(Success)
     {
         Result = CString;
     }
