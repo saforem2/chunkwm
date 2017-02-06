@@ -1,5 +1,6 @@
 #include "window.h"
 #include "element.h"
+#include "application.h"
 
 #define internal static
 
@@ -45,6 +46,31 @@ macos_window *AXLibConstructWindow(macos_application *Application, AXUIElementRe
     return Window;
 }
 
+macos_window *AXLibCopyWindow(macos_window *Window)
+{
+    macos_window *Result = (macos_window *) malloc(sizeof(macos_window));
+    memset(Result, 0, sizeof(macos_window));
+
+    Result->Ref = (AXUIElementRef) CFRetain(Window->Ref);
+
+    if(Window->Mainrole)
+        Result->Mainrole = (AXUIElementRef) CFRetain(Window->Mainrole);
+
+    if(Window->Subrole)
+        Result->Subrole = (AXUIElementRef) CFRetain(Window->Subrole);
+
+    Result->Owner = Window->Owner;
+    Result->Id = Window->Id;
+    Result->Name = strdup(Window->Name);
+
+    Result->Position = Window->Position;
+    Result->Size = Window->Size;
+
+    Result->Flags = Window->Flags;
+
+    return Result;
+}
+
 /* NOTE(koekeishiya): The caller is responsible for passing a valid window! */
 bool AXLibIsWindowStandard(macos_window *Window)
 {
@@ -78,6 +104,31 @@ bool AXLibWindowHasCustomRole(macos_window *Window, CFTypeRef Role)
 }
 
 */
+
+// NOTE(koekeishiya): Caller is responsible for memory.
+macos_window **AXLibWindowListForApplication(macos_application *Application)
+{
+    macos_window **WindowList = NULL;
+
+    CFArrayRef Windows = (CFArrayRef) AXLibGetWindowProperty(Application->Ref, kAXWindowsAttribute);
+    if(Windows)
+    {
+        CFIndex Count = CFArrayGetCount(Windows);
+        WindowList = (macos_window **) malloc((Count + 1) * sizeof(macos_window *));
+        WindowList[Count] = NULL;
+
+        for(CFIndex Index = 0; Index < Count; ++Index)
+        {
+            AXUIElementRef Ref = (AXUIElementRef) CFArrayGetValueAtIndex(Windows, Index);
+            macos_window *Window = AXLibConstructWindow(Application, Ref);
+            WindowList[Index] = Window;
+        }
+
+        CFRelease(Windows);
+    }
+
+    return WindowList;
+}
 
 /* NOTE(koekeishiya): The caller is responsible for passing a valid window! */
 void AXLibDestroyWindow(macos_window *Window)

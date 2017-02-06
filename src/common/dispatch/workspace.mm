@@ -16,7 +16,7 @@ char *WorkspaceCopyProcessNameAndPolicy(pid_t PID, uint32_t *ProcessPolicy)
 
     if(!ProcessName)
     {
-        ProcessName = strdup("<Unknown>");
+        ProcessName = strdup("<unknown>");
     }
 
     return ProcessName;
@@ -37,7 +37,7 @@ char *WorkspaceCopyProcessName(pid_t PID)
 
     if(!ProcessName)
     {
-        ProcessName = strdup("<Unknown>");
+        ProcessName = strdup("<unknown>");
     }
 
     return ProcessName;

@@ -158,7 +158,6 @@ std::vector<macos_application *> AXLibRunningProcesses(uint32_t ProcessFlags)
     return Applications;
 }
 
-
 /* NOTE(koekeishiya): Wrap the frontmost application inside a macos_application struct.
  * The caller is responsible for calling 'AXLibDestroyApplication()'. */
 macos_application *AXLibConstructFocusedApplication()

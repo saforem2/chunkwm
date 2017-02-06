@@ -14,6 +14,5 @@ struct carbon_event_handler
 
 bool BeginCarbonEventHandler(carbon_event_handler *Carbon);
 bool EndCarbonEventHandler(carbon_event_handler *Carbon);
-void EndCarbonApplicationDetails(carbon_application_details *Info);
 
 #endif

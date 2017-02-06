@@ -7,9 +7,7 @@ SRC				= ./plugin.cpp ./node.cpp ./region.cpp \
 				  ./../../common/accessibility/element.cpp \
 				  ./../../common/accessibility/observer.cpp \
 				  ./../../common/dispatch/carbon.cpp \
-				  ./../../common/dispatch/workspace.mm \
-				  ./../../common/dispatch/cgeventtap.cpp \
-				  ./../../common/ipc/daemon.cpp
+				  ./../../common/dispatch/workspace.mm
 BINS			= $(BUILD_PATH)/tiling.so
 LINK			= -shared -fPIC -framework Carbon -framework Cocoa -framework ApplicationServices
 

@@ -11,9 +11,6 @@
 #include "../../common/accessibility/element.h"
 #include "../../common/accessibility/observer.h"
 #include "../../common/dispatch/carbon.h"
-#include "../../common/dispatch/workspace.h"
-#include "../../common/dispatch/cgeventtap.h"
-#include "../../common/ipc/daemon.h"
 
 #include "region.h"
 #include "node.h"
@@ -34,14 +31,11 @@ extern "C" CGSConnectionID _CGSDefaultConnection(void);
 extern "C" CGError CGSGetOnScreenWindowCount(const CGSConnectionID CID, CGSConnectionID TID, int *Count);
 extern "C" CGError CGSGetOnScreenWindowList(const CGSConnectionID CID, CGSConnectionID TID, int Count, int *List, int *OutCount);
 
-internal event_tap EventTap;
-internal macos_application_map Applications;
-internal pthread_mutex_t ApplicationsMutex;
-
 internal unsigned DisplayCount;
 internal macos_display **DisplayList;
 internal macos_display *MainDisplay;
 
+internal macos_application_map Applications;
 internal macos_window_map Windows;
 
 /* TODO(koekeishiya): Lookup space storage using macos_space. */
@@ -60,26 +54,66 @@ macos_window *GetWindowByID(uint32_t Id)
 internal void
 AddWindowToCollection(macos_window *Window)
 {
-    AXError Success = AXLibAddObserverNotification(&Window->Owner->Observer,
-                                                   Window->Ref,
-                                                   kAXUIElementDestroyedNotification,
-                                                   Window);
-    if(Success == kAXErrorSuccess)
+    Windows[Window->Id] = Window;
+}
+
+internal macos_window *
+RemoveWindowFromCollection(macos_window *Window)
+{
+    macos_window *Result = GetWindowByID(Window->Id);
+    if(Result)
     {
-        Windows[Window->Id] = Window;
+        Windows.erase(Window->Id);
     }
-    else
+    return Result;
+}
+
+internal void
+AddApplicationWindowList(macos_application *Application)
+{
+    macos_window **WindowList = AXLibWindowListForApplication(Application);
+    if(WindowList)
     {
-        printf("%d: Window '%s' is not destructible, ignore!\n", Window->Id, Window->Name);
-        AXLibDestroyWindow(Window);
+        macos_window **List = WindowList;
+        macos_window *Window;
+        while((Window = *List++))
+        {
+            if(GetWindowByID(Window->Id))
+            {
+                AXLibDestroyWindow(Window);
+            }
+            else
+            {
+                AddWindowToCollection(Window);
+            }
+        }
+
+        free(WindowList);
     }
 }
 
 internal void
-RemoveWindowFromCollection(macos_window *Window)
+UpdateWindowCollection()
 {
-    Windows.erase(Window->Id);
-    AXLibRemoveObserverNotification(&Window->Owner->Observer, Window->Ref, kAXUIElementDestroyedNotification);
+    for(macos_application_map_it It = Applications.begin();
+        It != Applications.end();
+        ++It)
+    {
+        macos_application *Application = It->second;
+        AddApplicationWindowList(Application);
+    }
+}
+
+internal void
+AddApplication(macos_application *Application)
+{
+    Applications[Application->PID] = Application;
+}
+
+internal void
+RemoveApplication(macos_application *Application)
+{
+    Applications.erase(Application->PID);
 }
 
 #include <vector>
@@ -176,308 +210,53 @@ region_offset *FindSpaceOffset(CGDirectDisplayID Display, CGSSpaceID Space)
     return &Offset;
 }
 
-macos_application_map *BeginApplications()
-{
-    pthread_mutex_lock(&ApplicationsMutex);
-    return &Applications;
-}
-
-void EndApplications()
-{
-    pthread_mutex_unlock(&ApplicationsMutex);
-}
-
-macos_application *GetApplicationFromPID(pid_t PID)
-{
-    macos_application *Result = NULL;
-
-    BeginApplications();
-    macos_application_map_it It = Applications.find(PID);
-    if(It != Applications.end())
-    {
-        Result = It->second;
-    }
-    EndApplications();
-
-    return Result;
-}
-
-internal void
-AddApplication(macos_application *Application)
-{
-    BeginApplications();
-    macos_application_map_it It = Applications.find(Application->PID);
-    if(It == Applications.end())
-    {
-        Applications[Application->PID] = Application;
-    }
-    EndApplications();
-}
-
-internal void
-RemoveApplication(pid_t PID)
-{
-    BeginApplications();
-    macos_application_map_it It = Applications.find(PID);
-    if(It != Applications.end())
-    {
-        Applications.erase(It);
-    }
-    EndApplications();
-}
-
-/* NOTE(koekeishiya): Iterate through an application window-list (macos_window **)
- * and store them in our collection of valid windows. If we do not add a window,
- * free the allocated memory. */
-internal void
-AppendApplicationWindowList(macos_window **List)
-{
-    macos_window *Window = NULL;
-    while((Window = *List++))
-    {
-        if(GetWindowByID(Window->Id))
-        {
-            AXLibDestroyWindow(Window);
-        }
-        else
-        {
-            AddWindowToCollection(Window);
-        }
-    }
-}
-
-internal macos_window **
-ApplicationWindowList(macos_application *Application)
-{
-    macos_window **WindowList = NULL;
-
-    CFArrayRef Windows = (CFArrayRef) AXLibGetWindowProperty(Application->Ref, kAXWindowsAttribute);
-    if(Windows)
-    {
-        CFIndex Count = CFArrayGetCount(Windows);
-        WindowList = (macos_window **) malloc((Count + 1) * sizeof(macos_window *));
-        WindowList[Count] = NULL;
-
-        for(CFIndex Index = 0; Index < Count; ++Index)
-        {
-            AXUIElementRef Ref = (AXUIElementRef) CFArrayGetValueAtIndex(Windows, Index);
-            macos_window *Window = AXLibConstructWindow(Application, Ref);
-            WindowList[Index] = Window;
-        }
-
-        CFRelease(Windows);
-    }
-
-    return WindowList;
-}
-
-internal
-OBSERVER_CALLBACK(Callback)
-{
-    macos_application *Application = (macos_application *) Reference;
-
-    if(CFEqual(Notification, kAXWindowCreatedNotification))
-    {
-        printf("%s: Window Created\n", Application->Name);
-        macos_window *Window = AXLibConstructWindow(Application, Element);
-
-        // TODO(koekeishiya): This probably has to be thread-safe.
-        AddWindowToCollection(Window);
-    }
-    else if(CFEqual(Notification, kAXUIElementDestroyedNotification))
-    {
-        /* NOTE(koekeishiya): If this is an actual window, it should be associated
-         * with a valid CGWindowID. HOWEVER, because the window in question has been
-         * destroyed. We are unable to utilize this window reference with the AX API.
-         *
-         * The 'CFEqual()' function can still be used to compare this AXUIElementRef
-         * with any existing window refs that we may have. There are a couple of ways
-         * we can use to track if an actual window is closed.
-         *
-         *   a) Store all window AXUIElementRefs in a local cache that we update upon
-         *      creation and removal. Requires unsorted container with custom comparator
-         *      that uses 'CFEqual()' to match AXUIElementRefs.
-         *
-         *   b) Instead of tracking 'kAXUIElementDestroyedNotification' for an application,
-         *      we have to register this notification separately for every window created.
-         *      By doing this, we can pass our own data containing the information necessary
-         *      to properly identify and report which window was destroyed.
-         *
-         * At the very least, we need to know the windowid of the destroyed window. */
-
-        /* NOTE(koekeishiya): Option 'b' has been implemented. Leaving note for future reference. */
-
-        macos_window *Window = (macos_window *) Reference;
-        printf("%s: Window Destroyed\n", Window->Owner->Name);
-
-        // TODO(koekeishiya): This probably has to be thread-safe.
-        RemoveWindowFromCollection(Window);
-
-        AXLibDestroyWindow(Window);
-    }
-    else if(CFEqual(Notification, kAXFocusedWindowChangedNotification))
-    {
-        printf("%s: Focused Window Changed\n", Application->Name);
-    }
-    else if(CFEqual(Notification, kAXWindowMiniaturizedNotification))
-    {
-        printf("%s: Window Minimized\n", Application->Name);
-    }
-    else if(CFEqual(Notification, kAXWindowDeminiaturizedNotification))
-    {
-        printf("%s: Window Deminimized\n", Application->Name);
-    }
-    else if(CFEqual(Notification, kAXWindowMovedNotification))
-    {
-        printf("%s: Window Moved\n", Application->Name);
-    }
-    else if(CFEqual(Notification, kAXWindowResizedNotification))
-    {
-        printf("%s: Window Resized\n", Application->Name);
-    }
-    else if(CFEqual(Notification, kAXTitleChangedNotification))
-    {
-        printf("%s: Window Title Changed\n", Application->Name);
-    }
-}
-
-#define MICROSEC_PER_SEC 1e6
 void ApplicationLaunchedHandler(const char *Data)
 {
-    carbon_application_details *Info =
-        (carbon_application_details *) Data;
+    macos_application *Application = (macos_application *) Data;
+    printf("    plugin: %s launched!\n", Application->Name);
 
-    // NOTE(koekeishiya): We do not care about background-only applications.
-    if((!Info->ProcessBackground) &&
-       (Info->ProcessPolicy != PROCESS_POLICY_LSBACKGROUND_ONLY))
-    {
-        macos_application *Application = AXLibConstructApplication(Info->PSN, Info->PID, Info->ProcessName);
-        if(Application)
-        {
-            printf("    plugin: launched '%s'\n", Info->ProcessName);
-            AddApplication(Application);
-
-            /* NOTE(koekeishiya): We need to wait for some amount of time before we can try to
-             * observe the launched application. The time to wait depends on how long the
-             * application in question takes to finish. Half a second is good enough for
-             * most applications so we 'usleep()' as a temporary fix for now, but we need a way
-             * to properly defer the creation of observers for applications that require more time.
-             *
-             * We cannot simply defer the creation automatically using dispatch_after, because
-             * there is simply no way to remove a dispatched event once it has been created.
-             * We need a way to tell a dispatched event to NOT execute and be rendered invalid,
-             * because some applications only live for a very very short amount of time.
-             * The dispatched event will then be triggered after a potential 'terminated' event
-             * has been received, in which the application reference has been freed.
-             *
-             * Passing an invalid reference to the AXObserver API does not simply trigger an error,
-             * but causes a full on segmentation fault. */
-
-            usleep(0.5 * MICROSEC_PER_SEC);
-            if(AXLibAddApplicationObserver(Application, Callback))
-            {
-                printf("    plugin: subscribed to '%s' notifications\n", Application->Name);
-            }
-
-            macos_window **WindowList = ApplicationWindowList(Application);
-            if(WindowList)
-            {
-                AppendApplicationWindowList(WindowList);
-                free(WindowList);
-            }
-        }
-    }
+    AddApplication(Application);
 }
 
 void ApplicationTerminatedHandler(const char *Data)
 {
-    carbon_application_details *Info =
-        (carbon_application_details *) Data;
+    macos_application *Application = (macos_application *) Data;
+    printf("    plugin: %s terminated!\n", Application->Name);
 
-    macos_application *Application = GetApplicationFromPID(Info->PID);
-    if(Application)
-    {
-        printf("    plugin: terminated '%s'\n", Info->ProcessName);
-        RemoveApplication(Application->PID);
-        AXLibDestroyApplication(Application);
-    }
+    RemoveApplication(Application);
 }
 
 void ApplicationHiddenHandler(const char *Data)
 {
-    workspace_application_details *Info =
-        (workspace_application_details *) Data;
-
-    macos_application *Application = GetApplicationFromPID(Info->PID);
-    if(Application)
-    {
-        printf("    plugin: hidden '%s'\n", Info->ProcessName);
-    }
+    macos_application *Application = (macos_application *) Data;
+    printf("    plugin: %s hidden!\n", Application->Name);
 }
 
 void ApplicationUnhiddenHandler(const char *Data)
 {
-    workspace_application_details *Info =
-        (workspace_application_details *) Data;
-
-    macos_application *Application = GetApplicationFromPID(Info->PID);
-    if(Application)
-    {
-        printf("    plugin: unhidden '%s'\n", Info->ProcessName);
-    }
+    macos_application *Application = (macos_application *) Data;
+    printf("    plugin: %s unhidden!\n", Application->Name);
 }
 
-internal
-DAEMON_CALLBACK(DaemonCallback)
+void WindowCreatedHandler(const char *Data)
 {
-    printf("    plugin daemon: %s\n", Message);
+    macos_window *Window = (macos_window *) Data;
+    printf("    plugin: %s:%s window created\n", Window->Owner->Name, Window->Name);
+
+    macos_window *Copy = AXLibCopyWindow(Window);
+    AddWindowToCollection(Copy);
 }
 
-internal
-EVENTTAP_CALLBACK(EventCallback)
+void WindowDestroyedHandler(const char *Data)
 {
-    event_tap *EventTap = (event_tap *) Reference;
+    macos_window *Window = (macos_window *) Data;
+    printf("    plugin: %s:%s window destroyed\n", Window->Owner->Name, Window->Name);
 
-    switch(Type)
+    macos_window *Copy = RemoveWindowFromCollection(Window);
+    if(Copy)
     {
-        case kCGEventTapDisabledByTimeout:
-        case kCGEventTapDisabledByUserInput:
-        {
-            CGEventTapEnable(EventTap->Handle, true);
-        } break;
-        case kCGEventMouseMoved:
-        {
-            printf("kCGEventMouseMoved\n");
-        } break;
-        case kCGEventLeftMouseDown:
-        {
-            printf("kCGEventLeftMouseDown\n");
-        } break;
-        case kCGEventLeftMouseUp:
-        {
-            printf("kCGEventLeftMouseUp\n");
-        } break;
-        case kCGEventLeftMouseDragged:
-        {
-            printf("kCGEventLeftMouseDragged\n");
-        } break;
-        case kCGEventRightMouseDown:
-        {
-            printf("kCGEventRightMouseDown\n");
-        } break;
-        case kCGEventRightMouseUp:
-        {
-            printf("kCGEventRightMouseUp\n");
-        } break;
-        case kCGEventRightMouseDragged:
-        {
-            printf("kCGEventRightMouseDragged\n");
-        } break;
-
-        default: {} break;
+        AXLibDestroyWindow(Copy);
     }
-
-    return Event;
 }
 
 inline bool
@@ -515,9 +294,19 @@ PLUGIN_MAIN_FUNC(PluginMain)
         ApplicationUnhiddenHandler(Data);
         return true;
     }
+    else if(StringsAreEqual(Node, "chunkwm_export_window_created"))
+    {
+        WindowCreatedHandler(Data);
+        return true;
+    }
+    else if(StringsAreEqual(Node, "chunkwm_export_window_destroyed"))
+    {
+        WindowDestroyedHandler(Data);
+        return true;
+    }
     else if(StringsAreEqual(Node, "chunkwm_export_space_changed"))
     {
-        printf("Active Space Changed\n");
+        UpdateWindowCollection();
         return true;
     }
 
@@ -538,45 +327,19 @@ Init()
     {
         macos_application *Application = Applications[Index];
         AddApplication(Application);
-        AXLibAddApplicationObserver(Application, Callback);
-
-        macos_window **WindowList = ApplicationWindowList(Application);
-        if(WindowList)
-        {
-            AppendApplicationWindowList(WindowList);
-            free(WindowList);
-        }
+        AddApplicationWindowList(Application);
     }
 
-    /* NOTE(koekeishiya): Tile windows visible on the current space using binary space partitioning.
-     * CreateWindowTree(MainDisplay); */
-#if 0
-    int Port = 4020;
-    EventTap.Mask = ((1 << kCGEventMouseMoved) |
-                     (1 << kCGEventLeftMouseDragged) |
-                     (1 << kCGEventLeftMouseDown) |
-                     (1 << kCGEventLeftMouseUp) |
-                     (1 << kCGEventRightMouseDragged) |
-                     (1 << kCGEventRightMouseDown) |
-                     (1 << kCGEventRightMouseUp));
+    /* NOTE(koekeishiya): Tile windows visible on the current space using binary space partitioning. */
+    // CreateWindowTree(MainDisplay);
 
-    bool Result = ((pthread_mutex_init(&ApplicationsMutex, NULL) == 0) &&
-                   (StartDaemon(Port, &DaemonCallback)) &&
-                   (BeginEventTap(&EventTap, &EventCallback)));
-#else
-    bool Result = (pthread_mutex_init(&ApplicationsMutex, NULL) == 0);
-#endif
+    bool Result = true;
     return Result;
 }
 
 internal void
 Deinit()
 {
-#if 0
-    StopDaemon();
-    EndEventTap(&EventTap);
-#endif
-    pthread_mutex_destroy(&ApplicationsMutex);
 }
 
 /*
@@ -611,6 +374,10 @@ chunkwm_plugin_export Subscriptions[] =
     chunkwm_export_application_terminated,
     chunkwm_export_application_hidden,
     chunkwm_export_application_unhidden,
+
+    chunkwm_export_window_created,
+    chunkwm_export_window_destroyed,
+
     chunkwm_export_space_changed,
 };
 CHUNKWM_PLUGIN_SUBSCRIBE(Subscriptions)
