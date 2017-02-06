@@ -22,6 +22,21 @@ UpdateWindow(AXUIElementRef WindowRef)
 }
 
 internal void
+UpdateToFocusedWindow()
+{
+    AXUIElementRef WindowRef = AXLibGetFocusedWindow(Application->Ref);
+    if(WindowRef)
+    {
+        UpdateWindow(WindowRef);
+        CFRelease(WindowRef);
+    }
+    else
+    {
+        UpdateBorder(0, 0, 0, 0);
+    }
+}
+
+internal void
 UpdateIfFocusedWindow(AXUIElementRef Element)
 {
     AXUIElementRef WindowRef = AXLibGetFocusedWindow(Application->Ref);
@@ -38,19 +53,8 @@ UpdateIfFocusedWindow(AXUIElementRef Element)
 internal void
 ApplicationActivatedHandler(const char *Data)
 {
-    macos_application *Context = (macos_application *) Data;
-    Application = Context;
-
-    AXUIElementRef WindowRef = AXLibGetFocusedWindow(Application->Ref);
-    if(WindowRef)
-    {
-        UpdateWindow(WindowRef);
-        CFRelease(WindowRef);
-    }
-    else
-    {
-        UpdateBorder(0, 0, 0, 0);
-    }
+    Application = (macos_application *) Data;
+    UpdateToFocusedWindow();
 }
 
 internal void
@@ -79,19 +83,9 @@ internal void
 WindowDestroyedHandler(const char *Data)
 {
     macos_window *Window = (macos_window *) Data;
-
     if(Window->Owner == Application)
     {
-        AXUIElementRef WindowRef = AXLibGetFocusedWindow(Window->Owner->Ref);
-        if(WindowRef)
-        {
-            UpdateWindow(WindowRef);
-            CFRelease(WindowRef);
-        }
-        else
-        {
-            UpdateBorder(0, 0, 0, 0);
-        }
+        UpdateToFocusedWindow();
     }
 }
 
@@ -113,7 +107,10 @@ internal void
 WindowMinimizedHandler(const char *Data)
 {
     macos_window *Window = (macos_window *) Data;
-    UpdateIfFocusedWindow(Window->Ref);
+    if(Window->Owner == Application)
+    {
+        UpdateToFocusedWindow();
+    }
 }
 
 inline bool

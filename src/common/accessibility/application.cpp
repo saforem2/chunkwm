@@ -19,8 +19,6 @@ enum macos_application_notifications
     Application_Notification_WindowFocused,
     Application_Notification_WindowMoved,
     Application_Notification_WindowResized,
-    Application_Notification_WindowMinimized,
-    Application_Notification_WindowDeminimized,
     Application_Notification_WindowTitleChanged,
     Application_Notification_Count
 };
@@ -45,14 +43,6 @@ AXNotificationFromEnum(int Type)
         case Application_Notification_WindowResized:
         {
             return kAXWindowResizedNotification;
-        } break;
-        case Application_Notification_WindowMinimized:
-        {
-            return kAXWindowMiniaturizedNotification;
-        } break;
-        case Application_Notification_WindowDeminimized:
-        {
-            return kAXWindowDeminiaturizedNotification;
         } break;
         case Application_Notification_WindowTitleChanged:
         {

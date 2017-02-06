@@ -55,6 +55,14 @@ bool AddWindowToCollection(macos_window *Window)
     bool Result = (Success == kAXErrorSuccess);
     if(Result)
     {
+        AXLibAddObserverNotification(&Window->Owner->Observer,
+                                     Window->Ref,
+                                     kAXWindowMiniaturizedNotification,
+                                     Window);
+        AXLibAddObserverNotification(&Window->Owner->Observer,
+                                     Window->Ref,
+                                     kAXWindowDeminiaturizedNotification,
+                                     Window);
         pthread_mutex_lock(&WindowsLock);
         Windows[Window->Id] = Window;
         pthread_mutex_unlock(&WindowsLock);
@@ -71,6 +79,8 @@ void RemoveWindowFromCollection(macos_window *Window)
     pthread_mutex_unlock(&WindowsLock);
 
     AXLibRemoveObserverNotification(&Window->Owner->Observer, Window->Ref, kAXUIElementDestroyedNotification);
+    AXLibRemoveObserverNotification(&Window->Owner->Observer, Window->Ref, kAXWindowMiniaturizedNotification);
+    AXLibRemoveObserverNotification(&Window->Owner->Observer, Window->Ref, kAXWindowDeminiaturizedNotification);
 }
 
 // NOTE(koekeishiya): Caller is responsible for passing a valid window!
@@ -204,21 +214,13 @@ OBSERVER_CALLBACK(ApplicationCallback)
     }
     else if(CFEqual(Notification, kAXWindowMiniaturizedNotification))
     {
-        uint32_t WindowId = AXLibGetWindowID(Element);
-        macos_window *Window = GetWindowByID(WindowId);
-        if(Window)
-        {
-            ConstructEvent(ChunkWM_WindowMinimized, Window);
-        }
+        macos_window *Window = (macos_window *) Reference;
+        ConstructEvent(ChunkWM_WindowMinimized, Window);
     }
     else if(CFEqual(Notification, kAXWindowDeminiaturizedNotification))
     {
-        uint32_t WindowId = AXLibGetWindowID(Element);
-        macos_window *Window = GetWindowByID(WindowId);
-        if(Window)
-        {
-            ConstructEvent(ChunkWM_WindowDeminimized, Window);
-        }
+        macos_window *Window = (macos_window *) Reference;
+        ConstructEvent(ChunkWM_WindowDeminimized, Window);
     }
     else if(CFEqual(Notification, kAXTitleChangedNotification))
     {
