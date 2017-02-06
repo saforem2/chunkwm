@@ -7,6 +7,8 @@
 #include "dispatch/workspace.h"
 #include "dispatch/event.h"
 
+#include "../common/accessibility/window.h"
+
 #include <stdio.h>
 #include <pthread.h>
 
@@ -353,6 +355,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_WindowMinimized)
 {
     macos_window *Window = (macos_window *) Event->Context;
     printf("%s:%s window minimized\n", Window->Owner->Name, Window->Name);
+    AXLibAddFlags(Window, Window_Minimized);
 #if 0
     ProcessPluginList(chunkwm_export_window_minimized, Window);
 #else
@@ -364,11 +367,17 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_WindowDeminimized)
 {
     macos_window *Window = (macos_window *) Event->Context;
     printf("%s:%s window deminimized\n", Window->Owner->Name, Window->Name);
+    AXLibClearFlags(Window, Window_Minimized);
 #if 0
     ProcessPluginList(chunkwm_export_window_deminimized, Window);
 #else
     ProcessPluginListThreaded(chunkwm_export_window_deminimized, Window);
 #endif
+
+    /* NOTE(koekeishiya): When a window is deminimized, we incorrectly
+     * receive the kAXFocusedWindowChangedNotification first, We discard
+     * that notification and restore it when we have the window to work with. */
+    ConstructEvent(ChunkWM_WindowFocused, Window);
 }
 
 /* NOTE(koekeishiya): If a plugin has stored a pointer to our macos_window structs

@@ -180,19 +180,27 @@ OBSERVER_CALLBACK(ApplicationCallback)
          *
          * At the very least, we need to know the windowid of the destroyed window. */
 
-        /* NOTE(koekeishiya): Option 'b' has been implemented. Leaving note for future reference. */
+        /* NOTE(koekeishiya): Option 'b' has been implemented. Leave note for future reference. */
 
         macos_window *Window = (macos_window *) Reference;
         ConstructEvent(ChunkWM_WindowDestroyed, Window);
     }
     else if(CFEqual(Notification, kAXFocusedWindowChangedNotification))
     {
+        /* NOTE(koekeishiya): We have to make sure that we can actually interact with the window.
+         * When a window is created, we receive this notification before kAXWindowCreatedNotification.
+         * When a window is deminimized, we receive this notification before the window is visible. */
+
+        /* NOTE(koekeishiya): To achieve the expected behaviour, we emit a 'ChunkWM_WindowFocused' event
+         * after processing 'ChunkWM_WindowCreated' and 'ChunkWM_WindowDeminimized' events. */
+
         uint32_t WindowId = AXLibGetWindowID(Element);
         macos_window *Window = GetWindowByID(WindowId);
-        if(Window)
+        if(Window && !AXLibHasFlags(Window, Window_Minimized))
         {
             ConstructEvent(ChunkWM_WindowFocused, Window);
         }
+
     }
     else if(CFEqual(Notification, kAXWindowMovedNotification))
     {
@@ -214,11 +222,19 @@ OBSERVER_CALLBACK(ApplicationCallback)
     }
     else if(CFEqual(Notification, kAXWindowMiniaturizedNotification))
     {
+        /* NOTE(koekeishiya): We cannot register this notification globally for an application.
+         * The AXUIElementRef 'Element' we receive cannot be used with 'AXLibGetWindowID', because
+         * a window that is minimized often return a CGWindowID of 0. We have to register this
+         * notification for every window such that we can pass our own cached window-information. */
+
         macos_window *Window = (macos_window *) Reference;
         ConstructEvent(ChunkWM_WindowMinimized, Window);
     }
     else if(CFEqual(Notification, kAXWindowDeminiaturizedNotification))
     {
+        /* NOTE(koekeishiya): when a deminimized window pulls the user to the space of that window,
+         * we receive this notification before 'didActiveSpaceChangeNotification'. */
+
         macos_window *Window = (macos_window *) Reference;
         ConstructEvent(ChunkWM_WindowDeminimized, Window);
     }
