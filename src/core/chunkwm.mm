@@ -66,7 +66,7 @@ int main(int Count, char **Args)
         if(InitState())
         {
             // TODO(koekeishiya): Read plugin directory from config or something.
-            HotloaderRegisterDirectory(PluginDirectory);
+            HotloaderAddPath(PluginDirectory);
             HotloaderInit();
 
             StartEventLoop();

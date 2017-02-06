@@ -14,6 +14,6 @@ struct hotloader
 void HotloaderInit();
 void HotloaderTerminate();
 
-void HotloaderRegisterDirectory(const char *Path);
+void HotloaderAddPath(const char *Path);
 
 #endif

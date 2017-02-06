@@ -52,7 +52,7 @@ HOTLOADER_CALLBACK(HotloadPluginCallback)
 internal hotloader Hotloader;
 internal std::vector<const char *> Directories;
 
-void HotloaderRegisterDirectory(const char *Path)
+void HotloaderAddPath(const char *Path)
 {
     if(!Hotloader.Enabled)
     {
