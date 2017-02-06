@@ -6,6 +6,7 @@
 #include "dispatch/display.h"
 #include "dispatch/event.h"
 
+#include "hotloader.h"
 #include "state.h"
 #include "callback.h"
 #include "plugin.h"
@@ -24,6 +25,7 @@
 #include "dispatch/event.cpp"
 #include "dispatch/display.cpp"
 
+#include "hotloader.cpp"
 #include "state.cpp"
 #include "callback.cpp"
 #include "plugin.cpp"
@@ -45,6 +47,8 @@ SystemWideElement()
     return Element;
 }
 
+internal const char *PluginDirectory = "/Users/Koe/Documents/programming/C++/chunkwm/plugins";
+
 int main(int Count, char **Args)
 {
     NSApplicationLoad();
@@ -61,6 +65,10 @@ int main(int Count, char **Args)
 
         if(InitState())
         {
+            // TODO(koekeishiya): Read plugin directory from config or something.
+            HotloaderRegisterDirectory(PluginDirectory);
+            HotloaderInit();
+
             StartEventLoop();
             CFRunLoopRun();
         }
