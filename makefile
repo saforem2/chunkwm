@@ -1,4 +1,4 @@
-BUILD_FLAGS		= -O0 -g -std=c++11 -Wall -Wno-deprecated
+BUILD_FLAGS		= -O0 -g -DCHUNKWM_DEBUG -std=c++11 -Wall -Wno-deprecated
 BUILD_PATH		= ./bin
 SRC				= ./src/core/chunkwm.mm
 BINS			= $(BUILD_PATH)/chunkwm

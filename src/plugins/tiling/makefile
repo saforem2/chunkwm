@@ -1,4 +1,4 @@
-BUILD_FLAGS		= -O0 -g -std=c++11 -Wall -Wno-deprecated
+BUILD_FLAGS		= -O0 -g -DCHUNKWM_DEBUG -std=c++11 -Wall -Wno-deprecated
 BUILD_PATH		= ./../../../plugins
 SRC				= ./plugin.cpp ./node.cpp ./region.cpp \
 				  ./../../common/accessibility/display.mm \
