@@ -4,7 +4,7 @@
 /*
  * NOTE(koekeishiya): The following files must also be linked against:
  *
- * common/dispatch/workspace.mm
+ * common/misc/workspace.mm
  *
  * */
 

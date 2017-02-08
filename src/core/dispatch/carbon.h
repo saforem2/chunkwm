@@ -2,7 +2,7 @@
 #define CHUNKWM_OSX_CARBON_H
 
 #include <Carbon/Carbon.h>
-#include "../../common/dispatch/carbon.h"
+#include "../../common/misc/carbon.h"
 
 struct carbon_event_handler
 {

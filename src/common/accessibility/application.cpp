@@ -1,6 +1,6 @@
 #include "application.h"
-#include "../dispatch/carbon.h"
-#include "../dispatch/workspace.h"
+#include "../misc/carbon.h"
+#include "../misc/workspace.h"
 
 #define internal static
 
@@ -8,8 +8,8 @@
  * NOTE(koekeishiya): The following files must also be linked against:
  *
  * common/accessibility/observer.cpp
- * common/dispatch/carbon.cpp
- * common/dispatch/workspace.mm
+ * common/misc/carbon.cpp
+ * common/misc/workspace.mm
  *
  * */
 

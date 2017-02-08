@@ -17,8 +17,8 @@
 #include "../common/accessibility/window.cpp"
 #include "../common/accessibility/element.cpp"
 
-#include "../common/dispatch/carbon.cpp"
-#include "../common/dispatch/workspace.mm"
+#include "../common/misc/carbon.cpp"
+#include "../common/misc/workspace.mm"
 
 #include "dispatch/carbon.cpp"
 #include "dispatch/workspace.mm"
