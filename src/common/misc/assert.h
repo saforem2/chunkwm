@@ -4,7 +4,7 @@
 #ifdef CHUNKWM_DEBUG
 #include <stdio.h>
 #define ASSERT(Condition) do { if(!(Condition)) {\
-    printf("#%d:%s:%s assert failed '%s'\n",        \
+    printf("#%d:%s:%s: assert failed '%s'\n",        \
             __LINE__, __FILE__, __FUNCTION__, #Condition); \
     *(int volatile *)0 = 0;                      \
     } } while(0)
