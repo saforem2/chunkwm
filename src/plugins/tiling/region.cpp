@@ -1,6 +1,6 @@
 #include "region.h"
 #include "node.h"
-#include "assert.h"
+#include "../../common/misc/assert.h"
 #include "../../common/accessibility/display.h"
 
 #include <stdio.h>
@@ -13,7 +13,7 @@ internal region
 FullscreenRegion(macos_display *Display)
 {
     macos_space *Space = AXLibActiveSpace(Display->Ref);
-    Assert(Space);
+    ASSERT(Space);
 
     region_offset *Offset = FindSpaceOffset(Display->Id, Space->Id);
     region Result;
@@ -32,8 +32,8 @@ LeftVerticalRegion(macos_display *Display, node *Node)
 {
     macos_space *Space = AXLibActiveSpace(Display->Ref);
 
-    Assert(Space);
-    Assert(Node);
+    ASSERT(Space);
+    ASSERT(Node);
 
     region *Region = &Node->Region;
     region_offset *Offset = FindSpaceOffset(Display->Id, Space->Id);
@@ -55,8 +55,8 @@ RightVerticalRegion(macos_display *Display, node *Node)
 {
     macos_space *Space = AXLibActiveSpace(Display->Ref);
 
-    Assert(Space);
-    Assert(Node);
+    ASSERT(Space);
+    ASSERT(Node);
 
     region *Region = &Node->Region;
     region_offset *Offset = FindSpaceOffset(Display->Id, Space->Id);
@@ -78,8 +78,8 @@ UpperHorizontalRegion(macos_display *Display, node *Node)
 {
     macos_space *Space = AXLibActiveSpace(Display->Ref);
 
-    Assert(Space);
-    Assert(Node);
+    ASSERT(Space);
+    ASSERT(Node);
 
     region *Region = &Node->Region;
     region_offset *Offset = FindSpaceOffset(Display->Id, Space->Id);
@@ -101,8 +101,8 @@ LowerHorizontalRegion(macos_display *Display, node *Node)
 {
     macos_space *Space = AXLibActiveSpace(Display->Ref);
 
-    Assert(Space);
-    Assert(Node);
+    ASSERT(Space);
+    ASSERT(Node);
 
     region *Region = &Node->Region;
     region_offset *Offset = FindSpaceOffset(Display->Id, Space->Id);
@@ -127,7 +127,7 @@ void CreateNodeRegion(macos_display *Display, node *Node, region_type Type)
         Node->Ratio = 0.5f; // Settings.SplitRatio;
     }
 
-    Assert(Type >= Region_Full && Type <= Region_Lower);
+    ASSERT(Type >= Region_Full && Type <= Region_Lower);
     switch(Type)
     {
         case Region_Full:
@@ -163,7 +163,7 @@ void CreateNodeRegion(macos_display *Display, node *Node, region_type Type)
 
 void CreateNodeRegionPair(macos_display *Display, node *Left, node *Right, node_split Split)
 {
-    Assert(Split == Split_Vertical || Split == Split_Horizontal);
+    ASSERT(Split == Split_Vertical || Split == Split_Horizontal);
     if(Split == Split_Vertical)
     {
         CreateNodeRegion(Display, Left, Region_Left);

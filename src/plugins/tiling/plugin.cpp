@@ -11,10 +11,10 @@
 #include "../../common/accessibility/element.h"
 #include "../../common/accessibility/observer.h"
 #include "../../common/misc/carbon.h"
+#include "../../common/misc/assert.h"
 
 #include "region.h"
 #include "node.h"
-#include "assert.h"
 
 #define internal static
 #define local_persist static
@@ -194,7 +194,7 @@ CreateWindowTree(macos_display *Display)
             ++Index)
         {
             node *Node = FindFirstMinDepthLeafNode(Root);
-            Assert(Node != NULL);
+            ASSERT(Node != NULL);
 
             CreateLeafNodePair(Display, Node, Node->WindowId, Windows[Index], OptimalSplitMode(Node));
         }
@@ -317,7 +317,7 @@ internal bool
 Init()
 {
     DisplayList = AXLibDisplayList(&DisplayCount);
-    Assert(DisplayCount != 0);
+    ASSERT(DisplayCount != 0);
     MainDisplay = DisplayList[0];
 
     uint32_t ProcessPolicy = Process_Policy_Regular | Process_Policy_LSUIElement;

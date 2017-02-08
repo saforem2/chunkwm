@@ -1,9 +1,10 @@
 #include "wqueue.h"
+#include "../common/misc/assert.h"
+
 #include <stdio.h>
 #include <pthread.h>
 
 #define internal static
-#define Assert(Condition) do { if(!(Condition)) *(int volatile *)0 = 0; } while(0)
 #ifndef ArrayCount
 #define ArrayCount(Array) (sizeof(Array) / sizeof(*(Array)))
 #endif
@@ -34,7 +35,7 @@ DoNextWorkQueueEntry(work_queue *Queue)
 void AddWorkQueueEntry(work_queue *Queue, work_queue_callback *Callback, void *Data)
 {
     uint32_t NextEntryToWrite = (Queue->EntryToWrite + 1) % ArrayCount(Queue->Entries);
-    Assert(NextEntryToWrite != Queue->EntryToRead);
+    ASSERT(NextEntryToWrite != Queue->EntryToRead);
 
     work_queue_entry *Entry = Queue->Entries + Queue->EntryToWrite;
     Entry->Callback = Callback;

@@ -1,6 +1,5 @@
 #include "node.h"
-#include "assert.h"
-
+#include "../../common/misc/assert.h"
 #include "../../common/accessibility/display.h"
 #include "../../common/accessibility/window.h"
 #include "../../common/accessibility/element.h"
@@ -56,7 +55,7 @@ void CreateLeafNodePair(macos_display *Display, node *Parent,
     uint32_t LeftWindowId = FirstWindowId;
     uint32_t RightWindowId = SecondWindowId;
 
-    Assert(Split == Split_Vertical || Split == Split_Horizontal);
+    ASSERT(Split == Split_Vertical || Split == Split_Horizontal);
     if(Split == Split_Vertical)
     {
         Parent->Left = CreateLeafNode(Display, Parent, LeftWindowId, Region_Left);
@@ -73,7 +72,7 @@ void ResizeWindowToRegionSize(node *Node)
 {
     // NOTE(koekeishiya): GetWindowByID should not be able to fail!
     macos_window *Window = GetWindowByID(Node->WindowId);
-    Assert(Window);
+    ASSERT(Window);
 
     if(AXLibSetWindowPosition(Window->Ref, Node->Region.X, Node->Region.Y))
         printf("set window position!\n");
