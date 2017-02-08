@@ -1,7 +1,8 @@
-#import <Cocoa/Cocoa.h>
-
 #include "workspace.h"
 #include "event.h"
+#include "../../common/misc/assert.h"
+
+#import <Cocoa/Cocoa.h>
 
 #define internal static
 @interface WorkspaceWatcher : NSObject {
@@ -43,15 +44,14 @@ BeginWorkspaceApplicationDetails(NSNotification *Notification)
 // NOTE(koekeishiya): Make sure that the correct module frees memory.
 void EndWorkspaceApplicationDetails(workspace_application_details *Info)
 {
-    if(Info)
-    {
-        if(Info->ProcessName)
-        {
-            free(Info->ProcessName);
-        }
+    ASSERT(Info);
 
-        free(Info);
+    if(Info->ProcessName)
+    {
+        free(Info->ProcessName);
     }
+
+    free(Info);
 }
 
 /* NOTE(koekeishiya): Subscribe to necessary notifications from NSWorkspace */

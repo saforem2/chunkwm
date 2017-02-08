@@ -1,4 +1,6 @@
 #include "display.h"
+#include "../misc/assert.h"
+
 #include <Cocoa/Cocoa.h>
 
 #define internal static
@@ -48,6 +50,8 @@ macos_display *AXLibConstructDisplay(CGDirectDisplayID Id, unsigned Arrangement)
 /* NOTE(koekeishiya): Caller is responsible for passing a valid display! */
 void AXLibDestroyDisplay(macos_display *Display)
 {
+    ASSERT(Display && Display->Ref);
+
     CFRelease(Display->Ref);
     free(Display);
 }
@@ -114,6 +118,8 @@ AXLibConstructSpace(CFStringRef Ref, CGSSpaceID Id, CGSSpaceType Type)
 /* NOTE(koekeishiya): Caller is responsible for calling 'AXLibDestroySpace()'. */
 macos_space *AXLibActiveSpace(CFStringRef DisplayRef)
 {
+    ASSERT(DisplayRef);
+
     CFStringRef SpaceRef;
     CGSSpaceID SpaceId = AXLibActiveSpaceIdentifier(DisplayRef, &SpaceRef);
     CGSSpaceType SpaceType = CGSSpaceGetType(CGSDefaultConnection, SpaceId);
@@ -125,6 +131,8 @@ macos_space *AXLibActiveSpace(CFStringRef DisplayRef)
 /* NOTE(koekeishiya): Caller is responsible for passing a valid space! */
 void AXLibDestroySpace(macos_space *Space)
 {
+    ASSERT(Space && Space->Ref);
+
     CFRelease(Space->Ref);
     free(Space);
 }

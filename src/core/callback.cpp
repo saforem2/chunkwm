@@ -94,6 +94,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_ApplicationLaunched)
 {
     carbon_application_details *Info =
         (carbon_application_details *) Event->Context;
+    ASSERT(Info);
 
     if(IsProcessInteractive(Info))
     {
@@ -111,6 +112,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_ApplicationTerminated)
 {
     carbon_application_details *Info =
         (carbon_application_details *) Event->Context;
+    ASSERT(Info);
 
     macos_application *Application = GetApplicationFromPID(Info->PID);
     if(Application)
@@ -131,6 +133,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_ApplicationActivated)
 {
     workspace_application_details *Info =
         (workspace_application_details *) Event->Context;
+    ASSERT(Info);
 
     macos_application *Application = GetApplicationFromPID(Info->PID);
     if(Application)
@@ -150,6 +153,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_ApplicationDeactivated)
 {
     workspace_application_details *Info =
         (workspace_application_details *) Event->Context;
+    ASSERT(Info);
 
     macos_application *Application = GetApplicationFromPID(Info->PID);
     if(Application)
@@ -169,6 +173,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_ApplicationVisible)
 {
     workspace_application_details *Info =
         (workspace_application_details *) Event->Context;
+    ASSERT(Info);
 
     macos_application *Application = GetApplicationFromPID(Info->PID);
     if(Application)
@@ -188,6 +193,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_ApplicationHidden)
 {
     workspace_application_details *Info =
         (workspace_application_details *) Event->Context;
+    ASSERT(Info);
 
     macos_application *Application = GetApplicationFromPID(Info->PID);
     if(Application)
@@ -205,12 +211,14 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_ApplicationHidden)
 
 CHUNKWM_CALLBACK(Callback_ChunkWM_SpaceChanged)
 {
+    /* NOTE(koekeishiya): This event does not take an argument. */
+    ASSERT(Event->Context == NULL);
+
     /* NOTE(koekeishiya): Applications that are not on our focused space fails to have their
      * existing windows added to our windw collection. We must force update our collection on
      * every space change. Windows that are already tracked is NOT added multiple times. */
     UpdateWindowCollection();
 
-    /* NOTE(koekeishiya): This event does not take an argument. */
 #if 0
     ProcessPluginList(chunkwm_export_space_changed, NULL);
 #else
@@ -223,6 +231,8 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_DisplayAdded)
 {
     CGDirectDisplayID *DisplayId
         = (CGDirectDisplayID *) Event->Context;
+    ASSERT(DisplayId);
+
     printf("%d: display added\n", *DisplayId);
 #if 0
     ProcessPluginList(chunkwm_export_display_added, DisplayId);
@@ -237,6 +247,8 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_DisplayRemoved)
 {
     CGDirectDisplayID *DisplayId
         = (CGDirectDisplayID *) Event->Context;
+    ASSERT(DisplayId);
+
     printf("%d: display removed\n", *DisplayId);
 #if 0
     ProcessPluginList(chunkwm_export_display_removed, DisplayId);
@@ -251,6 +263,8 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_DisplayMoved)
 {
     CGDirectDisplayID *DisplayId
         = (CGDirectDisplayID *) Event->Context;
+    ASSERT(DisplayId);
+
     printf("%d: display moved\n", *DisplayId);
 #if 0
     ProcessPluginList(chunkwm_export_display_moved, DisplayId);
@@ -265,6 +279,8 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_DisplayResized)
 {
     CGDirectDisplayID *DisplayId
         = (CGDirectDisplayID *) Event->Context;
+    ASSERT(DisplayId);
+
     printf("%d: display resolution changed\n", *DisplayId);
 #if 0
     ProcessPluginList(chunkwm_export_display_resized, DisplayId);
@@ -284,6 +300,8 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_DisplayChanged)
 CHUNKWM_CALLBACK(Callback_ChunkWM_WindowCreated)
 {
     macos_window *Window = (macos_window *) Event->Context;
+    ASSERT(Window);
+
     if(AddWindowToCollection(Window))
     {
         printf("%s:%s window created\n", Window->Owner->Name, Window->Name);
@@ -308,6 +326,8 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_WindowCreated)
 CHUNKWM_CALLBACK(Callback_ChunkWM_WindowDestroyed)
 {
     macos_window *Window = (macos_window *) Event->Context;
+    ASSERT(Window);
+
     printf("%s:%s window destroyed\n", Window->Owner->Name, Window->Name);
 #if 0
     ProcessPluginList(chunkwm_export_window_destroyed, Window);
@@ -321,6 +341,8 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_WindowDestroyed)
 CHUNKWM_CALLBACK(Callback_ChunkWM_WindowFocused)
 {
     macos_window *Window = (macos_window *) Event->Context;
+    ASSERT(Window);
+
     printf("%s:%s window focused\n", Window->Owner->Name, Window->Name);
 #if 0
     ProcessPluginList(chunkwm_export_window_focused, Window);
@@ -332,6 +354,8 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_WindowFocused)
 CHUNKWM_CALLBACK(Callback_ChunkWM_WindowMoved)
 {
     macos_window *Window = (macos_window *) Event->Context;
+    ASSERT(Window);
+
     printf("%s:%s window moved\n", Window->Owner->Name, Window->Name);
 #if 0
     ProcessPluginList(chunkwm_export_window_moved, Window);
@@ -343,6 +367,8 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_WindowMoved)
 CHUNKWM_CALLBACK(Callback_ChunkWM_WindowResized)
 {
     macos_window *Window = (macos_window *) Event->Context;
+    ASSERT(Window);
+
     printf("%s:%s window resized\n", Window->Owner->Name, Window->Name);
 #if 0
     ProcessPluginList(chunkwm_export_window_resized, Window);
@@ -354,6 +380,8 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_WindowResized)
 CHUNKWM_CALLBACK(Callback_ChunkWM_WindowMinimized)
 {
     macos_window *Window = (macos_window *) Event->Context;
+    ASSERT(Window);
+
     printf("%s:%s window minimized\n", Window->Owner->Name, Window->Name);
     AXLibAddFlags(Window, Window_Minimized);
 #if 0
@@ -366,6 +394,8 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_WindowMinimized)
 CHUNKWM_CALLBACK(Callback_ChunkWM_WindowDeminimized)
 {
     macos_window *Window = (macos_window *) Event->Context;
+    ASSERT(Window);
+
     printf("%s:%s window deminimized\n", Window->Owner->Name, Window->Name);
     AXLibClearFlags(Window, Window_Minimized);
 #if 0
@@ -386,6 +416,8 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_WindowDeminimized)
 CHUNKWM_CALLBACK(Callback_ChunkWM_WindowTitleChanged)
 {
     macos_window *Window = (macos_window *) Event->Context;
+    ASSERT(Window);
+
     UpdateWindowTitle(Window);
 
     printf("%s:%s window title changed\n", Window->Owner->Name, Window->Name);

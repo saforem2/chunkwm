@@ -1,6 +1,7 @@
 #include "application.h"
 #include "../misc/carbon.h"
 #include "../misc/workspace.h"
+#include "../misc/assert.h"
 
 #define internal static
 
@@ -55,6 +56,8 @@ AXNotificationFromEnum(int Type)
 /* NOTE(koekeishiya): The caller is responsible for making sure that a valid application is passed! */
 bool AXLibAddApplicationObserver(macos_application *Application, ObserverCallback Callback)
 {
+    ASSERT(Application && Application->Ref);
+
     AXLibConstructObserver(Application, Callback);
     bool Result = Application->Observer.Valid;
     if(Result)
@@ -181,6 +184,8 @@ macos_application *AXLibConstructApplication(ProcessSerialNumber PSN, pid_t PID,
 /* NOTE(koekeishiya): The caller is responsible for making sure that a valid application is passed! */
 void AXLibDestroyApplication(macos_application *Application)
 {
+    ASSERT(Application && Application->Ref);
+
     if(Application->Observer.Valid)
     {
         AXLibDestroyObserver(&Application->Observer);

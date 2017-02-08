@@ -2,6 +2,8 @@
 #include "element.h"
 #include "application.h"
 
+#include "../misc/assert.h"
+
 #define internal static
 
 /*
@@ -40,8 +42,11 @@ macos_window *AXLibConstructWindow(macos_application *Application, AXUIElementRe
     return Window;
 }
 
+/* NOTE(koekeishiya): The caller is responsible for passing a valid window! */
 macos_window *AXLibCopyWindow(macos_window *Window)
 {
+    ASSERT(Window && Window->Ref);
+
     macos_window *Result = (macos_window *) malloc(sizeof(macos_window));
     memset(Result, 0, sizeof(macos_window));
 
@@ -127,6 +132,8 @@ macos_window **AXLibWindowListForApplication(macos_application *Application)
 /* NOTE(koekeishiya): The caller is responsible for passing a valid window! */
 void AXLibDestroyWindow(macos_window *Window)
 {
+    ASSERT(Window && Window->Ref);
+
     if(Window->Mainrole)
         CFRelease(Window->Mainrole);
 

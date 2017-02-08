@@ -1,5 +1,6 @@
 #include "carbon.h"
 #include "workspace.h"
+#include "assert.h"
 
 /*
  * NOTE(koekeishiya): The following files must also be linked against:
@@ -25,15 +26,15 @@ carbon_application_details *BeginCarbonApplicationDetails(ProcessSerialNumber PS
     return Info;
 }
 
+// NOTE(koekeishiya): Caller is responsible for passing a valid argument.
 void EndCarbonApplicationDetails(carbon_application_details *Info)
 {
-    if(Info)
-    {
-        if(Info->ProcessName)
-        {
-            free(Info->ProcessName);
-        }
+    ASSERT(Info);
 
-        free(Info);
+    if(Info->ProcessName)
+    {
+        free(Info->ProcessName);
     }
+
+    free(Info);
 }

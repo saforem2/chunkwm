@@ -1,8 +1,11 @@
 #include <Cocoa/Cocoa.h>
+#include "assert.h"
 
 char *WorkspaceCopyProcessNameAndPolicy(pid_t PID, uint32_t *ProcessPolicy)
 {
-    char *ProcessName = NULL;;
+    ASSERT(ProcessPolicy);
+
+    char *ProcessName = NULL;
     NSRunningApplication *Application = [NSRunningApplication runningApplicationWithProcessIdentifier:PID];
     if(Application)
     {

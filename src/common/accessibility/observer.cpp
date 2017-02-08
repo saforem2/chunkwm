@@ -1,5 +1,6 @@
 #include "observer.h"
 #include "application.h"
+#include "../misc/assert.h"
 
 /*
  * NOTE(koekeishiya): The following files must also be linked against:
@@ -21,6 +22,8 @@ void AXLibConstructObserver(macos_application *Application, ObserverCallback Cal
 /* NOTE(koekeishiya): The caller is responsible for making sure that a valid observer is passed! */
 void AXLibStartObserver(macos_observer *Observer)
 {
+    ASSERT(Observer && Observer->Ref);
+
     if(!CFRunLoopContainsSource(CFRunLoopGetMain(),
                                 AXObserverGetRunLoopSource(Observer->Ref),
                                 kCFRunLoopDefaultMode))
@@ -36,18 +39,27 @@ void AXLibStartObserver(macos_observer *Observer)
 AXError AXLibAddObserverNotification(macos_observer *Observer, AXUIElementRef Ref,
                                      CFStringRef Notification, void *Reference)
 {
+    ASSERT(Observer && Observer->Ref);
+    ASSERT(Ref);
+    ASSERT(Notification);
+
     return AXObserverAddNotification(Observer->Ref, Ref, Notification, Reference);
 }
 
 /* NOTE(koekeishiya): The caller is responsible for making sure that a valid observer is passed! */
 void AXLibRemoveObserverNotification(macos_observer *Observer, AXUIElementRef Ref, CFStringRef Notification)
 {
+    ASSERT(Observer && Observer->Ref);
+    ASSERT(Ref);
+
     AXObserverRemoveNotification(Observer->Ref, Ref, Notification);
 }
 
 /* NOTE(koekeishiya): The caller is responsible for making sure that a valid observer is passed! */
 void AXLibStopObserver(macos_observer *Observer)
 {
+    ASSERT(Observer && Observer->Ref);
+
     Observer->Enabled = false;
     CFRunLoopSourceInvalidate(AXObserverGetRunLoopSource(Observer->Ref));
 }
@@ -55,6 +67,8 @@ void AXLibStopObserver(macos_observer *Observer)
 /* NOTE(koekeishiya): The caller is responsible for making sure that a valid observer is passed! */
 void AXLibDestroyObserver(macos_observer *Observer)
 {
+    ASSERT(Observer && Observer->Ref);
+
     if(Observer->Enabled)
     {
         AXLibStopObserver(Observer);
