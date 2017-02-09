@@ -233,7 +233,10 @@ OBSERVER_CALLBACK(ApplicationCallback)
     else if(CFEqual(Notification, kAXWindowDeminiaturizedNotification))
     {
         /* NOTE(koekeishiya): when a deminimized window pulls the user to the space of that window,
-         * we receive this notification before 'didActiveSpaceChangeNotification'. */
+         * we receive this notification before 'didActiveSpaceChangeNotification'.
+         *
+         * This does NOT happen if a window is deminimized by cmd-clicking the window. The window
+         * will be deminimized on the currently active space, and no space change occur. */
 
         macos_window *Window = (macos_window *) Reference;
         ConstructEvent(ChunkWM_WindowDeminimized, Window);
