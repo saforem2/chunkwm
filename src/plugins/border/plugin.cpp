@@ -39,6 +39,11 @@ UpdateToFocusedWindow()
 internal void
 UpdateIfFocusedWindow(AXUIElementRef Element)
 {
+    if(!Application)
+    {
+        return;
+    }
+
     AXUIElementRef WindowRef = AXLibGetFocusedWindow(Application->Ref);
     if(WindowRef)
     {
