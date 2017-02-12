@@ -203,7 +203,7 @@ bool BeginPlugins()
     }
 
     loaded_plugin LoadedPluginTemplate;
-    if(LoadPlugin("plugins/template.so", &LoadedPluginTemplate))
+    if(LoadPlugin("plugins/transparency.so", &LoadedPluginTemplate))
     {
 #if 0
         UnloadPlugin(&LoadedPluginTemplate);
