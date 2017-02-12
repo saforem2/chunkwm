@@ -27,6 +27,7 @@ SetWindowAlpha(uint32_t Id)
         char Message[255];
         sprintf(Message, "window_alpha %d %f", Id, ALPHA);
         WriteToSocket(Message, SockFD);
+        CloseSocket(SockFD);
     }
 }
 
@@ -41,6 +42,7 @@ ProcessApplicationWindowList(macos_application *Application)
         while((Window = *List++))
         {
             SetWindowAlpha(Window->Id);
+            AXLibDestroyWindow(Window);
         }
 
         free(WindowList);
