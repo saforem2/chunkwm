@@ -77,8 +77,9 @@ internal void
 WindowFocusedHandler(const char *Data)
 {
     macos_window *Window = (macos_window *) Data;
-    if((Window->Owner == Application) &&
-       (AXLibIsWindowStandard(Window)))
+    if((AXLibIsWindowStandard(Window)) &&
+       ((Window->Owner == Application) ||
+       (Application == NULL)))
     {
         UpdateWindow(Window->Ref);
     }
@@ -183,15 +184,13 @@ PLUGIN_MAIN_FUNC(PluginMain)
  */
 PLUGIN_BOOL_FUNC(PluginInit)
 {
-    printf("Plugin Init!\n");
-
     CreateBorder(0, 0, 0, 0);
     return true;
 }
 
 PLUGIN_VOID_FUNC(PluginDeInit)
 {
-    printf("Plugin DeInit!\n");
+    DestroyBorder();
 }
 
 // NOTE(koekeishiya): Enable to manually trigger ABI mismatch

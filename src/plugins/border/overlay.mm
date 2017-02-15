@@ -77,6 +77,7 @@ void CreateBorder(int X, int Y, int W, int H)
     [BorderWindow setCollectionBehavior:NSWindowCollectionBehaviorCanJoinAllSpaces];
     [BorderWindow setLevel:NSFloatingWindowLevel];
     [BorderWindow makeKeyAndOrderFront: nil];
+    [BorderWindow setReleasedWhenClosed:YES];
 
     [Pool release];
 }
@@ -84,4 +85,19 @@ void CreateBorder(int X, int Y, int W, int H)
 void UpdateBorder(int X, int Y, int W, int H)
 {
     [BorderWindow setFrame:NSMakeRect(X - Inset, InvertY(Y + Inset, H), W + (2 * Inset), H + (2 * Inset)) display:YES animate:NO];
+}
+
+void DestroyBorder()
+{
+    if(BorderWindow)
+    {
+        [BorderWindow close];
+        BorderWindow = nil;
+    }
+
+    if(BorderView)
+    {
+        [BorderView release];
+        BorderView = nil;
+    }
 }
