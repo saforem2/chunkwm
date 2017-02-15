@@ -61,18 +61,29 @@ int main(int Count, char **Args)
         BeginSharedWorkspace();
         BeginDisplayHandler();
 
-        BeginPlugins();
-
-        if(InitState())
+        // TODO(koekeishiya): Read plugin directory from argument or env-variable.
+        int Status = BeginPlugins(PluginDirectory);
+        if(Status == 0)
         {
-            // TODO(koekeishiya): Read plugin directory from config or something.
-            HotloaderAddPath(PluginDirectory);
-            HotloaderInit();
+            // NOTE(koekeishiya): Success
+            if(InitState())
+            {
+                HotloaderAddPath(PluginDirectory);
+                HotloaderInit();
 
-            StartEventLoop();
-            CFRunLoopRun();
+                StartEventLoop();
+                CFRunLoopRun();
+            }
+            else
+            {
+                fprintf(stderr, "chunkwm: failed to initialize critical mutex! abort..\n");
+            }
         }
-        else
+        else if(Status == -1)
+        {
+            fprintf(stderr, "chunkwm: failed to initialize plugins, directory does not exist! abort..\n");
+        }
+        else if(Status == -2)
         {
             fprintf(stderr, "chunkwm: failed to initialize critical mutex! abort..\n");
         }

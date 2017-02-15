@@ -4,16 +4,29 @@
 #include <dlfcn.h>
 #include <string.h>
 #include <pthread.h>
+#include <dirent.h>
+
+#include <map>
 
 #include "plugin.h"
 #define internal static
 
 struct loaded_plugin
 {
+    char *Filename;
     void *Handle;
     plugin *Plugin;
     plugin_details *Info;
 };
+
+struct string_comparator {
+bool operator()(const char *A, const char *B) const
+{
+    return strcmp(A, B) < 0;
+}
+};
+
+internal std::map<const char *, loaded_plugin *, string_comparator> LoadedPlugins;
 
 internal pthread_mutex_t Mutexes[chunkwm_export_end];
 internal plugin_list ExportedPlugins[chunkwm_export_end];
@@ -89,9 +102,11 @@ HookPlugin(loaded_plugin *LoadedPlugin)
         {
             if(*Export >= 0)
             {
+#if 0
                 printf("Plugin '%s' subscribed to '%s'\n",
                        LoadedPlugin->Info->PluginName,
                        chunkwm_plugin_export_str[*Export]);
+#endif
                 SubscribeToEvent(Plugin, *Export);
             }
             else
@@ -116,9 +131,11 @@ UnhookPlugin(loaded_plugin *LoadedPlugin)
         {
             if(*Export >= 0)
             {
+#if 0
                 printf("Plugin '%s' unsubscribed from '%s'\n",
                        LoadedPlugin->Info->PluginName,
                        chunkwm_plugin_export_str[*Export]);
+#endif
                 UnsubscribeFromEvent(Plugin, *Export);
             }
             ++Export;
@@ -126,9 +143,32 @@ UnhookPlugin(loaded_plugin *LoadedPlugin)
     }
 }
 
-bool LoadPlugin(const char *File, loaded_plugin *LoadedPlugin)
+internal void
+StoreLoadedPlugin(loaded_plugin *LoadedPlugin)
 {
-    void *Handle = dlopen(File, RTLD_LAZY);
+    LoadedPlugins[LoadedPlugin->Filename] = LoadedPlugin;
+}
+
+internal loaded_plugin *
+RemoveLoadedPlugin(const char *Filename)
+{
+    loaded_plugin *Result;
+    if(LoadedPlugins.find(Filename) != LoadedPlugins.end())
+    {
+        Result = LoadedPlugins[Filename];
+        LoadedPlugins.erase(Filename);
+    }
+    else
+    {
+        Result = NULL;
+    }
+
+    return Result;
+}
+
+bool LoadPlugin(const char *Absolutepath, const char *Filename)
+{
+    void *Handle = dlopen(Absolutepath, RTLD_LAZY);
     if(Handle)
     {
         plugin_details *Info = (plugin_details *) dlsym(Handle, "Exports");
@@ -137,18 +177,23 @@ bool LoadPlugin(const char *File, loaded_plugin *LoadedPlugin)
             if(VerifyPluginABI(Info))
             {
                 plugin *Plugin = Info->Initialize();
+                PrintPluginDetails(Info);
+
+                loaded_plugin *LoadedPlugin = (loaded_plugin *) malloc(sizeof(loaded_plugin));
                 LoadedPlugin->Handle = Handle;
                 LoadedPlugin->Plugin = Plugin;
                 LoadedPlugin->Info = Info;
-                PrintPluginDetails(Info);
 
                 if(Plugin->Init())
                 {
+                    LoadedPlugin->Filename = strdup(Filename);
+                    StoreLoadedPlugin(LoadedPlugin);
                     HookPlugin(LoadedPlugin);
                     return true;
                 }
                 else
                 {
+                    free(LoadedPlugin);
                     fprintf(stderr, "Plugin '%s' init failed!\n", Info->PluginName);
                     dlclose(Handle);
                 }
@@ -162,35 +207,44 @@ bool LoadPlugin(const char *File, loaded_plugin *LoadedPlugin)
         }
         else
         {
-            fprintf(stderr, "dlsym '%s' plugin details missing!\n", File);
+            fprintf(stderr, "dlsym '%s' plugin details missing!\n", Absolutepath);
             dlclose(Handle);
         }
     }
     else
     {
-        fprintf(stderr, "dlopen '%s' failed!\n", File);
+        fprintf(stderr, "dlopen '%s' failed!\n", Absolutepath);
     }
 
     return false;
 }
 
-bool UnloadPlugin(loaded_plugin *LoadedPlugin)
+bool UnloadPlugin(const char *Filename)
 {
     bool Result = false;
-    if(LoadedPlugin->Handle)
+
+    loaded_plugin *LoadedPlugin = RemoveLoadedPlugin(Filename);
+    if(LoadedPlugin && LoadedPlugin->Handle)
     {
+        printf("chunkwm: unload plugin '%s'\n", Filename);
         UnhookPlugin(LoadedPlugin);
 
         plugin *Plugin = LoadedPlugin->Plugin;
         Plugin->DeInit();
 
         Result = dlclose(LoadedPlugin->Handle) == 0;
+        free(LoadedPlugin->Filename);
+        free(LoadedPlugin);
     }
 
     return Result;
 }
 
-bool BeginPlugins()
+/* NOTE(koekeishiya):
+ * Success                      =  0
+ * Directory does not exist     = -1
+ * Failed to initialize mutexes = -2 */
+int BeginPlugins(const char *Directory)
 {
     for(int Index = 0;
         Index < chunkwm_export_end;
@@ -198,41 +252,45 @@ bool BeginPlugins()
     {
         if(pthread_mutex_init(&Mutexes[Index], NULL) != 0)
         {
-            return false;
+            return -2;
         }
     }
 
-    loaded_plugin LoadedPluginTemplate;
-    if(LoadPlugin("plugins/transparency.so", &LoadedPluginTemplate))
+    DIR *Handle = opendir(Directory);
+    if(!Handle)
     {
-#if 0
-        UnloadPlugin(&LoadedPluginTemplate);
-#endif
+        return -1;
     }
 
-    loaded_plugin LoadedPluginBorder;
-    if(LoadPlugin("plugins/border.so", &LoadedPluginBorder))
+    struct dirent *Entry;
+    while((Entry = readdir(Handle)))
     {
+        char *File = Entry->d_name;
+        char *Extension = strrchr(File, '.');
+        if((Extension) && (strcmp(Extension, ".so") == 0))
+        {
+            size_t DirectoryLength = strlen(Directory);
+            size_t FilenameLength = strlen(Entry->d_name);
+            size_t TotalLength = DirectoryLength + 1 + FilenameLength;
+
+            char *Absolutepath = (char *) malloc(TotalLength + 1);
+            Absolutepath[TotalLength] = '\0';
+
+            memcpy(Absolutepath, Directory, DirectoryLength);
+            memset(Absolutepath + DirectoryLength, '/', 1);
+            memcpy(Absolutepath + DirectoryLength + 1, Entry->d_name, FilenameLength);
+
 #if 0
-        UnloadPlugin(&LoadedPluginBorder);
+            printf("Plugin asbolutepath '%s', filename '%s'\n",
+                    Absolutepath,
+                    Entry->d_name);
 #endif
+
+            LoadPlugin(Absolutepath, Entry->d_name);
+            free(Absolutepath);
+        }
     }
 
-    loaded_plugin LoadedPluginFFM;
-    if(LoadPlugin("plugins/ffm.so", &LoadedPluginFFM))
-    {
-#if 0
-        UnloadPlugin(&LoadedPluginFFM);
-#endif
-    }
-
-    loaded_plugin LoadedPluginTiling;
-    if(LoadPlugin("plugins/tiling.so", &LoadedPluginTiling))
-    {
-#if 0
-        UnloadPlugin(&LoadedPluginTiling);
-#endif
-    }
-
-    return true;
+    closedir(Handle);
+    return 0;
 }

@@ -1,5 +1,7 @@
 #include "hotloader.h"
+#include "plugin.h"
 
+#include <sys/stat.h>
 #include <string.h>
 #include <vector>
 
@@ -24,10 +26,10 @@ HOTLOADER_CALLBACK(HotloadPluginCallback)
         Index < Count;
         ++Index)
     {
-        char *File = Files[Index];
+        char *Fullpath = Files[Index];
         bool ValidDirectory = false;
 
-        char *LastSlash = strrchr(File, '/');
+        char *LastSlash = strrchr(Fullpath, '/');
         if(LastSlash)
         {
             *LastSlash = '\0';
@@ -37,7 +39,7 @@ HOTLOADER_CALLBACK(HotloadPluginCallback)
                 Index < Directories.size();
                 ++Index)
             {
-                if(strcmp(File, Directories[Index]) == 0)
+                if(strcmp(Fullpath, Directories[Index]) == 0)
                 {
                     ValidDirectory = true;
                     break;
@@ -49,11 +51,20 @@ HOTLOADER_CALLBACK(HotloadPluginCallback)
 
         if(ValidDirectory)
         {
-            char *Extension = strrchr(File, '.');
+            char *Extension = strrchr(Fullpath, '.');
             if((Extension) && (strcmp(Extension, ".so") == 0))
             {
-                // TODO(koekeishiya): reload plugin..
-                printf("hotloader: '%s' changed!\n", File);
+                char *Filename = LastSlash + 1;
+                printf("hotloader: '%s' changed!\n", Filename);
+
+                UnloadPlugin(Filename);
+
+                // NOTE(koekeishiya): Try to load plugin if file exists)
+                struct stat Buffer;
+                if(stat(Fullpath, &Buffer) == 0)
+                {
+                    LoadPlugin(Fullpath, Filename);
+                }
             }
         }
     }

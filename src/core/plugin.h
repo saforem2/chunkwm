@@ -7,9 +7,12 @@
 typedef std::map<plugin *, bool>  plugin_list;
 typedef std::map<plugin *, bool>::iterator plugin_list_iter;
 
-bool BeginPlugins();
+int BeginPlugins(const char *Directory);
 
 plugin_list *BeginPluginList(chunkwm_plugin_export Export);
 void EndPluginList(chunkwm_plugin_export Export);
+
+bool LoadPlugin(const char *Fullpath, const char *Filename);
+bool UnloadPlugin(const char *Filename);
 
 #endif
