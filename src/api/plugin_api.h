@@ -29,6 +29,7 @@ struct plugin
     plugin_main_func *Run;
 
     chunkwm_plugin_export *Subscriptions;
+    unsigned SubscriptionCount;
 };
 
 
@@ -56,15 +57,8 @@ struct plugin_details
     void InitPluginSubscriptions(plugin *Plugin)                 \
     {                                                            \
         int Count = ArrayCount(SubscriptionArray);               \
-        Plugin->Subscriptions =                                  \
-            (chunkwm_plugin_export *) malloc((Count + 1) *       \
-                    sizeof(chunkwm_plugin_export));              \
-        Plugin->Subscriptions[Count] = chunkwm_export_end;       \
-        for(int Index = 0; Index < Count; ++Index)               \
-        {                                                        \
-            Plugin->Subscriptions[Index] =                       \
-                SubscriptionArray[Index];                        \
-        }                                                        \
+        Plugin->SubscriptionCount = Count;                       \
+        Plugin->Subscriptions = SubscriptionArray;               \
      }
 
 #define CHUNKWM_PLUGIN(PluginName, PluginVersion)                \

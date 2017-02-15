@@ -97,25 +97,17 @@ HookPlugin(loaded_plugin *LoadedPlugin)
     plugin *Plugin = LoadedPlugin->Plugin;
     if(Plugin->Subscriptions)
     {
-        chunkwm_plugin_export *Export = Plugin->Subscriptions;
-        while(*Export != chunkwm_export_end)
+        for(int Index = 0;
+            Index < Plugin->SubscriptionCount;
+            ++Index)
         {
-            if(*Export >= 0)
-            {
-#if 0
-                printf("Plugin '%s' subscribed to '%s'\n",
-                       LoadedPlugin->Info->PluginName,
-                       chunkwm_plugin_export_str[*Export]);
+            chunkwm_plugin_export *Export = Plugin->Subscriptions + Index;
+#if 1
+            printf("Plugin '%s' subscribed to '%s'\n",
+                   LoadedPlugin->Info->PluginName,
+                   chunkwm_plugin_export_str[*Export]);
 #endif
-                SubscribeToEvent(Plugin, *Export);
-            }
-            else
-            {
-                fprintf(stderr,
-                        "Plugin '%s' contains invalid subscription!\n",
-                        LoadedPlugin->Info->PluginName);
-            }
-            ++Export;
+            SubscribeToEvent(Plugin, *Export);
         }
     }
 }
@@ -126,19 +118,17 @@ UnhookPlugin(loaded_plugin *LoadedPlugin)
     plugin *Plugin = LoadedPlugin->Plugin;
     if(Plugin->Subscriptions)
     {
-        chunkwm_plugin_export *Export = Plugin->Subscriptions;
-        while(*Export != chunkwm_export_end)
+        for(int Index = 0;
+            Index < Plugin->SubscriptionCount;
+            ++Index)
         {
-            if(*Export >= 0)
-            {
-#if 0
-                printf("Plugin '%s' unsubscribed from '%s'\n",
-                       LoadedPlugin->Info->PluginName,
-                       chunkwm_plugin_export_str[*Export]);
+            chunkwm_plugin_export *Export = Plugin->Subscriptions + Index;
+#if 1
+            printf("Plugin '%s' unsubscribed from '%s'\n",
+                   LoadedPlugin->Info->PluginName,
+                   chunkwm_plugin_export_str[*Export]);
 #endif
-                UnsubscribeFromEvent(Plugin, *Export);
-            }
-            ++Export;
+            UnsubscribeFromEvent(Plugin, *Export);
         }
     }
 }
