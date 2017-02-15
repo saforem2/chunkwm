@@ -28,8 +28,8 @@ bool operator()(const char *A, const char *B) const
 
 internal std::map<const char *, loaded_plugin *, string_comparator> LoadedPlugins;
 
-internal pthread_mutex_t Mutexes[chunkwm_export_end];
-internal plugin_list ExportedPlugins[chunkwm_export_end];
+internal pthread_mutex_t Mutexes[chunkwm_export_count];
+internal plugin_list ExportedPlugins[chunkwm_export_count];
 
 internal bool
 VerifyPluginABI(plugin_details *Info)
@@ -237,7 +237,7 @@ bool UnloadPlugin(const char *Filename)
 int BeginPlugins(const char *Directory)
 {
     for(int Index = 0;
-        Index < chunkwm_export_end;
+        Index < chunkwm_export_count;
         ++Index)
     {
         if(pthread_mutex_init(&Mutexes[Index], NULL) != 0)
