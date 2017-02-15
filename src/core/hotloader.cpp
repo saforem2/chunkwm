@@ -12,23 +12,8 @@
                                            const FSEventStreamEventFlags *Flags,\
                                            const FSEventStreamEventId *Ids)
 
-internal bool
-FileHasExtensionSO(char *File)
-{
-    bool Result;
-
-    char *Extension = strrchr(File, '.');
-    if(Extension)
-    {
-        Result = (strcmp(Extension, ".so") == 0);
-    }
-    else
-    {
-        Result = false;
-    }
-
-    return Result;
-}
+internal hotloader Hotloader;
+internal std::vector<const char *> Directories;
 
 internal
 HOTLOADER_CALLBACK(HotloadPluginCallback)
@@ -39,18 +24,40 @@ HOTLOADER_CALLBACK(HotloadPluginCallback)
         Index < Count;
         ++Index)
     {
-        // NOTE(koekeishiya): We also receive notifications for subdirectories.
         char *File = Files[Index];
-        if(FileHasExtensionSO(File))
+        bool ValidDirectory = false;
+
+        char *LastSlash = strrchr(File, '/');
+        if(LastSlash)
         {
-            // TODO(koekeishiya): reload plugin..
-            printf("hotloader: '%s' changed!\n", File);
+            *LastSlash = '\0';
+
+            // NOTE(koekeishiya): We receive notifications for subdirectories, skip these.
+            for(size_t Index = 0;
+                Index < Directories.size();
+                ++Index)
+            {
+                if(strcmp(File, Directories[Index]) == 0)
+                {
+                    ValidDirectory = true;
+                    break;
+                }
+            }
+
+            *LastSlash = '/';
+        }
+
+        if(ValidDirectory)
+        {
+            char *Extension = strrchr(File, '.');
+            if((Extension) && (strcmp(Extension, ".so") == 0))
+            {
+                // TODO(koekeishiya): reload plugin..
+                printf("hotloader: '%s' changed!\n", File);
+            }
         }
     }
 }
-
-internal hotloader Hotloader;
-internal std::vector<const char *> Directories;
 
 void HotloaderAddPath(const char *Path)
 {
