@@ -27,8 +27,8 @@ SetWindowAlpha(uint32_t Id)
         char Message[255];
         sprintf(Message, "window_alpha %d %f", Id, ALPHA);
         WriteToSocket(Message, SockFD);
-        CloseSocket(SockFD);
     }
+    CloseSocket(SockFD);
 }
 
 inline void
