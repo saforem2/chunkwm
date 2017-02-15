@@ -186,7 +186,6 @@ PLUGIN_MAIN_FUNC(PluginMain)
  */
 PLUGIN_BOOL_FUNC(PluginInit)
 {
-    printf("Plugin Init!\n");
     EventTap.Mask = (1 << kCGEventMouseMoved);
     bool Result = BeginEventTap(&EventTap, &EventTapCallback);
     return Result;
@@ -194,7 +193,6 @@ PLUGIN_BOOL_FUNC(PluginInit)
 
 PLUGIN_VOID_FUNC(PluginDeInit)
 {
-    printf("Plugin DeInit!\n");
     EndEventTap(&EventTap);
 }
 
