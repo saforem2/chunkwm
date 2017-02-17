@@ -59,7 +59,7 @@ HOTLOADER_CALLBACK(HotloadPluginCallback)
                 printf("hotloader: plugin '%s' changed!\n", Filename);
 #endif
 
-                UnloadPlugin(Filename);
+                UnloadPlugin(Fullpath, Filename);
 
                 // NOTE(koekeishiya): Try to load plugin if file exists)
                 struct stat Buffer;

@@ -13,6 +13,6 @@ plugin_list *BeginPluginList(chunkwm_plugin_export Export);
 void EndPluginList(chunkwm_plugin_export Export);
 
 bool LoadPlugin(const char *Fullpath, const char *Filename);
-bool UnloadPlugin(const char *Filename);
+bool UnloadPlugin(const char *Fullpath, const char *Filename);
 
 #endif
