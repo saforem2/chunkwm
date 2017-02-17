@@ -158,29 +158,29 @@ TileWindow(macos_display *Display, macos_window *Window)
     }
 
     macos_space *Space = AXLibActiveSpace(Display->Ref);
-    if(Space->Type != kCGSSpaceUser)
+    if(Space->Type == kCGSSpaceUser)
     {
-        return;
-    }
-
-    virtual_space *VirtualSpace = AcquireVirtualSpace(Display, Space);
-    if(VirtualSpace->Tree)
-    {
-        node *Exists = GetNodeWithId(VirtualSpace->Tree, Window->Id);
-        if(!Exists)
+        virtual_space *VirtualSpace = AcquireVirtualSpace(Display, Space);
+        if(VirtualSpace->Tree)
         {
-            node *Node = FindFirstMinDepthLeafNode(VirtualSpace->Tree);
-            ASSERT(Node != NULL);
-            CreateLeafNodePair(Display, Node, Node->WindowId, Window->Id, OptimalSplitMode(Node));
-            ApplyNodeRegion(Node);
+            node *Exists = GetNodeWithId(VirtualSpace->Tree, Window->Id);
+            if(!Exists)
+            {
+                node *Node = FindFirstMinDepthLeafNode(VirtualSpace->Tree);
+                ASSERT(Node != NULL);
+                CreateLeafNodePair(Display, Node, Node->WindowId, Window->Id, OptimalSplitMode(Node));
+                ApplyNodeRegion(Node);
+            }
+        }
+        else
+        {
+            VirtualSpace->Tree = CreateRootNode(Display);
+            VirtualSpace->Tree->WindowId = Window->Id;
+            ApplyNodeRegion(VirtualSpace->Tree);
         }
     }
-    else
-    {
-        VirtualSpace->Tree = CreateRootNode(Display);
-        VirtualSpace->Tree->WindowId = Window->Id;
-        ApplyNodeRegion(VirtualSpace->Tree);
-    }
+
+    AXLibDestroySpace(Space);
 }
 
 internal void
@@ -192,46 +192,44 @@ UntileWindow(macos_display *Display, macos_window *Window)
     }
 
     macos_space *Space = AXLibActiveSpace(Display->Ref);
-    if(Space->Type != kCGSSpaceUser)
+    if(Space->Type == kCGSSpaceUser)
     {
-        return;
-    }
-
-    virtual_space *VirtualSpace = AcquireVirtualSpace(Display, Space);
-    if(!VirtualSpace->Tree)
-    {
-        return;
-    }
-
-    node *Node = GetNodeWithId(VirtualSpace->Tree, Window->Id);
-    node *Parent = Node->Parent;
-    if(Parent && Parent->Left && Parent->Right)
-    {
-        node *Child = IsRightChild(Node) ? Parent->Left : Parent->Right;
-        Parent->Left = NULL;
-        Parent->Right = NULL;
-
-        Parent->WindowId = Child->WindowId;
-        if(Child->Left && Child->Right)
+        virtual_space *VirtualSpace = AcquireVirtualSpace(Display, Space);
+        if(VirtualSpace->Tree)
         {
-            Parent->Left = Child->Left;
-            Parent->Left->Parent = Parent;
+            node *Node = GetNodeWithId(VirtualSpace->Tree, Window->Id);
+            node *Parent = Node->Parent;
+            if(Parent && Parent->Left && Parent->Right)
+            {
+                node *Child = IsRightChild(Node) ? Parent->Left : Parent->Right;
+                Parent->Left = NULL;
+                Parent->Right = NULL;
 
-            Parent->Right = Child->Right;
-            Parent->Right->Parent = Parent;
+                Parent->WindowId = Child->WindowId;
+                if(Child->Left && Child->Right)
+                {
+                    Parent->Left = Child->Left;
+                    Parent->Left->Parent = Parent;
 
-            CreateNodeRegionRecursive(Display, Parent, true);
+                    Parent->Right = Child->Right;
+                    Parent->Right->Parent = Parent;
+
+                    CreateNodeRegionRecursive(Display, Parent, true);
+                }
+
+                ApplyNodeRegion(Parent);
+                free(Child);
+                free(Node);
+            }
+            else if(!Parent)
+            {
+                free(VirtualSpace->Tree);
+                VirtualSpace->Tree = NULL;
+            }
         }
+    }
 
-        ApplyNodeRegion(Parent);
-        free(Child);
-        free(Node);
-    }
-    else if(!Parent)
-    {
-        free(VirtualSpace->Tree);
-        VirtualSpace->Tree = NULL;
-    }
+    AXLibDestroySpace(Space);
 }
 
 /* NOTE(koekeishiya): Returns a vector of CGWindowIDs. */
@@ -350,79 +348,75 @@ internal void
 CreateWindowTree(macos_display *Display)
 {
     macos_space *Space = AXLibActiveSpace(Display->Ref);
-    if(Space->Type != kCGSSpaceUser)
+    if(Space->Type == kCGSSpaceUser)
     {
-        return;
-    }
-
-    virtual_space *VirtualSpace = AcquireVirtualSpace(Display, Space);
-    if(VirtualSpace->Tree)
-    {
-        return;
-    }
-
-    std::vector<uint32_t> Windows = GetAllVisibleWindows();
-    if(!Windows.empty())
-    {
-        node *Root = CreateRootNode(Display);
-        Root->WindowId = Windows[0];
-
-        for(size_t Index = 1;
-            Index < Windows.size();
-            ++Index)
+        virtual_space *VirtualSpace = AcquireVirtualSpace(Display, Space);
+        if(!VirtualSpace->Tree)
         {
-            node *Node = FindFirstMinDepthLeafNode(Root);
-            ASSERT(Node != NULL);
+            std::vector<uint32_t> Windows = GetAllVisibleWindows();
+            if(!Windows.empty())
+            {
+                node *Root = CreateRootNode(Display);
+                Root->WindowId = Windows[0];
 
-            CreateLeafNodePair(Display, Node, Node->WindowId, Windows[Index], OptimalSplitMode(Node));
+                for(size_t Index = 1;
+                    Index < Windows.size();
+                    ++Index)
+                {
+                    node *Node = FindFirstMinDepthLeafNode(Root);
+                    ASSERT(Node != NULL);
+
+                    CreateLeafNodePair(Display, Node, Node->WindowId, Windows[Index], OptimalSplitMode(Node));
+                }
+
+                VirtualSpace->Tree = Root;
+                ApplyNodeRegion(VirtualSpace->Tree);
+            }
         }
-
-        VirtualSpace->Tree = Root;
-        ApplyNodeRegion(VirtualSpace->Tree);
     }
+
+    AXLibDestroySpace(Space);
 }
 
 internal void
 RebalanceWindowTree(macos_display *Display)
 {
     macos_space *Space = AXLibActiveSpace(Display->Ref);
-    if(Space->Type != kCGSSpaceUser)
+    if(Space->Type == kCGSSpaceUser)
     {
-        return;
-    }
-
-    virtual_space *VirtualSpace = AcquireVirtualSpace(Display, Space);
-    if(!VirtualSpace->Tree)
-    {
-        return;
-    }
-
-    std::vector<uint32_t> Windows = GetAllVisibleWindows();
-    std::vector<uint32_t> WindowsInTree = GetAllWindowsInTree(VirtualSpace->Tree);
-    std::vector<uint32_t> WindowsToAdd = GetAllWindowsToAddToTree(Space, Windows, WindowsInTree);
-    std::vector<uint32_t> WindowsToRemove = GetAllWindowsToRemoveFromTree(Windows, WindowsInTree);
-
-    for(size_t Index = 0;
-        Index < WindowsToRemove.size();
-        ++Index)
-    {
-        macos_window *Window = GetWindowByID(WindowsToRemove[Index]);
-        if(Window)
+        virtual_space *VirtualSpace = AcquireVirtualSpace(Display, Space);
+        if(VirtualSpace->Tree)
         {
-            UntileWindow(Display, Window);
+            std::vector<uint32_t> Windows = GetAllVisibleWindows();
+            std::vector<uint32_t> WindowsInTree = GetAllWindowsInTree(VirtualSpace->Tree);
+            std::vector<uint32_t> WindowsToAdd = GetAllWindowsToAddToTree(Space, Windows, WindowsInTree);
+            std::vector<uint32_t> WindowsToRemove = GetAllWindowsToRemoveFromTree(Windows, WindowsInTree);
+
+            for(size_t Index = 0;
+                Index < WindowsToRemove.size();
+                ++Index)
+            {
+                macos_window *Window = GetWindowByID(WindowsToRemove[Index]);
+                if(Window)
+                {
+                    UntileWindow(Display, Window);
+                }
+            }
+
+            for(size_t Index = 0;
+                Index < WindowsToAdd.size();
+                ++Index)
+            {
+                macos_window *Window = GetWindowByID(WindowsToAdd[Index]);
+                if(Window)
+                {
+                    TileWindow(Display, Window);
+                }
+            }
         }
     }
 
-    for(size_t Index = 0;
-        Index < WindowsToAdd.size();
-        ++Index)
-    {
-        macos_window *Window = GetWindowByID(WindowsToAdd[Index]);
-        if(Window)
-        {
-            TileWindow(Display, Window);
-        }
-    }
+    AXLibDestroySpace(Space);
 }
 
 void ApplicationLaunchedHandler(const char *Data)
@@ -473,28 +467,32 @@ void ApplicationUnhiddenHandler(const char *Data)
     macos_application *Application = (macos_application *) Data;
     printf("    plugin: %s unhidden!\n", Application->Name);
 
-    macos_window **WindowList = AXLibWindowListForApplication(Application);
-    if(WindowList)
+    macos_space *Space = AXLibActiveSpace(MainDisplay->Ref);
+    if(Space->Type == kCGSSpaceUser)
     {
-        macos_window **List = WindowList;
-        macos_window *Window;
-        while((Window = *List++))
+        macos_window **WindowList = AXLibWindowListForApplication(Application);
+        if(WindowList)
         {
-            if(GetWindowByID(Window->Id))
+            macos_window **List = WindowList;
+            macos_window *Window;
+            while((Window = *List++))
             {
-                macos_space *Space = AXLibActiveSpace(MainDisplay->Ref);
-                if((Space->Type == kCGSSpaceUser) &&
-                   (AXLibSpaceHasWindow(Space->Id, Window->Id)))
+                if(GetWindowByID(Window->Id))
                 {
-                    TileWindow(MainDisplay, Window);
+                    if(AXLibSpaceHasWindow(Space->Id, Window->Id))
+                    {
+                        TileWindow(MainDisplay, Window);
+                    }
                 }
+
+                AXLibDestroyWindow(Window);
             }
 
-            AXLibDestroyWindow(Window);
+            free(WindowList);
         }
-
-        free(WindowList);
     }
+
+    AXLibDestroySpace(Space);
 }
 
 void WindowCreatedHandler(const char *Data)
@@ -540,6 +538,8 @@ void WindowDeminimizedHandler(const char *Data)
     {
         TileWindow(MainDisplay, Window);
     }
+
+    AXLibDestroySpace(Space);
 }
 
 inline bool
