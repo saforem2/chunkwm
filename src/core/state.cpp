@@ -200,7 +200,6 @@ OBSERVER_CALLBACK(ApplicationCallback)
         {
             ConstructEvent(ChunkWM_WindowFocused, Window);
         }
-
     }
     else if(CFEqual(Notification, kAXWindowMovedNotification))
     {
