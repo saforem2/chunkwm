@@ -92,8 +92,7 @@ IsProcessInteractive(carbon_application_details *Info)
 // NOTE(koekeishiya): Application-related callbacks.
 CHUNKWM_CALLBACK(Callback_ChunkWM_ApplicationLaunched)
 {
-    carbon_application_details *Info =
-        (carbon_application_details *) Event->Context;
+    carbon_application_details *Info = (carbon_application_details *) Event->Context;
     ASSERT(Info);
 
     if(IsProcessInteractive(Info))
@@ -110,8 +109,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_ApplicationLaunched)
 
 CHUNKWM_CALLBACK(Callback_ChunkWM_ApplicationTerminated)
 {
-    carbon_application_details *Info =
-        (carbon_application_details *) Event->Context;
+    carbon_application_details *Info = (carbon_application_details *) Event->Context;
     ASSERT(Info);
 
     macos_application *Application = GetApplicationFromPID(Info->PID);
@@ -131,8 +129,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_ApplicationTerminated)
 
 CHUNKWM_CALLBACK(Callback_ChunkWM_ApplicationActivated)
 {
-    workspace_application_details *Info =
-        (workspace_application_details *) Event->Context;
+    workspace_application_details *Info = (workspace_application_details *) Event->Context;
     ASSERT(Info);
 
     macos_application *Application = GetApplicationFromPID(Info->PID);
@@ -151,8 +148,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_ApplicationActivated)
 
 CHUNKWM_CALLBACK(Callback_ChunkWM_ApplicationDeactivated)
 {
-    workspace_application_details *Info =
-        (workspace_application_details *) Event->Context;
+    workspace_application_details *Info = (workspace_application_details *) Event->Context;
     ASSERT(Info);
 
     macos_application *Application = GetApplicationFromPID(Info->PID);
@@ -171,8 +167,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_ApplicationDeactivated)
 
 CHUNKWM_CALLBACK(Callback_ChunkWM_ApplicationVisible)
 {
-    workspace_application_details *Info =
-        (workspace_application_details *) Event->Context;
+    workspace_application_details *Info = (workspace_application_details *) Event->Context;
     ASSERT(Info);
 
     macos_application *Application = GetApplicationFromPID(Info->PID);
@@ -191,8 +186,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_ApplicationVisible)
 
 CHUNKWM_CALLBACK(Callback_ChunkWM_ApplicationHidden)
 {
-    workspace_application_details *Info =
-        (workspace_application_details *) Event->Context;
+    workspace_application_details *Info = (workspace_application_details *) Event->Context;
     ASSERT(Info);
 
     macos_application *Application = GetApplicationFromPID(Info->PID);
@@ -229,8 +223,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_SpaceChanged)
 // NOTE(koekeishiya): Display-related callbacks
 CHUNKWM_CALLBACK(Callback_ChunkWM_DisplayAdded)
 {
-    CGDirectDisplayID *DisplayId
-        = (CGDirectDisplayID *) Event->Context;
+    CGDirectDisplayID *DisplayId = (CGDirectDisplayID *) Event->Context;
     ASSERT(DisplayId);
 
     printf("%d: display added\n", *DisplayId);
@@ -245,8 +238,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_DisplayAdded)
 
 CHUNKWM_CALLBACK(Callback_ChunkWM_DisplayRemoved)
 {
-    CGDirectDisplayID *DisplayId
-        = (CGDirectDisplayID *) Event->Context;
+    CGDirectDisplayID *DisplayId = (CGDirectDisplayID *) Event->Context;
     ASSERT(DisplayId);
 
     printf("%d: display removed\n", *DisplayId);
@@ -261,8 +253,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_DisplayRemoved)
 
 CHUNKWM_CALLBACK(Callback_ChunkWM_DisplayMoved)
 {
-    CGDirectDisplayID *DisplayId
-        = (CGDirectDisplayID *) Event->Context;
+    CGDirectDisplayID *DisplayId = (CGDirectDisplayID *) Event->Context;
     ASSERT(DisplayId);
 
     printf("%d: display moved\n", *DisplayId);
@@ -277,8 +268,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_DisplayMoved)
 
 CHUNKWM_CALLBACK(Callback_ChunkWM_DisplayResized)
 {
-    CGDirectDisplayID *DisplayId
-        = (CGDirectDisplayID *) Event->Context;
+    CGDirectDisplayID *DisplayId = (CGDirectDisplayID *) Event->Context;
     ASSERT(DisplayId);
 
     printf("%d: display resolution changed\n", *DisplayId);
