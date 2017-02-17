@@ -1,5 +1,4 @@
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 
 #include "../../api/plugin_api.h"
@@ -23,13 +22,11 @@ PLUGIN_MAIN_FUNC(PluginMain)
     if(StringsAreEqual(Node, "chunkwm_export_application_launched"))
     {
         macos_application *Application = (macos_application *) Data;
-        printf("    plugin template: launched: '%s'\n", Application->Name);
         return true;
     }
     else if(StringsAreEqual(Node, "chunkwm_export_application_terminated"))
     {
         macos_application *Application = (macos_application *) Data;
-        printf("    plugin template: terminated: '%s'\n", Application->Name);
         return true;
     }
 
@@ -42,13 +39,11 @@ PLUGIN_MAIN_FUNC(PluginMain)
  */
 PLUGIN_BOOL_FUNC(PluginInit)
 {
-    printf("Plugin Init!\n");
     return true;
 }
 
 PLUGIN_VOID_FUNC(PluginDeInit)
 {
-    printf("Plugin DeInit!\n");
 }
 
 // NOTE(koekeishiya): Enable to manually trigger ABI mismatch

@@ -60,7 +60,6 @@ PLUGIN_MAIN_FUNC(PluginMain)
     if(StringsAreEqual(Node, "chunkwm_export_application_launched"))
     {
         macos_application *Application = (macos_application *) Data;
-        printf("    plugin template: launched: '%s'\n", Application->Name);
         ProcessApplicationWindowList(Application);
         return true;
     }
@@ -79,8 +78,6 @@ PLUGIN_MAIN_FUNC(PluginMain)
  */
 PLUGIN_BOOL_FUNC(PluginInit)
 {
-    printf("Plugin Init!\n");
-
     uint32_t ProcessPolicy = Process_Policy_Regular | Process_Policy_LSUIElement;
     std::vector<macos_application *> Applications = AXLibRunningProcesses(ProcessPolicy);
 
@@ -95,7 +92,6 @@ PLUGIN_BOOL_FUNC(PluginInit)
 
 PLUGIN_VOID_FUNC(PluginDeInit)
 {
-    printf("Plugin DeInit!\n");
 }
 
 // NOTE(koekeishiya): Enable to manually trigger ABI mismatch

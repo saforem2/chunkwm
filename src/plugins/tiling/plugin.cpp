@@ -422,7 +422,6 @@ RebalanceWindowTree(macos_display *Display)
 void ApplicationLaunchedHandler(const char *Data)
 {
     macos_application *Application = (macos_application *) Data;
-    printf("    plugin: %s launched!\n", Application->Name);
 
     macos_window **WindowList = AXLibWindowListForApplication(Application);
     if(WindowList)
@@ -449,7 +448,6 @@ void ApplicationLaunchedHandler(const char *Data)
 void ApplicationTerminatedHandler(const char *Data)
 {
     macos_application *Application = (macos_application *) Data;
-    printf("    plugin: %s terminated!\n", Application->Name);
 
     RemoveApplication(Application);
     RebalanceWindowTree(MainDisplay);
@@ -458,14 +456,12 @@ void ApplicationTerminatedHandler(const char *Data)
 void ApplicationHiddenHandler(const char *Data)
 {
     macos_application *Application = (macos_application *) Data;
-    printf("    plugin: %s hidden!\n", Application->Name);
     RebalanceWindowTree(MainDisplay);
 }
 
 void ApplicationUnhiddenHandler(const char *Data)
 {
     macos_application *Application = (macos_application *) Data;
-    printf("    plugin: %s unhidden!\n", Application->Name);
 
     macos_space *Space = AXLibActiveSpace(MainDisplay->Ref);
     if(Space->Type == kCGSSpaceUser)
@@ -498,7 +494,6 @@ void ApplicationUnhiddenHandler(const char *Data)
 void WindowCreatedHandler(const char *Data)
 {
     macos_window *Window = (macos_window *) Data;
-    printf("    plugin: %s:%s window created\n", Window->Owner->Name, Window->Name);
 
     macos_window *Copy = AXLibCopyWindow(Window);
     AddWindowToCollection(Copy);
@@ -509,7 +504,6 @@ void WindowCreatedHandler(const char *Data)
 void WindowDestroyedHandler(const char *Data)
 {
     macos_window *Window = (macos_window *) Data;
-    printf("    plugin: %s:%s window destroyed\n", Window->Owner->Name, Window->Name);
 
     macos_window *Copy = RemoveWindowFromCollection(Window);
     if(Copy)
@@ -522,15 +516,12 @@ void WindowDestroyedHandler(const char *Data)
 void WindowMinimizedHandler(const char *Data)
 {
     macos_window *Window = (macos_window *) Data;
-    printf("    plugin: %s:%s window minimized\n", Window->Owner->Name, Window->Name);
-
     UntileWindow(MainDisplay, Window);
 }
 
 void WindowDeminimizedHandler(const char *Data)
 {
     macos_window *Window = (macos_window *) Data;
-    printf("    plugin: %s:%s window deminimized\n", Window->Owner->Name, Window->Name);
 
     macos_space *Space = AXLibActiveSpace(MainDisplay->Ref);
     if((Space->Type == kCGSSpaceUser) &&
@@ -675,13 +666,11 @@ Deinit()
  */
 PLUGIN_BOOL_FUNC(PluginInit)
 {
-    printf("Plugin Init!\n");
     return Init();
 }
 
 PLUGIN_VOID_FUNC(PluginDeInit)
 {
-    printf("Plugin DeInit!\n");
     Deinit();
 }
 

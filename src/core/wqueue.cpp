@@ -59,7 +59,7 @@ void *WorkQueueThreadProc(void *Data)
             {
                 uint64_t ID;
                 pthread_threadid_np(NULL, &ID);
-                printf("%lld: sem_wait(..) failed\n", ID);
+                fprintf(stderr, "%lld: sem_wait(..) failed\n", ID);
             }
         }
     }
@@ -74,5 +74,4 @@ void CompleteWorkQueue(work_queue *Queue)
 
     Queue->EntryCount = 0;
     Queue->EntriesCompleted = 0;
-    printf("Work queue completed!\n");
 }

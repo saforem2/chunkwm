@@ -97,11 +97,9 @@ HookPlugin(loaded_plugin *LoadedPlugin)
             ++Index)
         {
             chunkwm_plugin_export *Export = Plugin->Subscriptions + Index;
-#if 1
             printf("Plugin '%s' subscribed to '%s'\n",
                    LoadedPlugin->Info->PluginName,
                    chunkwm_plugin_export_str[*Export]);
-#endif
             SubscribeToEvent(Plugin, *Export);
         }
     }
@@ -118,11 +116,9 @@ UnhookPlugin(loaded_plugin *LoadedPlugin)
             ++Index)
         {
             chunkwm_plugin_export *Export = Plugin->Subscriptions + Index;
-#if 1
             printf("Plugin '%s' unsubscribed from '%s'\n",
                    LoadedPlugin->Info->PluginName,
                    chunkwm_plugin_export_str[*Export]);
-#endif
             UnsubscribeFromEvent(Plugin, *Export);
         }
     }
@@ -162,7 +158,9 @@ bool LoadPlugin(const char *Absolutepath, const char *Filename)
             if(VerifyPluginABI(Info))
             {
                 plugin *Plugin = Info->Initialize();
+#ifdef CHUNKWM_DEBUG
                 PrintPluginDetails(Info);
+#endif
 
                 loaded_plugin *LoadedPlugin = (loaded_plugin *) malloc(sizeof(loaded_plugin));
                 LoadedPlugin->Handle = Handle;
@@ -171,6 +169,7 @@ bool LoadPlugin(const char *Absolutepath, const char *Filename)
 
                 if(Plugin->Init())
                 {
+                    printf("chunkwm: load plugin '%s'\n", Filename);
                     LoadedPlugin->Filename = strdup(Filename);
                     StoreLoadedPlugin(LoadedPlugin);
                     HookPlugin(LoadedPlugin);
@@ -264,12 +263,6 @@ int BeginPlugins(const char *Directory)
             memcpy(Absolutepath, Directory, DirectoryLength);
             memset(Absolutepath + DirectoryLength, '/', 1);
             memcpy(Absolutepath + DirectoryLength + 1, Entry->d_name, FilenameLength);
-
-#if 0
-            printf("Plugin asbolutepath '%s', filename '%s'\n",
-                    Absolutepath,
-                    Entry->d_name);
-#endif
 
             LoadPlugin(Absolutepath, Entry->d_name);
             free(Absolutepath);

@@ -55,7 +55,9 @@ HOTLOADER_CALLBACK(HotloadPluginCallback)
             if((Extension) && (strcmp(Extension, ".so") == 0))
             {
                 char *Filename = LastSlash + 1;
-                printf("hotloader: '%s' changed!\n", Filename);
+#ifdef CHUNKWM_DEBUG
+                printf("hotloader: plugin '%s' changed!\n", Filename);
+#endif
 
                 UnloadPlugin(Filename);
 

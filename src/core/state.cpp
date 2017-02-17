@@ -115,7 +115,9 @@ AddApplicationWindowsToCollection(macos_application *Application)
             {
                 if(!AddWindowToCollection(Window))
                 {
+#ifdef CHUNKWM_DEBUG
                     printf("%s:%s is not destructible, ignore!\n", Window->Owner->Name, Window->Name);
+#endif
                     AXLibDestroyWindow(Window);
                 }
             }
@@ -276,13 +278,13 @@ macos_application *ConstructAndAddApplication(ProcessSerialNumber PSN, pid_t PID
     usleep(0.5 * MICROSEC_PER_SEC);
     if(AXLibAddApplicationObserver(Application, ApplicationCallback))
     {
+#ifdef CHUNKWM_DEBUG
         printf("%d:%s registered window notifications\n", Application->PID, Application->Name);
+#endif
     }
     else
     {
-        printf("%d:%s could not register window notifications!!!\n", Application->PID, Application->Name);
-        printf("%d:%s could not register window notifications!!!\n", Application->PID, Application->Name);
-        printf("%d:%s could not register window notifications!!!\n", Application->PID, Application->Name);
+        fprintf(stderr, "%d:%s could not register window notifications!!!\n", Application->PID, Application->Name);
     }
 
     // NOTE(koekeishiya): An application can have multiple windows when it spawns.
