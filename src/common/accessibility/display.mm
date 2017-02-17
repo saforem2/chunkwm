@@ -136,3 +136,70 @@ void AXLibDestroySpace(macos_space *Space)
     CFRelease(Space->Ref);
     free(Space);
 }
+
+// NOTE(koekeishiya): Translate a CGSSpaceID to the DesktopId (mission control index).
+unsigned AXLibCGSSpaceIDToDesktopID(CFStringRef DisplayRef, CGSSpaceID SpaceId)
+{
+    ASSERT(DisplayRef);
+
+    unsigned Result = 0;
+    NSString *CurrentIdentifier = (__bridge NSString *) DisplayRef;
+
+    CFArrayRef ScreenDictionaries = CGSCopyManagedDisplaySpaces(CGSDefaultConnection);
+    for(NSDictionary *ScreenDictionary in (__bridge NSArray *) ScreenDictionaries)
+    {
+        int SpaceIndex = 1;
+        NSString *ScreenIdentifier = ScreenDictionary[@"Display Identifier"];
+        if([ScreenIdentifier isEqualToString:CurrentIdentifier])
+        {
+            NSArray *SpaceDictionaries = ScreenDictionary[@"Spaces"];
+            for(NSDictionary *SpaceDictionary in (__bridge NSArray *) SpaceDictionaries)
+            {
+                if(SpaceId == [SpaceDictionary[@"id64"] intValue])
+                {
+                    Result = SpaceIndex;
+                    break;
+                }
+
+                ++SpaceIndex;
+            }
+            break;
+        }
+    }
+
+    CFRelease(ScreenDictionaries);
+    return Result;
+}
+
+// NOTE(koekeishiya): Translate a DesktopId (mission control index) to the CGSSpaceID.
+CGSSpaceID AXLibCGSSpaceIDFromDesktopID(CFStringRef DisplayRef, unsigned DesktopId)
+{
+    ASSERT(DisplayRef);
+
+    CGSSpaceID Result = 0;
+    NSString *CurrentIdentifier = (__bridge NSString *) DisplayRef;
+
+    CFArrayRef ScreenDictionaries = CGSCopyManagedDisplaySpaces(CGSDefaultConnection);
+    for(NSDictionary *ScreenDictionary in (__bridge NSArray *) ScreenDictionaries)
+    {
+        int SpaceIndex = 1;
+        NSString *ScreenIdentifier = ScreenDictionary[@"Display Identifier"];
+        if([ScreenIdentifier isEqualToString:CurrentIdentifier])
+        {
+            NSArray *SpaceDictionaries = ScreenDictionary[@"Spaces"];
+            for(NSDictionary *SpaceDictionary in (__bridge NSArray *) SpaceDictionaries)
+            {
+                if(SpaceIndex == DesktopId)
+                {
+                    Result = [SpaceDictionary[@"id64"] intValue];
+                    break;
+                }
+                ++SpaceIndex;
+            }
+            break;
+        }
+    }
+
+    CFRelease(ScreenDictionaries);
+    return Result;
+}

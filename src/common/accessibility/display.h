@@ -42,4 +42,7 @@ macos_display **AXLibDisplayList(unsigned *Count);
 macos_space *AXLibActiveSpace(CFStringRef DisplayRef);
 void AXLibDestroySpace(macos_space *Space);
 
+unsigned AXLibCGSSpaceIDToDesktopID(CFStringRef DisplayRef, CGSSpaceID SpaceId);
+CGSSpaceID AXLibCGSSpaceIDFromDesktopID(CFStringRef DisplayRef, unsigned DesktopId);
+
 #endif
