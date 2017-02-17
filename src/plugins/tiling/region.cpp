@@ -1,5 +1,7 @@
 #include "region.h"
 #include "node.h"
+#include "vspace.h"
+
 #include "../../common/misc/assert.h"
 #include "../../common/accessibility/display.h"
 
@@ -7,15 +9,15 @@
 
 #define internal static
 
-extern region_offset *FindSpaceOffset(CGDirectDisplayID Display, CGSSpaceID Space);
-
 internal region
 FullscreenRegion(macos_display *Display)
 {
     macos_space *Space = AXLibActiveSpace(Display->Ref);
     ASSERT(Space);
 
-    region_offset *Offset = FindSpaceOffset(Display->Id, Space->Id);
+    virtual_space *VirtualSpace = AcquireVirtualSpace(Display, Space);
+    region_offset *Offset = &VirtualSpace->Offset;
+
     region Result;
 
     Result.X = Display->X + Offset->Left;
@@ -35,9 +37,10 @@ LeftVerticalRegion(macos_display *Display, node *Node)
     ASSERT(Space);
     ASSERT(Node);
 
-    region *Region = &Node->Region;
-    region_offset *Offset = FindSpaceOffset(Display->Id, Space->Id);
+    virtual_space *VirtualSpace = AcquireVirtualSpace(Display, Space);
+    region_offset *Offset = &VirtualSpace->Offset;
 
+    region *Region = &Node->Region;
     region Result;
 
     Result.X = Region->X;
@@ -58,9 +61,10 @@ RightVerticalRegion(macos_display *Display, node *Node)
     ASSERT(Space);
     ASSERT(Node);
 
-    region *Region = &Node->Region;
-    region_offset *Offset = FindSpaceOffset(Display->Id, Space->Id);
+    virtual_space *VirtualSpace = AcquireVirtualSpace(Display, Space);
+    region_offset *Offset = &VirtualSpace->Offset;
 
+    region *Region = &Node->Region;
     region Result;
 
     Result.X = Region->X + (Region->Width * Node->Ratio) + (Offset->X / 2);
@@ -81,9 +85,10 @@ UpperHorizontalRegion(macos_display *Display, node *Node)
     ASSERT(Space);
     ASSERT(Node);
 
-    region *Region = &Node->Region;
-    region_offset *Offset = FindSpaceOffset(Display->Id, Space->Id);
+    virtual_space *VirtualSpace = AcquireVirtualSpace(Display, Space);
+    region_offset *Offset = &VirtualSpace->Offset;
 
+    region *Region = &Node->Region;
     region Result;
 
     Result.X = Region->X;
@@ -104,9 +109,10 @@ LowerHorizontalRegion(macos_display *Display, node *Node)
     ASSERT(Space);
     ASSERT(Node);
 
-    region *Region = &Node->Region;
-    region_offset *Offset = FindSpaceOffset(Display->Id, Space->Id);
+    virtual_space *VirtualSpace = AcquireVirtualSpace(Display, Space);
+    region_offset *Offset = &VirtualSpace->Offset;
 
+    region *Region = &Node->Region;
     region Result;
 
     Result.X = Region->X;
@@ -161,7 +167,8 @@ void CreateNodeRegion(macos_display *Display, node *Node, region_type Type)
     Node->Region.Type = Type;
 }
 
-void CreateNodeRegionPair(macos_display *Display, node *Left, node *Right, node_split Split)
+internal void
+CreateNodeRegionPair(macos_display *Display, node *Left, node *Right, node_split Split)
 {
     ASSERT(Split == Split_Vertical || Split == Split_Horizontal);
     if(Split == Split_Vertical)

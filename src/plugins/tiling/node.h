@@ -32,5 +32,16 @@ node *CreateRootNode(macos_display *Display);
 
 void CreateLeafNodePair(macos_display *Display, node *Parent, uint32_t FirstWindowID, uint32_t SecondWindowID, node_split Split);
 void ApplyNodeRegion(node *Node);
+void FreeNodeTree(node *Node);
+
+bool IsLeafNode(node *Node);
+bool IsLeftChild(node *Node);
+bool IsRightChild(node *Node);
+
+node *GetFirstLeafNode(node *Tree);
+node *GetLastLeafNode(node *Tree);
+
+node *GetNearestNodeToTheRight(node *Node);
+node *GetNodeWithId(node *Tree, uint32_t WindowId);
 
 #endif

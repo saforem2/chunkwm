@@ -96,3 +96,103 @@ void ApplyNodeRegion(node *Node)
     if(Node->Right)
         ApplyNodeRegion(Node->Right);
 }
+
+void FreeNodeTree(node *Node)
+{
+    if(Node->Left)
+    {
+        FreeNodeTree(Node->Left);
+    }
+
+    if(Node->Right)
+    {
+        FreeNodeTree(Node->Right);
+    }
+
+    free(Node);
+}
+
+bool IsRightChild(node *Node)
+{
+    bool Result = Node->Parent && Node->Parent->Right == Node;
+    return Result;
+}
+
+bool IsLeftChild(node *Node)
+{
+    bool Result = Node->Parent && Node->Parent->Left == Node;
+    return Result;
+}
+
+bool IsLeafNode(node *Node)
+{
+    bool Result = Node->Left == NULL && Node->Right == NULL;
+    return Result;
+}
+
+node *GetFirstLeafNode(node *Tree)
+{
+    node *Node = Tree;
+    while(Node->Left)
+    {
+        Node = Node->Left;
+    }
+
+    return Node;
+}
+
+node *GetLastLeafNode(node *Tree)
+{
+    node *Node = Tree;
+    while(Node->Right)
+    {
+        Node = Node->Right;
+    }
+
+    return Node;
+}
+
+node *GetNearestNodeToTheRight(node *Node)
+{
+    node *Parent = Node->Parent;
+    if(Parent)
+    {
+        if(Parent->Right == Node)
+        {
+            return GetNearestNodeToTheRight(Parent);
+        }
+
+        if(IsLeafNode(Parent->Right))
+        {
+            return Parent->Right;
+        }
+
+        Parent = Parent->Right;
+        while(!IsLeafNode(Parent->Left))
+        {
+            Parent = Parent->Left;
+        }
+
+        return Parent->Left;
+    }
+
+    return NULL;
+}
+
+node *GetNodeWithId(node *Tree, uint32_t WindowId)
+{
+    node *Node = GetFirstLeafNode(Tree);
+    while(Node)
+    {
+        if(Node->WindowId == WindowId)
+        {
+            return Node;
+        }
+        else
+        {
+            Node = GetNearestNodeToTheRight(Node);
+        }
+    }
+
+    return NULL;
+}
