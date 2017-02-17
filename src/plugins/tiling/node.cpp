@@ -74,15 +74,8 @@ void ResizeWindowToRegionSize(node *Node)
     macos_window *Window = GetWindowByID(Node->WindowId);
     ASSERT(Window);
 
-    if(AXLibSetWindowPosition(Window->Ref, Node->Region.X, Node->Region.Y))
-        printf("set window position!\n");
-    else
-        printf("could not set window position!\n");
-
-    if(AXLibSetWindowSize(Window->Ref, Node->Region.Width, Node->Region.Height))
-        printf("set window size!\n");
-    else
-        printf("could not set window size!\n");
+    AXLibSetWindowPosition(Window->Ref, Node->Region.X, Node->Region.Y);
+    AXLibSetWindowSize(Window->Ref, Node->Region.Width, Node->Region.Height);
 }
 
 void ApplyNodeRegion(node *Node)
