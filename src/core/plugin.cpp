@@ -40,7 +40,7 @@ PrintPluginDetails(plugin_details *Info)
            "API Version %d\n"
            "FileName '%s'\n"
            "PluginName '%s'\n"
-           "PluginVersion '%s'\n\n",
+           "PluginVersion '%s'\n",
             Info->ApiVersion,
             Info->FileName,
             Info->PluginName,
@@ -158,9 +158,6 @@ bool LoadPlugin(const char *Absolutepath, const char *Filename)
             if(VerifyPluginABI(Info))
             {
                 plugin *Plugin = Info->Initialize();
-#ifdef CHUNKWM_DEBUG
-                PrintPluginDetails(Info);
-#endif
 
                 loaded_plugin *LoadedPlugin = (loaded_plugin *) malloc(sizeof(loaded_plugin));
                 LoadedPlugin->Handle = Handle;
@@ -170,6 +167,9 @@ bool LoadPlugin(const char *Absolutepath, const char *Filename)
                 if(Plugin->Init())
                 {
                     printf("chunkwm: load plugin '%s'\n", Filename);
+#ifdef CHUNKWM_DEBUG
+                    PrintPluginDetails(Info);
+#endif
                     LoadedPlugin->Filename = strdup(Filename);
                     StoreLoadedPlugin(LoadedPlugin);
                     HookPlugin(LoadedPlugin);
