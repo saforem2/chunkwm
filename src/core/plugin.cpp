@@ -9,6 +9,8 @@
 #include <map>
 
 #include "plugin.h"
+#include "../common/misc/string.h"
+
 #define internal static
 
 struct loaded_plugin
@@ -17,13 +19,6 @@ struct loaded_plugin
     void *Handle;
     plugin *Plugin;
     plugin_details *Info;
-};
-
-struct string_comparator {
-bool operator()(const char *A, const char *B) const
-{
-    return strcmp(A, B) < 0;
-}
 };
 
 internal std::map<const char *, loaded_plugin *, string_comparator> LoadedPlugins;
