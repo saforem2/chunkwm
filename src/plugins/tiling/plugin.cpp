@@ -285,6 +285,39 @@ GetAllWindowsInTree(node *Tree)
 }
 
 internal std::vector<uint32_t>
+GetAllWindowsToAddToTree(macos_space *Space, std::vector<uint32_t> &VisibleWindows, std::vector<uint32_t> &WindowsInTree)
+{
+    std::vector<uint32_t> Windows;
+    for(size_t WindowIndex = 0;
+        WindowIndex < VisibleWindows.size();
+        ++WindowIndex)
+    {
+        bool Found = false;
+        uint32_t WindowId = VisibleWindows[WindowIndex];
+
+        for(size_t Index = 0;
+            Index < WindowsInTree.size();
+            ++Index)
+        {
+            if(WindowId == WindowsInTree[Index])
+            {
+                Found = true;
+                break;
+            }
+        }
+
+        if((!Found) &&
+           (AXLibSpaceHasWindow(Space->Id, WindowId)) &&
+           (!AXLibStickyWindow(WindowId)))
+        {
+            Windows.push_back(WindowId);
+        }
+    }
+
+    return Windows;
+}
+
+internal std::vector<uint32_t>
 GetAllWindowsToRemoveFromTree(std::vector<uint32_t> &VisibleWindows, std::vector<uint32_t> &WindowsInTree)
 {
     std::vector<uint32_t> Windows;
@@ -366,6 +399,7 @@ RebalanceWindowTree(macos_display *Display)
 
     std::vector<uint32_t> Windows = GetAllVisibleWindows();
     std::vector<uint32_t> WindowsInTree = GetAllWindowsInTree(VirtualSpace->Tree);
+    std::vector<uint32_t> WindowsToAdd = GetAllWindowsToAddToTree(Space, Windows, WindowsInTree);
     std::vector<uint32_t> WindowsToRemove = GetAllWindowsToRemoveFromTree(Windows, WindowsInTree);
 
     for(size_t Index = 0;
@@ -379,13 +413,16 @@ RebalanceWindowTree(macos_display *Display)
         }
     }
 
-    /*
-    std::vector<ax_window *> WindowsToAdd = GetAllAXWindowsNotInTree(Display, VisibleWindows, WindowIDsInTree);
-    for(size_t WindowIndex = 0; WindowIndex < WindowsToAdd.size(); ++WindowIndex)
+    for(size_t Index = 0;
+        Index < WindowsToAdd.size();
+        ++Index)
     {
-        TileWindow(Display, WindowsToAdd[WindowIndex]);
+        macos_window *Window = GetWindowByID(WindowsToAdd[Index]);
+        if(Window)
+        {
+            TileWindow(Display, Window);
+        }
     }
-    */
 }
 
 void ApplicationLaunchedHandler(const char *Data)
@@ -428,12 +465,36 @@ void ApplicationHiddenHandler(const char *Data)
 {
     macos_application *Application = (macos_application *) Data;
     printf("    plugin: %s hidden!\n", Application->Name);
+    RebalanceWindowTree(MainDisplay);
 }
 
 void ApplicationUnhiddenHandler(const char *Data)
 {
     macos_application *Application = (macos_application *) Data;
     printf("    plugin: %s unhidden!\n", Application->Name);
+
+    macos_window **WindowList = AXLibWindowListForApplication(Application);
+    if(WindowList)
+    {
+        macos_window **List = WindowList;
+        macos_window *Window;
+        while((Window = *List++))
+        {
+            if(GetWindowByID(Window->Id))
+            {
+                macos_space *Space = AXLibActiveSpace(MainDisplay->Ref);
+                if((Space->Type == kCGSSpaceUser) &&
+                   (AXLibSpaceHasWindow(Space->Id, Window->Id)))
+                {
+                    TileWindow(MainDisplay, Window);
+                }
+            }
+
+            AXLibDestroyWindow(Window);
+        }
+
+        free(WindowList);
+    }
 }
 
 void WindowCreatedHandler(const char *Data)
@@ -473,7 +534,12 @@ void WindowDeminimizedHandler(const char *Data)
     macos_window *Window = (macos_window *) Data;
     printf("    plugin: %s:%s window deminimized\n", Window->Owner->Name, Window->Name);
 
-    TileWindow(MainDisplay, Window);
+    macos_space *Space = AXLibActiveSpace(MainDisplay->Ref);
+    if((Space->Type == kCGSSpaceUser) &&
+       (AXLibSpaceHasWindow(Space->Id, Window->Id)))
+    {
+        TileWindow(MainDisplay, Window);
+    }
 }
 
 inline bool
