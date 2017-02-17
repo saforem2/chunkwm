@@ -46,7 +46,7 @@ LeftVerticalRegion(macos_display *Display, node *Node)
     Result.X = Region->X;
     Result.Y = Region->Y;
 
-    Result.Width = (Region->Width * Node->Ratio) - (Offset->X / 2);
+    Result.Width = (Region->Width * Node->Ratio) - (Offset->Gap / 2);
     Result.Height = Region->Height;
 
     AXLibDestroySpace(Space);
@@ -67,10 +67,10 @@ RightVerticalRegion(macos_display *Display, node *Node)
     region *Region = &Node->Region;
     region Result;
 
-    Result.X = Region->X + (Region->Width * Node->Ratio) + (Offset->X / 2);
+    Result.X = Region->X + (Region->Width * Node->Ratio) + (Offset->Gap / 2);
     Result.Y = Region->Y;
 
-    Result.Width = (Region->Width * (1 - Node->Ratio)) - (Offset->X / 2);
+    Result.Width = (Region->Width * (1 - Node->Ratio)) - (Offset->Gap / 2);
     Result.Height = Region->Height;
 
     AXLibDestroySpace(Space);
@@ -95,7 +95,7 @@ UpperHorizontalRegion(macos_display *Display, node *Node)
     Result.Y = Region->Y;
 
     Result.Width = Region->Width;
-    Result.Height = (Region->Height * Node->Ratio) - (Offset->Y / 2);
+    Result.Height = (Region->Height * Node->Ratio) - (Offset->Gap / 2);
 
     AXLibDestroySpace(Space);
     return Result;
@@ -116,10 +116,10 @@ LowerHorizontalRegion(macos_display *Display, node *Node)
     region Result;
 
     Result.X = Region->X;
-    Result.Y = Region->Y + (Region->Height * Node->Ratio) + (Offset->Y / 2);
+    Result.Y = Region->Y + (Region->Height * Node->Ratio) + (Offset->Gap / 2);
 
     Result.Width = Region->Width;
-    Result.Height = (Region->Height * (1 - Node->Ratio)) - (Offset->Y / 2);
+    Result.Height = (Region->Height * (1 - Node->Ratio)) - (Offset->Gap / 2);
 
     AXLibDestroySpace(Space);
     return Result;

@@ -25,9 +25,9 @@ struct region
 
 struct region_offset
 {
-    float Left, Top;
-    float Right, Bottom;
-    float X, Y;
+    float Top, Bottom;
+    float Left, Right;
+    float Gap;
 };
 
 struct node;

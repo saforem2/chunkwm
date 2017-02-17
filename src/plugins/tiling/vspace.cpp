@@ -53,7 +53,7 @@ CreateAndInitVirtualSpace(macos_display *Display, macos_space *Space)
     }
     else
     {
-        internal region_offset Offset = { 50, 50, 70, 50, 30, 30 };
+        internal region_offset Offset = { 60, 50, 50, 50, 20 };
         VirtualSpace->Mode = Virtual_Space_Bsp;
         VirtualSpace->Offset = Offset;
     }
