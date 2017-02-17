@@ -203,7 +203,7 @@ bool LoadPlugin(const char *Absolutepath, const char *Filename)
     return false;
 }
 
-bool UnloadPlugin(const char *Filename)
+bool UnloadPlugin(const char *Absolutepath, const char *Filename)
 {
     bool Result = false;
 
@@ -217,6 +217,16 @@ bool UnloadPlugin(const char *Filename)
         Plugin->DeInit();
 
         Result = dlclose(LoadedPlugin->Handle) == 0;
+
+        /* NOTE(koekeishiya): The objective-c runtime calls dlopen
+         * and increments the reference count of the handle.
+         * We decrement the counter to 0 to unload the library. */
+        while(dlopen(Absolutepath, RTLD_NOLOAD))
+        {
+            dlclose(LoadedPlugin->Handle);
+            dlclose(LoadedPlugin->Handle);
+        }
+
         free(LoadedPlugin->Filename);
         free(LoadedPlugin);
     }
