@@ -11,6 +11,7 @@ typedef int CGSConnectionID;
 extern "C" CGSConnectionID _CGSDefaultConnection(void);
 extern "C" CGSSpaceType CGSSpaceGetType(CGSConnectionID Connection, CGSSpaceID Id);
 extern "C" CFArrayRef CGSCopyManagedDisplaySpaces(const CGSConnectionID Connection);
+extern "C" CFArrayRef CGSCopySpacesForWindows(CGSConnectionID CID, CGSSpaceSelector Type, CFArrayRef Windows);
 
 /* NOTE(koekeishiya): Find the UUID associated with a CGDirectDisplayID. */
 internal CFStringRef
@@ -201,5 +202,47 @@ CGSSpaceID AXLibCGSSpaceIDFromDesktopID(CFStringRef DisplayRef, unsigned Desktop
     }
 
     CFRelease(ScreenDictionaries);
+    return Result;
+}
+
+bool AXLibSpaceHasWindow(CGSSpaceID SpaceId, uint32_t WindowId)
+{
+    bool Result = false;
+
+    NSArray *NSArrayWindow = @[ @(WindowId) ];
+    CFArrayRef Spaces = CGSCopySpacesForWindows(CGSDefaultConnection, kCGSSpaceAll, (__bridge CFArrayRef) NSArrayWindow);
+    int NumberOfSpaces = CFArrayGetCount(Spaces);
+
+    for(int Index = 0;
+        Index < NumberOfSpaces;
+        ++Index)
+    {
+        NSNumber *Id = (__bridge NSNumber *) CFArrayGetValueAtIndex(Spaces, Index);
+        if(SpaceId == [Id intValue])
+        {
+            Result = true;
+            break;
+        }
+    }
+
+    CFRelease(Spaces);
+    [NSArrayWindow release];
+
+    return Result;
+}
+
+bool AXLibStickyWindow(uint32_t WindowId)
+{
+    bool Result = false;
+
+    NSArray *NSArrayWindow = @[ @(WindowId) ];
+    CFArrayRef Spaces = CGSCopySpacesForWindows(CGSDefaultConnection, kCGSSpaceAll, (__bridge CFArrayRef) NSArrayWindow);
+    int NumberOfSpaces = CFArrayGetCount(Spaces);
+
+    Result = NumberOfSpaces > 1;
+
+    CFRelease(Spaces);
+    [NSArrayWindow release];
+
     return Result;
 }

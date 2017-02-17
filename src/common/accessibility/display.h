@@ -12,6 +12,13 @@
 /* NOTE(koekeishiya): Fullscreen applications */
 #define kCGSSpaceFullscreen 4
 
+enum CGSSpaceSelector
+{
+    kCGSSpaceCurrent = 5,
+    kCGSSpaceOther = 6,
+    kCGSSpaceAll = 7
+};
+
 typedef int CGSSpaceID;
 typedef int CGSSpaceType;
 /* NOTE(koekeishiya):
@@ -44,5 +51,8 @@ void AXLibDestroySpace(macos_space *Space);
 
 unsigned AXLibCGSSpaceIDToDesktopID(CFStringRef DisplayRef, CGSSpaceID SpaceId);
 CGSSpaceID AXLibCGSSpaceIDFromDesktopID(CFStringRef DisplayRef, unsigned DesktopId);
+
+bool AXLibSpaceHasWindow(CGSSpaceID SpaceId, uint32_t WindowId);
+bool AXLibStickyWindow(uint32_t WindowId);
 
 #endif
