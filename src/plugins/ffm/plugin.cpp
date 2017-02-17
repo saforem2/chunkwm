@@ -136,7 +136,7 @@ void FocusWindowBelowCursor()
         if(WindowRef)
         {
             int WindowRefWID = AXLibGetWindowID(WindowRef);
-            if(WindowRefWID == Window.ID)
+            if(WindowRefWID == Window.ID && !AXLibIsWindowMinimized(WindowRef))
             {
                 AXLibSetFocusedWindow(WindowRef);
                 AXLibSetFocusedApplication(Window.PID);
