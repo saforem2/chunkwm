@@ -44,7 +44,7 @@ node *CreateLeafNode(macos_display *Display, node *Parent, uint32_t WindowId, re
 }
 
 void CreateLeafNodePair(macos_display *Display, node *Parent,
-                        uint32_t FirstWindowId, uint32_t SecondWindowId, node_split Split)
+                        uint32_t ExistingWindowId, uint32_t SpawnedWindowId, node_split Split)
 {
     Parent->WindowId = 0;
     Parent->Split = Split;
@@ -52,8 +52,9 @@ void CreateLeafNodePair(macos_display *Display, node *Parent,
     // TODO(koekeishiya): cvar system.
     Parent->Ratio = 0.5f; // KWMSettings.SplitRatio;
 
-    uint32_t LeftWindowId = FirstWindowId;
-    uint32_t RightWindowId = SecondWindowId;
+    // TODO(koekeishiya): The new window is the left child. This should be configurable.
+    uint32_t LeftWindowId = SpawnedWindowId;
+    uint32_t RightWindowId = ExistingWindowId;
 
     ASSERT(Split == Split_Vertical || Split == Split_Horizontal);
     if(Split == Split_Vertical)
