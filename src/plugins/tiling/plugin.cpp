@@ -640,7 +640,10 @@ void WindowDeminimizedHandler(const char *Data)
 void WindowFocusedHandler(const char *Data)
 {
     macos_window *Window = (macos_window *) Data;
-    FocusedWindowId = Window->Id;
+    if(AXLibIsWindowStandard(Window))
+    {
+        FocusedWindowId = Window->Id;
+    }
 }
 
 inline bool
