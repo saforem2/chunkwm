@@ -94,7 +94,7 @@ void ReleaseVirtualSpaces()
 
         if(VirtualSpace->Tree)
         {
-            FreeNodeTree(VirtualSpace->Tree);
+            FreeNodeTree(VirtualSpace->Tree, VirtualSpace->Mode);
         }
 
         free(VirtualSpace);

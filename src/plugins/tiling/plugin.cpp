@@ -163,37 +163,63 @@ TileWindow(macos_display *Display, macos_window *Window)
     if(Space->Type == kCGSSpaceUser)
     {
         virtual_space *VirtualSpace = AcquireVirtualSpace(Display, Space);
-        if(VirtualSpace->Tree)
+        if(VirtualSpace->Mode != Virtual_Space_Float)
         {
-            node *Exists = GetNodeWithId(VirtualSpace->Tree, Window->Id);
-            if(!Exists)
+            if(VirtualSpace->Tree)
             {
-                node *Node = NULL;
-                if(FocusedWindowId)
+                node *Exists = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
+                if(!Exists)
                 {
-                    Node = GetNodeWithId(VirtualSpace->Tree, FocusedWindowId);
-                }
+                    node *Node = NULL;
+                    if(FocusedWindowId)
+                    {
+                        Node = GetNodeWithId(VirtualSpace->Tree, FocusedWindowId, VirtualSpace->Mode);
+                    }
+                    else
+                    {
+                        Node = GetLastLeafNode(VirtualSpace->Tree);
+                    }
 
-                if(!Node)
-                {
-                    Node = FindFirstMinDepthLeafNode(VirtualSpace->Tree);
-                }
+                    ASSERT(Node != NULL);
 
-                ASSERT(Node != NULL);
-                CreateLeafNodePair(Display, Node, Node->WindowId, Window->Id, OptimalSplitMode(Node));
-                ApplyNodeRegion(Node);
+                    if(VirtualSpace->Mode == Virtual_Space_Bsp)
+                    {
+                        CreateLeafNodePair(Display, Node, Node->WindowId, Window->Id, OptimalSplitMode(Node));
+                        ApplyNodeRegion(Node, VirtualSpace->Mode);
+                    }
+                    else if(VirtualSpace->Mode == Virtual_Space_Monocle)
+                    {
+                        node *NewNode = CreateRootNode(Display);
+                        NewNode->WindowId = Window->Id;
+
+                        if(Node->Right)
+                        {
+                            node *Next = Node->Right;
+                            Next->Left = NewNode;
+                            NewNode->Right = Next;
+                        }
+
+                        NewNode->Left = Node;
+                        Node->Right = NewNode;
+                        ResizeWindowToRegionSize(NewNode);
+                    }
+                }
             }
-        }
-        else
-        {
-            VirtualSpace->Tree = CreateRootNode(Display);
-            VirtualSpace->Tree->WindowId = Window->Id;
-            ApplyNodeRegion(VirtualSpace->Tree);
+            else
+            {
+                // NOTE(koekeishiya): This path is equal for both bsp and monocle spaces!
+                VirtualSpace->Tree = CreateRootNode(Display);
+                VirtualSpace->Tree->WindowId = Window->Id;
+                ResizeWindowToRegionSize(VirtualSpace->Tree);
+            }
         }
     }
 
     AXLibDestroySpace(Space);
 }
+
+/*
+ * */
 
 internal void
 UntileWindow(macos_display *Display, macos_window *Window)
@@ -207,36 +233,64 @@ UntileWindow(macos_display *Display, macos_window *Window)
     if(Space->Type == kCGSSpaceUser)
     {
         virtual_space *VirtualSpace = AcquireVirtualSpace(Display, Space);
-        if(VirtualSpace->Tree)
+        if(VirtualSpace->Tree && VirtualSpace->Mode != Virtual_Space_Float)
         {
-            node *Node = GetNodeWithId(VirtualSpace->Tree, Window->Id);
-            node *Parent = Node->Parent;
-            if(Parent && Parent->Left && Parent->Right)
+            node *Node = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
+            if(Node)
             {
-                node *Child = IsRightChild(Node) ? Parent->Left : Parent->Right;
-                Parent->Left = NULL;
-                Parent->Right = NULL;
-
-                Parent->WindowId = Child->WindowId;
-                if(Child->Left && Child->Right)
+                if(VirtualSpace->Mode == Virtual_Space_Bsp)
                 {
-                    Parent->Left = Child->Left;
-                    Parent->Left->Parent = Parent;
+                    node *Parent = Node->Parent;
+                    if(Parent && Parent->Left && Parent->Right)
+                    {
+                        node *Child = IsRightChild(Node) ? Parent->Left : Parent->Right;
+                        Parent->Left = NULL;
+                        Parent->Right = NULL;
 
-                    Parent->Right = Child->Right;
-                    Parent->Right->Parent = Parent;
+                        Parent->WindowId = Child->WindowId;
+                        if(Child->Left && Child->Right)
+                        {
+                            Parent->Left = Child->Left;
+                            Parent->Left->Parent = Parent;
 
-                    CreateNodeRegionRecursive(Display, Parent, true);
+                            Parent->Right = Child->Right;
+                            Parent->Right->Parent = Parent;
+
+                            CreateNodeRegionRecursive(Display, Parent, true);
+                        }
+
+                        ApplyNodeRegion(Parent, VirtualSpace->Mode);
+                        free(Child);
+                        free(Node);
+                    }
+                    else if(!Parent)
+                    {
+                        free(VirtualSpace->Tree);
+                        VirtualSpace->Tree = NULL;
+                    }
                 }
+                else if(VirtualSpace->Mode == Virtual_Space_Monocle)
+                {
+                    node *Prev = Node->Left;
+                    node *Next = Node->Right;
 
-                ApplyNodeRegion(Parent);
-                free(Child);
-                free(Node);
-            }
-            else if(!Parent)
-            {
-                free(VirtualSpace->Tree);
-                VirtualSpace->Tree = NULL;
+                    if(Prev)
+                    {
+                        Prev->Right = Next;
+                    }
+
+                    if(Next)
+                    {
+                        Next->Left = Prev;
+                    }
+
+                    if(Node == VirtualSpace->Tree)
+                    {
+                        VirtualSpace->Tree = Next;
+                    }
+
+                    free(Node);
+                }
             }
         }
     }
@@ -363,26 +417,43 @@ CreateWindowTree(macos_display *Display)
     if(Space->Type == kCGSSpaceUser)
     {
         virtual_space *VirtualSpace = AcquireVirtualSpace(Display, Space);
-        if(!VirtualSpace->Tree)
+        if(!VirtualSpace->Tree && VirtualSpace->Mode != Virtual_Space_Float)
         {
             std::vector<uint32_t> Windows = GetAllVisibleWindows();
             if(!Windows.empty())
             {
                 node *Root = CreateRootNode(Display);
                 Root->WindowId = Windows[0];
+                VirtualSpace->Tree = Root;
 
-                for(size_t Index = 1;
-                    Index < Windows.size();
-                    ++Index)
+                if(VirtualSpace->Mode == Virtual_Space_Bsp)
                 {
-                    node *Node = FindFirstMinDepthLeafNode(Root);
-                    ASSERT(Node != NULL);
+                    for(size_t Index = 1;
+                        Index < Windows.size();
+                        ++Index)
+                    {
+                        node *Node = FindFirstMinDepthLeafNode(Root);
+                        ASSERT(Node != NULL);
 
-                    CreateLeafNodePair(Display, Node, Node->WindowId, Windows[Index], OptimalSplitMode(Node));
+                        CreateLeafNodePair(Display, Node, Node->WindowId, Windows[Index], OptimalSplitMode(Node));
+                    }
+                }
+                else if(VirtualSpace->Mode == Virtual_Space_Monocle)
+                {
+                    for(size_t Index = 1;
+                        Index < Windows.size();
+                        ++Index)
+                    {
+                        node *Next = CreateRootNode(Display);
+                        Next->WindowId = Windows[Index];
+
+                        Root->Right = Next;
+                        Next->Left = Root;
+                        Root = Next;
+                    }
                 }
 
-                VirtualSpace->Tree = Root;
-                ApplyNodeRegion(VirtualSpace->Tree);
+                ApplyNodeRegion(VirtualSpace->Tree, VirtualSpace->Mode);
             }
         }
     }

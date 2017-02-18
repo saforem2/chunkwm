@@ -1,4 +1,5 @@
 #include "node.h"
+#include "vspace.h"
 #include "../../common/misc/assert.h"
 #include "../../common/accessibility/display.h"
 #include "../../common/accessibility/window.h"
@@ -79,28 +80,34 @@ void ResizeWindowToRegionSize(node *Node)
     AXLibSetWindowSize(Window->Ref, Node->Region.Width, Node->Region.Height);
 }
 
-void ApplyNodeRegion(node *Node)
+void ApplyNodeRegion(node *Node, virtual_space_mode VirtualSpaceMode)
 {
     if(Node->WindowId)
-        ResizeWindowToRegionSize(Node);
-
-    if(Node->Left)
-        ApplyNodeRegion(Node->Left);
-
-    if(Node->Right)
-        ApplyNodeRegion(Node->Right);
-}
-
-void FreeNodeTree(node *Node)
-{
-    if(Node->Left)
     {
-        FreeNodeTree(Node->Left);
+        ResizeWindowToRegionSize(Node);
+    }
+
+    if(Node->Left && VirtualSpaceMode == Virtual_Space_Bsp)
+    {
+        ApplyNodeRegion(Node->Left, VirtualSpaceMode);
     }
 
     if(Node->Right)
     {
-        FreeNodeTree(Node->Right);
+        ApplyNodeRegion(Node->Right, VirtualSpaceMode);
+    }
+}
+
+void FreeNodeTree(node *Node, virtual_space_mode VirtualSpaceMode)
+{
+    if(Node->Left && VirtualSpaceMode == Virtual_Space_Bsp)
+    {
+        FreeNodeTree(Node->Left, VirtualSpaceMode);
+    }
+
+    if(Node->Right)
+    {
+        FreeNodeTree(Node->Right, VirtualSpaceMode);
     }
 
     free(Node);
@@ -173,7 +180,7 @@ node *GetNearestNodeToTheRight(node *Node)
     return NULL;
 }
 
-node *GetNodeWithId(node *Tree, uint32_t WindowId)
+node *GetNodeWithId(node *Tree, uint32_t WindowId, virtual_space_mode VirtualSpaceMode)
 {
     node *Node = GetFirstLeafNode(Tree);
     while(Node)
@@ -182,9 +189,13 @@ node *GetNodeWithId(node *Tree, uint32_t WindowId)
         {
             return Node;
         }
-        else
+        else if(VirtualSpaceMode == Virtual_Space_Bsp)
         {
             Node = GetNearestNodeToTheRight(Node);
+        }
+        else if(VirtualSpaceMode == Virtual_Space_Monocle)
+        {
+            Node = Node->Right;
         }
     }
 

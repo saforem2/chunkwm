@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 #include "region.h"
+#include "vspace.h"
 
 enum node_split
 {
@@ -31,8 +32,9 @@ node_split OptimalSplitMode(node *Node);
 node *CreateRootNode(macos_display *Display);
 
 void CreateLeafNodePair(macos_display *Display, node *Parent, uint32_t FirstWindowID, uint32_t SecondWindowID, node_split Split);
-void ApplyNodeRegion(node *Node);
-void FreeNodeTree(node *Node);
+void ApplyNodeRegion(node *Node, virtual_space_mode VirtualSpaceMode);
+void ResizeWindowToRegionSize(node *Node);
+void FreeNodeTree(node *Node, virtual_space_mode VirtualSpaceMode);
 
 bool IsLeafNode(node *Node);
 bool IsLeftChild(node *Node);
@@ -42,6 +44,6 @@ node *GetFirstLeafNode(node *Tree);
 node *GetLastLeafNode(node *Tree);
 
 node *GetNearestNodeToTheRight(node *Node);
-node *GetNodeWithId(node *Tree, uint32_t WindowId);
+node *GetNodeWithId(node *Tree, uint32_t WindowId, virtual_space_mode VirtualSpaceMode);
 
 #endif
