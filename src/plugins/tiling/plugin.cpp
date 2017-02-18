@@ -478,7 +478,7 @@ RebalanceWindowTree(macos_display *Display)
     if(Space->Type == kCGSSpaceUser)
     {
         virtual_space *VirtualSpace = AcquireVirtualSpace(Display, Space);
-        if(VirtualSpace->Tree)
+        if(VirtualSpace->Tree && VirtualSpace->Mode != Virtual_Space_Float)
         {
             std::vector<uint32_t> Windows = GetAllVisibleWindows();
             std::vector<uint32_t> WindowsInTree = GetAllWindowsInTree(VirtualSpace->Tree, VirtualSpace->Mode);
