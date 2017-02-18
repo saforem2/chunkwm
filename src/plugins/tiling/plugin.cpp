@@ -175,20 +175,26 @@ TileWindow(macos_display *Display, macos_window *Window)
                     {
                         Node = GetNodeWithId(VirtualSpace->Tree, FocusedWindowId, VirtualSpace->Mode);
                     }
-                    else
-                    {
-                        Node = GetLastLeafNode(VirtualSpace->Tree);
-                    }
-
-                    ASSERT(Node != NULL);
 
                     if(VirtualSpace->Mode == Virtual_Space_Bsp)
                     {
+                        if(!Node)
+                        {
+                            Node = FindFirstMinDepthLeafNode(VirtualSpace->Tree);
+                            ASSERT(Node != NULL);
+                        }
+
                         CreateLeafNodePair(Display, Node, Node->WindowId, Window->Id, OptimalSplitMode(Node));
                         ApplyNodeRegion(Node, VirtualSpace->Mode);
                     }
                     else if(VirtualSpace->Mode == Virtual_Space_Monocle)
                     {
+                        if(!Node)
+                        {
+                            Node = GetLastLeafNode(VirtualSpace->Tree);
+                            ASSERT(Node != NULL);
+                        }
+
                         node *NewNode = CreateRootNode(Display);
                         NewNode->WindowId = Window->Id;
 
