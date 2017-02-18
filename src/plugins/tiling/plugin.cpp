@@ -41,6 +41,8 @@ internal macos_display *MainDisplay;
 internal macos_application_map Applications;
 internal macos_window_map Windows;
 
+internal uint32_t FocusedWindowId;
+
 /* NOTE(koekeishiya): We need a way to retrieve AXUIElementRef from a CGWindowID.
  * There is no way to do this, without caching AXUIElementRef references.
  * Here we perform a lookup of macos_window structs. */
@@ -166,7 +168,17 @@ TileWindow(macos_display *Display, macos_window *Window)
             node *Exists = GetNodeWithId(VirtualSpace->Tree, Window->Id);
             if(!Exists)
             {
-                node *Node = FindFirstMinDepthLeafNode(VirtualSpace->Tree);
+                node *Node = NULL;
+                if(FocusedWindowId)
+                {
+                    Node = GetNodeWithId(VirtualSpace->Tree, FocusedWindowId);
+                }
+
+                if(!Node)
+                {
+                    Node = FindFirstMinDepthLeafNode(VirtualSpace->Tree);
+                }
+
                 ASSERT(Node != NULL);
                 CreateLeafNodePair(Display, Node, Node->WindowId, Window->Id, OptimalSplitMode(Node));
                 ApplyNodeRegion(Node);
@@ -491,6 +503,21 @@ void ApplicationUnhiddenHandler(const char *Data)
     AXLibDestroySpace(Space);
 }
 
+void ApplicationActivatedHandler(const char *Data)
+{
+    macos_application *Application = (macos_application *) Data;
+    AXUIElementRef WindowRef = AXLibGetFocusedWindow(Application->Ref);
+    if(WindowRef)
+    {
+        FocusedWindowId = AXLibGetWindowID(WindowRef);
+        CFRelease(WindowRef);
+    }
+    else
+    {
+        FocusedWindowId = 0;
+    }
+}
+
 void WindowCreatedHandler(const char *Data)
 {
     macos_window *Window = (macos_window *) Data;
@@ -533,6 +560,12 @@ void WindowDeminimizedHandler(const char *Data)
     AXLibDestroySpace(Space);
 }
 
+void WindowFocusedHandler(const char *Data)
+{
+    macos_window *Window = (macos_window *) Data;
+    FocusedWindowId = Window->Id;
+}
+
 inline bool
 StringsAreEqual(const char *A, const char *B)
 {
@@ -568,6 +601,11 @@ PLUGIN_MAIN_FUNC(PluginMain)
         ApplicationUnhiddenHandler(Data);
         return true;
     }
+    else if(StringsAreEqual(Node, "chunkwm_export_application_activated"))
+    {
+        ApplicationActivatedHandler(Data);
+        return true;
+    }
     else if(StringsAreEqual(Node, "chunkwm_export_window_created"))
     {
         WindowCreatedHandler(Data);
@@ -586,6 +624,11 @@ PLUGIN_MAIN_FUNC(PluginMain)
     else if(StringsAreEqual(Node, "chunkwm_export_window_deminimized"))
     {
         WindowDeminimizedHandler(Data);
+        return true;
+    }
+    else if(StringsAreEqual(Node, "chunkwm_export_window_focused"))
+    {
+        WindowFocusedHandler(Data);
         return true;
     }
     else if(StringsAreEqual(Node, "chunkwm_export_space_changed"))
@@ -690,11 +733,13 @@ chunkwm_plugin_export Subscriptions[] =
     chunkwm_export_application_terminated,
     chunkwm_export_application_hidden,
     chunkwm_export_application_unhidden,
+    chunkwm_export_application_activated,
 
     chunkwm_export_window_created,
     chunkwm_export_window_destroyed,
     chunkwm_export_window_minimized,
     chunkwm_export_window_deminimized,
+    chunkwm_export_window_focused,
 
     chunkwm_export_space_changed,
 };
