@@ -224,9 +224,6 @@ TileWindow(macos_display *Display, macos_window *Window)
     AXLibDestroySpace(Space);
 }
 
-/*
- * */
-
 internal void
 UntileWindow(macos_display *Display, macos_window *Window)
 {
@@ -336,7 +333,7 @@ std::vector<uint32_t> GetAllVisibleWindows()
 }
 
 internal std::vector<uint32_t>
-GetAllWindowsInTree(node *Tree)
+GetAllWindowsInTree(node *Tree, virtual_space_mode VirtualSpaceMode)
 {
     std::vector<uint32_t> Windows;
 
@@ -348,7 +345,14 @@ GetAllWindowsInTree(node *Tree)
             Windows.push_back(Node->WindowId);
         }
 
-        Node = GetNearestNodeToTheRight(Node);
+        if(VirtualSpaceMode == Virtual_Space_Bsp)
+        {
+            Node = GetNearestNodeToTheRight(Node);
+        }
+        else if(VirtualSpaceMode == Virtual_Space_Monocle)
+        {
+            Node = Node->Right;
+        }
     }
 
     return Windows;
@@ -477,7 +481,7 @@ RebalanceWindowTree(macos_display *Display)
         if(VirtualSpace->Tree)
         {
             std::vector<uint32_t> Windows = GetAllVisibleWindows();
-            std::vector<uint32_t> WindowsInTree = GetAllWindowsInTree(VirtualSpace->Tree);
+            std::vector<uint32_t> WindowsInTree = GetAllWindowsInTree(VirtualSpace->Tree, VirtualSpace->Mode);
             std::vector<uint32_t> WindowsToAdd = GetAllWindowsToAddToTree(Space, Windows, WindowsInTree);
             std::vector<uint32_t> WindowsToRemove = GetAllWindowsToRemoveFromTree(Windows, WindowsInTree);
 
