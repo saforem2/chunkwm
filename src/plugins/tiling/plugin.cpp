@@ -41,7 +41,7 @@ internal macos_display *MainDisplay;
 internal macos_application_map Applications;
 internal macos_window_map Windows;
 
-internal uint32_t FocusedWindowId;
+internal uint32_t InsertionPointId;
 
 /* NOTE(koekeishiya): We need a way to retrieve AXUIElementRef from a CGWindowID.
  * There is no way to do this, without caching AXUIElementRef references.
@@ -171,9 +171,9 @@ TileWindow(macos_display *Display, macos_window *Window)
                 if(!Exists)
                 {
                     node *Node = NULL;
-                    if(FocusedWindowId)
+                    if(InsertionPointId)
                     {
-                        Node = GetNodeWithId(VirtualSpace->Tree, FocusedWindowId, VirtualSpace->Mode);
+                        Node = GetNodeWithId(VirtualSpace->Tree, InsertionPointId, VirtualSpace->Mode);
                     }
 
                     if(VirtualSpace->Mode == Virtual_Space_Bsp)
@@ -586,12 +586,12 @@ void ApplicationActivatedHandler(const char *Data)
     AXUIElementRef WindowRef = AXLibGetFocusedWindow(Application->Ref);
     if(WindowRef)
     {
-        FocusedWindowId = AXLibGetWindowID(WindowRef);
+        InsertionPointId = AXLibGetWindowID(WindowRef);
         CFRelease(WindowRef);
     }
     else
     {
-        FocusedWindowId = 0;
+        InsertionPointId = 0;
     }
 }
 
@@ -642,7 +642,7 @@ void WindowFocusedHandler(const char *Data)
     macos_window *Window = (macos_window *) Data;
     if(AXLibIsWindowStandard(Window))
     {
-        FocusedWindowId = Window->Id;
+        InsertionPointId = Window->Id;
     }
 }
 
