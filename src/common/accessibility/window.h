@@ -8,7 +8,7 @@ enum macos_window_flags
     Window_Movable = (1 << 0),
     Window_Resizable = (1 << 1),
     Window_Minimized = (1 << 2),
-    Window_Floating = (1 << 3),
+    Window_Float = (1 << 3),
 };
 
 struct macos_application;
