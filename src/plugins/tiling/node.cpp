@@ -7,7 +7,6 @@
 #include "../../common/accessibility/window.h"
 #include "../../common/accessibility/element.h"
 
-#include <math.h>
 #include <queue>
 
 #define internal static
@@ -87,8 +86,8 @@ CenterWindowInRegion(macos_window *Window, region Region)
     float DiffX = (Region.X + Region.Width) - (Position.x + Size.width);
     float DiffY = (Region.Y + Region.Height) - (Position.y + Size.height);
 
-    if((fabs(DiffX) > 0.0f) ||
-       (fabs(DiffY) > 0.0f))
+    if((DiffX > 0.0f) ||
+       (DiffY > 0.0f))
     {
         float OffsetX = DiffX / 2.0f;
         Region.X += OffsetX;
