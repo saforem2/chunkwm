@@ -3,13 +3,13 @@
 # use 'chunkc' to send message to socket
 export CHUNKC_SOCKET=4131
 
-chunkc global_virtual_space_mode bsp
+chunkc global_space_mode bsp
 
-chunkc global_virtual_space_offset_top      200
-chunkc global_virtual_space_offset_bottom   190
-chunkc global_virtual_space_offset_left     190
-chunkc global_virtual_space_offset_right    190
-chunkc global_virtual_space_offset_gap       25
+chunkc global_space_offset_top      200
+chunkc global_space_offset_bottom   190
+chunkc global_space_offset_left     190
+chunkc global_space_offset_right    190
+chunkc global_space_offset_gap       25
 
 chunkc bsp_spawn_left           1
 chunkc bsp_optimal_ratio    1.618
