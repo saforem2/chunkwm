@@ -1,13 +1,16 @@
 #!/bin/bash
 
 # Use 'chunkc' to send message to socket
-chwm="chunkc -p 4131 -c "
+export CHUNKC_SOCKET=4131
 
-$chwm "global_virtual_space_mode bsp"
+# if chunkc is not in path
+chunkc=/usr/local/bin/chunkc
 
-$chwm "global_virtual_space_offset_top 200"
-$chwm "global_virtual_space_offset_bottom 190"
-$chwm "global_virtual_space_offset_left 190"
-$chwm "global_virtual_space_offset_right 190"
+$chunkc global_virtual_space_mode float
 
-$chwm "bsp_spawn_left 0"
+$chunkc global_virtual_space_offset_top 200
+$chunkc global_virtual_space_offset_bottom 190
+$chunkc global_virtual_space_offset_left 190
+$chunkc global_virtual_space_offset_right 190
+
+$chunkc bsp_spawn_left 0
