@@ -370,15 +370,18 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_WindowFocused)
     macos_window *Window = (macos_window *) Event->Context;
     ASSERT(Window);
 
+    if(!AXLibHasFlags(Window, Window_Minimized))
+    {
 #ifdef CHUNKWM_DEBUG
-    printf("%s:%s window focused\n", Window->Owner->Name, Window->Name);
+        printf("%s:%s window focused\n", Window->Owner->Name, Window->Name);
 #endif
 
 #if 0
-    ProcessPluginList(chunkwm_export_window_focused, Window);
+        ProcessPluginList(chunkwm_export_window_focused, Window);
 #else
-    ProcessPluginListThreaded(chunkwm_export_window_focused, Window);
+        ProcessPluginListThreaded(chunkwm_export_window_focused, Window);
 #endif
+    }
 }
 
 CHUNKWM_CALLBACK(Callback_ChunkWM_WindowMoved)
