@@ -1,5 +1,6 @@
 #include "node.h"
 #include "vspace.h"
+#include "constants.h"
 
 #include "../../common/config/cvar.h"
 #include "../../common/misc/assert.h"
@@ -15,7 +16,7 @@ extern macos_window *GetWindowByID(uint32_t Id);
 
 node_split OptimalSplitMode(node *Node)
 {
-    float OptimalRatio = CVarFloatingPointValue("bsp_optimal_ratio");
+    float OptimalRatio = CVarFloatingPointValue(CVAR_BSP_OPTIMAL_RATIO);
 
     float NodeRatio = Node->Region.Width / Node->Region.Height;
     return NodeRatio >= OptimalRatio ? Split_Vertical : Split_Horizontal;
@@ -26,7 +27,7 @@ node *CreateRootNode(macos_display *Display)
     node *Node = (node *) malloc(sizeof(node));
     memset(Node, 0, sizeof(node));
 
-    Node->Ratio = CVarFloatingPointValue("bsp_split_ratio");
+    Node->Ratio = CVarFloatingPointValue(CVAR_BSP_SPLIT_RATIO);
     Node->Split = Split_None;
     CreateNodeRegion(Display, Node, Region_Full);
 
@@ -50,10 +51,10 @@ void CreateLeafNodePair(macos_display *Display, node *Parent,
 {
     Parent->WindowId = 0;
     Parent->Split = Split;
-    Parent->Ratio = CVarFloatingPointValue("bsp_split_ratio");
+    Parent->Ratio = CVarFloatingPointValue(CVAR_BSP_SPLIT_RATIO);
 
     uint32_t LeftWindowId, RightWindowId;
-    if(CVarIntegerValue("bsp_spawn_left"))
+    if(CVarIntegerValue(CVAR_BSP_SPAWN_LEFT))
     {
         LeftWindowId = SpawnedWindowId;
         RightWindowId = ExistingWindowId;

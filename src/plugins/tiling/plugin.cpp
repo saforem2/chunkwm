@@ -22,6 +22,7 @@
 #include "region.h"
 #include "node.h"
 #include "vspace.h"
+#include "constants.h"
 
 #define internal static
 #define local_persist static
@@ -162,7 +163,7 @@ TileWindow(macos_display *Display, macos_window *Window)
     if(!IsWindowValid(Window))
     {
         AXLibAddFlags(Window, Window_Float);
-        if(CVarIntegerValue("window_float_topmost"))
+        if(CVarIntegerValue(CVAR_WINDOW_FLOAT_TOPMOST))
         {
             ExtendedDockSetTopmost(Window);
         }
@@ -194,7 +195,7 @@ TileWindow(macos_display *Display, macos_window *Window)
                             ASSERT(Node != NULL);
                         }
 
-                        node_split Split = (node_split) CVarIntegerValue("bsp_split_mode");
+                        node_split Split = (node_split) CVarIntegerValue(CVAR_BSP_SPLIT_MODE);
                         if(Split == Split_Optimal)
                         {
                             Split = OptimalSplitMode(Node);
@@ -466,7 +467,7 @@ CreateWindowTree(macos_display *Display)
                         node *Node = GetFirstMinDepthLeafNode(Root);
                         ASSERT(Node != NULL);
 
-                        node_split Split = (node_split) CVarIntegerValue("bsp_split_mode");
+                        node_split Split = (node_split) CVarIntegerValue(CVAR_BSP_SPLIT_MODE);
                         if(Split == Split_Optimal)
                         {
                             Split = OptimalSplitMode(Node);
@@ -776,18 +777,18 @@ Init()
 {
     BeginCVars();
 
-    CreateCVar("global_virtual_space_mode", Virtual_Space_Bsp);
+    CreateCVar(CVAR_SPACE_MODE, Virtual_Space_Bsp);
 
-    CreateCVar("global_virtual_space_offset_top", 60.0f);
-    CreateCVar("global_virtual_space_offset_bottom", 50.0f);
-    CreateCVar("global_virtual_space_offset_left", 50.0f);
-    CreateCVar("global_virtual_space_offset_right", 50.0f);
-    CreateCVar("global_virtual_space_offset_gap", 20.0f);
+    CreateCVar(CVAR_SPACE_OFFSET_TOP, 60.0f);
+    CreateCVar(CVAR_SPACE_OFFSET_BOTTOM, 50.0f);
+    CreateCVar(CVAR_SPACE_OFFSET_LEFT, 50.0f);
+    CreateCVar(CVAR_SPACE_OFFSET_RIGHT, 50.0f);
+    CreateCVar(CVAR_SPACE_OFFSET_GAP, 20.0f);
 
-    CreateCVar("bsp_spawn_left", 1);
-    CreateCVar("bsp_optimal_ratio", 1.618f);
-    CreateCVar("bsp_split_ratio", 0.5f);
-    CreateCVar("bsp_split_mode", Split_Optimal);
+    CreateCVar(CVAR_BSP_SPAWN_LEFT, 1);
+    CreateCVar(CVAR_BSP_OPTIMAL_RATIO, 1.618f);
+    CreateCVar(CVAR_BSP_SPLIT_RATIO, 0.5f);
+    CreateCVar(CVAR_BSP_SPLIT_MODE, Split_Optimal);
 
     /* NOTE(koekeishiya): The following cvars do nothing for now. */
 
@@ -800,7 +801,7 @@ Init()
     /* NOTE(koekeishiya): The following cvars requires extended dock
      * functionality provided by chwm-sa to work. */
 
-    CreateCVar("window_float_topmost", 1);
+    CreateCVar(CVAR_WINDOW_FLOAT_TOPMOST, 1);
 
     /*   ---------------------------------------------------------   */
 

@@ -1,6 +1,7 @@
 #include "config.h"
 #include "vspace.h"
 #include "node.h"
+#include "constants.h"
 
 #include "../../common/config/cvar.h"
 #include "../../common/misc/assert.h"
@@ -90,7 +91,7 @@ DAEMON_CALLBACK(DaemonCallback)
     printf(" tiling daemon: '%s'\n", Message);
     token Command = GetToken(&Message);
 
-    if(TokenEquals(Command, "global_virtual_space_mode"))
+    if(TokenEquals(Command, CVAR_SPACE_MODE))
     {
         char *Variable = TokenToString(Command);
         printf("        command: '%s'\n", Variable);
@@ -112,11 +113,11 @@ DAEMON_CALLBACK(DaemonCallback)
         }
         free(Variable);
     }
-    else if((TokenEquals(Command, "global_virtual_space_offset_top")) ||
-            (TokenEquals(Command, "global_virtual_space_offset_bottom")) ||
-            (TokenEquals(Command, "global_virtual_space_offset_left")) ||
-            (TokenEquals(Command, "global_virtual_space_offset_right")) ||
-            (TokenEquals(Command, "global_virtual_space_offset_gap")))
+    else if((TokenEquals(Command, CVAR_SPACE_OFFSET_TOP)) ||
+            (TokenEquals(Command, CVAR_SPACE_OFFSET_BOTTOM)) ||
+            (TokenEquals(Command, CVAR_SPACE_OFFSET_LEFT)) ||
+            (TokenEquals(Command, CVAR_SPACE_OFFSET_RIGHT)) ||
+            (TokenEquals(Command, CVAR_SPACE_OFFSET_GAP)))
     {
         char *Variable = TokenToString(Command);
         printf("        command: '%s'\n", Variable);
@@ -128,7 +129,7 @@ DAEMON_CALLBACK(DaemonCallback)
         UpdateCVar(Variable, FloatValue);
         free(Variable);
     }
-    else if(TokenEquals(Command, "bsp_spawn_left"))
+    else if(TokenEquals(Command, CVAR_BSP_SPAWN_LEFT))
     {
         char *Variable = TokenToString(Command);
         printf("        command: '%s'\n", Variable);
@@ -140,8 +141,8 @@ DAEMON_CALLBACK(DaemonCallback)
         UpdateCVar(Variable, IntValue);
         free(Variable);
     }
-    else if((TokenEquals(Command, "bsp_optimal_ratio")) ||
-            (TokenEquals(Command, "bsp_split_ratio")))
+    else if((TokenEquals(Command, CVAR_BSP_OPTIMAL_RATIO)) ||
+            (TokenEquals(Command, CVAR_BSP_SPLIT_RATIO)))
     {
         char *Variable = TokenToString(Command);
         printf("        command: '%s'\n", Variable);
@@ -153,7 +154,7 @@ DAEMON_CALLBACK(DaemonCallback)
         UpdateCVar(Variable, FloatValue);
         free(Variable);
     }
-    else if(TokenEquals(Command, "bsp_split_mode"))
+    else if(TokenEquals(Command, CVAR_BSP_SPLIT_MODE))
     {
         char *Variable = TokenToString(Command);
         printf("        command: '%s'\n", Variable);
@@ -175,7 +176,7 @@ DAEMON_CALLBACK(DaemonCallback)
         }
         free(Variable);
     }
-    else if(TokenEquals(Command, "window_float_topmost"))
+    else if(TokenEquals(Command, CVAR_WINDOW_FLOAT_TOPMOST))
     {
         char *Variable = TokenToString(Command);
         printf("        command: '%s'\n", Variable);
