@@ -6,6 +6,7 @@ SRC				= ./plugin.cpp ./node.cpp ./region.cpp ./vspace.cpp \
 				  ./../../common/accessibility/window.cpp \
 				  ./../../common/accessibility/element.cpp \
 				  ./../../common/accessibility/observer.cpp \
+				  ./../../common/ipc/daemon.cpp \
 				  ./../../common/config/cvar.cpp \
 				  ./../../common/misc/carbon.cpp \
 				  ./../../common/misc/workspace.mm
