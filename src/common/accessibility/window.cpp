@@ -27,9 +27,6 @@ macos_window *AXLibConstructWindow(macos_application *Application, AXUIElementRe
     Window->Id = AXLibGetWindowID(Window->Ref);
     Window->Name = AXLibGetWindowTitle(Window->Ref);
 
-    Window->Position = AXLibGetWindowPosition(Window->Ref);
-    Window->Size = AXLibGetWindowSize(Window->Ref);
-
     if(AXLibIsWindowMovable(Window->Ref))
         AXLibAddFlags(Window, Window_Movable);
 
@@ -61,10 +58,6 @@ macos_window *AXLibCopyWindow(macos_window *Window)
     Result->Owner = Window->Owner;
     Result->Id = Window->Id;
     Result->Name = strdup(Window->Name);
-
-    Result->Position = Window->Position;
-    Result->Size = Window->Size;
-
     Result->Flags = Window->Flags;
 
     return Result;

@@ -23,9 +23,6 @@ struct macos_window
     uint32_t Id;
     char *Name;
 
-    CGPoint Position;
-    CGSize Size;
-
     uint32_t Flags;
 };
 
