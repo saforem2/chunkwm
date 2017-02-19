@@ -1,6 +1,7 @@
 #include "region.h"
 #include "node.h"
 #include "vspace.h"
+#include "cvar.h"
 
 #include "../../common/misc/assert.h"
 #include "../../common/accessibility/display.h"
@@ -129,8 +130,7 @@ void CreateNodeRegion(macos_display *Display, node *Node, region_type Type)
 {
     if(Node->Ratio == 0)
     {
-        /* TODO(koekeishiya): Replace with cvar system. */
-        Node->Ratio = 0.5f; // Settings.SplitRatio;
+        Node->Ratio = CVarFloatingPointValue("bsp_split_ratio");
     }
 
     ASSERT(Type >= Region_Full && Type <= Region_Lower);

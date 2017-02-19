@@ -18,6 +18,7 @@
 #include "region.h"
 #include "node.h"
 #include "vspace.h"
+#include "cvar.h"
 
 #define internal static
 #define local_persist static
@@ -729,6 +730,12 @@ PLUGIN_MAIN_FUNC(PluginMain)
 internal bool
 Init()
 {
+    BeginCVars();
+
+    CreateCVar("bsp_spawn_left", 1);
+    CreateCVar("bsp_optimal_ratio", 1.618f);
+    CreateCVar("bsp_split_ratio", 0.45f);
+
     DisplayList = AXLibDisplayList(&DisplayCount);
     ASSERT(DisplayCount != 0);
     MainDisplay = DisplayList[0];
@@ -785,6 +792,8 @@ Deinit()
     DisplayList = NULL;
     MainDisplay = NULL;
     DisplayCount = 0;
+
+    EndCVars();
 }
 
 /*

@@ -1,5 +1,7 @@
 #include "node.h"
 #include "vspace.h"
+#include "cvar.h"
+
 #include "../../common/misc/assert.h"
 #include "../../common/accessibility/display.h"
 #include "../../common/accessibility/window.h"
@@ -11,8 +13,7 @@ extern macos_window *GetWindowByID(uint32_t Id);
 
 node_split OptimalSplitMode(node *Node)
 {
-    // TODO(koekeishiya): cvar system.
-    float OptimalRatio = 1.618f; // Settings.OptimalRatio;
+    float OptimalRatio = CVarFloatingPointValue("bsp_optimal_ratio");
 
     float NodeRatio = Node->Region.Width / Node->Region.Height;
     return NodeRatio >= OptimalRatio ? Split_Vertical : Split_Horizontal;
@@ -23,9 +24,7 @@ node *CreateRootNode(macos_display *Display)
     node *Node = (node *) malloc(sizeof(node));
     memset(Node, 0, sizeof(node));
 
-    // TODO(koekeishiya): cvar system.
-    Node->Ratio = 1.618f; //Settings.SplitRatio;
-
+    Node->Ratio = CVarFloatingPointValue("bsp_split_ratio");
     Node->Split = Split_None;
     CreateNodeRegion(Display, Node, Region_Full);
 
@@ -49,13 +48,19 @@ void CreateLeafNodePair(macos_display *Display, node *Parent,
 {
     Parent->WindowId = 0;
     Parent->Split = Split;
+    Parent->Ratio = CVarFloatingPointValue("bsp_split_ratio");
 
-    // TODO(koekeishiya): cvar system.
-    Parent->Ratio = 0.5f; // KWMSettings.SplitRatio;
-
-    // TODO(koekeishiya): The new window is the left child. This should be configurable.
-    uint32_t LeftWindowId = SpawnedWindowId;
-    uint32_t RightWindowId = ExistingWindowId;
+    uint32_t LeftWindowId, RightWindowId;
+    if(CVarIntegerValue("bsp_spawn_left"))
+    {
+        LeftWindowId = SpawnedWindowId;
+        RightWindowId = ExistingWindowId;
+    }
+    else
+    {
+        LeftWindowId = ExistingWindowId;
+        RightWindowId = SpawnedWindowId;
+    }
 
     ASSERT(Split == Split_Vertical || Split == Split_Horizontal);
     if(Split == Split_Vertical)
