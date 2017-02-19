@@ -198,7 +198,7 @@ OBSERVER_CALLBACK(ApplicationCallback)
 
         uint32_t WindowId = AXLibGetWindowID(Element);
         macos_window *Window = GetWindowByID(WindowId);
-        if(Window && !AXLibHasFlags(Window, Window_Minimized))
+        if(Window)
         {
             ConstructEvent(ChunkWM_WindowFocused, Window);
         }
@@ -275,8 +275,21 @@ macos_application *ConstructAndAddApplication(ProcessSerialNumber PSN, pid_t PID
      * Passing an invalid reference to the AXObserver API does not simply trigger an error,
      * but causes a full on segmentation fault. */
 
-    usleep(0.5 * MICROSEC_PER_SEC);
-    if(AXLibAddApplicationObserver(Application, ApplicationCallback))
+    int Attempts = 0;
+    bool Success = AXLibAddApplicationObserver(Application, ApplicationCallback);
+    while(!Success && Attempts < 10)
+    {
+        if(Application->Observer.Valid)
+        {
+            AXLibDestroyObserver(&Application->Observer);
+        }
+
+        usleep(0.5 * MICROSEC_PER_SEC);
+        Success = AXLibAddApplicationObserver(Application, ApplicationCallback);
+        ++Attempts;
+    }
+
+    if(Success)
     {
 #ifdef CHUNKWM_DEBUG
         printf("%d:%s registered window notifications\n", Application->PID, Application->Name);
