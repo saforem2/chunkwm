@@ -7,6 +7,7 @@
 #include "../../common/accessibility/window.h"
 #include "../../common/accessibility/element.h"
 
+#include <math.h>
 #include <queue>
 
 #define internal static
@@ -77,14 +78,44 @@ void CreateLeafNodePair(macos_display *Display, node *Parent,
     }
 }
 
+internal inline void
+CenterWindowInRegion(macos_window *Window, region Region)
+{
+    CGPoint Position = AXLibGetWindowPosition(Window->Ref);
+    CGSize Size = AXLibGetWindowSize(Window->Ref);
+
+    float DiffX = (Region.X + Region.Width) - (Position.x + Size.width);
+    float DiffY = (Region.Y + Region.Height) - (Position.y + Size.height);
+
+    if((fabs(DiffX) > 0.0f) ||
+       (fabs(DiffY) > 0.0f))
+    {
+        float OffsetX = DiffX / 2.0f;
+        Region.X += OffsetX;
+        Region.Width -= OffsetX;
+
+        float OffsetY = DiffY / 2.0f;
+        Region.Y += OffsetY;
+        Region.Height -= OffsetY;
+
+        AXLibSetWindowPosition(Window->Ref, Region.X, Region.Y);
+        AXLibSetWindowSize(Window->Ref, Region.Width, Region.Height);
+    }
+}
+
 void ResizeWindowToRegionSize(node *Node)
 {
     // NOTE(koekeishiya): GetWindowByID should not be able to fail!
     macos_window *Window = GetWindowByID(Node->WindowId);
     ASSERT(Window);
 
-    AXLibSetWindowPosition(Window->Ref, Node->Region.X, Node->Region.Y);
-    AXLibSetWindowSize(Window->Ref, Node->Region.Width, Node->Region.Height);
+    bool WindowMoved  = AXLibSetWindowPosition(Window->Ref, Node->Region.X, Node->Region.Y);
+    bool WindowResized = AXLibSetWindowSize(Window->Ref, Node->Region.Width, Node->Region.Height);
+
+    if(WindowMoved || WindowResized)
+    {
+        CenterWindowInRegion(Window, Node->Region);
+    }
 }
 
 void ApplyNodeRegion(node *Node, virtual_space_mode VirtualSpaceMode)
