@@ -1,7 +1,7 @@
 #include "node.h"
 #include "vspace.h"
-#include "cvar.h"
 
+#include "../../common/config/cvar.h"
 #include "../../common/misc/assert.h"
 #include "../../common/accessibility/display.h"
 #include "../../common/accessibility/window.h"

@@ -3,7 +3,7 @@
 
 #include <map>
 
-#include "../../common/misc/string.h"
+#include "../misc/string.h"
 
 enum cvar_type
 {

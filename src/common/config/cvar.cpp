@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <pthread.h>
 
+#include "../misc/assert.h"
+
 #define internal static
 
 internal cvar_map CVars;
@@ -60,6 +62,7 @@ void UpdateCVar(const char *Name, int Value)
     cvar *Var = FindCVar(Name);
     if(Var)
     {
+        ASSERT(Var->Type == CVar_Int);
         Var->Integer = Value;
     }
     pthread_mutex_unlock(&CVarsLock);
@@ -71,6 +74,7 @@ void UpdateCVar(const char *Name, float Value)
     cvar *Var = FindCVar(Name);
     if(Var)
     {
+        ASSERT(Var->Type == CVar_Float);
         Var->Float = Value;
     }
     pthread_mutex_unlock(&CVarsLock);
@@ -82,6 +86,7 @@ void UpdateCVar(const char *Name, char *Value)
     cvar *Var = FindCVar(Name);
     if(Var)
     {
+        ASSERT(Var->Type == CVar_String);
         Var->String = Value;
     }
     pthread_mutex_unlock(&CVarsLock);
@@ -95,6 +100,7 @@ int CVarIntegerValue(const char *Name)
     cvar *Var = FindCVar(Name);
     if(Var)
     {
+        ASSERT(Var->Type == CVar_Int);
         Result = Var->Integer;
     }
     else
@@ -114,6 +120,7 @@ float CVarFloatingPointValue(const char *Name)
     cvar *Var = FindCVar(Name);
     if(Var)
     {
+        ASSERT(Var->Type == CVar_Float);
         Result = Var->Float;
     }
     else
@@ -133,6 +140,7 @@ char *CVarStringValue(const char *Name)
     cvar *Var = FindCVar(Name);
     if(Var)
     {
+        ASSERT(Var->Type == CVar_String);
         Result = Var->String;
     }
     else

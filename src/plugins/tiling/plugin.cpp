@@ -14,11 +14,11 @@
 #include "../../common/accessibility/observer.h"
 #include "../../common/misc/carbon.h"
 #include "../../common/misc/assert.h"
+#include "../../common/config/cvar.h"
 
 #include "region.h"
 #include "node.h"
 #include "vspace.h"
-#include "cvar.h"
 
 #define internal static
 #define local_persist static
