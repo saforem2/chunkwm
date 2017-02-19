@@ -1,5 +1,6 @@
 #include "vspace.h"
 #include "node.h"
+#include "cvar.h"
 
 #include "../../common/accessibility/element.h"
 #include "../../common/accessibility/display.h"
@@ -53,8 +54,15 @@ CreateAndInitVirtualSpace(macos_display *Display, macos_space *Space)
     }
     else
     {
-        internal region_offset Offset = { 60, 50, 50, 50, 20 };
-        VirtualSpace->Mode = Virtual_Space_Bsp;
+        internal region_offset Offset =
+        {
+            CVarFloatingPointValue("global_virtual_space_offset_top"),
+            CVarFloatingPointValue("global_virtual_space_offset_bottom"),
+            CVarFloatingPointValue("global_virtual_space_offset_left"),
+            CVarFloatingPointValue("global_virtual_space_offset_right"),
+            CVarFloatingPointValue("global_virtual_space_offset_gap")
+        };
+        VirtualSpace->Mode = (virtual_space_mode) CVarIntegerValue("global_virtual_space_mode");
         VirtualSpace->Offset = Offset;
     }
 

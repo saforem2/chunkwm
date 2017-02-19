@@ -152,11 +152,26 @@ node *FindFirstMinDepthLeafNode(node *Root)
     return NULL;
 }
 
+internal bool
+IsWindowValid(macos_window *Window)
+{
+    bool Result = ((AXLibIsWindowStandard(Window)) &&
+                   (AXLibHasFlags(Window, Window_Movable)) &&
+                   (AXLibHasFlags(Window, Window_Resizable)));
+    return Result;
+}
+
 internal void
 TileWindow(macos_display *Display, macos_window *Window)
 {
-    if(!AXLibIsWindowStandard(Window))
+    if(AXLibHasFlags(Window, Window_Float))
     {
+        return;
+    }
+
+    if(!IsWindowValid(Window))
+    {
+        AXLibAddFlags(Window, Window_Float);
         return;
     }
 
@@ -185,7 +200,13 @@ TileWindow(macos_display *Display, macos_window *Window)
                             ASSERT(Node != NULL);
                         }
 
-                        CreateLeafNodePair(Display, Node, Node->WindowId, Window->Id, OptimalSplitMode(Node));
+                        node_split Split = (node_split) CVarIntegerValue("bsp_split_mode");
+                        if(Split == Split_Optimal)
+                        {
+                            Split = OptimalSplitMode(Node);
+                        }
+
+                        CreateLeafNodePair(Display, Node, Node->WindowId, Window->Id, Split);
                         ApplyNodeRegion(Node, VirtualSpace->Mode);
                     }
                     else if(VirtualSpace->Mode == Virtual_Space_Monocle)
@@ -228,7 +249,12 @@ TileWindow(macos_display *Display, macos_window *Window)
 internal void
 UntileWindow(macos_display *Display, macos_window *Window)
 {
-    if(!AXLibIsWindowStandard(Window))
+    if(AXLibHasFlags(Window, Window_Float))
+    {
+        return;
+    }
+
+    if(!IsWindowValid(Window))
     {
         return;
     }
@@ -446,7 +472,13 @@ CreateWindowTree(macos_display *Display)
                         node *Node = FindFirstMinDepthLeafNode(Root);
                         ASSERT(Node != NULL);
 
-                        CreateLeafNodePair(Display, Node, Node->WindowId, Windows[Index], OptimalSplitMode(Node));
+                        node_split Split = (node_split) CVarIntegerValue("bsp_split_mode");
+                        if(Split == Split_Optimal)
+                        {
+                            Split = OptimalSplitMode(Node);
+                        }
+
+                        CreateLeafNodePair(Display, Node, Node->WindowId, Windows[Index], Split);
                     }
                 }
                 else if(VirtualSpace->Mode == Virtual_Space_Monocle)
@@ -591,8 +623,16 @@ void ApplicationActivatedHandler(const char *Data)
     AXUIElementRef WindowRef = AXLibGetFocusedWindow(Application->Ref);
     if(WindowRef)
     {
-        InsertionPointId = AXLibGetWindowID(WindowRef);
+        uint32_t WindowId = AXLibGetWindowID(WindowRef);
         CFRelease(WindowRef);
+
+        macos_window *Window = GetWindowByID(WindowId);
+        ASSERT(Window);
+
+        if(IsWindowValid(Window) && !AXLibHasFlags(Window, Window_Float))
+        {
+            InsertionPointId = Window->Id;
+        }
     }
     else
     {
@@ -615,17 +655,20 @@ void WindowDestroyedHandler(const char *Data)
     macos_window *Window = (macos_window *) Data;
 
     macos_window *Copy = RemoveWindowFromCollection(Window);
-    if(Copy)
-    {
-        UntileWindow(MainDisplay, Copy);
-        AXLibDestroyWindow(Copy);
-    }
+    ASSERT(Copy);
+
+    UntileWindow(MainDisplay, Copy);
+    AXLibDestroyWindow(Copy);
 }
 
 void WindowMinimizedHandler(const char *Data)
 {
     macos_window *Window = (macos_window *) Data;
-    UntileWindow(MainDisplay, Window);
+
+    macos_window *Copy = GetWindowByID(Window->Id);
+    ASSERT(Copy);
+
+    UntileWindow(MainDisplay, Copy);
 }
 
 void WindowDeminimizedHandler(const char *Data)
@@ -636,7 +679,10 @@ void WindowDeminimizedHandler(const char *Data)
     if((Space->Type == kCGSSpaceUser) &&
        (AXLibSpaceHasWindow(Space->Id, Window->Id)))
     {
-        TileWindow(MainDisplay, Window);
+        macos_window *Copy = GetWindowByID(Window->Id);
+        ASSERT(Copy);
+
+        TileWindow(MainDisplay, Copy);
     }
 
     AXLibDestroySpace(Space);
@@ -645,9 +691,13 @@ void WindowDeminimizedHandler(const char *Data)
 void WindowFocusedHandler(const char *Data)
 {
     macos_window *Window = (macos_window *) Data;
-    if(AXLibIsWindowStandard(Window))
+
+    macos_window *Copy = GetWindowByID(Window->Id);
+    ASSERT(Copy);
+
+    if(IsWindowValid(Copy) && !AXLibHasFlags(Copy, Window_Float))
     {
-        InsertionPointId = Window->Id;
+        InsertionPointId = Copy->Id;
     }
 }
 
@@ -732,9 +782,24 @@ Init()
 {
     BeginCVars();
 
+    CreateCVar("global_virtual_space_mode", Virtual_Space_Bsp);
+
+    CreateCVar("global_virtual_space_offset_top", 60.0f);
+    CreateCVar("global_virtual_space_offset_bottom", 50.0f);
+    CreateCVar("global_virtual_space_offset_left", 50.0f);
+    CreateCVar("global_virtual_space_offset_right", 50.0f);
+    CreateCVar("global_virtual_space_offset_gap", 20.0f);
+
     CreateCVar("bsp_spawn_left", 1);
     CreateCVar("bsp_optimal_ratio", 1.618f);
     CreateCVar("bsp_split_ratio", 0.45f);
+    CreateCVar("bsp_split_mode", Split_Optimal);
+
+    CreateCVar("mouse_follows_focus", 1);
+
+    CreateCVar("window_region_lock", 1);
+    CreateCVar("window_float_next", 0);
+    CreateCVar("window_float_center", 0);
 
     DisplayList = AXLibDisplayList(&DisplayCount);
     ASSERT(DisplayCount != 0);
@@ -752,6 +817,28 @@ Init()
 
     /* NOTE(koekeishiya): Tile windows visible on the current space using binary space partitioning. */
     CreateWindowTree(MainDisplay);
+
+    /* NOTE(koekeishiya): Set our initial insertion-point on launch. */
+    AXUIElementRef ApplicationRef = AXLibGetFocusedApplication();
+    if(ApplicationRef)
+    {
+        AXUIElementRef WindowRef = AXLibGetFocusedWindow(ApplicationRef);
+        CFRelease(ApplicationRef);
+
+        if(WindowRef)
+        {
+            uint32_t WindowId = AXLibGetWindowID(WindowRef);
+            CFRelease(WindowRef);
+
+            macos_window *Window = GetWindowByID(WindowId);
+            ASSERT(Window);
+
+            if(IsWindowValid(Window) && !AXLibHasFlags(Window, Window_Float))
+            {
+                InsertionPointId = Window->Id;
+            }
+        }
+    }
 
     bool Result = true;
     return Result;
