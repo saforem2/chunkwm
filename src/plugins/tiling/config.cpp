@@ -147,7 +147,7 @@ DAEMON_CALLBACK(DaemonCallback)
         printf("        command: '%s'\n", Variable);
 
         token Value = GetToken(&Message);
-        float FloatValue = TokenToInt(Value);
+        float FloatValue = TokenToFloat(Value);
         printf("        value: '%f'\n", FloatValue);
 
         UpdateCVar(Variable, FloatValue);
