@@ -1,3 +1,3 @@
 *chunkc* is a program used to write to a socket.
 
-Usage: `./chunkc -p <PORT> -c "COMMAND"`
+Usage: `CHUNKC_SOCKET=port chunkc data to send`
