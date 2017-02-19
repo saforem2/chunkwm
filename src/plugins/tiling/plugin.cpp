@@ -600,9 +600,9 @@ void ApplicationActivatedHandler(const char *Data)
         CFRelease(WindowRef);
 
         macos_window *Window = GetWindowByID(WindowId);
-        ASSERT(Window);
-
-        if(IsWindowValid(Window) && !AXLibHasFlags(Window, Window_Float))
+        if((Window) &&
+           (IsWindowValid(Window)) &&
+           (!AXLibHasFlags(Window, Window_Float)))
         {
             InsertionPointId = Window->Id;
         }
