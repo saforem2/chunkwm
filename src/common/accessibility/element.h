@@ -13,8 +13,8 @@ bool AXLibIsWindowResizable(AXUIElementRef WindowRef);
 bool AXLibIsWindowMovable(AXUIElementRef WindowRef);
 bool AXLibIsWindowFullscreen(AXUIElementRef WindowRef);
 
-bool AXLibSetWindowPosition(AXUIElementRef WindowRef, int X, int Y);
-bool AXLibSetWindowSize(AXUIElementRef WindowRef, int Width, int Height);
+bool AXLibSetWindowPosition(AXUIElementRef WindowRef, float X, float Y);
+bool AXLibSetWindowSize(AXUIElementRef WindowRef, float Width, float Height);
 
 CFTypeRef AXLibGetWindowProperty(AXUIElementRef WindowRef, CFStringRef Property);
 AXError AXLibSetWindowProperty(AXUIElementRef WindowRef, CFStringRef Property, CFTypeRef Value);

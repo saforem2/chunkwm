@@ -175,7 +175,7 @@ bool AXLibIsWindowResizable(AXUIElementRef WindowRef)
 }
 
 /* NOTE(koekeishiya): Caller is responsible for passing a valid AXUIElementRef. */
-bool AXLibSetWindowPosition(AXUIElementRef WindowRef, int X, int Y)
+bool AXLibSetWindowPosition(AXUIElementRef WindowRef, float X, float Y)
 {
     ASSERT(WindowRef);
 
@@ -194,7 +194,7 @@ bool AXLibSetWindowPosition(AXUIElementRef WindowRef, int X, int Y)
 }
 
 /* NOTE(koekeishiya): Caller is responsible for passing a valid AXUIElementRef. */
-bool AXLibSetWindowSize(AXUIElementRef WindowRef, int Width, int Height)
+bool AXLibSetWindowSize(AXUIElementRef WindowRef, float Width, float Height)
 {
     ASSERT(WindowRef);
 
