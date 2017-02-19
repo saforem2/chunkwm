@@ -1,0 +1,13 @@
+#!/bin/bash
+
+# Use 'chunkc' to send message to socket
+chwm="chunkc -p 4131 -c "
+
+$chwm "global_virtual_space_mode bsp"
+
+$chwm "global_virtual_space_offset_top 200"
+$chwm "global_virtual_space_offset_bottom 190"
+$chwm "global_virtual_space_offset_left 190"
+$chwm "global_virtual_space_offset_right 190"
+
+$chwm "bsp_spawn_left 0"

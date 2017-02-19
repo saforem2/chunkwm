@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
+#include <sys/stat.h>
+
 #include <map>
 #include <vector>
 
@@ -16,6 +18,7 @@
 #include "../../common/misc/assert.h"
 #include "../../common/config/cvar.h"
 
+#include "config.h"
 #include "region.h"
 #include "node.h"
 #include "vspace.h"
@@ -801,6 +804,24 @@ Init()
 
     /*   ---------------------------------------------------------   */
 
+    int Port = 4131;
+    StartDaemon(Port, DaemonCallback);
+
+    // TODO(koekeishiya): The config file should be in $HOME.
+    const char *PathToConfigFile = "/Users/Koe/Documents/programming/C++/chunkwm/src/plugins/tiling/examples/chwmtilingrc";
+
+    // NOTE(koekeishiya): Only try to execute the config file if it actually exists.
+    struct stat Buffer;
+    if(stat(PathToConfigFile, &Buffer) == 0)
+    {
+        // NOTE(koekeishiya): The config file is just an executable bash script!
+        system(PathToConfigFile);
+    }
+    else
+    {
+        fprintf(stderr, "   tiling: config '%s' not found!\n", PathToConfigFile);
+    }
+
     DisplayList = AXLibDisplayList(&DisplayCount);
     ASSERT(DisplayCount != 0);
     MainDisplay = DisplayList[0];
@@ -847,6 +868,8 @@ Init()
 internal void
 Deinit()
 {
+    StopDaemon();
+
     for(macos_application_map_it It = Applications.begin();
         It != Applications.end();
         ++It)
