@@ -4,7 +4,6 @@
 #include <pthread.h>
 #include <map>
 #include <vector>
-#include <queue>
 
 #include "../../api/plugin_api.h"
 #include "../../common/accessibility/display.h"
@@ -126,32 +125,6 @@ RemoveApplication(macos_application *Application)
     }
 }
 
-node *FindFirstMinDepthLeafNode(node *Root)
-{
-    std::queue<node *> Queue;
-    Queue.push(Root);
-
-    while(!Queue.empty())
-    {
-        node *Node = Queue.front();
-        Queue.pop();
-
-        if(!Node->Left && !Node->Right)
-            return Node;
-
-        if(Node->Left)
-            Queue.push(Node->Left);
-
-        if(Node->Right)
-            Queue.push(Node->Right);
-    }
-
-    /* NOTE(koekeishiya): Unreachable return;
-     * the binary-tree is always proper.
-     * Silence compiler warning.. */
-    return NULL;
-}
-
 internal bool
 IsWindowValid(macos_window *Window)
 {
@@ -196,7 +169,7 @@ TileWindow(macos_display *Display, macos_window *Window)
                     {
                         if(!Node)
                         {
-                            Node = FindFirstMinDepthLeafNode(VirtualSpace->Tree);
+                            Node = GetFirstMinDepthLeafNode(VirtualSpace->Tree);
                             ASSERT(Node != NULL);
                         }
 
@@ -469,7 +442,7 @@ CreateWindowTree(macos_display *Display)
                         Index < Windows.size();
                         ++Index)
                     {
-                        node *Node = FindFirstMinDepthLeafNode(Root);
+                        node *Node = GetFirstMinDepthLeafNode(Root);
                         ASSERT(Node != NULL);
 
                         node_split Split = (node_split) CVarIntegerValue("bsp_split_mode");

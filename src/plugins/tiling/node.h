@@ -42,6 +42,7 @@ bool IsRightChild(node *Node);
 
 node *GetFirstLeafNode(node *Tree);
 node *GetLastLeafNode(node *Tree);
+node *GetFirstMinDepthLeafNode(node *Root);
 
 node *GetNearestNodeToTheRight(node *Node);
 node *GetNodeWithId(node *Tree, uint32_t WindowId, virtual_space_mode VirtualSpaceMode);

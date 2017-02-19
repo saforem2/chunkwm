@@ -7,6 +7,8 @@
 #include "../../common/accessibility/window.h"
 #include "../../common/accessibility/element.h"
 
+#include <queue>
+
 #define internal static
 
 extern macos_window *GetWindowByID(uint32_t Id);
@@ -156,6 +158,32 @@ node *GetLastLeafNode(node *Tree)
     }
 
     return Node;
+}
+
+node *GetFirstMinDepthLeafNode(node *Root)
+{
+    std::queue<node *> Queue;
+    Queue.push(Root);
+
+    while(!Queue.empty())
+    {
+        node *Node = Queue.front();
+        Queue.pop();
+
+        if(!Node->Left && !Node->Right)
+            return Node;
+
+        if(Node->Left)
+            Queue.push(Node->Left);
+
+        if(Node->Right)
+            Queue.push(Node->Right);
+    }
+
+    /* NOTE(koekeishiya): Unreachable return;
+     * the binary-tree is always proper.
+     * Silence compiler warning.. */
+    return NULL;
 }
 
 node *GetNearestNodeToTheRight(node *Node)
