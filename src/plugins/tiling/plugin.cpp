@@ -11,6 +11,7 @@
 #include "../../common/accessibility/window.h"
 #include "../../common/accessibility/element.h"
 #include "../../common/accessibility/observer.h"
+#include "../../common/ipc/daemon.h"
 #include "../../common/misc/carbon.h"
 #include "../../common/misc/assert.h"
 #include "../../common/config/cvar.h"
@@ -135,6 +136,19 @@ IsWindowValid(macos_window *Window)
 }
 
 internal void
+ExtendedDockSetTopmost(macos_window *Window)
+{
+    int SockFD;
+    if(ConnectToDaemon(&SockFD, 5050))
+    {
+        char Message[64];
+        sprintf(Message, "window_level %d %d", Window->Id, kCGFloatingWindowLevelKey);
+        WriteToSocket(Message, SockFD);
+    }
+    CloseSocket(SockFD);
+}
+
+internal void
 TileWindow(macos_display *Display, macos_window *Window)
 {
     if(AXLibHasFlags(Window, Window_Float))
@@ -145,6 +159,10 @@ TileWindow(macos_display *Display, macos_window *Window)
     if(!IsWindowValid(Window))
     {
         AXLibAddFlags(Window, Window_Float);
+        if(CVarIntegerValue("window_float_topmost"))
+        {
+            ExtendedDockSetTopmost(Window);
+        }
         return;
     }
 
@@ -765,14 +783,23 @@ Init()
 
     CreateCVar("bsp_spawn_left", 1);
     CreateCVar("bsp_optimal_ratio", 1.618f);
-    CreateCVar("bsp_split_ratio", 0.45f);
+    CreateCVar("bsp_split_ratio", 0.5f);
     CreateCVar("bsp_split_mode", Split_Optimal);
 
-    CreateCVar("mouse_follows_focus", 1);
+    /* NOTE(koekeishiya): The following cvars do nothing for now. */
 
-    CreateCVar("window_region_lock", 1);
+    CreateCVar("mouse_follows_focus", 1);
     CreateCVar("window_float_next", 0);
     CreateCVar("window_float_center", 0);
+
+    /*   ---------------------------------------------------------   */
+
+    /* NOTE(koekeishiya): The following cvars requires extended dock
+     * functionality provided by chwm-sa to work. */
+
+    CreateCVar("window_float_topmost", 1);
+
+    /*   ---------------------------------------------------------   */
 
     DisplayList = AXLibDisplayList(&DisplayCount);
     ASSERT(DisplayCount != 0);
