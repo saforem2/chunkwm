@@ -370,6 +370,9 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_WindowFocused)
     macos_window *Window = (macos_window *) Event->Context;
     ASSERT(Window);
 
+    /* NOTE(koekeishiya): When a window is deminimized, we receive this notification before
+     * the deminimized notification (window is not yet visible). Skip this notification and
+     * post it after a 'ChunkWM_WindowDeminimized' event has been processed. */
     if(!AXLibHasFlags(Window, Window_Minimized))
     {
 #ifdef CHUNKWM_DEBUG
