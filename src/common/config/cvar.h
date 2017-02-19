@@ -1,5 +1,5 @@
-#ifndef PLUGIN_CVAR_H
-#define PLUGIN_CVAR_H
+#ifndef CHUNKWM_COMMON_CVAR_H
+#define CHUNKWM_COMMON_CVAR_H
 
 #include <map>
 
