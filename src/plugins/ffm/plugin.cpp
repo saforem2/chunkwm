@@ -95,20 +95,15 @@ void FocusWindowBelowCursor()
     AXUIElementRef WindowRef = AXLibGetFocusedWindow(ApplicationRef);
     CFRelease(ApplicationRef);
 
+    uint32_t FocusedWindowId = 0;
     if(WindowRef)
     {
-        CGRect WindowRect = { AXLibGetWindowPosition(WindowRef),
-                              AXLibGetWindowSize(WindowRef) };
+        FocusedWindowId = AXLibGetWindowID(WindowRef);
         CFRelease(WindowRef);
-        CGPoint Cursor = AXLibGetCursorPos();
-        if(IsPointInsideRect(&Cursor, &WindowRect))
-        {
-            return;
-        }
     }
 
     window_info Window = GetWindowBelowCursor();
-    if(Window.ID == 0)
+    if(Window.ID == 0 || Window.ID == FocusedWindowId)
     {
         return;
     }
@@ -132,7 +127,7 @@ void FocusWindowBelowCursor()
         Index < WindowCount;
         ++Index)
     {
-        AXUIElementRef WindowRef = (AXUIElementRef)CFArrayGetValueAtIndex(WindowList, Index);
+        AXUIElementRef WindowRef = (AXUIElementRef) CFArrayGetValueAtIndex(WindowList, Index);
         if(WindowRef)
         {
             int WindowRefWID = AXLibGetWindowID(WindowRef);
