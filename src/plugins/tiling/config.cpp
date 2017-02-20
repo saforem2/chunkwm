@@ -217,20 +217,27 @@ DAEMON_CALLBACK(DaemonCallback)
             printf("        command: '%s'\n", Variable);
 
             token Value = GetToken(&Message);
-            printf("        value: '%.*s'\n", Value.Length, Value.Text);
+            if(Value.Length > 0)
+            {
+                printf("        value: '%.*s'\n", Value.Length, Value.Text);
+                if(TokenEquals(Value, "bsp"))
+                {
+                    UpdateCVar(Variable, Virtual_Space_Bsp);
+                }
+                else if(TokenEquals(Value, "monocle"))
+                {
+                    UpdateCVar(Variable, Virtual_Space_Monocle);
+                }
+                else if(TokenEquals(Value, "float"))
+                {
+                    UpdateCVar(Variable, Virtual_Space_Float);
+                }
+            }
+            else
+            {
+                fprintf(stderr, "        value: MISSING!!!\n");
+            }
 
-            if(TokenEquals(Value, "bsp"))
-            {
-                UpdateCVar(Variable, Virtual_Space_Bsp);
-            }
-            else if(TokenEquals(Value, "monocle"))
-            {
-                UpdateCVar(Variable, Virtual_Space_Monocle);
-            }
-            else if(TokenEquals(Value, "float"))
-            {
-                UpdateCVar(Variable, Virtual_Space_Float);
-            }
             free(Variable);
         }
         else if((TokenEquals(Command, CVAR_SPACE_OFFSET_TOP)) ||
@@ -243,10 +250,17 @@ DAEMON_CALLBACK(DaemonCallback)
             printf("        command: '%s'\n", Variable);
 
             token Value = GetToken(&Message);
-            float FloatValue = TokenToFloat(Value);
-            printf("        value: '%f'\n", FloatValue);
+            if(Value.Length > 0)
+            {
+                float FloatValue = TokenToFloat(Value);
+                printf("        value: '%f'\n", FloatValue);
+                UpdateCVar(Variable, FloatValue);
+            }
+            else
+            {
+                fprintf(stderr, "        value: MISSING!!!\n");
+            }
 
-            UpdateCVar(Variable, FloatValue);
             free(Variable);
         }
         else if(TokenEquals(Command, CVAR_BSP_SPAWN_LEFT))
@@ -255,10 +269,17 @@ DAEMON_CALLBACK(DaemonCallback)
             printf("        command: '%s'\n", Variable);
 
             token Value = GetToken(&Message);
-            int IntValue = TokenToInt(Value);
-            printf("        value: '%d'\n", IntValue);
+            if(Value.Length > 0)
+            {
+                int IntValue = TokenToInt(Value);
+                printf("        value: '%d'\n", IntValue);
+                UpdateCVar(Variable, IntValue);
+            }
+            else
+            {
+                fprintf(stderr, "        value: MISSING!!!\n");
+            }
 
-            UpdateCVar(Variable, IntValue);
             free(Variable);
         }
         else if((TokenEquals(Command, CVAR_BSP_OPTIMAL_RATIO)) ||
@@ -268,10 +289,17 @@ DAEMON_CALLBACK(DaemonCallback)
             printf("        command: '%s'\n", Variable);
 
             token Value = GetToken(&Message);
-            float FloatValue = TokenToFloat(Value);
-            printf("        value: '%f'\n", FloatValue);
+            if(Value.Length > 0)
+            {
+                float FloatValue = TokenToFloat(Value);
+                printf("        value: '%f'\n", FloatValue);
+                UpdateCVar(Variable, FloatValue);
+            }
+            else
+            {
+                fprintf(stderr, "        value: MISSING!!!\n");
+            }
 
-            UpdateCVar(Variable, FloatValue);
             free(Variable);
         }
         else if(TokenEquals(Command, CVAR_BSP_SPLIT_MODE))
@@ -280,20 +308,27 @@ DAEMON_CALLBACK(DaemonCallback)
             printf("        command: '%s'\n", Variable);
 
             token Value = GetToken(&Message);
-            printf("        value: '%.*s'\n", Value.Length, Value.Text);
+            if(Value.Length > 0)
+            {
+                printf("        value: '%.*s'\n", Value.Length, Value.Text);
+                if(TokenEquals(Value, "optimal"))
+                {
+                    UpdateCVar(Variable, Split_Optimal);
+                }
+                else if(TokenEquals(Value, "vertical"))
+                {
+                    UpdateCVar(Variable, Split_Vertical);
+                }
+                else if(TokenEquals(Value, "horizontal"))
+                {
+                    UpdateCVar(Variable, Split_Horizontal);
+                }
+            }
+            else
+            {
+                fprintf(stderr, "        value: MISSING!!!\n");
+            }
 
-            if(TokenEquals(Value, "optimal"))
-            {
-                UpdateCVar(Variable, Split_Optimal);
-            }
-            else if(TokenEquals(Value, "vertical"))
-            {
-                UpdateCVar(Variable, Split_Vertical);
-            }
-            else if(TokenEquals(Value, "horizontal"))
-            {
-                UpdateCVar(Variable, Split_Horizontal);
-            }
             free(Variable);
         }
         else if((TokenEquals(Command, CVAR_WINDOW_FLOAT_TOPMOST)) ||
@@ -303,10 +338,17 @@ DAEMON_CALLBACK(DaemonCallback)
             printf("        command: '%s'\n", Variable);
 
             token Value = GetToken(&Message);
-            int IntValue = TokenToInt(Value);
-            printf("        value: '%d'\n", IntValue);
+            if(Value.Length > 0)
+            {
+                int IntValue = TokenToInt(Value);
+                printf("        value: '%d'\n", IntValue);
+                UpdateCVar(Variable, IntValue);
+            }
+            else
+            {
+                fprintf(stderr, "        value: MISSING!!!\n");
+            }
 
-            UpdateCVar(Variable, IntValue);
             free(Variable);
         }
         else
@@ -329,37 +371,49 @@ DAEMON_CALLBACK(DaemonCallback)
                    (StringEquals(Buffer, _CVAR_SPACE_OFFSET_GAP)))
                 {
                     token Value = GetToken(&Message);
-                    float FloatValue = TokenToFloat(Value);
-                    printf("        value: '%f'\n", FloatValue);
-
-                    UpdateCVar(Variable, FloatValue);
+                    if(Value.Length > 0)
+                    {
+                        float FloatValue = TokenToFloat(Value);
+                        printf("        value: '%f'\n", FloatValue);
+                        UpdateCVar(Variable, FloatValue);
+                    }
+                    else
+                    {
+                        fprintf(stderr, "        value: MISSING!!!\n");
+                    }
                 }
                 else if(StringEquals(Buffer, _CVAR_SPACE_MODE))
                 {
                     token Value = GetToken(&Message);
-                    printf("        value: '%.*s'\n", Value.Length, Value.Text);
-
-                    if(TokenEquals(Value, "bsp"))
+                    if(Value.Length > 0)
                     {
-                        UpdateCVar(Variable, Virtual_Space_Bsp);
+                        printf("        value: '%.*s'\n", Value.Length, Value.Text);
+                        if(TokenEquals(Value, "bsp"))
+                        {
+                            UpdateCVar(Variable, Virtual_Space_Bsp);
+                        }
+                        else if(TokenEquals(Value, "monocle"))
+                        {
+                            UpdateCVar(Variable, Virtual_Space_Monocle);
+                        }
+                        else if(TokenEquals(Value, "float"))
+                        {
+                            UpdateCVar(Variable, Virtual_Space_Float);
+                        }
                     }
-                    else if(TokenEquals(Value, "monocle"))
+                    else
                     {
-                        UpdateCVar(Variable, Virtual_Space_Monocle);
-                    }
-                    else if(TokenEquals(Value, "float"))
-                    {
-                        UpdateCVar(Variable, Virtual_Space_Float);
+                        fprintf(stderr, "        value: MISSING!!!\n");
                     }
                 }
                 else
                 {
-                    printf(" tiling daemon: '%s' is not a valid config option!\n", Variable);
+                    fprintf(stderr, " tiling daemon: '%s' is not a valid config option!\n", Variable);
                 }
             }
             else
             {
-                printf(" tiling daemon: '%.*s' is not a valid config option!\n", Command.Length, Command.Text);
+                fprintf(stderr, " tiling daemon: '%.*s' is not a valid config option!\n", Command.Length, Command.Text);
             }
             free(Variable);
         }
@@ -381,6 +435,6 @@ DAEMON_CALLBACK(DaemonCallback)
     }
     else
     {
-        printf(" tiling daemon: no match for '%.*s'\n", Type.Length, Type.Text);
+        fprintf(stderr, " tiling daemon: no match for '%.*s'\n", Type.Length, Type.Text);
     }
 }
