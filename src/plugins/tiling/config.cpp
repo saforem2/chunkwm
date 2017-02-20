@@ -199,107 +199,114 @@ End:
  * */
 DAEMON_CALLBACK(DaemonCallback)
 {
-    printf(" tiling daemon: '%s'\n", Message);
-    token Command = GetToken(&Message);
+    token Type = GetToken(&Message);
 
-    if(TokenEquals(Command, CVAR_SPACE_MODE))
+    if(TokenEquals(Type, "config"))
     {
-        char *Variable = TokenToString(Command);
-        printf("        command: '%s'\n", Variable);
-
-        token Value = GetToken(&Message);
-        printf("        value: '%.*s'\n", Value.Length, Value.Text);
-
-        if(TokenEquals(Value, "bsp"))
+        token Command = GetToken(&Message);
+        if(TokenEquals(Command, CVAR_SPACE_MODE))
         {
-            UpdateCVar(Variable, Virtual_Space_Bsp);
+            char *Variable = TokenToString(Command);
+            printf("        command: '%s'\n", Variable);
+
+            token Value = GetToken(&Message);
+            printf("        value: '%.*s'\n", Value.Length, Value.Text);
+
+            if(TokenEquals(Value, "bsp"))
+            {
+                UpdateCVar(Variable, Virtual_Space_Bsp);
+            }
+            else if(TokenEquals(Value, "monocle"))
+            {
+                UpdateCVar(Variable, Virtual_Space_Monocle);
+            }
+            else if(TokenEquals(Value, "float"))
+            {
+                UpdateCVar(Variable, Virtual_Space_Float);
+            }
+            free(Variable);
         }
-        else if(TokenEquals(Value, "monocle"))
+        else if((TokenEquals(Command, CVAR_SPACE_OFFSET_TOP)) ||
+                (TokenEquals(Command, CVAR_SPACE_OFFSET_BOTTOM)) ||
+                (TokenEquals(Command, CVAR_SPACE_OFFSET_LEFT)) ||
+                (TokenEquals(Command, CVAR_SPACE_OFFSET_RIGHT)) ||
+                (TokenEquals(Command, CVAR_SPACE_OFFSET_GAP)))
         {
-            UpdateCVar(Variable, Virtual_Space_Monocle);
+            char *Variable = TokenToString(Command);
+            printf("        command: '%s'\n", Variable);
+
+            token Value = GetToken(&Message);
+            float FloatValue = TokenToFloat(Value);
+            printf("        value: '%f'\n", FloatValue);
+
+            UpdateCVar(Variable, FloatValue);
+            free(Variable);
         }
-        else if(TokenEquals(Value, "float"))
+        else if(TokenEquals(Command, CVAR_BSP_SPAWN_LEFT))
         {
-            UpdateCVar(Variable, Virtual_Space_Float);
+            char *Variable = TokenToString(Command);
+            printf("        command: '%s'\n", Variable);
+
+            token Value = GetToken(&Message);
+            int IntValue = TokenToInt(Value);
+            printf("        value: '%d'\n", IntValue);
+
+            UpdateCVar(Variable, IntValue);
+            free(Variable);
         }
-        free(Variable);
-    }
-    else if((TokenEquals(Command, CVAR_SPACE_OFFSET_TOP)) ||
-            (TokenEquals(Command, CVAR_SPACE_OFFSET_BOTTOM)) ||
-            (TokenEquals(Command, CVAR_SPACE_OFFSET_LEFT)) ||
-            (TokenEquals(Command, CVAR_SPACE_OFFSET_RIGHT)) ||
-            (TokenEquals(Command, CVAR_SPACE_OFFSET_GAP)))
-    {
-        char *Variable = TokenToString(Command);
-        printf("        command: '%s'\n", Variable);
-
-        token Value = GetToken(&Message);
-        float FloatValue = TokenToFloat(Value);
-        printf("        value: '%f'\n", FloatValue);
-
-        UpdateCVar(Variable, FloatValue);
-        free(Variable);
-    }
-    else if(TokenEquals(Command, CVAR_BSP_SPAWN_LEFT))
-    {
-        char *Variable = TokenToString(Command);
-        printf("        command: '%s'\n", Variable);
-
-        token Value = GetToken(&Message);
-        int IntValue = TokenToInt(Value);
-        printf("        value: '%d'\n", IntValue);
-
-        UpdateCVar(Variable, IntValue);
-        free(Variable);
-    }
-    else if((TokenEquals(Command, CVAR_BSP_OPTIMAL_RATIO)) ||
-            (TokenEquals(Command, CVAR_BSP_SPLIT_RATIO)))
-    {
-        char *Variable = TokenToString(Command);
-        printf("        command: '%s'\n", Variable);
-
-        token Value = GetToken(&Message);
-        float FloatValue = TokenToFloat(Value);
-        printf("        value: '%f'\n", FloatValue);
-
-        UpdateCVar(Variable, FloatValue);
-        free(Variable);
-    }
-    else if(TokenEquals(Command, CVAR_BSP_SPLIT_MODE))
-    {
-        char *Variable = TokenToString(Command);
-        printf("        command: '%s'\n", Variable);
-
-        token Value = GetToken(&Message);
-        printf("        value: '%.*s'\n", Value.Length, Value.Text);
-
-        if(TokenEquals(Value, "optimal"))
+        else if((TokenEquals(Command, CVAR_BSP_OPTIMAL_RATIO)) ||
+                (TokenEquals(Command, CVAR_BSP_SPLIT_RATIO)))
         {
-            UpdateCVar(Variable, Split_Optimal);
-        }
-        else if(TokenEquals(Value, "vertical"))
-        {
-            UpdateCVar(Variable, Split_Vertical);
-        }
-        else if(TokenEquals(Value, "horizontal"))
-        {
-            UpdateCVar(Variable, Split_Horizontal);
-        }
-        free(Variable);
-    }
-    else if(TokenEquals(Command, CVAR_WINDOW_FLOAT_TOPMOST))
-    {
-        char *Variable = TokenToString(Command);
-        printf("        command: '%s'\n", Variable);
+            char *Variable = TokenToString(Command);
+            printf("        command: '%s'\n", Variable);
 
-        token Value = GetToken(&Message);
-        int IntValue = TokenToInt(Value);
-        printf("        value: '%d'\n", IntValue);
+            token Value = GetToken(&Message);
+            float FloatValue = TokenToFloat(Value);
+            printf("        value: '%f'\n", FloatValue);
 
-        UpdateCVar(Variable, IntValue);
-        free(Variable);
+            UpdateCVar(Variable, FloatValue);
+            free(Variable);
+        }
+        else if(TokenEquals(Command, CVAR_BSP_SPLIT_MODE))
+        {
+            char *Variable = TokenToString(Command);
+            printf("        command: '%s'\n", Variable);
+
+            token Value = GetToken(&Message);
+            printf("        value: '%.*s'\n", Value.Length, Value.Text);
+
+            if(TokenEquals(Value, "optimal"))
+            {
+                UpdateCVar(Variable, Split_Optimal);
+            }
+            else if(TokenEquals(Value, "vertical"))
+            {
+                UpdateCVar(Variable, Split_Vertical);
+            }
+            else if(TokenEquals(Value, "horizontal"))
+            {
+                UpdateCVar(Variable, Split_Horizontal);
+            }
+            free(Variable);
+        }
+        else if(TokenEquals(Command, CVAR_WINDOW_FLOAT_TOPMOST))
+        {
+            char *Variable = TokenToString(Command);
+            printf("        command: '%s'\n", Variable);
+
+            token Value = GetToken(&Message);
+            int IntValue = TokenToInt(Value);
+            printf("        value: '%d'\n", IntValue);
+
+            UpdateCVar(Variable, IntValue);
+            free(Variable);
+        }
+        else
+        {
+            printf(" tiling daemon: '%.*s' is not a valid config option!\n", Command.Length, Command.Text);
+        }
     }
-    else if(TokenEquals(Command, "window"))
+    else if(TokenEquals(Type, "window"))
     {
         command Chain = {};
         bool Success = ParseWindowCommand(Message, &Chain);
@@ -316,6 +323,6 @@ DAEMON_CALLBACK(DaemonCallback)
     }
     else
     {
-        printf(" tiling daemon: no match: '%.*s'\n", Command.Length, Command.Text);
+        printf(" tiling daemon: no match for '%.*s'\n", Type.Length, Type.Text);
     }
 }
