@@ -31,10 +31,14 @@ typedef cvar_map::iterator cvar_map_it;
 bool BeginCVars();
 void EndCVars();
 
+// NOTE(koekeishiya): The caller is responsible for making sure that
+// a cvar with 'name' does not already exist. The existing cvar pointer
+// will be overwritten and is effectively a memory leak.
 void CreateCVar(const char *Name, int Value);
 void CreateCVar(const char *Name, float Value);
 void CreateCVar(const char *Name, char *Value);
 
+// NOTE(koekeishiya): If the cvar doesn't exist, it will be created.
 void UpdateCVar(const char *Name, int Value);
 void UpdateCVar(const char *Name, float Value);
 void UpdateCVar(const char *Name, char *Value);
@@ -42,5 +46,7 @@ void UpdateCVar(const char *Name, char *Value);
 int CVarIntegerValue(const char *Name);
 float CVarFloatingPointValue(const char *Name);
 char *CVarStringValue(const char *Name);
+
+bool CVarExists(const char *Name);
 
 #endif
