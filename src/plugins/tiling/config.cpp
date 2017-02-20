@@ -13,6 +13,9 @@
 
 #define local_persist static
 
+extern void FocusWindow(char *Direction);
+extern void SwapWindow(char *Direction);
+
 inline bool
 StringEquals(const char *A, const char *B)
 {
@@ -154,6 +157,18 @@ FreeCommandChain(command *Chain)
     }
 }
 
+inline command *
+ConstructCommand(char Flag, char *Arg)
+{
+    command *Command = (command *) malloc(sizeof(command));
+
+    Command->Flag = Flag;
+    Command->Arg = strdup(Arg);
+    Command->Next = NULL;
+
+    return Command;
+}
+
 inline bool
 ParseWindowCommand(const char *Message, command *Chain)
 {
@@ -169,17 +184,27 @@ ParseWindowCommand(const char *Message, command *Chain)
     {
         switch(Option)
         {
+            // NOTE(koekeishiya): Both the '-f' and '-s' flag support the same arguments.
             case 'f':
             case 's':
             {
                 printf("    %c: '%s'\n", Option, optarg);
-
-                Command->Next = (command *) malloc(sizeof(command));
-                Command = Command->Next;
-
-                Command->Flag = Option;
-                Command->Arg = strdup(optarg);
-                Command->Next = NULL;
+                if((StringEquals(optarg, "west")) ||
+                   (StringEquals(optarg, "east")) ||
+                   (StringEquals(optarg, "north")) ||
+                   (StringEquals(optarg, "south")))
+                {
+                    command *Entry = ConstructCommand(Option, optarg);
+                    Command->Next = Entry;
+                    Command = Entry;
+                }
+                else
+                {
+                    fprintf(stderr, "    invalid selector '%s' for window flag '%c'\n", optarg, Option);
+                    Success = false;
+                    FreeCommandChain(Chain);
+                    goto End;
+                }
             } break;
             case '?':
             {
@@ -428,6 +453,14 @@ DAEMON_CALLBACK(DaemonCallback)
             while((Command = Command->Next))
             {
                 printf("    command: '%c', arg: '%s'\n", Command->Flag, Command->Arg);
+                if(Command->Flag == 'f')
+                {
+                    FocusWindow(Command->Arg);
+                }
+                else if(Command->Flag == 's')
+                {
+                    SwapWindow(Command->Arg);
+                }
             }
 
             FreeCommandChain(&Chain);

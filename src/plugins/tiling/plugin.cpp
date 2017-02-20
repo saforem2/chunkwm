@@ -51,6 +51,13 @@ internal macos_window_map Windows;
 
 internal uint32_t InsertionPointId;
 
+inline bool
+StringsAreEqual(const char *A, const char *B)
+{
+    bool Result = (strcmp(A, B) == 0);
+    return Result;
+}
+
 /* NOTE(koekeishiya): We need a way to retrieve AXUIElementRef from a CGWindowID.
  * There is no way to do this, without caching AXUIElementRef references.
  * Here we perform a lookup of macos_window structs. */
@@ -556,6 +563,216 @@ RebalanceWindowTree(macos_display *Display)
     AXLibDestroySpace(Space);
 }
 
+void GetCenterOfWindow(virtual_space *VirtualSpace, macos_window *Window, float *X, float *Y)
+{
+    node *Node = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
+    if(Node)
+    {
+        *X = Node->Region.X + Node->Region.Width / 2;
+        *Y = Node->Region.Y + Node->Region.Height / 2;
+    }
+    else
+    {
+        *X = -1;
+        *Y = -1;
+    }
+}
+
+float GetWindowDistance(virtual_space *VirtualSpace, macos_window *A, macos_window *B, char *Direction, bool Wrap)
+{
+    float X1, Y1, X2, Y2;
+    GetCenterOfWindow(VirtualSpace, A, &X1, &Y1);
+    GetCenterOfWindow(VirtualSpace, B, &X2, &Y2);
+
+    bool West = StringsAreEqual(Direction, "west");
+    bool East = StringsAreEqual(Direction, "east");
+    bool North = StringsAreEqual(Direction, "north");
+    bool South = StringsAreEqual(Direction, "south");
+
+    if(Wrap)
+    {
+        if(West && X1 < X2)
+        {
+            X2 -= MainDisplay->Width;
+        }
+        else if(East && X1 > X2)
+        {
+            X2 += MainDisplay->Width;
+        }
+        if(North && Y1 < Y2)
+        {
+            Y2 -= MainDisplay->Height;
+        }
+        else if(South && Y1 > Y2)
+        {
+            Y2 += MainDisplay->Height;
+        }
+    }
+
+    float DeltaX = X2 - X1;
+    float DeltaY = Y2 - Y1;
+    float Angle = atan2(DeltaY, DeltaX);
+    float Distance = hypot(DeltaX, DeltaY);
+    float DeltaA = 0;
+
+    if((North && DeltaY >= 0) ||
+       (East && DeltaX <= 0) ||
+       (South && DeltaY <= 0) ||
+       (West && DeltaX >= 0))
+    {
+        return 0xFFFFFFFF;
+    }
+
+    if(North)
+    {
+        DeltaA = -M_PI_2 - Angle;
+    }
+    else if(South)
+    {
+        DeltaA = M_PI_2 - Angle;
+    }
+    else if(East)
+    {
+        DeltaA = 0.0 - Angle;
+    }
+    else if(West)
+    {
+        DeltaA = M_PI - fabs(Angle);
+    }
+
+    return (Distance / cos(DeltaA / 2.0));
+}
+
+bool WindowIsInDirection(virtual_space *VirtualSpace, macos_window *WindowA, macos_window *WindowB, char *Direction)
+{
+    bool Result = false;
+
+    node *NodeA = GetNodeWithId(VirtualSpace->Tree, WindowA->Id, VirtualSpace->Mode);
+    node *NodeB = GetNodeWithId(VirtualSpace->Tree, WindowB->Id, VirtualSpace->Mode);
+
+    if(NodeA && NodeB && NodeA != NodeB)
+    {
+        region *A = &NodeA->Region;
+        region *B = &NodeB->Region;
+
+        if((StringsAreEqual(Direction, "north")) ||
+           (StringsAreEqual(Direction, "south")))
+        {
+            Result = (A->Y != B->Y) &&
+                     (fmax(A->X, B->X) < fmin(B->X + B->Width, A->X + A->Width));
+        }
+        if((StringsAreEqual(Direction, "east")) ||
+           (StringsAreEqual(Direction, "west")))
+        {
+            Result = (A->X != B->X) &&
+                     (fmax(A->Y, B->Y) < fmin(B->Y + B->Height, A->Y + A->Height));
+        }
+    }
+
+    return Result;
+}
+
+bool FindClosestWindow(virtual_space *VirtualSpace, macos_window *Match, macos_window **ClosestWindow, char *Direction, bool Wrap)
+{
+    std::vector<uint32_t> Windows = GetAllVisibleWindows();
+    float MinDist = 0xFFFFFFFF;
+
+    for(int Index = 0;
+        Index < Windows.size();
+        ++Index)
+    {
+        macos_window *Window = GetWindowByID(Windows[Index]);
+        if(Window &&
+           Match->Id != Window->Id &&
+           WindowIsInDirection(VirtualSpace, Match, Window, Direction))
+        {
+            float Dist = GetWindowDistance(VirtualSpace, Match, Window, Direction, Wrap);
+            if(Dist < MinDist)
+            {
+                MinDist = Dist;
+                *ClosestWindow = Window;
+            }
+        }
+    }
+
+    return MinDist != 0xFFFFFFFF;
+}
+
+void FocusWindow(char *Direction)
+{
+    macos_window *Window = GetWindowByID(InsertionPointId);
+    if(!Window)
+    {
+        return; // TODO(koekeishiya): Focus first or last leaf ?
+    }
+
+    macos_space *Space = AXLibActiveSpace(MainDisplay->Ref);
+    if(Space->Type == kCGSSpaceUser)
+    {
+        virtual_space *VirtualSpace = AcquireVirtualSpace(MainDisplay, Space);
+        if(VirtualSpace->Tree && VirtualSpace->Mode != Virtual_Space_Float)
+        {
+            if(VirtualSpace->Mode == Virtual_Space_Bsp)
+            {
+                macos_window *ClosestWindow;
+                if(FindClosestWindow(VirtualSpace, Window, &ClosestWindow, Direction, true))
+                {
+                    AXLibSetFocusedWindow(ClosestWindow->Ref);
+                    AXLibSetFocusedApplication(ClosestWindow->Owner->PSN);
+                }
+            }
+            else if(VirtualSpace->Mode == Virtual_Space_Monocle)
+            {
+                // TODO(koekeishiya): NYI
+            }
+        }
+    }
+
+    AXLibDestroySpace(Space);
+}
+
+void SwapWindow(char *Direction)
+{
+    macos_window *Window = GetWindowByID(InsertionPointId);
+    if(!Window)
+    {
+        return; // TODO(koekeishiya): Focus first or last leaf ?
+    }
+
+    macos_space *Space = AXLibActiveSpace(MainDisplay->Ref);
+    if(Space->Type == kCGSSpaceUser)
+    {
+        virtual_space *VirtualSpace = AcquireVirtualSpace(MainDisplay, Space);
+        if(VirtualSpace->Tree && VirtualSpace->Mode != Virtual_Space_Float)
+        {
+            if(VirtualSpace->Mode == Virtual_Space_Bsp)
+            {
+                node *Node = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
+                if(Node)
+                {
+                    macos_window *ClosestWindow;
+                    if(FindClosestWindow(VirtualSpace, Window, &ClosestWindow, Direction, true))
+                    {
+                        node *ClosestNode = GetNodeWithId(VirtualSpace->Tree, ClosestWindow->Id, VirtualSpace->Mode);
+                        if(ClosestNode)
+                        {
+                            SwapNodeIds(Node, ClosestNode);
+                            ResizeWindowToRegionSize(Node);
+                            ResizeWindowToRegionSize(ClosestNode);
+                        }
+                    }
+                }
+            }
+            else if(VirtualSpace->Mode == Virtual_Space_Monocle)
+            {
+                // TODO(koekeishiya): NYI
+            }
+        }
+    }
+
+    AXLibDestroySpace(Space);
+}
+
 void ApplicationLaunchedHandler(const char *Data)
 {
     macos_application *Application = (macos_application *) Data;
@@ -710,13 +927,6 @@ void WindowFocusedHandler(const char *Data)
     {
         InsertionPointId = Copy->Id;
     }
-}
-
-inline bool
-StringsAreEqual(const char *A, const char *B)
-{
-    bool Result = (strcmp(A, B) == 0);
-    return Result;
 }
 
 /*
