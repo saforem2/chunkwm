@@ -723,7 +723,42 @@ void FocusWindow(char *Direction)
             }
             else if(VirtualSpace->Mode == Virtual_Space_Monocle)
             {
-                // TODO(koekeishiya): NYI
+                node *Node = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
+                if(Node)
+                {
+                    node *FocusNode = NULL;
+                    if(StringsAreEqual(Direction, "west"))
+                    {
+                        if(Node->Left)
+                        {
+                            FocusNode = Node->Left;
+                        }
+                        else
+                        {
+                            FocusNode = GetLastLeafNode(VirtualSpace->Tree);
+                        }
+                    }
+                    else if(StringsAreEqual(Direction, "east"))
+                    {
+                        if(Node->Right)
+                        {
+                            FocusNode = Node->Right;
+                        }
+                        else
+                        {
+                            FocusNode = GetFirstLeafNode(VirtualSpace->Tree);
+                        }
+                    }
+
+                    if(FocusNode)
+                    {
+                        macos_window *FocusWindow = GetWindowByID(FocusNode->WindowId);
+                        ASSERT(FocusWindow);
+
+                        AXLibSetFocusedWindow(FocusWindow->Ref);
+                        AXLibSetFocusedApplication(FocusWindow->Owner->PSN);
+                    }
+                }
             }
         }
     }
