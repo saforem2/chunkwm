@@ -3,13 +3,19 @@
 
 #define BUFFER_SIZE                 256
 
-#define CVAR_SPACE_MODE             "global_space_mode"
+#define _CVAR_SPACE_MODE            "space_mode"
+#define _CVAR_SPACE_OFFSET_TOP      "space_offset_top"
+#define _CVAR_SPACE_OFFSET_BOTTOM   "space_offset_bottom"
+#define _CVAR_SPACE_OFFSET_LEFT     "space_offset_left"
+#define _CVAR_SPACE_OFFSET_RIGHT    "space_offset_right"
+#define _CVAR_SPACE_OFFSET_GAP      "space_offset_gap"
 
-#define CVAR_SPACE_OFFSET_TOP       "global_space_offset_top"
-#define CVAR_SPACE_OFFSET_BOTTOM    "global_space_offset_bottom"
-#define CVAR_SPACE_OFFSET_LEFT      "global_space_offset_left"
-#define CVAR_SPACE_OFFSET_RIGHT     "global_space_offset_right"
-#define CVAR_SPACE_OFFSET_GAP       "global_space_offset_gap"
+#define CVAR_SPACE_MODE             "global_" _CVAR_SPACE_MODE
+#define CVAR_SPACE_OFFSET_TOP       "global_" _CVAR_SPACE_OFFSET_TOP
+#define CVAR_SPACE_OFFSET_BOTTOM    "global_" _CVAR_SPACE_OFFSET_BOTTOM
+#define CVAR_SPACE_OFFSET_LEFT      "global_" _CVAR_SPACE_OFFSET_LEFT
+#define CVAR_SPACE_OFFSET_RIGHT     "global_" _CVAR_SPACE_OFFSET_RIGHT
+#define CVAR_SPACE_OFFSET_GAP       "global_" _CVAR_SPACE_OFFSET_GAP
 
 #define CVAR_BSP_SPAWN_LEFT         "bsp_spawn_left"
 #define CVAR_BSP_OPTIMAL_RATIO      "bsp_optimal_ratio"

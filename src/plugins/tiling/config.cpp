@@ -322,11 +322,11 @@ DAEMON_CALLBACK(DaemonCallback)
 
             if(sscanf(Variable, "%d_%d_%s", &First, &Second, Buffer) == 3)
             {
-                if((StringEquals(Buffer, "space_offset_top")) ||
-                   (StringEquals(Buffer, "space_offset_bottom")) ||
-                   (StringEquals(Buffer, "space_offset_left")) ||
-                   (StringEquals(Buffer, "space_offset_right")) ||
-                   (StringEquals(Buffer, "space_offset_gap")))
+                if((StringEquals(Buffer, _CVAR_SPACE_OFFSET_TOP)) ||
+                   (StringEquals(Buffer, _CVAR_SPACE_OFFSET_BOTTOM)) ||
+                   (StringEquals(Buffer, _CVAR_SPACE_OFFSET_LEFT)) ||
+                   (StringEquals(Buffer, _CVAR_SPACE_OFFSET_RIGHT)) ||
+                   (StringEquals(Buffer, _CVAR_SPACE_OFFSET_GAP)))
                 {
                     token Value = GetToken(&Message);
                     float FloatValue = TokenToFloat(Value);
@@ -334,7 +334,7 @@ DAEMON_CALLBACK(DaemonCallback)
 
                     UpdateCVar(Variable, FloatValue);
                 }
-                else if(StringEquals(Buffer, "space_mode"))
+                else if(StringEquals(Buffer, _CVAR_SPACE_MODE))
                 {
                     token Value = GetToken(&Message);
                     printf("        value: '%.*s'\n", Value.Length, Value.Text);
