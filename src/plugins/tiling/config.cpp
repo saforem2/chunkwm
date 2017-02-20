@@ -9,6 +9,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <getopt.h>
+
+#define local_persist static
 
 struct token
 {
@@ -46,7 +49,15 @@ token GetToken(const char **Data)
 
     Token.Length = *Data - Token.Text;
     ASSERT(**Data == ' ' || **Data == '\0');
-    ++(*Data);
+
+    if(**Data == ' ')
+    {
+        ++(*Data);
+    }
+    else
+    {
+        // NOTE(koekeishiya): Do not go past the null-terminator!
+    }
 
     return Token;
 }
@@ -78,6 +89,103 @@ TokenToInt(token Token)
     sscanf(String, "%d", &Result);
     free(String);
     return Result;
+}
+
+inline char **
+BuildArguments(const char *Message, int *Count)
+{
+    char **Args = (char **) malloc(16 * sizeof(char *));
+    *Count = 1;
+
+    while(*Message)
+    {
+        token ArgToken = GetToken(&Message);
+        char *Arg = TokenToString(ArgToken);
+        Args[(*Count)++] = Arg;
+    }
+
+    for(int Index = 1;
+        Index < *Count;
+        ++Index)
+    {
+        printf("%d arg '%s'\n", Index, Args[Index]);
+    }
+
+    return Args;
+}
+
+inline void
+FreeArguments(int Count, char **Args)
+{
+    for(int Index = 1;
+        Index < Count;
+        ++Index)
+    {
+        free(Args[Index]);
+    }
+
+    free(Args);
+}
+
+struct command
+{
+    char Flag;
+    char *Arg;
+    struct command *Next;
+};
+
+inline void
+FreeCommandChain(command *Chain)
+{
+    command *Command = Chain;
+    while((Command = Command->Next))
+    {
+        free(Command->Arg);
+    }
+}
+
+inline bool
+ParseWindowCommand(const char *Message, command *Chain)
+{
+    int Count;
+    char **Args = BuildArguments(Message, &Count);
+
+    int Option;
+    bool Success = true;
+    const char *Short = "f:s:";
+
+    command *Command = Chain;
+    while((Option = getopt_long(Count, Args, Short, NULL, NULL)) != -1)
+    {
+        switch(Option)
+        {
+            case 'f':
+            case 's':
+            {
+                printf("    %c: '%s'\n", Option, optarg);
+
+                Command->Next = (command *) malloc(sizeof(command));
+                Command = Command->Next;
+
+                Command->Flag = Option;
+                Command->Arg = strdup(optarg);
+                Command->Next = NULL;
+            } break;
+            case '?':
+            {
+                Success = false;
+                FreeCommandChain(Chain);
+                goto End;
+            } break;
+        }
+    }
+
+End:
+    // NOTE(koekeishiya): Reset getopt.
+    optind = 1;
+
+    FreeArguments(Count, Args);
+    return Success;
 }
 
 /* NOTE(koekeishiya): Parameters
@@ -187,6 +295,21 @@ DAEMON_CALLBACK(DaemonCallback)
 
         UpdateCVar(Variable, IntValue);
         free(Variable);
+    }
+    else if(TokenEquals(Command, "window"))
+    {
+        command Chain = {};
+        bool Success = ParseWindowCommand(Message, &Chain);
+        if(Success)
+        {
+            command *Command = &Chain;
+            while((Command = Command->Next))
+            {
+                printf("    command: '%c', arg: '%s'\n", Command->Flag, Command->Arg);
+            }
+
+            FreeCommandChain(&Chain);
+        }
     }
     else
     {
