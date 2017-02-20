@@ -39,6 +39,9 @@ extern "C" CGSConnectionID _CGSDefaultConnection(void);
 extern "C" CGError CGSGetOnScreenWindowCount(const CGSConnectionID CID, CGSConnectionID TID, int *Count);
 extern "C" CGError CGSGetOnScreenWindowList(const CGSConnectionID CID, CGSConnectionID TID, int Count, int *List, int *OutCount);
 
+// TODO(koekeishiya): Shorter name.
+#define CONFIG_FILE "/.chunkwmtilingrc"
+
 internal unsigned DisplayCount;
 internal macos_display **DisplayList;
 internal macos_display *MainDisplay;
@@ -822,19 +825,37 @@ Init()
     int Port = 4131;
     StartDaemon(Port, DaemonCallback);
 
-    // TODO(koekeishiya): The config file should be in $HOME.
-    const char *PathToConfigFile = "/Users/Koe/Documents/programming/C++/chunkwm/src/plugins/tiling/examples/chwmtilingrc";
-
-    // NOTE(koekeishiya): Only try to execute the config file if it actually exists.
-    struct stat Buffer;
-    if(stat(PathToConfigFile, &Buffer) == 0)
+    const char *HomeEnv = getenv("HOME");
+    if(HomeEnv)
     {
-        // NOTE(koekeishiya): The config file is just an executable bash script!
-        system(PathToConfigFile);
+        unsigned HomeEnvLength = strlen(HomeEnv);
+        unsigned ConfigFileLength = strlen(CONFIG_FILE);
+        unsigned PathLength = HomeEnvLength + ConfigFileLength;
+
+        // NOTE(koekeishiya): We don't need to store the config-file, as reloading the config
+        // can be done externally by simply executing the bash script instead of sending us
+        // a reload command. Stack allocation..
+        char PathToConfigFile[PathLength + 1];
+        PathToConfigFile[PathLength] = '\0';
+
+        memcpy(PathToConfigFile, HomeEnv, HomeEnvLength);
+        memcpy(PathToConfigFile + HomeEnvLength, CONFIG_FILE, ConfigFileLength);
+
+        // NOTE(koekeishiya): Only try to execute the config file if it actually exists.
+        struct stat Buffer;
+        if(stat(PathToConfigFile, &Buffer) == 0)
+        {
+            // NOTE(koekeishiya): The config file is just an executable bash script!
+            system(PathToConfigFile);
+        }
+        else
+        {
+            fprintf(stderr, "   tiling: config '%s' not found!\n", PathToConfigFile);
+        }
     }
     else
     {
-        fprintf(stderr, "   tiling: config '%s' not found!\n", PathToConfigFile);
+        fprintf(stderr,"    tiling: 'env HOME' not set!\n");
     }
 
     DisplayList = AXLibDisplayList(&DisplayCount);
