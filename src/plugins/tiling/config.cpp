@@ -137,10 +137,13 @@ struct command
 inline void
 FreeCommandChain(command *Chain)
 {
-    command *Command = Chain;
-    while((Command = Command->Next))
+    command *Command = Chain->Next;
+    while(Command)
     {
+        command *Next = Command->Next;
         free(Command->Arg);
+        free(Command);
+        Command = Next;
     }
 }
 
