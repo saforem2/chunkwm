@@ -153,6 +153,16 @@ ExtendedDockSetTopmost(macos_window *Window)
 }
 
 internal void
+FloatWindow(macos_window *Window)
+{
+    AXLibAddFlags(Window, Window_Float);
+    if(CVarIntegerValue(CVAR_WINDOW_FLOAT_TOPMOST))
+    {
+        ExtendedDockSetTopmost(Window);
+    }
+}
+
+internal void
 TileWindow(macos_display *Display, macos_window *Window)
 {
     if(AXLibHasFlags(Window, Window_Float))
@@ -162,11 +172,14 @@ TileWindow(macos_display *Display, macos_window *Window)
 
     if(!IsWindowValid(Window))
     {
-        AXLibAddFlags(Window, Window_Float);
-        if(CVarIntegerValue(CVAR_WINDOW_FLOAT_TOPMOST))
-        {
-            ExtendedDockSetTopmost(Window);
-        }
+        FloatWindow(Window);
+        return;
+    }
+
+    if(CVarIntegerValue(CVAR_WINDOW_FLOAT_NEXT))
+    {
+        FloatWindow(Window);
+        UpdateCVar(CVAR_WINDOW_FLOAT_NEXT, 0);
         return;
     }
 
@@ -790,10 +803,11 @@ Init()
     CreateCVar(CVAR_BSP_SPLIT_RATIO, 0.5f);
     CreateCVar(CVAR_BSP_SPLIT_MODE, Split_Optimal);
 
+    CreateCVar(CVAR_WINDOW_FLOAT_NEXT, 0);
+
     /* NOTE(koekeishiya): The following cvars do nothing for now. */
 
     CreateCVar("mouse_follows_focus", 1);
-    CreateCVar("window_float_next", 0);
     CreateCVar("window_float_center", 0);
 
     /*   ---------------------------------------------------------   */

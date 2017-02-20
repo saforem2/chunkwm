@@ -289,7 +289,8 @@ DAEMON_CALLBACK(DaemonCallback)
             }
             free(Variable);
         }
-        else if(TokenEquals(Command, CVAR_WINDOW_FLOAT_TOPMOST))
+        else if((TokenEquals(Command, CVAR_WINDOW_FLOAT_TOPMOST)) ||
+                (TokenEquals(Command, CVAR_WINDOW_FLOAT_NEXT)))
         {
             char *Variable = TokenToString(Command);
             printf("        command: '%s'\n", Variable);

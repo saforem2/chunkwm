@@ -16,6 +16,8 @@ chunkc config bsp_optimal_ratio    1.618
 chunkc config bsp_split_mode     optimal
 chunkc config bsp_split_ratio        0.5
 
+chunkc config window_float_next        0
+
 # signal dock to make windows topmost when floated
 # requires chwm-sa (https://github.com/koekeishiya/chwm-sa)
 chunkc config window_float_topmost     1

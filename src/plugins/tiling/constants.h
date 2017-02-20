@@ -14,6 +14,8 @@
 #define CVAR_BSP_SPLIT_RATIO        "bsp_split_ratio"
 #define CVAR_BSP_SPLIT_MODE         "bsp_split_mode"
 
+#define CVAR_WINDOW_FLOAT_NEXT      "window_float_next"
+
 /* NOTE(koekeishiya): The following cvars requires extended dock
  * functionality provided by chwm-sa to work. */
 
