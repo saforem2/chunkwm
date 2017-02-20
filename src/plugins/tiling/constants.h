@@ -1,6 +1,8 @@
 #ifndef PLUGIN_CONSTANTS_H
 #define PLUGIN_CONSTANTS_H
 
+#define BUFFER_SIZE                 256
+
 #define CVAR_SPACE_MODE             "global_space_mode"
 
 #define CVAR_SPACE_OFFSET_TOP       "global_space_offset_top"

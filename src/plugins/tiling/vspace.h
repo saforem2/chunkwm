@@ -7,17 +7,6 @@
 
 #include <map>
 
-struct virtual_space_identifier
-{
-    int DisplayIndex, SpaceIndex;
-    bool operator<(const virtual_space_identifier &Other) const
-    {
-        return ((DisplayIndex < Other.DisplayIndex) ||
-                ((DisplayIndex == Other.DisplayIndex) &&
-                 (SpaceIndex < Other.SpaceIndex)));
-    }
-};
-
 enum virtual_space_mode
 {
     Virtual_Space_Bsp,
@@ -38,9 +27,6 @@ struct virtual_space
 
     node *Tree;
 };
-
-typedef std::map<virtual_space_identifier, virtual_space_config> virtual_space_config_map;
-typedef virtual_space_config_map::iterator virtual_space_config_map_it;
 
 typedef std::map<const char *, virtual_space *, string_comparator> virtual_space_map;
 typedef virtual_space_map::iterator virtual_space_map_it;

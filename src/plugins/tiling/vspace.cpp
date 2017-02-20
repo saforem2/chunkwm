@@ -10,62 +10,53 @@
 #include <stdlib.h>
 
 #define internal static
+#define local_persist static
 
 internal virtual_space_map VirtualSpaces;
-internal virtual_space_config_map VirtualSpacesConfig;
 
-internal virtual_space_config *
+internal virtual_space_config
 GetVirtualSpaceConfig(int DisplayIndex, int SpaceIndex)
 {
-    virtual_space_identifier Key = { DisplayIndex, SpaceIndex };
-    virtual_space_config_map_it It = VirtualSpacesConfig.find(Key);
+    virtual_space_config Config;
 
-    virtual_space_config Config = {};
-
-    // NOTE(koekeishiya): This virtual_space has space specific config.
-    if(It != VirtualSpacesConfig.end())
-    {
-        return &It->second;
-    }
-    else
-    {
-        // NOTE(koekeishiya): This virtual_space does not have space specific config.
-        // TODO(koekeishiya): Check for display specific config.
-    }
-
-    return NULL;
+    char KeyMode[BUFFER_SIZE];
+    snprintf(KeyMode, BUFFER_SIZE, "%d_%d_space_mode", DisplayIndex, SpaceIndex);
+    Config.Mode = CVarExists(KeyMode) ? (virtual_space_mode) CVarIntegerValue(KeyMode)
+                                      : (virtual_space_mode) CVarIntegerValue(CVAR_SPACE_MODE);
+    char KeyTop[BUFFER_SIZE];
+    snprintf(KeyTop, BUFFER_SIZE, "%d_%d_space_offset_top", DisplayIndex, SpaceIndex);
+    Config.Offset.Top = CVarExists(KeyTop) ? CVarFloatingPointValue(KeyTop)
+                                           : CVarFloatingPointValue(CVAR_SPACE_OFFSET_TOP);
+    char KeyBottom[BUFFER_SIZE];
+    snprintf(KeyBottom, BUFFER_SIZE, "%d_%d_space_offset_bottom", DisplayIndex, SpaceIndex);
+    Config.Offset.Bottom = CVarExists(KeyBottom) ? CVarFloatingPointValue(KeyBottom)
+                                                 : CVarFloatingPointValue(CVAR_SPACE_OFFSET_BOTTOM);
+    char KeyLeft[BUFFER_SIZE];
+    snprintf(KeyLeft, BUFFER_SIZE, "%d_%d_space_offset_left", DisplayIndex, SpaceIndex);
+    Config.Offset.Left = CVarExists(KeyLeft) ? CVarFloatingPointValue(KeyLeft)
+                                             : CVarFloatingPointValue(CVAR_SPACE_OFFSET_LEFT);
+    char KeyRight[BUFFER_SIZE];
+    snprintf(KeyRight, BUFFER_SIZE, "%d_%d_space_offset_right", DisplayIndex, SpaceIndex);
+    Config.Offset.Right = CVarExists(KeyRight) ? CVarFloatingPointValue(KeyRight)
+                                               : CVarFloatingPointValue(CVAR_SPACE_OFFSET_RIGHT);
+    char KeyGap[BUFFER_SIZE];
+    snprintf(KeyGap, BUFFER_SIZE, "%d_%d_space_offset_gap", DisplayIndex, SpaceIndex);
+    Config.Offset.Gap = CVarExists(KeyGap) ? CVarFloatingPointValue(KeyGap)
+                                           : CVarFloatingPointValue(CVAR_SPACE_OFFSET_GAP);
+    return Config;
 }
 
 internal virtual_space *
 CreateAndInitVirtualSpace(macos_display *Display, macos_space *Space)
 {
     virtual_space *VirtualSpace = (virtual_space *) malloc(sizeof(virtual_space));
-
     VirtualSpace->Tree = NULL;
 
     unsigned DesktopId = AXLibCGSSpaceIDToDesktopID(Display->Ref, Space->Id);
-    virtual_space_config *Config = GetVirtualSpaceConfig(Display->Arrangement, DesktopId);
+    virtual_space_config Config = GetVirtualSpaceConfig(Display->Arrangement, DesktopId);
 
-    // TODO(koekeishiya): GetVirtualSpaceConfig(..) should not be able to return null!
-    if(Config)
-    {
-        // TODO(koekeishiya): Do we want the virtual_space members to be pointers ?
-        VirtualSpace->Mode = Config->Mode;
-        VirtualSpace->Offset = Config->Offset;
-    }
-    else
-    {
-        internal region_offset Offset =
-        {
-            CVarFloatingPointValue(CVAR_SPACE_OFFSET_TOP),
-            CVarFloatingPointValue(CVAR_SPACE_OFFSET_BOTTOM),
-            CVarFloatingPointValue(CVAR_SPACE_OFFSET_LEFT),
-            CVarFloatingPointValue(CVAR_SPACE_OFFSET_RIGHT),
-            CVarFloatingPointValue(CVAR_SPACE_OFFSET_GAP)
-        };
-        VirtualSpace->Mode = (virtual_space_mode) CVarIntegerValue(CVAR_SPACE_MODE);
-        VirtualSpace->Offset = Offset;
-    }
+    VirtualSpace->Mode = Config.Mode;
+    VirtualSpace->Offset = Config.Offset;
 
     return VirtualSpace;
 }

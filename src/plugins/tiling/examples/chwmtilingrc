@@ -5,11 +5,19 @@ export CHUNKC_SOCKET=4131
 
 chunkc config global_space_mode bsp
 
-chunkc config global_space_offset_top      200
-chunkc config global_space_offset_bottom   190
-chunkc config global_space_offset_left     190
-chunkc config global_space_offset_right    190
-chunkc config global_space_offset_gap       25
+chunkc config global_space_offset_top      60
+chunkc config global_space_offset_bottom   50
+chunkc config global_space_offset_left     50
+chunkc config global_space_offset_right    50
+chunkc config global_space_offset_gap      20
+
+chunkc config 0_1_space_offset_top        200
+chunkc config 0_1_space_offset_bottom     190
+chunkc config 0_1_space_offset_left       190
+chunkc config 0_1_space_offset_right      190
+chunkc config 0_1_space_offset_gap         25
+
+chunkc config 0_2_space_mode monocle
 
 chunkc config bsp_spawn_left           1
 chunkc config bsp_optimal_ratio    1.618
@@ -21,3 +29,4 @@ chunkc config window_float_next        0
 # signal dock to make windows topmost when floated
 # requires chwm-sa (https://github.com/koekeishiya/chwm-sa)
 chunkc config window_float_topmost     1
+

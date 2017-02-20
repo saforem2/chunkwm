@@ -13,6 +13,13 @@
 
 #define local_persist static
 
+inline bool
+StringEquals(const char *A, const char *B)
+{
+    bool Result = (strcmp(A, B) == 0);
+    return Result;
+}
+
 struct token
 {
     const char *Text;
@@ -304,7 +311,57 @@ DAEMON_CALLBACK(DaemonCallback)
         }
         else
         {
-            printf(" tiling daemon: '%.*s' is not a valid config option!\n", Command.Length, Command.Text);
+            // NOTE(koekeishiya): The command we got is not a pre-defined string, but
+            // we do allow custom options used for space-specific settings, etc...
+
+            char *Variable = TokenToString(Command);
+            printf("        command: '%s'\n", Variable);
+
+            char Buffer[BUFFER_SIZE];
+            int First, Second;
+
+            if(sscanf(Variable, "%d_%d_%s", &First, &Second, Buffer) == 3)
+            {
+                if((StringEquals(Buffer, "space_offset_top")) ||
+                   (StringEquals(Buffer, "space_offset_bottom")) ||
+                   (StringEquals(Buffer, "space_offset_left")) ||
+                   (StringEquals(Buffer, "space_offset_right")) ||
+                   (StringEquals(Buffer, "space_offset_gap")))
+                {
+                    token Value = GetToken(&Message);
+                    float FloatValue = TokenToFloat(Value);
+                    printf("        value: '%f'\n", FloatValue);
+
+                    UpdateCVar(Variable, FloatValue);
+                }
+                else if(StringEquals(Buffer, "space_mode"))
+                {
+                    token Value = GetToken(&Message);
+                    printf("        value: '%.*s'\n", Value.Length, Value.Text);
+
+                    if(TokenEquals(Value, "bsp"))
+                    {
+                        UpdateCVar(Variable, Virtual_Space_Bsp);
+                    }
+                    else if(TokenEquals(Value, "monocle"))
+                    {
+                        UpdateCVar(Variable, Virtual_Space_Monocle);
+                    }
+                    else if(TokenEquals(Value, "float"))
+                    {
+                        UpdateCVar(Variable, Virtual_Space_Float);
+                    }
+                }
+                else
+                {
+                    printf(" tiling daemon: '%s' is not a valid config option!\n", Variable);
+                }
+            }
+            else
+            {
+                printf(" tiling daemon: '%.*s' is not a valid config option!\n", Command.Length, Command.Text);
+            }
+            free(Variable);
         }
     }
     else if(TokenEquals(Type, "window"))
