@@ -47,4 +47,6 @@ node *GetFirstMinDepthLeafNode(node *Root);
 node *GetNearestNodeToTheRight(node *Node);
 node *GetNodeWithId(node *Tree, uint32_t WindowId, virtual_space_mode VirtualSpaceMode);
 
+void SwapNodeIds(node *A, node *B);
+
 #endif

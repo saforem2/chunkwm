@@ -265,3 +265,10 @@ node *GetNodeWithId(node *Tree, uint32_t WindowId, virtual_space_mode VirtualSpa
 
     return NULL;
 }
+
+void SwapNodeIds(node *A, node *B)
+{
+    uint32_t TempId = A->WindowId;
+    A->WindowId = B->WindowId;
+    B->WindowId = TempId;
+}
