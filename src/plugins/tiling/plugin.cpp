@@ -58,6 +58,21 @@ StringsAreEqual(const char *A, const char *B)
     return Result;
 }
 
+internal bool
+IsCursorInRegion(region Region)
+{
+    CGPoint Cursor = AXLibGetCursorPos();
+    if(Cursor.x >= Region.X &&
+       Cursor.x <= Region.X + Region.Width &&
+       Cursor.y >= Region.Y &&
+       Cursor.y <= Region.Y + Region.Height)
+    {
+        return true;
+    }
+
+    return false;
+}
+
 /* NOTE(koekeishiya): We need a way to retrieve AXUIElementRef from a CGWindowID.
  * There is no way to do this, without caching AXUIElementRef references.
  * Here we perform a lookup of macos_window structs. */
@@ -736,44 +751,63 @@ void FocusWindow(char *Direction)
                 {
                     AXLibSetFocusedWindow(ClosestWindow->Ref);
                     AXLibSetFocusedApplication(ClosestWindow->Owner->PSN);
+
+                    if(CVarIntegerValue(CVAR_MOUSE_FOLLOWS_FOCUS))
+                    {
+                        node *Node = GetNodeWithId(VirtualSpace->Tree, ClosestWindow->Id, VirtualSpace->Mode);
+                        if(Node && !IsCursorInRegion(Node->Region))
+                        {
+                            CGPoint Center = CGPointMake(Node->Region.X + Node->Region.Width / 2,
+                                                         Node->Region.Y + Node->Region.Height / 2);
+                            CGWarpMouseCursorPosition(Center);
+                        }
+                    }
                 }
             }
             else if(VirtualSpace->Mode == Virtual_Space_Monocle)
             {
-                node *Node = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
-                if(Node)
+                node *WindowNode = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
+                if(WindowNode)
                 {
-                    node *FocusNode = NULL;
+                    node *Node = NULL;
                     if(StringsAreEqual(Direction, "west"))
                     {
-                        if(Node->Left)
+                        if(WindowNode->Left)
                         {
-                            FocusNode = Node->Left;
+                            Node = WindowNode->Left;
                         }
                         else
                         {
-                            FocusNode = GetLastLeafNode(VirtualSpace->Tree);
+                            Node = GetLastLeafNode(VirtualSpace->Tree);
                         }
                     }
                     else if(StringsAreEqual(Direction, "east"))
                     {
-                        if(Node->Right)
+                        if(WindowNode->Right)
                         {
-                            FocusNode = Node->Right;
+                            Node = WindowNode->Right;
                         }
                         else
                         {
-                            FocusNode = GetFirstLeafNode(VirtualSpace->Tree);
+                            Node = GetFirstLeafNode(VirtualSpace->Tree);
                         }
                     }
 
-                    if(FocusNode)
+                    if(Node)
                     {
-                        macos_window *FocusWindow = GetWindowByID(FocusNode->WindowId);
+                        macos_window *FocusWindow = GetWindowByID(Node->WindowId);
                         ASSERT(FocusWindow);
 
                         AXLibSetFocusedWindow(FocusWindow->Ref);
                         AXLibSetFocusedApplication(FocusWindow->Owner->PSN);
+
+                        if((CVarIntegerValue(CVAR_MOUSE_FOLLOWS_FOCUS)) &&
+                           (!IsCursorInRegion(Node->Region)))
+                        {
+                            CGPoint Center = CGPointMake(Node->Region.X + Node->Region.Width / 2,
+                                                         Node->Region.Y + Node->Region.Height / 2);
+                            CGWarpMouseCursorPosition(Center);
+                        }
                     }
                 }
             }
@@ -1077,11 +1111,12 @@ Init()
     CreateCVar(CVAR_BSP_SPLIT_RATIO, 0.5f);
     CreateCVar(CVAR_BSP_SPLIT_MODE, Split_Optimal);
 
+    CreateCVar(CVAR_MOUSE_FOLLOWS_FOCUS, 1);
+
     CreateCVar(CVAR_WINDOW_FLOAT_NEXT, 0);
 
     /* NOTE(koekeishiya): The following cvars do nothing for now. */
 
-    CreateCVar("mouse_follows_focus", 1);
     CreateCVar("window_float_center", 0);
 
     /*   ---------------------------------------------------------   */
