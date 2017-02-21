@@ -385,9 +385,9 @@ DAEMON_CALLBACK(DaemonCallback)
             printf("        command: '%s'\n", Variable);
 
             char Buffer[BUFFER_SIZE];
-            int First, Second;
+            int First;
 
-            if(sscanf(Variable, "%d_%d_%s", &First, &Second, Buffer) == 3)
+            if(sscanf(Variable, "%d_%s", &First, Buffer) == 2)
             {
                 if((StringEquals(Buffer, _CVAR_SPACE_OFFSET_TOP)) ||
                    (StringEquals(Buffer, _CVAR_SPACE_OFFSET_BOTTOM)) ||
