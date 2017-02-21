@@ -16,7 +16,7 @@ FullscreenRegion()
 {
     macos_space *Space;
     bool Success = AXLibActiveSpace(&Space);
-    ASSERT(Space);
+    ASSERT(Success);
 
     virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
     region_offset *Offset = &VirtualSpace->Offset;
@@ -40,8 +40,8 @@ LeftVerticalRegion(node *Node)
 {
     macos_space *Space;
     bool Success = AXLibActiveSpace(&Space);
+    ASSERT(Success);
 
-    ASSERT(Space);
     ASSERT(Node);
 
     virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
@@ -65,8 +65,8 @@ RightVerticalRegion(node *Node)
 {
     macos_space *Space;
     bool Success = AXLibActiveSpace(&Space);
+    ASSERT(Success);
 
-    ASSERT(Space);
     ASSERT(Node);
 
     virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
@@ -90,8 +90,8 @@ UpperHorizontalRegion(node *Node)
 {
     macos_space *Space;
     bool Success = AXLibActiveSpace(&Space);
+    ASSERT(Success);
 
-    ASSERT(Space);
     ASSERT(Node);
 
     virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
@@ -115,8 +115,8 @@ LowerHorizontalRegion(node *Node)
 {
     macos_space *Space;
     bool Success = AXLibActiveSpace(&Space);
+    ASSERT(Success);
 
-    ASSERT(Space);
     ASSERT(Node);
 
     virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
