@@ -42,10 +42,6 @@ extern "C" CGError CGSGetOnScreenWindowList(const CGSConnectionID CID, CGSConnec
 // TODO(koekeishiya): Shorter name.
 #define CONFIG_FILE "/.chunkwmtilingrc"
 
-internal unsigned DisplayCount;
-internal macos_display **DisplayList;
-internal macos_display *MainDisplay;
-
 internal macos_application_map Applications;
 internal macos_window_map Windows;
 
@@ -590,7 +586,8 @@ RebalanceWindowTree()
     AXLibDestroySpace(Space);
 }
 
-void GetCenterOfWindow(virtual_space *VirtualSpace, macos_window *Window, float *X, float *Y)
+internal void
+GetCenterOfWindow(virtual_space *VirtualSpace, macos_window *Window, float *X, float *Y)
 {
     node *Node = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
     if(Node)
@@ -605,7 +602,10 @@ void GetCenterOfWindow(virtual_space *VirtualSpace, macos_window *Window, float 
     }
 }
 
-float GetWindowDistance(virtual_space *VirtualSpace, macos_window *A, macos_window *B, char *Direction, bool Wrap)
+internal float
+GetWindowDistance(macos_space *Space, virtual_space *VirtualSpace,
+                  macos_window *A, macos_window *B,
+                  char *Direction, bool Wrap)
 {
     float X1, Y1, X2, Y2;
     GetCenterOfWindow(VirtualSpace, A, &X1, &Y1);
@@ -620,21 +620,25 @@ float GetWindowDistance(virtual_space *VirtualSpace, macos_window *A, macos_wind
     // display we are currently on. Should this be stored in VirtualSpace ??
     if(Wrap)
     {
+        CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromSpace(Space->Id);
+        CGRect Display = AXLibGetDisplayBounds(DisplayRef);
+        CFRelease(DisplayRef);
+
         if(West && X1 < X2)
         {
-            X2 -= MainDisplay->Width;
+            X2 -= Display.size.width;
         }
         else if(East && X1 > X2)
         {
-            X2 += MainDisplay->Width;
+            X2 += Display.size.width;
         }
         if(North && Y1 < Y2)
         {
-            Y2 -= MainDisplay->Height;
+            Y2 -= Display.size.height;
         }
         else if(South && Y1 > Y2)
         {
-            Y2 += MainDisplay->Height;
+            Y2 += Display.size.height;
         }
     }
 
@@ -672,7 +676,10 @@ float GetWindowDistance(virtual_space *VirtualSpace, macos_window *A, macos_wind
     return (Distance / cos(DeltaA / 2.0));
 }
 
-bool WindowIsInDirection(virtual_space *VirtualSpace, macos_window *WindowA, macos_window *WindowB, char *Direction)
+internal bool
+WindowIsInDirection(virtual_space *VirtualSpace,
+                    macos_window *WindowA, macos_window *WindowB,
+                    char *Direction)
 {
     bool Result = false;
 
@@ -701,7 +708,10 @@ bool WindowIsInDirection(virtual_space *VirtualSpace, macos_window *WindowA, mac
     return Result;
 }
 
-bool FindClosestWindow(virtual_space *VirtualSpace, macos_window *Match, macos_window **ClosestWindow, char *Direction, bool Wrap)
+internal bool
+FindClosestWindow(macos_space *Space, virtual_space *VirtualSpace,
+                  macos_window *Match, macos_window **ClosestWindow,
+                  char *Direction, bool Wrap)
 {
     std::vector<uint32_t> Windows = GetAllVisibleWindows();
     float MinDist = 0xFFFFFFFF;
@@ -715,7 +725,9 @@ bool FindClosestWindow(virtual_space *VirtualSpace, macos_window *Match, macos_w
            Match->Id != Window->Id &&
            WindowIsInDirection(VirtualSpace, Match, Window, Direction))
         {
-            float Dist = GetWindowDistance(VirtualSpace, Match, Window, Direction, Wrap);
+            float Dist = GetWindowDistance(Space, VirtualSpace,
+                                           Match, Window,
+                                           Direction, Wrap);
             if(Dist < MinDist)
             {
                 MinDist = Dist;
@@ -747,7 +759,7 @@ void FocusWindow(char *Direction)
             if(VirtualSpace->Mode == Virtual_Space_Bsp)
             {
                 macos_window *ClosestWindow;
-                if(FindClosestWindow(VirtualSpace, Window, &ClosestWindow, Direction, true))
+                if(FindClosestWindow(Space, VirtualSpace, Window, &ClosestWindow, Direction, true))
                 {
                     AXLibSetFocusedWindow(ClosestWindow->Ref);
                     AXLibSetFocusedApplication(ClosestWindow->Owner->PSN);
@@ -846,7 +858,7 @@ void SwapWindow(char *Direction)
                 if(WindowNode)
                 {
                     macos_window *ClosestWindow;
-                    if(FindClosestWindow(VirtualSpace, Window, &ClosestWindow, Direction, true))
+                    if(FindClosestWindow(Space, VirtualSpace, Window, &ClosestWindow, Direction, true))
                     {
                         node *ClosestNode = GetNodeWithId(VirtualSpace->Tree, ClosestWindow->Id, VirtualSpace->Mode);
                         if(ClosestNode)
@@ -1218,9 +1230,6 @@ Init()
         fprintf(stderr,"    tiling: 'env HOME' not set!\n");
     }
 
-    DisplayList = AXLibDisplayList(&DisplayCount);
-    ASSERT(DisplayCount != 0);
-    MainDisplay = DisplayList[0];
 
     uint32_t ProcessPolicy = Process_Policy_Regular | Process_Policy_LSUIElement;
     std::vector<macos_application *> Applications = AXLibRunningProcesses(ProcessPolicy);
@@ -1282,22 +1291,9 @@ Deinit()
         AXLibDestroyWindow(Window);
     }
 
-    for(unsigned Index = 0;
-        Index < DisplayCount;
-        ++Index)
-    {
-        macos_display *Display = DisplayList[Index];
-        AXLibDestroyDisplay(Display);
-    }
-
     ReleaseVirtualSpaces();
     Applications.clear();
     Windows.clear();
-
-    free(DisplayList);
-    DisplayList = NULL;
-    MainDisplay = NULL;
-    DisplayCount = 0;
 
     EndCVars();
 }
