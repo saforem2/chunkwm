@@ -51,6 +51,7 @@ macos_space *AXLibActiveSpace(CFStringRef DisplayRef);
 bool AXLibActiveSpace(macos_space **Space);
 void AXLibDestroySpace(macos_space *Space);
 
+CFStringRef AXLibGetDisplayIdentifierFromArrangement(unsigned Arrangement);
 CFStringRef AXLibGetDisplayIdentifierFromSpace(CGSSpaceID Space);
 CGRect AXLibGetDisplayBounds(CFStringRef DisplayRef);
 

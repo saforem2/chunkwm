@@ -120,6 +120,27 @@ CGRect AXLibGetDisplayBounds(CFStringRef DisplayRef)
 }
 
 /* NOTE(koekeishiya): Caller is responsible for calling CFRelease. */
+CFStringRef AXLibGetDisplayIdentifierFromArrangement(unsigned Arrangement)
+{
+    CFStringRef Result = NULL;
+
+    CGDirectDisplayID *CGDisplayList =
+        (CGDirectDisplayID *) malloc(sizeof(CGDirectDisplayID) * MAX_DISPLAY_COUNT);
+
+    unsigned Count = 0;
+    CGGetActiveDisplayList(MAX_DISPLAY_COUNT, CGDisplayList, &Count);
+
+    if(Arrangement < Count)
+    {
+        Result = AXLibDisplayIdentifier(CGDisplayList[Arrangement]);
+    }
+
+    free(CGDisplayList);
+    return Result;
+}
+
+
+/* NOTE(koekeishiya): Caller is responsible for calling CFRelease. */
 CFStringRef AXLibGetDisplayIdentifierFromSpace(CGSSpaceID Space)
 {
     return CGSCopyManagedDisplayForSpace(CGSDefaultConnection, Space);
