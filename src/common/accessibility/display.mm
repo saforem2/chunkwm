@@ -13,7 +13,7 @@ extern "C" CGSSpaceType CGSSpaceGetType(CGSConnectionID Connection, CGSSpaceID I
 extern "C" CFArrayRef CGSCopyManagedDisplaySpaces(const CGSConnectionID Connection);
 extern "C" CFArrayRef CGSCopySpacesForWindows(CGSConnectionID Connection, CGSSpaceSelector Type, CFArrayRef Windows);
 extern "C" CGSSpaceID CGSManagedDisplayGetCurrentSpace(CGSConnectionID Connection, CFStringRef DisplayRef);
-
+extern "C" CFStringRef CGSCopyManagedDisplayForSpace(const CGSConnectionID Connection, CGSSpaceID Space);
 
 /* NOTE(koekeishiya): Find the UUID associated with a CGDirectDisplayID. */
 internal CFStringRef
@@ -83,6 +83,48 @@ macos_display **AXLibDisplayList(unsigned *Count)
     free(CGDisplayList);
     return DisplayList;
 }
+
+CGRect AXLibGetDisplayBounds(CFStringRef DisplayRef)
+{
+    CGRect Result = {};
+
+    CGDirectDisplayID *CGDisplayList =
+        (CGDirectDisplayID *) malloc(sizeof(CGDirectDisplayID) * MAX_DISPLAY_COUNT);
+
+    unsigned Count = 0;
+    CGGetActiveDisplayList(MAX_DISPLAY_COUNT, CGDisplayList, &Count);
+
+    for(size_t Index = 0;
+        Index < Count;
+        ++Index)
+    {
+        CGDirectDisplayID Id = CGDisplayList[Index];
+        CFStringRef UUID = AXLibDisplayIdentifier(Id);
+        if(UUID)
+        {
+            if(CFStringCompare(DisplayRef, UUID, 0) == kCFCompareEqualTo)
+            {
+                Result = CGDisplayBounds(Id);
+                CFRelease(UUID);
+                break;
+            }
+            else
+            {
+                CFRelease(UUID);
+            }
+        }
+    }
+
+    free(CGDisplayList);
+    return Result;
+}
+
+/* NOTE(koekeishiya): Caller is responsible for calling CFRelease. */
+CFStringRef AXLibGetDisplayIdentifierFromSpace(CGSSpaceID Space)
+{
+    return CGSCopyManagedDisplayForSpace(CGSDefaultConnection, Space);
+}
+
 
 internal CGSSpaceID
 AXLibActiveSpaceIdentifier(CFStringRef DisplayRef, CFStringRef *SpaceRef)
@@ -172,67 +214,95 @@ void AXLibDestroySpace(macos_space *Space)
     free(Space);
 }
 
-// NOTE(koekeishiya): Translate a CGSSpaceID to the DesktopId (mission control index).
-unsigned AXLibCGSSpaceIDToDesktopID(CFStringRef DisplayRef, CGSSpaceID SpaceId)
+/* NOTE(koekeishiya): Translate a CGSSpaceID to the index shown in mission control. Also
+ * assign the arrangement index of the display that the space belongs to.
+ *
+ * It is safe to pass NULL for OutArrangement and OutDesktopId in case this information
+ * is not of importance to the caller.
+ *
+ * The function returns a bool specifying if the CGSSpaceID was properly translated. */
+bool AXLibCGSSpaceIDToDesktopID(CGSSpaceID SpaceId, unsigned *OutArrangement, unsigned *OutDesktopId)
 {
-    ASSERT(DisplayRef);
+    bool Result = false;
+    unsigned Arrangement = 0;
+    unsigned DesktopId = 0;
 
-    unsigned Result = 0;
-    NSString *CurrentIdentifier = (__bridge NSString *) DisplayRef;
-
+    unsigned SpaceIndex = 1;
     CFArrayRef ScreenDictionaries = CGSCopyManagedDisplaySpaces(CGSDefaultConnection);
     for(NSDictionary *ScreenDictionary in (__bridge NSArray *) ScreenDictionaries)
     {
-        int SpaceIndex = 1;
-        NSString *ScreenIdentifier = ScreenDictionary[@"Display Identifier"];
-        if([ScreenIdentifier isEqualToString:CurrentIdentifier])
+        NSArray *SpaceDictionaries = ScreenDictionary[@"Spaces"];
+        for(NSDictionary *SpaceDictionary in (__bridge NSArray *) SpaceDictionaries)
         {
-            NSArray *SpaceDictionaries = ScreenDictionary[@"Spaces"];
-            for(NSDictionary *SpaceDictionary in (__bridge NSArray *) SpaceDictionaries)
+            if(SpaceId == [SpaceDictionary[@"id64"] intValue])
             {
-                if(SpaceId == [SpaceDictionary[@"id64"] intValue])
-                {
-                    Result = SpaceIndex;
-                    break;
-                }
-
-                ++SpaceIndex;
+                DesktopId = SpaceIndex;
+                Result = true;
+                goto End;
             }
-            break;
+
+            ++SpaceIndex;
         }
+
+        ++Arrangement;
+    }
+
+End:
+    if(OutArrangement)
+    {
+        *OutArrangement = Arrangement;
+    }
+
+    if(OutDesktopId)
+    {
+        *OutDesktopId = DesktopId;
     }
 
     CFRelease(ScreenDictionaries);
     return Result;
 }
 
-// NOTE(koekeishiya): Translate a DesktopId (mission control index) to the CGSSpaceID.
-CGSSpaceID AXLibCGSSpaceIDFromDesktopID(CFStringRef DisplayRef, unsigned DesktopId)
+/* NOTE(koekeishiya): Translate the space index shown in mission control to a CGSSpaceID.
+ * Also assign the arrangement index of the display that the space belongs to.
+ *
+ * It is safe to pass NULL for OutArrangement and OutSpaceId in case this information
+ * is not of importance to the caller.
+ *
+ * The function returns a bool specifying if the index was properly translated. */
+bool AXLibCGSSpaceIDFromDesktopID(unsigned DesktopId, unsigned *OutArrangement, CGSSpaceID *OutSpaceId)
 {
-    ASSERT(DisplayRef);
-
-    CGSSpaceID Result = 0;
-    NSString *CurrentIdentifier = (__bridge NSString *) DisplayRef;
+    bool Result = false;
+    CGSSpaceID SpaceId = 0;
+    unsigned Arrangement = 0;
+    unsigned SpaceIndex = 1;
 
     CFArrayRef ScreenDictionaries = CGSCopyManagedDisplaySpaces(CGSDefaultConnection);
     for(NSDictionary *ScreenDictionary in (__bridge NSArray *) ScreenDictionaries)
     {
-        int SpaceIndex = 1;
-        NSString *ScreenIdentifier = ScreenDictionary[@"Display Identifier"];
-        if([ScreenIdentifier isEqualToString:CurrentIdentifier])
+        NSArray *SpaceDictionaries = ScreenDictionary[@"Spaces"];
+        for(NSDictionary *SpaceDictionary in (__bridge NSArray *) SpaceDictionaries)
         {
-            NSArray *SpaceDictionaries = ScreenDictionary[@"Spaces"];
-            for(NSDictionary *SpaceDictionary in (__bridge NSArray *) SpaceDictionaries)
+            if(SpaceIndex == DesktopId)
             {
-                if(SpaceIndex == DesktopId)
-                {
-                    Result = [SpaceDictionary[@"id64"] intValue];
-                    break;
-                }
-                ++SpaceIndex;
+                SpaceId = [SpaceDictionary[@"id64"] intValue];
+                Result = true;
+                goto End;
             }
-            break;
+            ++SpaceIndex;
         }
+
+        ++Arrangement;
+    }
+
+End:
+    if(OutArrangement)
+    {
+        *OutArrangement = Arrangement;
+    }
+
+    if(OutSpaceId)
+    {
+        *OutSpaceId = SpaceId;
     }
 
     CFRelease(ScreenDictionaries);

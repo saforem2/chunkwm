@@ -51,8 +51,11 @@ macos_space *AXLibActiveSpace(CFStringRef DisplayRef);
 bool AXLibActiveSpace(macos_space **Space);
 void AXLibDestroySpace(macos_space *Space);
 
-unsigned AXLibCGSSpaceIDToDesktopID(CFStringRef DisplayRef, CGSSpaceID SpaceId);
-CGSSpaceID AXLibCGSSpaceIDFromDesktopID(CFStringRef DisplayRef, unsigned DesktopId);
+CFStringRef AXLibGetDisplayIdentifierFromSpace(CGSSpaceID Space);
+CGRect AXLibGetDisplayBounds(CFStringRef DisplayRef);
+
+bool AXLibCGSSpaceIDToDesktopID(CGSSpaceID SpaceId, unsigned *OutArrangement, unsigned *OutDesktopId);
+bool AXLibCGSSpaceIDFromDesktopID(unsigned DesktopId, unsigned *OutArrangement, CGSSpaceID *OutSpaceId);
 
 bool AXLibSpaceHasWindow(CGSSpaceID SpaceId, uint32_t WindowId);
 bool AXLibStickyWindow(uint32_t WindowId);
