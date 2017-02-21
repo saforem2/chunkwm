@@ -123,7 +123,8 @@ CGSSpaceID AXLibActiveCGSSpaceID(CFStringRef DisplayRef)
     return CGSManagedDisplayGetCurrentSpace(CGSDefaultConnection, DisplayRef);
 }
 
-/* NOTE(koekeishiya): Caller is responsible for calling 'AXLibDestroySpace()'. */
+/* NOTE(koekeishiya): Returns a macos_space representing the active space
+for the given display. Caller is responsible for calling 'AXLibDestroySpace()'. */
 macos_space *AXLibActiveSpace(CFStringRef DisplayRef)
 {
     ASSERT(DisplayRef);
@@ -134,6 +135,32 @@ macos_space *AXLibActiveSpace(CFStringRef DisplayRef)
 
     macos_space *Space = AXLibConstructSpace(SpaceRef, SpaceId, SpaceType);
     return Space;
+}
+
+/* NOTE(koekeishiya): Construct a macos_space representing the active space for the
+ * display that currently holds the window that accepts key-input.
+ * Caller is responsible for calling 'AXLibDestroySpace()'. */
+bool AXLibActiveSpace(macos_space **Space)
+{
+    bool Result = false;
+
+    NSDictionary *ScreenDictionary = [[NSScreen mainScreen] deviceDescription];
+    NSNumber *ScreenID = [ScreenDictionary objectForKey:@"NSScreenNumber"];
+    CGDirectDisplayID DisplayID = [ScreenID unsignedIntValue];
+
+    CFUUIDRef DisplayUUID = CGDisplayCreateUUIDFromDisplayID(DisplayID);
+    if(DisplayUUID)
+    {
+        CFStringRef Identifier = CFUUIDCreateString(NULL, DisplayUUID);
+        *Space = AXLibActiveSpace(Identifier);
+
+        CFRelease(DisplayUUID);
+        CFRelease(Identifier);
+
+        Result = true;
+    }
+
+    return Result;
 }
 
 /* NOTE(koekeishiya): Caller is responsible for passing a valid space! */
