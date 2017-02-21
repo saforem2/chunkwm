@@ -778,6 +778,9 @@ void FocusWindow(char *Direction)
                         }
                         else
                         {
+                            // TODO(koekeishiya): This code is a duplicate of the one found in SwapWindow
+                            // for monocle spaces. This should be refactored when implementing different
+                            // types of window_cycle_focus behaviour.
                             Node = GetLastLeafNode(VirtualSpace->Tree);
                         }
                     }
@@ -789,6 +792,9 @@ void FocusWindow(char *Direction)
                         }
                         else
                         {
+                            // TODO(koekeishiya): This code is a duplicate of the one found in SwapWindow
+                            // for monocle spaces. This should be refactored when implementing different
+                            // types of window_cycle_focus behaviour.
                             Node = GetFirstLeafNode(VirtualSpace->Tree);
                         }
                     }
@@ -863,6 +869,46 @@ void SwapWindow(char *Direction)
             else if(VirtualSpace->Mode == Virtual_Space_Monocle)
             {
                 // TODO(koekeishiya): NYI
+                node *WindowNode = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
+                if(WindowNode)
+                {
+                    node *ClosestNode = NULL;
+                    if(StringsAreEqual(Direction, "west"))
+                    {
+                        if(WindowNode->Left)
+                        {
+                            ClosestNode = WindowNode->Left;
+                        }
+                        else
+                        {
+                            // TODO(koekeishiya): This code is a duplicate of the one found in FocusWindow
+                            // for monocle spaces. This should be refactored when implementing different
+                            // types of window_cycle_focus behaviour.
+                            ClosestNode = GetLastLeafNode(VirtualSpace->Tree);
+                        }
+                    }
+                    else if(StringsAreEqual(Direction, "east"))
+                    {
+                        if(WindowNode->Right)
+                        {
+                            ClosestNode = WindowNode->Right;
+                        }
+                        else
+                        {
+                            // TODO(koekeishiya): This code is a duplicate of the one found in FocusWindow
+                            // for monocle spaces. This should be refactored when implementing different
+                            // types of window_cycle_focus behaviour.
+                            ClosestNode = GetFirstLeafNode(VirtualSpace->Tree);
+                        }
+                    }
+
+                    if(ClosestNode && ClosestNode != WindowNode)
+                    {
+                        // NOTE(koekeishiya): Swapping windows in monocle mode
+                        // should not trigger mouse_follows_focus.
+                        SwapNodeIds(WindowNode, ClosestNode);
+                    }
+                }
             }
         }
     }
