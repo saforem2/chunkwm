@@ -403,3 +403,59 @@ void UseInsertionPoint(char *Direction)
         AXLibDestroySpace(Space);
     }
 }
+
+internal void
+RotateBSPTree(node *Node, char *Degrees)
+{
+    if((StringEquals(Degrees, "90") && Node->Split == Split_Vertical) ||
+       (StringEquals(Degrees, "270") && Node->Split == Split_Horizontal) ||
+       (StringEquals(Degrees, "180")))
+    {
+        node *Temp = Node->Left;
+        Node->Left = Node->Right;
+        Node->Right = Temp;
+        Node->Ratio = 1 - Node->Ratio;
+    }
+
+    if(!StringEquals(Degrees, "180"))
+    {
+        if(Node->Split == Split_Horizontal)
+        {
+            Node->Split = Split_Vertical;
+        }
+        else if(Node->Split == Split_Vertical)
+        {
+            Node->Split = Split_Horizontal;
+        }
+    }
+
+    if(Node->Left)
+    {
+        RotateBSPTree(Node->Left, Degrees);
+    }
+
+    if(Node->Right)
+    {
+        RotateBSPTree(Node->Right, Degrees);
+    }
+}
+
+void RotateWindowTree(char *Degrees)
+{
+    macos_space *Space;
+    bool Success = AXLibActiveSpace(&Space);
+    ASSERT(Success);
+
+    if(Space->Type == kCGSSpaceUser)
+    {
+        virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
+        if(VirtualSpace->Tree && VirtualSpace->Mode == Virtual_Space_Bsp)
+        {
+            RotateBSPTree(VirtualSpace->Tree, Degrees);
+            CreateNodeRegionRecursive(VirtualSpace->Tree, false);
+            ApplyNodeRegion(VirtualSpace->Tree, VirtualSpace->Mode);
+        }
+    }
+
+    AXLibDestroySpace(Space);
+}

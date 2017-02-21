@@ -217,6 +217,56 @@ End:
     return Success;
 }
 
+inline bool
+ParseSpaceCommand(const char *Message, command *Chain)
+{
+    int Count;
+    char **Args = BuildArguments(Message, &Count);
+
+    int Option;
+    bool Success = true;
+    const char *Short = "r:";
+
+    command *Command = Chain;
+    while((Option = getopt_long(Count, Args, Short, NULL, NULL)) != -1)
+    {
+        switch(Option)
+        {
+            case 'r':
+            {
+                if((StringEquals(optarg, "90")) ||
+                   (StringEquals(optarg, "180")) ||
+                   (StringEquals(optarg, "270")))
+                {
+                    command *Entry = ConstructCommand(Option, optarg);
+                    Command->Next = Entry;
+                    Command = Entry;
+                }
+                else
+                {
+                    fprintf(stderr, "    invalid selector '%s' for space flag '%c'\n", optarg, Option);
+                    Success = false;
+                    FreeCommandChain(Chain);
+                    goto End;
+                }
+            } break;
+            case '?':
+            {
+                Success = false;
+                FreeCommandChain(Chain);
+                goto End;
+            } break;
+        }
+    }
+
+End:
+    // NOTE(koekeishiya): Reset getopt.
+    optind = 1;
+
+    FreeArguments(Count, Args);
+    return Success;
+}
+
 /* NOTE(koekeishiya): Parameters
  *
  * const char *Message
@@ -469,6 +519,31 @@ DAEMON_CALLBACK(DaemonCallback)
                 else if(Command->Flag == 'i')
                 {
                     UseInsertionPoint(Command->Arg);
+                }
+            }
+
+            FreeCommandChain(&Chain);
+        }
+    }
+    else if(TokenEquals(Type, "space"))
+    {
+        command Chain = {};
+        bool Success = ParseSpaceCommand(Message, &Chain);
+        if(Success)
+        {
+            command *Command = &Chain;
+            while((Command = Command->Next))
+            {
+                printf("    command: '%c', arg: '%s'\n", Command->Flag, Command->Arg);
+
+                /* NOTE(koekeishiya): flags description:
+                 * r: rotate 90, 180, 270 degrees
+                 * */
+
+                // TODO(koekeishiya): Replace if-branches with jump-table
+                if(Command->Flag == 'r')
+                {
+                    RotateWindowTree(Command->Arg);
                 }
             }
 
