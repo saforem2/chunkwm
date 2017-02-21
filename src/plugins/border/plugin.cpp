@@ -6,19 +6,24 @@
 #include "../../common/accessibility/application.h"
 #include "../../common/accessibility/window.h"
 #include "../../common/accessibility/element.h"
+#include "../../common/accessibility/display.h"
 
 #include "overlay.h"
 
 #define internal static
 
 internal macos_application *Application;
+internal bool DrawBorder = true;
 
 internal void
 UpdateWindow(AXUIElementRef WindowRef)
 {
-    CGPoint Position = AXLibGetWindowPosition(WindowRef);
-    CGSize Size = AXLibGetWindowSize(WindowRef);
-    UpdateBorder(Position.x, Position.y, Size.width, Size.height);
+    if(DrawBorder)
+    {
+        CGPoint Position = AXLibGetWindowPosition(WindowRef);
+        CGSize Size = AXLibGetWindowSize(WindowRef);
+        UpdateBorder(Position.x, Position.y, Size.width, Size.height);
+    }
 }
 
 internal void
@@ -172,6 +177,16 @@ PLUGIN_MAIN_FUNC(PluginMain)
     else if(StringsAreEqual(Node, "chunkwm_export_space_changed"))
     {
         UpdateBorder(0, 0, 0, 0);
+
+        macos_space *Space;
+        bool Result = AXLibActiveSpace(&Space);
+        if(Result)
+        {
+            Result = Space->Type == kCGSSpaceUser;
+            AXLibDestroySpace(Space);
+        }
+
+        DrawBorder = Result;
         return true;
     }
 
