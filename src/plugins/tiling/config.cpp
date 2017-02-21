@@ -502,9 +502,11 @@ DAEMON_CALLBACK(DaemonCallback)
                 /* NOTE(koekeishiya): flags description:
                  * f: focus
                  * s: swap
-                 * m: move (detach and reinsert)
+                 * w: detach and reinsert
                  * i: insertion point (previously 'mark' window)
-                 * z: zoom
+                 * t: float, fullscreen, (parent ?)
+                 * d: move to desktop
+                 * m: move to monitor
                  * */
 
                 // TODO(koekeishiya): Replace if-branches with jump-table
