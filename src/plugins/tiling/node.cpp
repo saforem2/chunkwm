@@ -4,7 +4,6 @@
 
 #include "../../common/config/cvar.h"
 #include "../../common/misc/assert.h"
-#include "../../common/accessibility/display.h"
 #include "../../common/accessibility/window.h"
 #include "../../common/accessibility/element.h"
 
@@ -22,32 +21,31 @@ node_split OptimalSplitMode(node *Node)
     return NodeRatio >= OptimalRatio ? Split_Vertical : Split_Horizontal;
 }
 
-node *CreateRootNode(macos_display *Display)
+node *CreateRootNode()
 {
     node *Node = (node *) malloc(sizeof(node));
     memset(Node, 0, sizeof(node));
 
     Node->Ratio = CVarFloatingPointValue(CVAR_BSP_SPLIT_RATIO);
     Node->Split = Split_None;
-    CreateNodeRegion(Display, Node, Region_Full);
+    CreateNodeRegion(Node, Region_Full);
 
     return Node;
 }
 
-node *CreateLeafNode(macos_display *Display, node *Parent, uint32_t WindowId, region_type Type)
+node *CreateLeafNode(node *Parent, uint32_t WindowId, region_type Type)
 {
     node *Node = (node *) malloc(sizeof(node));
     memset(Node, 0, sizeof(node));
 
     Node->WindowId = WindowId;
     Node->Parent = Parent;
-    CreateNodeRegion(Display, Node, Type);
+    CreateNodeRegion(Node, Type);
 
     return Node;
 }
 
-void CreateLeafNodePair(macos_display *Display, node *Parent,
-                        uint32_t ExistingWindowId, uint32_t SpawnedWindowId, node_split Split)
+void CreateLeafNodePair(node *Parent, uint32_t ExistingWindowId, uint32_t SpawnedWindowId, node_split Split)
 {
     Parent->WindowId = 0;
     Parent->Split = Split;
@@ -68,13 +66,13 @@ void CreateLeafNodePair(macos_display *Display, node *Parent,
     ASSERT(Split == Split_Vertical || Split == Split_Horizontal);
     if(Split == Split_Vertical)
     {
-        Parent->Left = CreateLeafNode(Display, Parent, LeftWindowId, Region_Left);
-        Parent->Right = CreateLeafNode(Display, Parent, RightWindowId, Region_Right);
+        Parent->Left = CreateLeafNode(Parent, LeftWindowId, Region_Left);
+        Parent->Right = CreateLeafNode(Parent, RightWindowId, Region_Right);
     }
     else if(Split == Split_Horizontal)
     {
-        Parent->Left = CreateLeafNode(Display, Parent, LeftWindowId, Region_Upper);
-        Parent->Right = CreateLeafNode(Display, Parent, RightWindowId, Region_Lower);
+        Parent->Left = CreateLeafNode(Parent, LeftWindowId, Region_Upper);
+        Parent->Right = CreateLeafNode(Parent, RightWindowId, Region_Lower);
     }
 }
 

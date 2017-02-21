@@ -27,11 +27,10 @@ struct node
     region Region;
 };
 
-struct macos_display;
 node_split OptimalSplitMode(node *Node);
-node *CreateRootNode(macos_display *Display);
+node *CreateRootNode();
 
-void CreateLeafNodePair(macos_display *Display, node *Parent, uint32_t FirstWindowID, uint32_t SecondWindowID, node_split Split);
+void CreateLeafNodePair(node *Parent, uint32_t FirstWindowID, uint32_t SecondWindowID, node_split Split);
 void ApplyNodeRegion(node *Node, virtual_space_mode VirtualSpaceMode);
 void ResizeWindowToRegionSize(node *Node);
 void FreeNodeTree(node *Node, virtual_space_mode VirtualSpaceMode);

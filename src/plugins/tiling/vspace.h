@@ -31,9 +31,8 @@ struct virtual_space
 typedef std::map<const char *, virtual_space *, string_comparator> virtual_space_map;
 typedef virtual_space_map::iterator virtual_space_map_it;
 
-struct macos_display;
 struct macos_space;
-virtual_space *AcquireVirtualSpace(macos_display *Display, macos_space *Space);
+virtual_space *AcquireVirtualSpace(macos_space *Space);
 void ReleaseVirtualSpaces();
 
 #endif

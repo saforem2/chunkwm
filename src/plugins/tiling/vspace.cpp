@@ -47,14 +47,22 @@ GetVirtualSpaceConfig(int DisplayIndex, int SpaceIndex)
 }
 
 internal virtual_space *
-CreateAndInitVirtualSpace(macos_display *Display, macos_space *Space)
+CreateAndInitVirtualSpace(macos_space *Space)
 {
     virtual_space *VirtualSpace = (virtual_space *) malloc(sizeof(virtual_space));
     VirtualSpace->Tree = NULL;
 
-    unsigned DesktopId = AXLibCGSSpaceIDToDesktopID(Display->Ref, Space->Id);
-    virtual_space_config Config = GetVirtualSpaceConfig(Display->Arrangement, DesktopId);
+    unsigned Arrangement = 0;
+    unsigned DesktopId = 1;
 
+    // TODO(koekeishiya): The arrangement should not be necessary here.
+    // We should now be able to address spaces using mission-control indexing,
+    // Need to confirm that this actually works properly when I get access to an
+    // external display.
+    bool Success = AXLibCGSSpaceIDToDesktopID(Space->Id, &Arrangement, &DesktopId);
+    ASSERT(Success);
+
+    virtual_space_config Config = GetVirtualSpaceConfig(Arrangement, DesktopId);
     VirtualSpace->Mode = Config.Mode;
     VirtualSpace->Offset = Config.Offset;
 
@@ -62,7 +70,7 @@ CreateAndInitVirtualSpace(macos_display *Display, macos_space *Space)
 }
 
 // NOTE(koekeishiya): If the requested space does not exist, we create it.
-virtual_space *AcquireVirtualSpace(macos_display *Display, macos_space *Space)
+virtual_space *AcquireVirtualSpace(macos_space *Space)
 {
     virtual_space *Result;
 
@@ -77,7 +85,7 @@ virtual_space *AcquireVirtualSpace(macos_display *Display, macos_space *Space)
     }
     else
     {
-        Result = CreateAndInitVirtualSpace(Display, Space);
+        Result = CreateAndInitVirtualSpace(Space);
         VirtualSpaces[SpaceCRef] = Result;
     }
 

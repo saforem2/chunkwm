@@ -31,11 +31,10 @@ struct region_offset
 };
 
 struct node;
-struct macos_display;
 
-void CreateNodeRegion(macos_display *Display, node *Node, region_type Type);
-void CreateNodeRegionRecursive(macos_display *Display, node *Node, bool Optimal);
+void CreateNodeRegion(node *Node, region_type Type);
+void CreateNodeRegionRecursive(node *Node, bool Optimal);
 
-void ResizeNodeRegion(macos_display *Display, node *Node);
+void ResizeNodeRegion(node *Node);
 
 #endif
