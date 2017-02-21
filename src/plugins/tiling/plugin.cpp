@@ -21,6 +21,7 @@
 #include "region.h"
 #include "node.h"
 #include "vspace.h"
+#include "controller.h"
 #include "constants.h"
 #include "misc.h"
 
@@ -136,31 +137,7 @@ IsWindowValid(macos_window *Window)
     return Result;
 }
 
-internal void
-ExtendedDockSetTopmost(macos_window *Window)
-{
-    int SockFD;
-    if(ConnectToDaemon(&SockFD, 5050))
-    {
-        char Message[64];
-        sprintf(Message, "window_level %d %d", Window->Id, kCGFloatingWindowLevelKey);
-        WriteToSocket(Message, SockFD);
-    }
-    CloseSocket(SockFD);
-}
-
-internal void
-FloatWindow(macos_window *Window)
-{
-    AXLibAddFlags(Window, Window_Float);
-    if(CVarIntegerValue(CVAR_WINDOW_FLOAT_TOPMOST))
-    {
-        ExtendedDockSetTopmost(Window);
-    }
-}
-
-internal void
-TileWindow(macos_window *Window)
+void TileWindow(macos_window *Window)
 {
     if(AXLibHasFlags(Window, Window_Float))
     {
@@ -255,8 +232,7 @@ TileWindow(macos_window *Window)
     AXLibDestroySpace(Space);
 }
 
-internal void
-UntileWindow(macos_window *Window)
+void UntileWindow(macos_window *Window)
 {
     if(AXLibHasFlags(Window, Window_Float))
     {

@@ -171,7 +171,7 @@ ParseWindowCommand(const char *Message, command *Chain)
 
     int Option;
     bool Success = true;
-    const char *Short = "f:s:i:";
+    const char *Short = "f:s:i:t:";
 
     command *Command = Chain;
     while((Option = getopt_long(Count, Args, Short, NULL, NULL)) != -1)
@@ -187,6 +187,22 @@ ParseWindowCommand(const char *Message, command *Chain)
                    (StringEquals(optarg, "east")) ||
                    (StringEquals(optarg, "north")) ||
                    (StringEquals(optarg, "south")))
+                {
+                    command *Entry = ConstructCommand(Option, optarg);
+                    Command->Next = Entry;
+                    Command = Entry;
+                }
+                else
+                {
+                    fprintf(stderr, "    invalid selector '%s' for window flag '%c'\n", optarg, Option);
+                    Success = false;
+                    FreeCommandChain(Chain);
+                    goto End;
+                }
+            } break;
+            case 't':
+            {
+                if((StringEquals(optarg, "float")))
                 {
                     command *Entry = ConstructCommand(Option, optarg);
                     Command->Next = Entry;
@@ -521,6 +537,10 @@ DAEMON_CALLBACK(DaemonCallback)
                 else if(Command->Flag == 'i')
                 {
                     UseInsertionPoint(Command->Arg);
+                }
+                else if(Command->Flag == 't')
+                {
+                    ToggleWindow(Command->Arg);
                 }
             }
 

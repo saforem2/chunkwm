@@ -4,6 +4,7 @@
 #include "../../common/accessibility/application.h"
 #include "../../common/accessibility/window.h"
 #include "../../common/accessibility/element.h"
+#include "../../common/ipc/daemon.h"
 #include "../../common/misc/assert.h"
 #include "../../common/config/cvar.h"
 
@@ -20,6 +21,8 @@
 
 extern macos_window *GetWindowByID(uint32_t Id);
 extern std::vector<uint32_t> GetAllVisibleWindows();
+extern void TileWindow(macos_window *Window);
+extern void UntileWindow(macos_window *Window);
 
 internal bool
 IsCursorInRegion(region Region)
@@ -376,6 +379,84 @@ void SwapWindow(char *Direction)
     }
 
     AXLibDestroySpace(Space);
+}
+
+internal void
+ExtendedDockSetTopmost(macos_window *Window)
+{
+    int SockFD;
+    if(ConnectToDaemon(&SockFD, 5050))
+    {
+        char Message[64];
+        sprintf(Message, "window_level %d %d", Window->Id, kCGFloatingWindowLevelKey);
+        WriteToSocket(Message, SockFD);
+    }
+    CloseSocket(SockFD);
+}
+
+internal void
+ExtendedDockResetTopmost(macos_window *Window)
+{
+    int SockFD;
+    if(ConnectToDaemon(&SockFD, 5050))
+    {
+        char Message[64];
+        sprintf(Message, "window_level %d %d", Window->Id, kCGNormalWindowLevelKey);
+        WriteToSocket(Message, SockFD);
+    }
+    CloseSocket(SockFD);
+}
+
+void FloatWindow(macos_window *Window)
+{
+    AXLibAddFlags(Window, Window_Float);
+    if(CVarIntegerValue(CVAR_WINDOW_FLOAT_TOPMOST))
+    {
+        ExtendedDockSetTopmost(Window);
+    }
+}
+
+void UnfloatWindow(macos_window *Window)
+{
+    AXLibClearFlags(Window, Window_Float);
+    if(CVarIntegerValue(CVAR_WINDOW_FLOAT_TOPMOST))
+    {
+        ExtendedDockResetTopmost(Window);
+    }
+}
+
+void ToggleWindow(char *Type)
+{
+    // NOTE(koekeishiya): We cannot use our _CVAR_BSP_INSERTION_POINT here
+    // because the window that we toggle options for may not be in a tree,
+    // and we will not be able to perform an operation in that case.
+    AXUIElementRef ApplicationRef = AXLibGetFocusedApplication();
+    AXUIElementRef WindowRef = AXLibGetFocusedWindow(ApplicationRef);
+    CFRelease(ApplicationRef);
+
+    if(WindowRef)
+    {
+        uint32_t WindowId = AXLibGetWindowID(WindowRef);
+        CFRelease(WindowRef);
+
+        macos_window *Window = GetWindowByID(WindowId);
+        if(Window)
+        {
+            if(StringEquals(Type, "float"))
+            {
+                if(AXLibHasFlags(Window, Window_Float))
+                {
+                    UnfloatWindow(Window);
+                    TileWindow(Window);
+                }
+                else
+                {
+                    UntileWindow(Window);
+                    FloatWindow(Window);
+                }
+            }
+        }
+    }
 }
 
 void UseInsertionPoint(char *Direction)
