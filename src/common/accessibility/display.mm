@@ -5,13 +5,15 @@
 
 #define internal static
 #define CGSDefaultConnection _CGSDefaultConnection()
-
 typedef int CGSConnectionID;
 
 extern "C" CGSConnectionID _CGSDefaultConnection(void);
+
 extern "C" CGSSpaceType CGSSpaceGetType(CGSConnectionID Connection, CGSSpaceID Id);
 extern "C" CFArrayRef CGSCopyManagedDisplaySpaces(const CGSConnectionID Connection);
-extern "C" CFArrayRef CGSCopySpacesForWindows(CGSConnectionID CID, CGSSpaceSelector Type, CFArrayRef Windows);
+extern "C" CFArrayRef CGSCopySpacesForWindows(CGSConnectionID Connection, CGSSpaceSelector Type, CFArrayRef Windows);
+extern "C" CGSSpaceID CGSManagedDisplayGetCurrentSpace(CGSConnectionID Connection, CFStringRef DisplayRef);
+
 
 /* NOTE(koekeishiya): Find the UUID associated with a CGDirectDisplayID. */
 internal CFStringRef
@@ -114,6 +116,11 @@ AXLibConstructSpace(CFStringRef Ref, CGSSpaceID Id, CGSSpaceType Type)
     Space->Type = Type;
 
     return Space;
+}
+
+CGSSpaceID AXLibActiveCGSSpaceID(CFStringRef DisplayRef)
+{
+    return CGSManagedDisplayGetCurrentSpace(CGSDefaultConnection, DisplayRef);
 }
 
 /* NOTE(koekeishiya): Caller is responsible for calling 'AXLibDestroySpace()'. */
