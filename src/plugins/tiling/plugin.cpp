@@ -836,8 +836,8 @@ void SwapWindow(char *Direction)
         {
             if(VirtualSpace->Mode == Virtual_Space_Bsp)
             {
-                node *Node = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
-                if(Node)
+                node *WindowNode = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
+                if(WindowNode)
                 {
                     macos_window *ClosestWindow;
                     if(FindClosestWindow(VirtualSpace, Window, &ClosestWindow, Direction, true))
@@ -845,9 +845,17 @@ void SwapWindow(char *Direction)
                         node *ClosestNode = GetNodeWithId(VirtualSpace->Tree, ClosestWindow->Id, VirtualSpace->Mode);
                         if(ClosestNode)
                         {
-                            SwapNodeIds(Node, ClosestNode);
-                            ResizeWindowToRegionSize(Node);
+                            SwapNodeIds(WindowNode, ClosestNode);
+                            ResizeWindowToRegionSize(WindowNode);
                             ResizeWindowToRegionSize(ClosestNode);
+
+                            if((CVarIntegerValue(CVAR_MOUSE_FOLLOWS_FOCUS)) &&
+                               (!IsCursorInRegion(ClosestNode->Region)))
+                            {
+                                CGPoint Center = CGPointMake(ClosestNode->Region.X + ClosestNode->Region.Width / 2,
+                                                             ClosestNode->Region.Y + ClosestNode->Region.Height / 2);
+                                CGWarpMouseCursorPosition(Center);
+                            }
                         }
                     }
                 }
