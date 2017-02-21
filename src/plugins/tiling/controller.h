@@ -3,5 +3,6 @@
 
 void FocusWindow(char *Direction);
 void SwapWindow(char *Direction);
+void UseInsertionPoint(char *Direction);
 
 #endif

@@ -106,12 +106,14 @@ BuildArguments(const char *Message, int *Count)
         Args[(*Count)++] = Arg;
     }
 
+#if 0
     for(int Index = 1;
         Index < *Count;
         ++Index)
     {
         printf("%d arg '%s'\n", Index, Args[Index]);
     }
+#endif
 
     return Args;
 }
@@ -169,18 +171,18 @@ ParseWindowCommand(const char *Message, command *Chain)
 
     int Option;
     bool Success = true;
-    const char *Short = "f:s:";
+    const char *Short = "f:s:i:";
 
     command *Command = Chain;
     while((Option = getopt_long(Count, Args, Short, NULL, NULL)) != -1)
     {
         switch(Option)
         {
-            // NOTE(koekeishiya): Both the '-f' and '-s' flag support the same arguments.
+            // NOTE(koekeishiya): Both the '-f', '-s' and '-i' flag support the same arguments.
             case 'f':
             case 's':
+            case 'i':
             {
-                printf("    %c: '%s'\n", Option, optarg);
                 if((StringEquals(optarg, "west")) ||
                    (StringEquals(optarg, "east")) ||
                    (StringEquals(optarg, "north")) ||
@@ -446,6 +448,16 @@ DAEMON_CALLBACK(DaemonCallback)
             while((Command = Command->Next))
             {
                 printf("    command: '%c', arg: '%s'\n", Command->Flag, Command->Arg);
+
+                /* NOTE(koekeishiya): flags description:
+                 * f: focus
+                 * s: swap
+                 * m: move (detach and reinsert)
+                 * i: insertion point (previously 'mark' window)
+                 * z: zoom
+                 * */
+
+                // TODO(koekeishiya): Replace if-branches with jump-table
                 if(Command->Flag == 'f')
                 {
                     FocusWindow(Command->Arg);
@@ -453,6 +465,10 @@ DAEMON_CALLBACK(DaemonCallback)
                 else if(Command->Flag == 's')
                 {
                     SwapWindow(Command->Arg);
+                }
+                else if(Command->Flag == 'i')
+                {
+                    UseInsertionPoint(Command->Arg);
                 }
             }
 

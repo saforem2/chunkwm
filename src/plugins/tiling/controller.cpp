@@ -377,3 +377,29 @@ void SwapWindow(char *Direction)
 
     AXLibDestroySpace(Space);
 }
+
+void UseInsertionPoint(char *Direction)
+{
+    macos_window *Window = GetWindowByID(CVarIntegerValue(_CVAR_BSP_INSERTION_POINT));
+    if(Window)
+    {
+        macos_space *Space;
+        bool Success = AXLibActiveSpace(&Space);
+        ASSERT(Success);
+
+        if(Space->Type == kCGSSpaceUser)
+        {
+            virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
+            if(VirtualSpace->Tree && VirtualSpace->Mode == Virtual_Space_Bsp)
+            {
+                macos_window *ClosestWindow;
+                if(FindClosestWindow(Space, VirtualSpace, Window, &ClosestWindow, Direction, true))
+                {
+                    UpdateCVar(_CVAR_BSP_INSERTION_POINT, (int)ClosestWindow->Id);
+                }
+            }
+        }
+
+        AXLibDestroySpace(Space);
+    }
+}
