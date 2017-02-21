@@ -1,7 +1,9 @@
 #include "config.h"
 #include "vspace.h"
 #include "node.h"
+#include "controller.h"
 #include "constants.h"
+#include "misc.h"
 
 #include "../../common/config/cvar.h"
 #include "../../common/misc/assert.h"
@@ -12,16 +14,6 @@
 #include <getopt.h>
 
 #define local_persist static
-
-extern void FocusWindow(char *Direction);
-extern void SwapWindow(char *Direction);
-
-inline bool
-StringEquals(const char *A, const char *B)
-{
-    bool Result = (strcmp(A, B) == 0);
-    return Result;
-}
 
 struct token
 {

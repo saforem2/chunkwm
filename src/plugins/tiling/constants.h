@@ -17,6 +17,7 @@
 #define CVAR_SPACE_OFFSET_RIGHT     "global_" _CVAR_SPACE_OFFSET_RIGHT
 #define CVAR_SPACE_OFFSET_GAP       "global_" _CVAR_SPACE_OFFSET_GAP
 
+#define _CVAR_BSP_INSERTION_POINT   "_bsp_insertion_point"
 #define CVAR_BSP_SPAWN_LEFT         "bsp_spawn_left"
 #define CVAR_BSP_OPTIMAL_RATIO      "bsp_optimal_ratio"
 #define CVAR_BSP_SPLIT_RATIO        "bsp_split_ratio"

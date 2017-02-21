@@ -1,6 +1,5 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
 #include <pthread.h>
 #include <sys/stat.h>
 
@@ -23,6 +22,7 @@
 #include "node.h"
 #include "vspace.h"
 #include "constants.h"
+#include "misc.h"
 
 #define internal static
 #define local_persist static
@@ -44,30 +44,6 @@ extern "C" CGError CGSGetOnScreenWindowList(const CGSConnectionID CID, CGSConnec
 
 internal macos_application_map Applications;
 internal macos_window_map Windows;
-
-internal uint32_t InsertionPointId;
-
-inline bool
-StringsAreEqual(const char *A, const char *B)
-{
-    bool Result = (strcmp(A, B) == 0);
-    return Result;
-}
-
-internal bool
-IsCursorInRegion(region Region)
-{
-    CGPoint Cursor = AXLibGetCursorPos();
-    if(Cursor.x >= Region.X &&
-       Cursor.x <= Region.X + Region.Width &&
-       Cursor.y >= Region.Y &&
-       Cursor.y <= Region.Y + Region.Height)
-    {
-        return true;
-    }
-
-    return false;
-}
 
 /* NOTE(koekeishiya): We need a way to retrieve AXUIElementRef from a CGWindowID.
  * There is no way to do this, without caching AXUIElementRef references.
@@ -219,9 +195,10 @@ TileWindow(macos_window *Window)
                 if(!Exists)
                 {
                     node *Node = NULL;
-                    if(InsertionPointId)
+                    uint32_t InsertionPoint = CVarIntegerValue(_CVAR_BSP_INSERTION_POINT);
+                    if(InsertionPoint)
                     {
-                        Node = GetNodeWithId(VirtualSpace->Tree, InsertionPointId, VirtualSpace->Mode);
+                        Node = GetNodeWithId(VirtualSpace->Tree, InsertionPoint, VirtualSpace->Mode);
                     }
 
                     if(VirtualSpace->Mode == Virtual_Space_Bsp)
@@ -586,348 +563,6 @@ RebalanceWindowTree()
     AXLibDestroySpace(Space);
 }
 
-internal void
-GetCenterOfWindow(virtual_space *VirtualSpace, macos_window *Window, float *X, float *Y)
-{
-    node *Node = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
-    if(Node)
-    {
-        *X = Node->Region.X + Node->Region.Width / 2;
-        *Y = Node->Region.Y + Node->Region.Height / 2;
-    }
-    else
-    {
-        *X = -1;
-        *Y = -1;
-    }
-}
-
-internal float
-GetWindowDistance(macos_space *Space, virtual_space *VirtualSpace,
-                  macos_window *A, macos_window *B,
-                  char *Direction, bool Wrap)
-{
-    float X1, Y1, X2, Y2;
-    GetCenterOfWindow(VirtualSpace, A, &X1, &Y1);
-    GetCenterOfWindow(VirtualSpace, B, &X2, &Y2);
-
-    bool West = StringsAreEqual(Direction, "west");
-    bool East = StringsAreEqual(Direction, "east");
-    bool North = StringsAreEqual(Direction, "north");
-    bool South = StringsAreEqual(Direction, "south");
-
-    // TODO(koekeishiya): Pass info so that we can figure out which
-    // display we are currently on. Should this be stored in VirtualSpace ??
-    if(Wrap)
-    {
-        CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromSpace(Space->Id);
-        CGRect Display = AXLibGetDisplayBounds(DisplayRef);
-        CFRelease(DisplayRef);
-
-        if(West && X1 < X2)
-        {
-            X2 -= Display.size.width;
-        }
-        else if(East && X1 > X2)
-        {
-            X2 += Display.size.width;
-        }
-        if(North && Y1 < Y2)
-        {
-            Y2 -= Display.size.height;
-        }
-        else if(South && Y1 > Y2)
-        {
-            Y2 += Display.size.height;
-        }
-    }
-
-    float DeltaX = X2 - X1;
-    float DeltaY = Y2 - Y1;
-    float Angle = atan2(DeltaY, DeltaX);
-    float Distance = hypot(DeltaX, DeltaY);
-    float DeltaA = 0;
-
-    if((North && DeltaY >= 0) ||
-       (East && DeltaX <= 0) ||
-       (South && DeltaY <= 0) ||
-       (West && DeltaX >= 0))
-    {
-        return 0xFFFFFFFF;
-    }
-
-    if(North)
-    {
-        DeltaA = -M_PI_2 - Angle;
-    }
-    else if(South)
-    {
-        DeltaA = M_PI_2 - Angle;
-    }
-    else if(East)
-    {
-        DeltaA = 0.0 - Angle;
-    }
-    else if(West)
-    {
-        DeltaA = M_PI - fabs(Angle);
-    }
-
-    return (Distance / cos(DeltaA / 2.0));
-}
-
-internal bool
-WindowIsInDirection(virtual_space *VirtualSpace,
-                    macos_window *WindowA, macos_window *WindowB,
-                    char *Direction)
-{
-    bool Result = false;
-
-    node *NodeA = GetNodeWithId(VirtualSpace->Tree, WindowA->Id, VirtualSpace->Mode);
-    node *NodeB = GetNodeWithId(VirtualSpace->Tree, WindowB->Id, VirtualSpace->Mode);
-
-    if(NodeA && NodeB && NodeA != NodeB)
-    {
-        region *A = &NodeA->Region;
-        region *B = &NodeB->Region;
-
-        if((StringsAreEqual(Direction, "north")) ||
-           (StringsAreEqual(Direction, "south")))
-        {
-            Result = (A->Y != B->Y) &&
-                     (fmax(A->X, B->X) < fmin(B->X + B->Width, A->X + A->Width));
-        }
-        if((StringsAreEqual(Direction, "east")) ||
-           (StringsAreEqual(Direction, "west")))
-        {
-            Result = (A->X != B->X) &&
-                     (fmax(A->Y, B->Y) < fmin(B->Y + B->Height, A->Y + A->Height));
-        }
-    }
-
-    return Result;
-}
-
-internal bool
-FindClosestWindow(macos_space *Space, virtual_space *VirtualSpace,
-                  macos_window *Match, macos_window **ClosestWindow,
-                  char *Direction, bool Wrap)
-{
-    std::vector<uint32_t> Windows = GetAllVisibleWindows();
-    float MinDist = 0xFFFFFFFF;
-
-    for(int Index = 0;
-        Index < Windows.size();
-        ++Index)
-    {
-        macos_window *Window = GetWindowByID(Windows[Index]);
-        if(Window &&
-           Match->Id != Window->Id &&
-           WindowIsInDirection(VirtualSpace, Match, Window, Direction))
-        {
-            float Dist = GetWindowDistance(Space, VirtualSpace,
-                                           Match, Window,
-                                           Direction, Wrap);
-            if(Dist < MinDist)
-            {
-                MinDist = Dist;
-                *ClosestWindow = Window;
-            }
-        }
-    }
-
-    return MinDist != 0xFFFFFFFF;
-}
-
-void FocusWindow(char *Direction)
-{
-    macos_window *Window = GetWindowByID(InsertionPointId);
-    if(!Window)
-    {
-        return; // TODO(koekeishiya): Focus first or last leaf ?
-    }
-
-    macos_space *Space;
-    bool Success = AXLibActiveSpace(&Space);
-    ASSERT(Success);
-
-    if(Space->Type == kCGSSpaceUser)
-    {
-        virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
-        if(VirtualSpace->Tree && VirtualSpace->Mode != Virtual_Space_Float)
-        {
-            if(VirtualSpace->Mode == Virtual_Space_Bsp)
-            {
-                macos_window *ClosestWindow;
-                if(FindClosestWindow(Space, VirtualSpace, Window, &ClosestWindow, Direction, true))
-                {
-                    AXLibSetFocusedWindow(ClosestWindow->Ref);
-                    AXLibSetFocusedApplication(ClosestWindow->Owner->PSN);
-
-                    if(CVarIntegerValue(CVAR_MOUSE_FOLLOWS_FOCUS))
-                    {
-                        node *Node = GetNodeWithId(VirtualSpace->Tree, ClosestWindow->Id, VirtualSpace->Mode);
-                        if(Node && !IsCursorInRegion(Node->Region))
-                        {
-                            CGPoint Center = CGPointMake(Node->Region.X + Node->Region.Width / 2,
-                                                         Node->Region.Y + Node->Region.Height / 2);
-                            CGWarpMouseCursorPosition(Center);
-                        }
-                    }
-                }
-            }
-            else if(VirtualSpace->Mode == Virtual_Space_Monocle)
-            {
-                node *WindowNode = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
-                if(WindowNode)
-                {
-                    node *Node = NULL;
-                    if(StringsAreEqual(Direction, "west"))
-                    {
-                        if(WindowNode->Left)
-                        {
-                            Node = WindowNode->Left;
-                        }
-                        else
-                        {
-                            // TODO(koekeishiya): This code is a duplicate of the one found in SwapWindow
-                            // for monocle spaces. This should be refactored when implementing different
-                            // types of window_cycle_focus behaviour.
-                            Node = GetLastLeafNode(VirtualSpace->Tree);
-                        }
-                    }
-                    else if(StringsAreEqual(Direction, "east"))
-                    {
-                        if(WindowNode->Right)
-                        {
-                            Node = WindowNode->Right;
-                        }
-                        else
-                        {
-                            // TODO(koekeishiya): This code is a duplicate of the one found in SwapWindow
-                            // for monocle spaces. This should be refactored when implementing different
-                            // types of window_cycle_focus behaviour.
-                            Node = GetFirstLeafNode(VirtualSpace->Tree);
-                        }
-                    }
-
-                    if(Node)
-                    {
-                        macos_window *FocusWindow = GetWindowByID(Node->WindowId);
-                        ASSERT(FocusWindow);
-
-                        AXLibSetFocusedWindow(FocusWindow->Ref);
-                        AXLibSetFocusedApplication(FocusWindow->Owner->PSN);
-
-                        if((CVarIntegerValue(CVAR_MOUSE_FOLLOWS_FOCUS)) &&
-                           (!IsCursorInRegion(Node->Region)))
-                        {
-                            CGPoint Center = CGPointMake(Node->Region.X + Node->Region.Width / 2,
-                                                         Node->Region.Y + Node->Region.Height / 2);
-                            CGWarpMouseCursorPosition(Center);
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    AXLibDestroySpace(Space);
-}
-
-void SwapWindow(char *Direction)
-{
-    macos_window *Window = GetWindowByID(InsertionPointId);
-    if(!Window)
-    {
-        return; // TODO(koekeishiya): Focus first or last leaf ?
-    }
-
-    macos_space *Space;
-    bool Success = AXLibActiveSpace(&Space);
-    ASSERT(Success);
-
-    if(Space->Type == kCGSSpaceUser)
-    {
-        virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
-        if(VirtualSpace->Tree && VirtualSpace->Mode != Virtual_Space_Float)
-        {
-            if(VirtualSpace->Mode == Virtual_Space_Bsp)
-            {
-                node *WindowNode = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
-                if(WindowNode)
-                {
-                    macos_window *ClosestWindow;
-                    if(FindClosestWindow(Space, VirtualSpace, Window, &ClosestWindow, Direction, true))
-                    {
-                        node *ClosestNode = GetNodeWithId(VirtualSpace->Tree, ClosestWindow->Id, VirtualSpace->Mode);
-                        if(ClosestNode)
-                        {
-                            SwapNodeIds(WindowNode, ClosestNode);
-                            ResizeWindowToRegionSize(WindowNode);
-                            ResizeWindowToRegionSize(ClosestNode);
-
-                            if((CVarIntegerValue(CVAR_MOUSE_FOLLOWS_FOCUS)) &&
-                               (!IsCursorInRegion(ClosestNode->Region)))
-                            {
-                                CGPoint Center = CGPointMake(ClosestNode->Region.X + ClosestNode->Region.Width / 2,
-                                                             ClosestNode->Region.Y + ClosestNode->Region.Height / 2);
-                                CGWarpMouseCursorPosition(Center);
-                            }
-                        }
-                    }
-                }
-            }
-            else if(VirtualSpace->Mode == Virtual_Space_Monocle)
-            {
-                // TODO(koekeishiya): NYI
-                node *WindowNode = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
-                if(WindowNode)
-                {
-                    node *ClosestNode = NULL;
-                    if(StringsAreEqual(Direction, "west"))
-                    {
-                        if(WindowNode->Left)
-                        {
-                            ClosestNode = WindowNode->Left;
-                        }
-                        else
-                        {
-                            // TODO(koekeishiya): This code is a duplicate of the one found in FocusWindow
-                            // for monocle spaces. This should be refactored when implementing different
-                            // types of window_cycle_focus behaviour.
-                            ClosestNode = GetLastLeafNode(VirtualSpace->Tree);
-                        }
-                    }
-                    else if(StringsAreEqual(Direction, "east"))
-                    {
-                        if(WindowNode->Right)
-                        {
-                            ClosestNode = WindowNode->Right;
-                        }
-                        else
-                        {
-                            // TODO(koekeishiya): This code is a duplicate of the one found in FocusWindow
-                            // for monocle spaces. This should be refactored when implementing different
-                            // types of window_cycle_focus behaviour.
-                            ClosestNode = GetFirstLeafNode(VirtualSpace->Tree);
-                        }
-                    }
-
-                    if(ClosestNode && ClosestNode != WindowNode)
-                    {
-                        // NOTE(koekeishiya): Swapping windows in monocle mode
-                        // should not trigger mouse_follows_focus.
-                        SwapNodeIds(WindowNode, ClosestNode);
-                    }
-                }
-            }
-        }
-    }
-
-    AXLibDestroySpace(Space);
-}
-
 void ApplicationLaunchedHandler(const char *Data)
 {
     macos_application *Application = (macos_application *) Data;
@@ -1017,12 +652,12 @@ void ApplicationActivatedHandler(const char *Data)
            (IsWindowValid(Window)) &&
            (!AXLibHasFlags(Window, Window_Float)))
         {
-            InsertionPointId = Window->Id;
+            UpdateCVar(_CVAR_BSP_INSERTION_POINT, (int)Window->Id);
         }
     }
     else
     {
-        InsertionPointId = 0;
+        UpdateCVar(_CVAR_BSP_INSERTION_POINT, 0);
     }
 }
 
@@ -1086,7 +721,7 @@ void WindowFocusedHandler(const char *Data)
 
     if(IsWindowValid(Copy) && !AXLibHasFlags(Copy, Window_Float))
     {
-        InsertionPointId = Copy->Id;
+        UpdateCVar(_CVAR_BSP_INSERTION_POINT, (int)Copy->Id);
     }
 }
 
@@ -1098,57 +733,57 @@ void WindowFocusedHandler(const char *Data)
  * */
 PLUGIN_MAIN_FUNC(PluginMain)
 {
-    if(StringsAreEqual(Node, "chunkwm_export_application_launched"))
+    if(StringEquals(Node, "chunkwm_export_application_launched"))
     {
         ApplicationLaunchedHandler(Data);
         return true;
     }
-    else if(StringsAreEqual(Node, "chunkwm_export_application_terminated"))
+    else if(StringEquals(Node, "chunkwm_export_application_terminated"))
     {
         ApplicationTerminatedHandler(Data);
         return true;
     }
-    else if(StringsAreEqual(Node, "chunkwm_export_application_hidden"))
+    else if(StringEquals(Node, "chunkwm_export_application_hidden"))
     {
         ApplicationHiddenHandler(Data);
         return true;
     }
-    else if(StringsAreEqual(Node, "chunkwm_export_application_unhidden"))
+    else if(StringEquals(Node, "chunkwm_export_application_unhidden"))
     {
         ApplicationUnhiddenHandler(Data);
         return true;
     }
-    else if(StringsAreEqual(Node, "chunkwm_export_application_activated"))
+    else if(StringEquals(Node, "chunkwm_export_application_activated"))
     {
         ApplicationActivatedHandler(Data);
         return true;
     }
-    else if(StringsAreEqual(Node, "chunkwm_export_window_created"))
+    else if(StringEquals(Node, "chunkwm_export_window_created"))
     {
         WindowCreatedHandler(Data);
         return true;
     }
-    else if(StringsAreEqual(Node, "chunkwm_export_window_destroyed"))
+    else if(StringEquals(Node, "chunkwm_export_window_destroyed"))
     {
         WindowDestroyedHandler(Data);
         return true;
     }
-    else if(StringsAreEqual(Node, "chunkwm_export_window_minimized"))
+    else if(StringEquals(Node, "chunkwm_export_window_minimized"))
     {
         WindowMinimizedHandler(Data);
         return true;
     }
-    else if(StringsAreEqual(Node, "chunkwm_export_window_deminimized"))
+    else if(StringEquals(Node, "chunkwm_export_window_deminimized"))
     {
         WindowDeminimizedHandler(Data);
         return true;
     }
-    else if(StringsAreEqual(Node, "chunkwm_export_window_focused"))
+    else if(StringEquals(Node, "chunkwm_export_window_focused"))
     {
         WindowFocusedHandler(Data);
         return true;
     }
-    else if(StringsAreEqual(Node, "chunkwm_export_space_changed"))
+    else if(StringEquals(Node, "chunkwm_export_space_changed"))
     {
         UpdateWindowCollection();
         CreateWindowTree();
@@ -1172,6 +807,7 @@ Init()
     CreateCVar(CVAR_SPACE_OFFSET_RIGHT, 50.0f);
     CreateCVar(CVAR_SPACE_OFFSET_GAP, 20.0f);
 
+    CreateCVar(_CVAR_BSP_INSERTION_POINT, 0);
     CreateCVar(CVAR_BSP_SPAWN_LEFT, 1);
     CreateCVar(CVAR_BSP_OPTIMAL_RATIO, 1.618f);
     CreateCVar(CVAR_BSP_SPLIT_RATIO, 0.5f);
@@ -1261,7 +897,7 @@ Init()
 
             if(IsWindowValid(Window) && !AXLibHasFlags(Window, Window_Float))
             {
-                InsertionPointId = Window->Id;
+                UpdateCVar(_CVAR_BSP_INSERTION_POINT, (int)Window->Id);
             }
         }
     }
