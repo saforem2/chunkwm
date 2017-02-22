@@ -1,3 +1,7 @@
+#include "plugin.h"
+
+#include "../common/misc/string.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -7,9 +11,6 @@
 #include <dirent.h>
 
 #include <map>
-
-#include "plugin.h"
-#include "../common/misc/string.h"
 
 #define internal static
 

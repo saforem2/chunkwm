@@ -1,8 +1,8 @@
+#include "plugin.h"
+
 #include "../common/config/cvar.h"
 #include "../common/misc/assert.h"
 #include "../common/ipc/daemon.h"
-
-#include "plugin.h"
 
 #include <stdlib.h>
 #include <stdio.h>
