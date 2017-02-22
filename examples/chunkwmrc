@@ -1,5 +1,5 @@
 #
-# NOTE: uses chunkc to send data
+# NOTE: uses chunkc to send data.
 #
 
 export CHUNKC_SOCKET=3920
