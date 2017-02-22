@@ -1,4 +1,5 @@
-#
+#!/bin/bash
+
 # NOTE: uses chunkc to send data.
 #
 
