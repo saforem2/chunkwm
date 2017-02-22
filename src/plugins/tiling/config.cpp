@@ -163,6 +163,37 @@ ConstructCommand(char Flag, char *Arg)
     return Command;
 }
 
+typedef void (*command_func)(char *);
+command_func WindowCommandDispatch[] =
+{
+    FocusWindow,
+    SwapWindow,
+    UseInsertionPoint,
+    ToggleWindow,
+    MoveWindow,
+    TemporaryRatio
+};
+
+#define WINDOW_FLAG_F 0
+#define WINDOW_FLAG_S 1
+#define WINDOW_FLAG_I 2
+#define WINDOW_FLAG_T 3
+#define WINDOW_FLAG_W 4
+#define WINDOW_FLAG_R 5
+
+unsigned WindowFuncFromFlag(char Flag)
+{
+    switch(Flag)
+    {
+        case 'f': return WINDOW_FLAG_F; break;
+        case 's': return WINDOW_FLAG_S; break;
+        case 'i': return WINDOW_FLAG_I; break;
+        case 't': return WINDOW_FLAG_T; break;
+        case 'w': return WINDOW_FLAG_W; break;
+        case 'r': return WINDOW_FLAG_R; break;
+    }
+}
+
 inline bool
 ParseWindowCommand(const char *Message, command *Chain)
 {
@@ -171,7 +202,7 @@ ParseWindowCommand(const char *Message, command *Chain)
 
     int Option;
     bool Success = true;
-    const char *Short = "f:s:i:t:w:";
+    const char *Short = "f:s:i:t:w:r:";
 
     command *Command = Chain;
     while((Option = getopt_long(Count, Args, Short, NULL, NULL)) != -1)
@@ -188,6 +219,23 @@ ParseWindowCommand(const char *Message, command *Chain)
                    (StringEquals(optarg, "east")) ||
                    (StringEquals(optarg, "north")) ||
                    (StringEquals(optarg, "south")))
+                {
+                    command *Entry = ConstructCommand(Option, optarg);
+                    Command->Next = Entry;
+                    Command = Entry;
+                }
+                else
+                {
+                    fprintf(stderr, "    invalid selector '%s' for window flag '%c'\n", optarg, Option);
+                    Success = false;
+                    FreeCommandChain(Chain);
+                    goto End;
+                }
+            } break;
+            case 'r':
+            {
+                float Float;
+                if(sscanf(optarg, "%f", &Float))
                 {
                     command *Entry = ConstructCommand(Option, optarg);
                     Command->Next = Entry;
@@ -232,6 +280,21 @@ End:
 
     FreeArguments(Count, Args);
     return Success;
+}
+
+command_func SpaceCommandDispatch[] =
+{
+    RotateTree
+};
+
+#define SPACE_FLAG_R 0
+
+unsigned SpaceFuncFromFlag(char Flag)
+{
+    switch(Flag)
+    {
+        case 'r': return SPACE_FLAG_R; break;
+    }
 }
 
 inline bool
@@ -511,6 +574,7 @@ DAEMON_CALLBACK(DaemonCallback)
         bool Success = ParseWindowCommand(Message, &Chain);
         if(Success)
         {
+            float Ratio = CVarFloatingPointValue(CVAR_BSP_SPLIT_RATIO);
             command *Command = &Chain;
             while((Command = Command->Next))
             {
@@ -526,27 +590,13 @@ DAEMON_CALLBACK(DaemonCallback)
                  * m: move to monitor
                  * */
 
-                // TODO(koekeishiya): Replace if-branches with jump-table
-                if(Command->Flag == 'f')
-                {
-                    FocusWindow(Command->Arg);
-                }
-                else if(Command->Flag == 's')
-                {
-                    SwapWindow(Command->Arg);
-                }
-                else if(Command->Flag == 'w')
-                {
-                    MoveWindow(Command->Arg);
-                }
-                else if(Command->Flag == 'i')
-                {
-                    UseInsertionPoint(Command->Arg);
-                }
-                else if(Command->Flag == 't')
-                {
-                    ToggleWindow(Command->Arg);
-                }
+                unsigned Index = WindowFuncFromFlag(Command->Flag);
+                WindowCommandDispatch[Index](Command->Arg);
+            }
+
+            if(Ratio != CVarFloatingPointValue(CVAR_BSP_SPLIT_RATIO))
+            {
+                UpdateCVar(CVAR_BSP_SPLIT_RATIO, Ratio);
             }
 
             FreeCommandChain(&Chain);
@@ -567,11 +617,8 @@ DAEMON_CALLBACK(DaemonCallback)
                  * r: rotate 90, 180, 270 degrees
                  * */
 
-                // TODO(koekeishiya): Replace if-branches with jump-table
-                if(Command->Flag == 'r')
-                {
-                    RotateWindowTree(Command->Arg);
-                }
+                unsigned Index = SpaceFuncFromFlag(Command->Flag);
+                SpaceCommandDispatch[Index](Command->Arg);
             }
 
             FreeCommandChain(&Chain);
