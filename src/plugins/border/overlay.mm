@@ -78,7 +78,7 @@ void CreateBorder(int X, int Y, int W, int H)
     [BorderWindow setBackgroundColor: [NSColor clearColor]];
     [BorderWindow setCollectionBehavior:NSWindowCollectionBehaviorCanJoinAllSpaces];
     [BorderWindow setLevel:NSFloatingWindowLevel];
-    [BorderWindow makeKeyAndOrderFront: nil];
+    [BorderWindow makeKeyAndOrderFront:nil];
     [BorderWindow setReleasedWhenClosed:YES];
 
     BorderCreated = true;
@@ -100,7 +100,13 @@ void UpdateBorder(int X, int Y, int W, int H)
     }
     else
     {
-        CreateBorder(X, Y, W, H);
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void)
+        {
+            dispatch_async(dispatch_get_main_queue(), ^(void)
+            {
+                CreateBorder(X, Y, W, H);
+            });
+        });
     }
 }
 
