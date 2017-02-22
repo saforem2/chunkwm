@@ -1,6 +1,7 @@
 #import <Cocoa/Cocoa.h>
 #include "overlay.h"
 
+static bool BorderCreated = false;
 static int CornerRadius = 6;
 static int BorderWidth = 2;
 static int Inset = BorderWidth / 2;
@@ -59,6 +60,8 @@ InvertY(int Y, int Height)
 
 void CreateBorder(int X, int Y, int W, int H)
 {
+    NSApplicationLoad();
+
     NSAutoreleasePool *Pool = [[NSAutoreleasePool alloc] init];
 
     NSRect GraphicsRect = NSMakeRect(X - Inset, InvertY(Y + Inset, H), W + (2 * Inset), H + (2 * Inset));
@@ -69,6 +72,7 @@ void CreateBorder(int X, int Y, int W, int H)
            defer: NO];
 
     BorderView = [[[OverlayView alloc] initWithFrame:GraphicsRect] autorelease];
+    BorderView = [[OverlayView alloc] initWithFrame:GraphicsRect];
     [BorderWindow setContentView:BorderView];
     [BorderWindow setIgnoresMouseEvents:YES];
     [BorderWindow setHasShadow:NO];
@@ -79,18 +83,27 @@ void CreateBorder(int X, int Y, int W, int H)
     [BorderWindow makeKeyAndOrderFront: nil];
     [BorderWindow setReleasedWhenClosed:YES];
 
+    BorderCreated = true;
+
     [Pool release];
 }
 
 void UpdateBorder(int X, int Y, int W, int H)
 {
-    dispatch_async(dispatch_get_global_queue( DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void)
+    if(BorderCreated)
     {
-        dispatch_async(dispatch_get_main_queue(), ^(void)
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void)
         {
-            [BorderWindow setFrame:NSMakeRect(X - Inset, InvertY(Y + Inset, H), W + (2 * Inset), H + (2 * Inset)) display:YES animate:NO];
+            dispatch_async(dispatch_get_main_queue(), ^(void)
+            {
+                [BorderWindow setFrame:NSMakeRect(X - Inset, InvertY(Y + Inset, H), W + (2 * Inset), H + (2 * Inset)) display:YES animate:NO];
+            });
         });
-    });
+    }
+    else
+    {
+        CreateBorder(X, Y, W, H);
+    }
 }
 
 void DestroyBorder()

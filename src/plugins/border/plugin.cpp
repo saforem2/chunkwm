@@ -199,7 +199,6 @@ PLUGIN_MAIN_FUNC(PluginMain)
  */
 PLUGIN_BOOL_FUNC(PluginInit)
 {
-    CreateBorder(0, 0, 0, 0);
     return true;
 }
 
