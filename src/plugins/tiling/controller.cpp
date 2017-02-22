@@ -69,8 +69,6 @@ GetWindowDistance(macos_space *Space, virtual_space *VirtualSpace,
     bool North = StringEquals(Direction, "north");
     bool South = StringEquals(Direction, "south");
 
-    // TODO(koekeishiya): Pass info so that we can figure out which
-    // display we are currently on. Should this be stored in VirtualSpace ??
     if(Wrap)
     {
         CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromSpace(Space->Id);
