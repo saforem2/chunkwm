@@ -379,6 +379,65 @@ void SwapWindow(char *Direction)
     AXLibDestroySpace(Space);
 }
 
+void MoveWindow(char *Direction)
+{
+    macos_window *Window = GetWindowByID(CVarIntegerValue(_CVAR_BSP_INSERTION_POINT));
+    if(Window)
+    {
+        macos_space *Space;
+        bool Success = AXLibActiveSpace(&Space);
+        ASSERT(Success);
+
+        if(Space->Type == kCGSSpaceUser)
+        {
+            virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
+            if(VirtualSpace->Tree && VirtualSpace->Mode == Virtual_Space_Bsp)
+            {
+                macos_window *ClosestWindow;
+                if(FindClosestWindow(Space, VirtualSpace, Window, &ClosestWindow, Direction, true))
+                {
+                    node *WindowNode = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
+                    ASSERT(WindowNode);
+                    node *ClosestNode = GetNodeWithId(VirtualSpace->Tree, ClosestWindow->Id, VirtualSpace->Mode);
+                    ASSERT(ClosestNode);
+                    node *FocusedNode;
+
+                    if(WindowNode->Parent == ClosestNode->Parent)
+                    {
+                        // NOTE(koekeishiya): Windows have the same parent, perform a regular swap.
+                        SwapNodeIds(WindowNode, ClosestNode);
+                        ResizeWindowToRegionSize(WindowNode);
+                        ResizeWindowToRegionSize(ClosestNode);
+                        FocusedNode = ClosestNode;
+                    }
+                    else
+                    {
+                        // NOTE(koekeishiya): Modify tree layout.
+                        UntileWindow(Window);
+                        UpdateCVar(_CVAR_BSP_INSERTION_POINT, (int)ClosestWindow->Id);
+                        TileWindow(Window);
+                        UpdateCVar(_CVAR_BSP_INSERTION_POINT, (int)Window->Id);
+
+                        FocusedNode = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
+                    }
+
+                    ASSERT(FocusedNode);
+
+                    if((CVarIntegerValue(CVAR_MOUSE_FOLLOWS_FOCUS)) &&
+                       (!IsCursorInRegion(FocusedNode->Region)))
+                    {
+                        CGPoint Center = CGPointMake(FocusedNode->Region.X + FocusedNode->Region.Width / 2,
+                                                     FocusedNode->Region.Y + FocusedNode->Region.Height / 2);
+                        CGWarpMouseCursorPosition(Center);
+                    }
+                }
+            }
+        }
+
+        AXLibDestroySpace(Space);
+    }
+}
+
 internal void
 ExtendedDockSetTopmost(macos_window *Window)
 {

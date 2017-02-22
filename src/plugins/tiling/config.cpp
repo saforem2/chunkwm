@@ -171,17 +171,18 @@ ParseWindowCommand(const char *Message, command *Chain)
 
     int Option;
     bool Success = true;
-    const char *Short = "f:s:i:t:";
+    const char *Short = "f:s:i:t:w:";
 
     command *Command = Chain;
     while((Option = getopt_long(Count, Args, Short, NULL, NULL)) != -1)
     {
         switch(Option)
         {
-            // NOTE(koekeishiya): Both the '-f', '-s' and '-i' flag support the same arguments.
+            // NOTE(koekeishiya): The '-f', '-s', '-i' and '-w' flag support the same arguments.
             case 'f':
             case 's':
             case 'i':
+            case 'w':
             {
                 if((StringEquals(optarg, "west")) ||
                    (StringEquals(optarg, "east")) ||
@@ -533,6 +534,10 @@ DAEMON_CALLBACK(DaemonCallback)
                 else if(Command->Flag == 's')
                 {
                     SwapWindow(Command->Arg);
+                }
+                else if(Command->Flag == 'w')
+                {
+                    MoveWindow(Command->Arg);
                 }
                 else if(Command->Flag == 'i')
                 {
