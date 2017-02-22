@@ -22,4 +22,4 @@ clean:
 	rm -f $(BUILD_PATH)/transparency.so
 
 $(BUILD_PATH)/transparency.so: $(SRC)
-	g++ $^ $(BUILD_FLAGS) -o $@ $(LINK)
+	clang++ $^ $(BUILD_FLAGS) -o $@ $(LINK)

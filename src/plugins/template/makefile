@@ -15,4 +15,4 @@ clean:
 	rm -f $(BUILD_PATH)/template.so
 
 $(BUILD_PATH)/template.so: $(SRC)
-	g++ $^ $(BUILD_FLAGS) -o $@ $(LINK)
+	clang++ $^ $(BUILD_FLAGS) -o $@ $(LINK)

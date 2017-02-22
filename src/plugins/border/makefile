@@ -18,4 +18,4 @@ clean:
 	rm -f $(BUILD_PATH)/border.so
 
 $(BUILD_PATH)/border.so: $(SRC)
-	g++ $^ $(BUILD_FLAGS) -o $@ $(LINK)
+	clang++ $^ $(BUILD_FLAGS) -o $@ $(LINK)

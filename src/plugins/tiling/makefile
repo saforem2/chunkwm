@@ -25,4 +25,4 @@ clean:
 	rm -f $(BUILD_PATH)/tiling.so
 
 $(BUILD_PATH)/tiling.so: $(SRC)
-	g++ $^ $(BUILD_FLAGS) -o $@ $(LINK)
+	clang++ $^ $(BUILD_FLAGS) -o $@ $(LINK)

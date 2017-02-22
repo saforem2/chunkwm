@@ -17,4 +17,4 @@ clean:
 	rm -f $(BUILD_PATH)/ffm.so
 
 $(BUILD_PATH)/ffm.so: $(SRC)
-	g++ $^ $(BUILD_FLAGS) -o $@ $(LINK)
+	clang++ $^ $(BUILD_FLAGS) -o $@ $(LINK)

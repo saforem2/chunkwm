@@ -20,4 +20,4 @@ clean:
 	rm -rf $(BUILD_PATH)
 
 $(BUILD_PATH)/chunkwm: $(SRC)
-	g++ $^ $(BUILD_FLAGS) -o $@ $(LINK)
+	clang++ $^ $(BUILD_FLAGS) -o $@ $(LINK)
