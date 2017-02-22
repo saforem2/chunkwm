@@ -7,8 +7,6 @@
 #include "../../common/misc/assert.h"
 #include "../../common/accessibility/display.h"
 
-#include <stdio.h>
-
 #define internal static
 
 internal region
@@ -38,11 +36,11 @@ FullscreenRegion()
 internal region
 LeftVerticalRegion(node *Node)
 {
+    ASSERT(Node);
+
     macos_space *Space;
     bool Success = AXLibActiveSpace(&Space);
     ASSERT(Success);
-
-    ASSERT(Node);
 
     virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
     region_offset *Offset = &VirtualSpace->Offset;
@@ -63,11 +61,11 @@ LeftVerticalRegion(node *Node)
 internal region
 RightVerticalRegion(node *Node)
 {
+    ASSERT(Node);
+
     macos_space *Space;
     bool Success = AXLibActiveSpace(&Space);
     ASSERT(Success);
-
-    ASSERT(Node);
 
     virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
     region_offset *Offset = &VirtualSpace->Offset;
@@ -88,11 +86,11 @@ RightVerticalRegion(node *Node)
 internal region
 UpperHorizontalRegion(node *Node)
 {
+    ASSERT(Node);
+
     macos_space *Space;
     bool Success = AXLibActiveSpace(&Space);
     ASSERT(Success);
-
-    ASSERT(Node);
 
     virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
     region_offset *Offset = &VirtualSpace->Offset;
@@ -113,11 +111,11 @@ UpperHorizontalRegion(node *Node)
 internal region
 LowerHorizontalRegion(node *Node)
 {
+    ASSERT(Node);
+
     macos_space *Space;
     bool Success = AXLibActiveSpace(&Space);
     ASSERT(Success);
-
-    ASSERT(Node);
 
     virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
     region_offset *Offset = &VirtualSpace->Offset;
