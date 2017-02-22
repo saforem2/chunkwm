@@ -11,13 +11,13 @@
 #include "plugin.h"
 #include "wqueue.h"
 
+#include "../common/misc/carbon.cpp"
+#include "../common/misc/workspace.mm"
+
 #include "../common/accessibility/observer.cpp"
 #include "../common/accessibility/application.cpp"
 #include "../common/accessibility/window.cpp"
 #include "../common/accessibility/element.cpp"
-
-#include "../common/misc/carbon.cpp"
-#include "../common/misc/workspace.mm"
 
 #include "../common/ipc/daemon.cpp"
 #include "../common/config/cvar.cpp"
