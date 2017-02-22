@@ -1,0 +1,47 @@
+# reload config
+cmd + alt + ctrl - r : khd -e "reload"
+
+# focus window
+alt - h : CHUNKC_SOCKET=4131 chunkc window -f west
+alt - j : CHUNKC_SOCKET=4131 chunkc window -f south
+alt - k : CHUNKC_SOCKET=4131 chunkc window -f north
+alt - l : CHUNKC_SOCKET=4131 chunkc window -f east
+
+# swap window
+shift + alt - h : CHUNKC_SOCKET=4131 chunkc window -s west
+shift + alt - j : CHUNKC_SOCKET=4131 chunkc window -s south
+shift + alt - k : CHUNKC_SOCKET=4131 chunkc window -s north
+shift + alt - l : CHUNKC_SOCKET=4131 chunkc window -s east
+
+# move window
+shift + cmd - h : CHUNKC_SOCKET=4131 chunkc window -w west
+shift + cmd - j : CHUNKC_SOCKET=4131 chunkc window -w south
+shift + cmd - k : CHUNKC_SOCKET=4131 chunkc window -w north
+shift + cmd - l : CHUNKC_SOCKET=4131 chunkc window -w east
+
+# increase region size
+shift + alt - a : CHUNKC_SOCKET=4131 chunkc window -r 0.1 -e west
+shift + alt - s : CHUNKC_SOCKET=4131 chunkc window -r 0.1 -e south
+shift + alt - w : CHUNKC_SOCKET=4131 chunkc window -r 0.1 -e north
+shift + alt - d : CHUNKC_SOCKET=4131 chunkc window -r 0.1 -e east
+
+# decrease region size
+shift + cmd - a : CHUNKC_SOCKET=4131 chunkc window -r -0.1 -e west
+shift + cmd - s : CHUNKC_SOCKET=4131 chunkc window -r -0.1 -e south
+shift + cmd - w : CHUNKC_SOCKET=4131 chunkc window -r -0.1 -e north
+shift + cmd - d : CHUNKC_SOCKET=4131 chunkc window -r -0.1 -e east
+
+# set insertion point
+ctrl + alt - h : CHUNKC_SOCKET=4131 chunkc window -i west
+ctrl + alt - j : CHUNKC_SOCKET=4131 chunkc window -i south
+ctrl + alt - k : CHUNKC_SOCKET=4131 chunkc window -i north
+ctrl + alt - l : CHUNKC_SOCKET=4131 chunkc window -i east
+
+# float / unfloat window
+alt - t : CHUNKC_SOCKET=4131 chunkc window -t float
+
+# float next window to be tiled
+shift + alt - t : CHUNKC_SOCKET=4131 chunkc config window_float_next 1
+
+# rotate tree
+shift + alt - r : CHUNKC_SOCKET=4131 chunkc space -r 90
