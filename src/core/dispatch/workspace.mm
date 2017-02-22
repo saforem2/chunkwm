@@ -5,6 +5,7 @@
 #import <Cocoa/Cocoa.h>
 
 #define internal static
+
 @interface WorkspaceWatcher : NSObject {
 }
 - (id)init;
