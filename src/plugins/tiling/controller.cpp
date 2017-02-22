@@ -218,7 +218,9 @@ void FocusWindow(char *Direction)
                     if(CVarIntegerValue(CVAR_MOUSE_FOLLOWS_FOCUS))
                     {
                         node *Node = GetNodeWithId(VirtualSpace->Tree, ClosestWindow->Id, VirtualSpace->Mode);
-                        if(Node && !IsCursorInRegion(Node->Region))
+                        ASSERT(Node);
+
+                        if(!IsCursorInRegion(Node->Region))
                         {
                             CGPoint Center = CGPointMake(Node->Region.X + Node->Region.Width / 2,
                                                          Node->Region.Y + Node->Region.Height / 2);
@@ -312,19 +314,18 @@ void SwapWindow(char *Direction)
                     if(FindClosestWindow(Space, VirtualSpace, Window, &ClosestWindow, Direction, true))
                     {
                         node *ClosestNode = GetNodeWithId(VirtualSpace->Tree, ClosestWindow->Id, VirtualSpace->Mode);
-                        if(ClosestNode)
-                        {
-                            SwapNodeIds(WindowNode, ClosestNode);
-                            ResizeWindowToRegionSize(WindowNode);
-                            ResizeWindowToRegionSize(ClosestNode);
+                        ASSERT(ClosestNode);
 
-                            if((CVarIntegerValue(CVAR_MOUSE_FOLLOWS_FOCUS)) &&
-                               (!IsCursorInRegion(ClosestNode->Region)))
-                            {
-                                CGPoint Center = CGPointMake(ClosestNode->Region.X + ClosestNode->Region.Width / 2,
-                                                             ClosestNode->Region.Y + ClosestNode->Region.Height / 2);
-                                CGWarpMouseCursorPosition(Center);
-                            }
+                        SwapNodeIds(WindowNode, ClosestNode);
+                        ResizeWindowToRegionSize(WindowNode);
+                        ResizeWindowToRegionSize(ClosestNode);
+
+                        if((CVarIntegerValue(CVAR_MOUSE_FOLLOWS_FOCUS)) &&
+                           (!IsCursorInRegion(ClosestNode->Region)))
+                        {
+                            CGPoint Center = CGPointMake(ClosestNode->Region.X + ClosestNode->Region.Width / 2,
+                                                         ClosestNode->Region.Y + ClosestNode->Region.Height / 2);
+                            CGWarpMouseCursorPosition(Center);
                         }
                     }
                 }
@@ -603,4 +604,55 @@ void RotateWindowTree(char *Degrees)
     }
 
     AXLibDestroySpace(Space);
+}
+
+void AdjustWindowRatio(char *Direction)
+{
+    macos_window *Window = GetWindowByID(CVarIntegerValue(_CVAR_BSP_INSERTION_POINT));
+    if(Window)
+    {
+        macos_space *Space;
+        bool Success = AXLibActiveSpace(&Space);
+        ASSERT(Success);
+
+        if(Space->Type == kCGSSpaceUser)
+        {
+            virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
+            if((VirtualSpace->Tree && VirtualSpace->Mode == Virtual_Space_Bsp) &&
+               (!IsLeafNode(VirtualSpace->Tree) && VirtualSpace->Tree->WindowId == 0))
+            {
+                node *WindowNode = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
+                if(WindowNode)
+                {
+                    macos_window *ClosestWindow;
+                    if(FindClosestWindow(Space, VirtualSpace, Window, &ClosestWindow, Direction, false))
+                    {
+                        node *ClosestNode = GetNodeWithId(VirtualSpace->Tree, ClosestWindow->Id, VirtualSpace->Mode);
+                        ASSERT(ClosestNode);
+
+                        node *Ancestor = GetLowestCommonAncestor(WindowNode, ClosestNode);
+                        if(Ancestor)
+                        {
+                            float Offset = CVarFloatingPointValue(CVAR_BSP_SPLIT_RATIO);
+                            if((IsRightChild(WindowNode)) ||
+                               (IsNodeInTree(Ancestor->Right, WindowNode)))
+                            {
+                                Offset = -Offset;
+                            }
+
+                            float Ratio = Ancestor->Ratio + Offset;
+                            if(Ratio >= 0.1 && Ratio <= 0.9)
+                            {
+                                Ancestor->Ratio = Ratio;
+                                ResizeNodeRegion(Ancestor);
+                                ApplyNodeRegion(Ancestor, VirtualSpace->Mode);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        AXLibDestroySpace(Space);
+    }
 }

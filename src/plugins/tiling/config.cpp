@@ -171,7 +171,8 @@ command_func WindowCommandDispatch[] =
     UseInsertionPoint,
     ToggleWindow,
     MoveWindow,
-    TemporaryRatio
+    TemporaryRatio,
+    AdjustWindowRatio
 };
 
 #define WINDOW_FLAG_F 0
@@ -180,6 +181,7 @@ command_func WindowCommandDispatch[] =
 #define WINDOW_FLAG_T 3
 #define WINDOW_FLAG_W 4
 #define WINDOW_FLAG_R 5
+#define WINDOW_FLAG_E 6
 
 unsigned WindowFuncFromFlag(char Flag)
 {
@@ -191,6 +193,7 @@ unsigned WindowFuncFromFlag(char Flag)
         case 't': return WINDOW_FLAG_T; break;
         case 'w': return WINDOW_FLAG_W; break;
         case 'r': return WINDOW_FLAG_R; break;
+        case 'e': return WINDOW_FLAG_E; break;
 
         // NOTE(koekeishiya): silence compiler warning.
         default: return 0; break;
@@ -205,18 +208,19 @@ ParseWindowCommand(const char *Message, command *Chain)
 
     int Option;
     bool Success = true;
-    const char *Short = "f:s:i:t:w:r:";
+    const char *Short = "f:s:i:t:w:r:e:";
 
     command *Command = Chain;
     while((Option = getopt_long(Count, Args, Short, NULL, NULL)) != -1)
     {
         switch(Option)
         {
-            // NOTE(koekeishiya): The '-f', '-s', '-i' and '-w' flag support the same arguments.
+            // NOTE(koekeishiya): The '-f', '-s', '-i', '-w' and '-e' flag support the same arguments.
             case 'f':
             case 's':
             case 'i':
             case 'w':
+            case 'e':
             {
                 if((StringEquals(optarg, "west")) ||
                    (StringEquals(optarg, "east")) ||
@@ -590,10 +594,12 @@ DAEMON_CALLBACK(DaemonCallback)
                  * f: focus
                  * s: swap
                  * w: detach and reinsert
-                 * i: insertion point (previously 'mark' window)
-                 * t: float, fullscreen, (parent ?)
+                 * i: set insertion point (previously 'mark' window)
+                 * t: toggle float, fullscreen, (parent ?)
+                 * e: adjust edge
                  * d: move to desktop
                  * m: move to monitor
+                 * r: set ratio, works with 'w' and 'e'
                  * */
 
                 unsigned Index = WindowFuncFromFlag(Command->Flag);
