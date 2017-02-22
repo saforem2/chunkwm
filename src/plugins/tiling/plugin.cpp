@@ -203,8 +203,7 @@ void TileWindow(macos_window *Window)
                             ASSERT(Node != NULL);
                         }
 
-                        node *NewNode = CreateRootNode();
-                        NewNode->WindowId = Window->Id;
+                        node *NewNode = CreateRootNode(Window->Id);
 
                         if(Node->Right)
                         {
@@ -222,8 +221,7 @@ void TileWindow(macos_window *Window)
             else
             {
                 // NOTE(koekeishiya): This path is equal for both bsp and monocle spaces!
-                VirtualSpace->Tree = CreateRootNode();
-                VirtualSpace->Tree->WindowId = Window->Id;
+                VirtualSpace->Tree = CreateRootNode(Window->Id);
                 ResizeWindowToRegionSize(VirtualSpace->Tree);
             }
         }
@@ -450,8 +448,7 @@ CreateWindowTree()
             std::vector<uint32_t> Windows = GetAllVisibleWindows();
             if(!Windows.empty())
             {
-                node *Root = CreateRootNode();
-                Root->WindowId = Windows[0];
+                node *Root = CreateRootNode(Windows[0]);
                 VirtualSpace->Tree = Root;
 
                 if(VirtualSpace->Mode == Virtual_Space_Bsp)
@@ -478,9 +475,7 @@ CreateWindowTree()
                         Index < Windows.size();
                         ++Index)
                     {
-                        node *Next = CreateRootNode();
-                        Next->WindowId = Windows[Index];
-
+                        node *Next = CreateRootNode(Windows[Index]);
                         Root->Right = Next;
                         Next->Left = Root;
                         Root = Next;

@@ -21,11 +21,12 @@ node_split OptimalSplitMode(node *Node)
     return NodeRatio >= OptimalRatio ? Split_Vertical : Split_Horizontal;
 }
 
-node *CreateRootNode()
+node *CreateRootNode(uint32_t WindowId)
 {
     node *Node = (node *) malloc(sizeof(node));
     memset(Node, 0, sizeof(node));
 
+    Node->WindowId = WindowId;
     Node->Ratio = CVarFloatingPointValue(CVAR_BSP_SPLIT_RATIO);
     Node->Split = Split_None;
     CreateNodeRegion(Node, Region_Full);
