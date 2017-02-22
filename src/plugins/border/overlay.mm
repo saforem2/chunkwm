@@ -25,6 +25,7 @@ NSColor *Color = ColorFromHex(HexColor);
 @end
 
 @implementation OverlayView
+
 - (void)drawRect:(NSRect)Rect
 {
     if(self.wantsLayer != YES)
@@ -60,8 +61,6 @@ InvertY(int Y, int Height)
 
 void CreateBorder(int X, int Y, int W, int H)
 {
-    NSApplicationLoad();
-
     NSAutoreleasePool *Pool = [[NSAutoreleasePool alloc] init];
 
     NSRect GraphicsRect = NSMakeRect(X - Inset, InvertY(Y + Inset, H), W + (2 * Inset), H + (2 * Inset));
@@ -72,7 +71,6 @@ void CreateBorder(int X, int Y, int W, int H)
            defer: NO];
 
     BorderView = [[[OverlayView alloc] initWithFrame:GraphicsRect] autorelease];
-    BorderView = [[OverlayView alloc] initWithFrame:GraphicsRect];
     [BorderWindow setContentView:BorderView];
     [BorderWindow setIgnoresMouseEvents:YES];
     [BorderWindow setHasShadow:NO];
