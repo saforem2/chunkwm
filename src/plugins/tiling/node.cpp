@@ -8,6 +8,7 @@
 #include "../../common/accessibility/element.h"
 
 #include <queue>
+#include <map>
 
 #define internal static
 
@@ -162,6 +163,14 @@ bool IsLeftChild(node *Node)
     return Result;
 }
 
+bool IsNodeInTree(node *Tree, node *Node)
+{
+    bool Result = ((Tree->Left == Node || Tree->Right == Node) ||
+                   (Tree->Left && IsNodeInTree(Tree->Left, Node)) ||
+                   (Tree->Right && IsNodeInTree(Tree->Right, Node)));
+    return Result;
+}
+
 bool IsLeafNode(node *Node)
 {
     bool Result = Node->Left == NULL && Node->Right == NULL;
@@ -244,6 +253,29 @@ node *GetNearestNodeToTheRight(node *Node)
         }
 
         return Parent->Left;
+    }
+
+    return NULL;
+}
+
+node *GetLowestCommonAncestor(node *A, node *B)
+{
+    std::map<node *, bool> Ancestors;
+
+    while(A)
+    {
+        Ancestors[A] = true;
+        A = A->Parent;
+    }
+
+    while(B)
+    {
+        if(Ancestors.find(B) != Ancestors.end())
+        {
+            return B;
+        }
+
+        B = B->Parent;
     }
 
     return NULL;
