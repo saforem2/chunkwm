@@ -11,7 +11,7 @@ export CHUNKC_SOCKET=3920
 #       loading a plugin. '~' expansion is supported.
 #
 
-chunkc plugin_dir ~/Documents/programming/C++/chunkwm/plugins
+chunkc plugin_dir ~/.chunkwm_plugins
 
 #
 # NOTE: if enabled, chunkwm will monitor the specified plugin_dir
@@ -32,6 +32,6 @@ chunkc load border.so
 # NOTE: if chunkc plugin_dir is not set, the absolutepath is necessary.
 #
 
-# chunkc load ~/Documents/programming/C++/chunkwm/plugins/tiling.so
-# chunkc load ~/Documents/programming/C++/chunkwm/plugins/ffm.so
-# chunkc load ~/Documents/programming/C++/chunkwm/plugins/border.so
+# chunkc load ~/.chunkwm_plugins/tiling.so
+# chunkc load ~/.chunkwm_plugins/ffm.so
+# chunkc load ~/.chunkwm_plugins/border.so
