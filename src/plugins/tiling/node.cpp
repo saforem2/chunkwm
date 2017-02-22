@@ -189,24 +189,30 @@ node *GetLastLeafNode(node *Tree)
     return Node;
 }
 
-node *GetFirstMinDepthLeafNode(node *Root)
+node *GetFirstMinDepthLeafNode(node *Tree)
 {
     std::queue<node *> Queue;
-    Queue.push(Root);
+    Queue.push(Tree);
 
     while(!Queue.empty())
     {
         node *Node = Queue.front();
         Queue.pop();
 
-        if(!Node->Left && !Node->Right)
+        if(IsLeafNode(Node))
+        {
             return Node;
+        }
 
         if(Node->Left)
+        {
             Queue.push(Node->Left);
+        }
 
         if(Node->Right)
+        {
             Queue.push(Node->Right);
+        }
     }
 
     /* NOTE(koekeishiya): Unreachable return;
