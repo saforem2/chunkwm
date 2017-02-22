@@ -84,7 +84,13 @@ void CreateBorder(int X, int Y, int W, int H)
 
 void UpdateBorder(int X, int Y, int W, int H)
 {
-    [BorderWindow setFrame:NSMakeRect(X - Inset, InvertY(Y + Inset, H), W + (2 * Inset), H + (2 * Inset)) display:YES animate:NO];
+    dispatch_async(dispatch_get_global_queue( DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void)
+    {
+        dispatch_async(dispatch_get_main_queue(), ^(void)
+        {
+            [BorderWindow setFrame:NSMakeRect(X - Inset, InvertY(Y + Inset, H), W + (2 * Inset), H + (2 * Inset)) display:YES animate:NO];
+        });
+    });
 }
 
 void DestroyBorder()
