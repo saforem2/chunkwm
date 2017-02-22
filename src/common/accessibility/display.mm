@@ -14,6 +14,7 @@ extern "C" CFArrayRef CGSCopyManagedDisplaySpaces(const CGSConnectionID Connecti
 extern "C" CFArrayRef CGSCopySpacesForWindows(CGSConnectionID Connection, CGSSpaceSelector Type, CFArrayRef Windows);
 extern "C" CGSSpaceID CGSManagedDisplayGetCurrentSpace(CGSConnectionID Connection, CFStringRef DisplayRef);
 extern "C" CFStringRef CGSCopyManagedDisplayForSpace(const CGSConnectionID Connection, CGSSpaceID Space);
+extern "C" CFStringRef CGSCopyManagedDisplayForWindow(const CGSConnectionID Connection, uint32_t WindowId);
 
 /* NOTE(koekeishiya): Find the UUID associated with a CGDirectDisplayID. */
 internal CFStringRef
@@ -146,6 +147,11 @@ CFStringRef AXLibGetDisplayIdentifierFromSpace(CGSSpaceID Space)
     return CGSCopyManagedDisplayForSpace(CGSDefaultConnection, Space);
 }
 
+/* NOTE(koekeishiya): Caller is responsible for calling CFRelease. */
+CFStringRef AXLibGetDisplayIdentifierFromWindow(uint32_t WindowId)
+{
+    return CGSCopyManagedDisplayForWindow(CGSDefaultConnection, WindowId);
+}
 
 internal CGSSpaceID
 AXLibActiveSpaceIdentifier(CFStringRef DisplayRef, CFStringRef *SpaceRef)
