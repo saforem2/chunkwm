@@ -6,6 +6,7 @@ void SwapWindow(char *Direction);
 void MoveWindow(char *Direction);
 void ToggleWindow(char *Type);
 void UseInsertionPoint(char *Direction);
+void TemporaryRatio(char *Ratio);
 
 void RotateWindowTree(char *Degrees);
 

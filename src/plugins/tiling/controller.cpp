@@ -438,6 +438,13 @@ void MoveWindow(char *Direction)
     }
 }
 
+void TemporaryRatio(char *Ratio)
+{
+    float FloatRatio;
+    sscanf(Ratio, "%f", &FloatRatio);
+    UpdateCVar(CVAR_BSP_SPLIT_RATIO, FloatRatio);
+}
+
 internal void
 ExtendedDockSetTopmost(macos_window *Window)
 {
