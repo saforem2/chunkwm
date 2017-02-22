@@ -1,4 +1,3 @@
-#include "callback.h"
 #include "plugin.h"
 #include "wqueue.h"
 #include "state.h"

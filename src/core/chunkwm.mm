@@ -8,7 +8,6 @@
 
 #include "hotloader.h"
 #include "state.h"
-#include "callback.h"
 #include "plugin.h"
 #include "wqueue.h"
 
