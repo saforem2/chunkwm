@@ -20,6 +20,9 @@
 #include "../common/misc/carbon.cpp"
 #include "../common/misc/workspace.mm"
 
+#include "../common/ipc/daemon.cpp"
+#include "../common/config/cvar.cpp"
+
 #include "dispatch/carbon.cpp"
 #include "dispatch/workspace.mm"
 #include "dispatch/event.cpp"
@@ -30,11 +33,12 @@
 #include "callback.cpp"
 #include "plugin.cpp"
 #include "wqueue.cpp"
+#include "config.cpp"
 
 #define internal static
 #define local_persist static
 
-internal inline AXUIElementRef
+inline AXUIElementRef
 SystemWideElement()
 {
     local_persist AXUIElementRef Element;
@@ -47,7 +51,8 @@ SystemWideElement()
     return Element;
 }
 
-internal const char *PluginDirectory = "/Users/Koe/Documents/programming/C++/chunkwm/plugins";
+#define CONFIG_FILE  "/.chunkwmrc"
+#define CHUNKWM_PORT 3920
 
 int main(int Count, char **Args)
 {
@@ -55,42 +60,78 @@ int main(int Count, char **Args)
     AXUIElementSetMessagingTimeout(SystemWideElement(), 1.0);
 
     carbon_event_handler Carbon = {};
-    if(BeginCarbonEventHandler(&Carbon))
+    if(!BeginCarbonEventHandler(&Carbon))
+    {
+        fprintf(stderr, "chunkwm: failed to install carbon eventhandler! abort..\n");
+        return EXIT_FAILURE;
+    }
+
+    if(!BeginCVars())
+    {
+        fprintf(stderr, "chunkwm: failed to initialize cvars! abort..\n");
+        return EXIT_FAILURE;
+    }
+
+    if(!StartDaemon(CHUNKWM_PORT, DaemonCallback))
+    {
+        fprintf(stderr, "chunkwm: failed to initialize daemon! abort..\n");
+        return EXIT_FAILURE;
+    }
+
+    const char *HomeEnv = getenv("HOME");
+    if(!HomeEnv)
+    {
+        fprintf(stderr, "chunkwm: 'env HOME' not set! abort..\n");
+        return EXIT_FAILURE;
+    }
+
+    unsigned HomeEnvLength = strlen(HomeEnv);
+    unsigned ConfigFileLength = strlen(CONFIG_FILE);
+    unsigned PathLength = HomeEnvLength + ConfigFileLength;
+
+    char PathToConfigFile[PathLength + 1];
+    PathToConfigFile[PathLength] = '\0';
+
+    memcpy(PathToConfigFile, HomeEnv, HomeEnvLength);
+    memcpy(PathToConfigFile + HomeEnvLength, CONFIG_FILE, ConfigFileLength);
+
+    struct stat Buffer;
+    if(stat(PathToConfigFile, &Buffer) != 0)
+    {
+        fprintf(stderr, "chunkwm: config '%s' not found!\n", PathToConfigFile);
+        return EXIT_FAILURE;
+    }
+
+    if(!BeginPlugins())
+    {
+        fprintf(stderr, "chunkwm: failed to initialize critical mutex! abort..\n");
+        return EXIT_FAILURE;
+    }
+
+    if(InitState())
     {
         BeginCallbackThreads(4);
         BeginSharedWorkspace();
         BeginDisplayHandler();
 
-        // TODO(koekeishiya): Read plugin directory from argument or env-variable.
-        int Status = BeginPlugins(PluginDirectory);
-        if(Status == 0)
-        {
-            // NOTE(koekeishiya): Success
-            if(InitState())
-            {
-                HotloaderAddPath(PluginDirectory);
-                HotloaderInit();
+        // NOTE(koekeishiya): The config file is just an executable bash script!
+        system(PathToConfigFile);
 
-                StartEventLoop();
-                CFRunLoopRun();
-            }
-            else
-            {
-                fprintf(stderr, "chunkwm: failed to initialize critical mutex! abort..\n");
-            }
-        }
-        else if(Status == -1)
+        // NOTE(koekeishiya): Read plugin directory from cvar.
+        char *PluginDirectory = CVarStringValue("plugin_dir");
+        if(PluginDirectory && CVarIntegerValue("hotload"))
         {
-            fprintf(stderr, "chunkwm: failed to initialize plugins, directory does not exist! abort..\n");
+            HotloaderAddPath(PluginDirectory);
+            HotloaderInit();
         }
-        else if(Status == -2)
-        {
-            fprintf(stderr, "chunkwm: failed to initialize critical mutex! abort..\n");
-        }
+
+        StartEventLoop();
+        CFRunLoopRun();
     }
     else
     {
-        fprintf(stderr, "chunkwm: failed to install carbon eventhandler! abort..\n");
+        fprintf(stderr, "chunkwm: failed to initialize critical mutex! abort..\n");
+        return EXIT_FAILURE;
     }
 
     return EXIT_SUCCESS;

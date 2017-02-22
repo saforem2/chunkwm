@@ -234,11 +234,7 @@ bool UnloadPlugin(const char *Absolutepath, const char *Filename)
     return Result;
 }
 
-/* NOTE(koekeishiya):
- * Success                      =  0
- * Directory does not exist     = -1
- * Failed to initialize mutexes = -2 */
-int BeginPlugins(const char *Directory)
+bool BeginPlugins()
 {
     for(int Index = 0;
         Index < chunkwm_export_count;
@@ -246,39 +242,9 @@ int BeginPlugins(const char *Directory)
     {
         if(pthread_mutex_init(&Mutexes[Index], NULL) != 0)
         {
-            return -2;
+            return false;
         }
     }
 
-    DIR *Handle = opendir(Directory);
-    if(!Handle)
-    {
-        return -1;
-    }
-
-    struct dirent *Entry;
-    while((Entry = readdir(Handle)))
-    {
-        char *File = Entry->d_name;
-        char *Extension = strrchr(File, '.');
-        if((Extension) && (strcmp(Extension, ".so") == 0))
-        {
-            size_t DirectoryLength = strlen(Directory);
-            size_t FilenameLength = strlen(Entry->d_name);
-            size_t TotalLength = DirectoryLength + 1 + FilenameLength;
-
-            char *Absolutepath = (char *) malloc(TotalLength + 1);
-            Absolutepath[TotalLength] = '\0';
-
-            memcpy(Absolutepath, Directory, DirectoryLength);
-            memset(Absolutepath + DirectoryLength, '/', 1);
-            memcpy(Absolutepath + DirectoryLength + 1, Entry->d_name, FilenameLength);
-
-            LoadPlugin(Absolutepath, Entry->d_name);
-            free(Absolutepath);
-        }
-    }
-
-    closedir(Handle);
-    return 0;
+    return true;
 }

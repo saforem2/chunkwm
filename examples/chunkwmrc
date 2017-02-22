@@ -1,0 +1,35 @@
+#
+# NOTE: uses chunkc to send data
+#
+
+export CHUNKC_SOCKET=3920
+
+#
+# NOTE: specify the absolutepath to the directory to use when
+#       loading a plugin. '~' expansion is not supported.
+#
+
+chunkc plugin_dir /Users/Koe/Documents/programming/C++/chunkwm/plugins
+
+#
+# NOTE: if enabled, chunkwm will monitor the specified plugin_dir
+#       and automatically reload any '.so' file that is changed.
+#
+
+chunkc hotload 1
+
+#
+# NOTE: specify plugins to load when chunkwm starts.
+#
+
+chunkc load tiling.so
+chunkc load ffm.so
+chunkc load border.so
+
+#
+# NOTE: if chunkc plugin_dir is not set, the absolutepath is necessary.
+#
+
+# chunkc load /Users/Koe/Documents/programming/C++/chunkwm/plugins/tiling.so
+# chunkc load /Users/Koe/Documents/programming/C++/chunkwm/plugins/ffm.so
+# chunkc load /Users/Koe/Documents/programming/C++/chunkwm/plugins/border.so
