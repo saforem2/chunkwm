@@ -191,6 +191,9 @@ unsigned WindowFuncFromFlag(char Flag)
         case 't': return WINDOW_FLAG_T; break;
         case 'w': return WINDOW_FLAG_W; break;
         case 'r': return WINDOW_FLAG_R; break;
+
+        // NOTE(koekeishiya): silence compiler warning.
+        default: return 0; break;
     }
 }
 
@@ -284,7 +287,7 @@ End:
 
 command_func SpaceCommandDispatch[] =
 {
-    RotateTree
+    RotateWindowTree
 };
 
 #define SPACE_FLAG_R 0
@@ -294,6 +297,9 @@ unsigned SpaceFuncFromFlag(char Flag)
     switch(Flag)
     {
         case 'r': return SPACE_FLAG_R; break;
+
+        // NOTE(koekeishiya): silence compiler warning.
+        default: return 0; break;
     }
 }
 
