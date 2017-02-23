@@ -84,7 +84,7 @@ internal bool
 IsProcessInteractive(carbon_application_details *Info)
 {
     bool Result = ((!Info->ProcessBackground) &&
-                   (Info->ProcessPolicy != PROCESS_POLICY_LSBACKGROUND_ONLY));
+                   (Info->ProcessPolicy == PROCESS_POLICY_REGULAR));
     return Result;
 }
 

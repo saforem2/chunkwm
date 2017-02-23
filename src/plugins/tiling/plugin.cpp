@@ -874,7 +874,7 @@ Init()
     }
 
 
-    uint32_t ProcessPolicy = Process_Policy_Regular | Process_Policy_LSUIElement;
+    uint32_t ProcessPolicy = Process_Policy_Regular;
     std::vector<macos_application *> Applications = AXLibRunningProcesses(ProcessPolicy);
 
     for(size_t Index = 0; Index < Applications.size(); ++Index)

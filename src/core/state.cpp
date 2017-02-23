@@ -335,7 +335,7 @@ bool InitState()
     bool Result = pthread_mutex_init(&WindowsLock, NULL) == 0;
     if(Result)
     {
-        uint32_t ProcessPolicy = Process_Policy_Regular | Process_Policy_LSUIElement;
+        uint32_t ProcessPolicy = Process_Policy_Regular;
         std::vector<macos_application *> RunningApplications = AXLibRunningProcesses(ProcessPolicy);
 
         for(size_t Index = 0;
