@@ -28,6 +28,16 @@ build **chunkwm**:
     make            # debug build
     make install    # optimized build
 
+the binary is placed in `<project>/bin`.
+
+build **chunkc**:
+
+    # chunkc is a client to interact with **chunkwm** and **plugins**.
+    cd <project>/src/chunkc
+
+    make            # optimized build
+
+the binary is placed in `<project>/chunkc/bin`.
 
 build **plugins**:
 
