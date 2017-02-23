@@ -23,6 +23,7 @@
 
 #include "../common/ipc/daemon.cpp"
 #include "../common/config/cvar.cpp"
+#include "../common/config/tokenize.cpp"
 
 #include "dispatch/carbon.cpp"
 #include "dispatch/workspace.mm"

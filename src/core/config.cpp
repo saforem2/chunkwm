@@ -1,82 +1,14 @@
 #include "plugin.h"
 
+#include "../common/config/tokenize.h"
 #include "../common/config/cvar.h"
 #include "../common/misc/assert.h"
 #include "../common/ipc/daemon.h"
 
 #include "constants.h"
 
-#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-
-struct token
-{
-    const char *Text;
-    unsigned Length;
-};
-
-inline bool
-TokenEquals(token Token, const char *Match)
-{
-    const char *At = Match;
-    for(int Index = 0;
-        Index < Token.Length;
-        ++Index, ++At)
-    {
-        if((*At == 0) || (Token.Text[Index] != *At))
-        {
-            return false;
-        }
-    }
-
-    bool Result = (*At == 0);
-    return Result;
-}
-
-token GetToken(const char **Data)
-{
-    token Token;
-
-    Token.Text = *Data;
-    while(**Data && **Data != ' ')
-    {
-        ++(*Data);
-    }
-
-    Token.Length = *Data - Token.Text;
-    ASSERT(**Data == ' ' || **Data == '\0');
-
-    if(**Data == ' ')
-    {
-        ++(*Data);
-    }
-    else
-    {
-        // NOTE(koekeishiya): Do not go past the null-terminator!
-    }
-
-    return Token;
-}
-
-inline char *
-TokenToString(token Token)
-{
-    char *Result = (char *) malloc(Token.Length + 1);
-    Result[Token.Length] = '\0';
-    memcpy(Result, Token.Text, Token.Length);
-    return Result;
-}
-
-inline int
-TokenToInt(token Token)
-{
-    int Result = 0;
-    char *String = TokenToString(Token);
-    sscanf(String, "%d", &Result);
-    free(String);
-    return Result;
-}
 
 DAEMON_CALLBACK(DaemonCallback)
 {
