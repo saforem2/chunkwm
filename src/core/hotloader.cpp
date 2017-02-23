@@ -1,4 +1,5 @@
 #include "hotloader.h"
+
 #include "plugin.h"
 
 #include <sys/stat.h>
@@ -76,7 +77,36 @@ void HotloaderAddPath(const char *Path)
 {
     if(!Hotloader.Enabled)
     {
-        Directories.push_back(Path);
+        struct stat Buffer;
+        if(lstat(Path, &Buffer) == 0)
+        {
+          if(S_ISDIR(Buffer.st_mode))
+          {
+              // NOTE(koekeishiya): not a symlink.
+              Directories.push_back(Path);
+          }
+          else if(S_ISLNK(Buffer.st_mode))
+          {
+              ssize_t Size = Buffer.st_size + 1;
+              char Directory[Size];
+              ssize_t Result = readlink(Path, Directory, Size);
+
+              if(Result != -1)
+              {
+                  Directory[Result] = '\0';
+                  Directories.push_back(strdup(Directory));
+                  printf("hotloader: symlink '%s' -> '%s'\n", Path, Directory);
+              }
+          }
+          else
+          {
+              fprintf(stderr, "hotloader: '%s' is not a directory!\n", Path);
+          }
+        }
+        else
+        {
+            fprintf(stderr, "hotloader: '%s' is not a valid path!\n", Path);
+        }
     }
 }
 
@@ -85,33 +115,40 @@ void HotloaderInit()
     if(!Hotloader.Enabled)
     {
         int Count = Directories.size();
-        CFStringRef StringRefs[Count];
-
-        for(size_t Index = 0;
-            Index < Count;
-            ++Index)
+        if(Count)
         {
-            StringRefs[Index] = CFStringCreateWithCString(kCFAllocatorDefault,
-                                                          Directories[Index],
-                                                          kCFStringEncodingUTF8);
+            CFStringRef StringRefs[Count];
+
+            for(size_t Index = 0;
+                Index < Count;
+                ++Index)
+            {
+                StringRefs[Index] = CFStringCreateWithCString(kCFAllocatorDefault,
+                                                              Directories[Index],
+                                                              kCFStringEncodingUTF8);
+            }
+
+            Hotloader.Enabled = true;
+            Hotloader.Path = (CFArrayRef) CFArrayCreate(NULL, (const void **) StringRefs, Count, &kCFTypeArrayCallBacks);
+
+            Hotloader.Flags = kFSEventStreamCreateFlagNoDefer |
+                              kFSEventStreamCreateFlagFileEvents;
+
+            Hotloader.Stream = FSEventStreamCreate(NULL,
+                                                   HotloadPluginCallback,
+                                                   NULL,
+                                                   Hotloader.Path,
+                                                   kFSEventStreamEventIdSinceNow,
+                                                   0.5,
+                                                   Hotloader.Flags);
+
+            FSEventStreamScheduleWithRunLoop(Hotloader.Stream, CFRunLoopGetMain(), kCFRunLoopDefaultMode);
+            FSEventStreamStart(Hotloader.Stream);
         }
-
-        Hotloader.Enabled = true;
-        Hotloader.Path = (CFArrayRef) CFArrayCreate(NULL, (const void **) StringRefs, Count, &kCFTypeArrayCallBacks);
-
-        Hotloader.Flags = kFSEventStreamCreateFlagNoDefer |
-                          kFSEventStreamCreateFlagFileEvents;
-
-        Hotloader.Stream = FSEventStreamCreate(NULL,
-                                               HotloadPluginCallback,
-                                               NULL,
-                                               Hotloader.Path,
-                                               kFSEventStreamEventIdSinceNow,
-                                               0.5,
-                                               Hotloader.Flags);
-
-        FSEventStreamScheduleWithRunLoop(Hotloader.Stream, CFRunLoopGetMain(), kCFRunLoopDefaultMode);
-        FSEventStreamStart(Hotloader.Stream);
+        else
+        {
+            fprintf(stderr, "hotloader: no directories specified!\n");
+        }
     }
 }
 
