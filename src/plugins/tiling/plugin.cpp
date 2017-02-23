@@ -161,7 +161,8 @@ void TileWindow(macos_window *Window)
     bool Success = AXLibActiveSpace(&Space);
     ASSERT(Success);
 
-    // NOTE(koekeishiya): This function should always return a valid identifier!
+    /* NOTE(koekeishiya): This function appears to always return a valid identifier!
+     * Could this potentially return NULL if an invalid CGSSpaceID is passed ? */
     CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromSpace(Space->Id);
     ASSERT(DisplayRef);
 
@@ -451,7 +452,8 @@ CreateWindowTree()
     bool Success = AXLibActiveSpace(&Space);
     ASSERT(Success);
 
-    // NOTE(koekeishiya): This function should always return a valid identifier!
+    /* NOTE(koekeishiya): This function appears to always return a valid identifier!
+     * Could this potentially return NULL if an invalid CGSSpaceID is passed ? */
     CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromSpace(Space->Id);
     ASSERT(DisplayRef);
 
@@ -519,7 +521,8 @@ RebalanceWindowTree()
     bool Success = AXLibActiveSpace(&Space);
     ASSERT(Success);
 
-    // NOTE(koekeishiya): This function should always return a valid identifier!
+    /* NOTE(koekeishiya): This function appears to always return a valid identifier!
+     * Could this potentially return NULL if an invalid CGSSpaceID is passed ? */
     CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromSpace(Space->Id);
     ASSERT(DisplayRef);
 
