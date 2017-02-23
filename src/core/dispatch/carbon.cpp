@@ -73,7 +73,7 @@ CacheRunningProcesses()
     {
         carbon_application_details *Info = BeginCarbonApplicationDetails(PSN);
 #ifdef CHUNKWM_DEBUG
-            PrintCarbonApplicationDetails(Info);
+        PrintCarbonApplicationDetails(Info);
 #endif
         CarbonApplicationCache[PSN] = Info;
     }
