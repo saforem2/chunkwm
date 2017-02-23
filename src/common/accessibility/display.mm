@@ -15,6 +15,7 @@ extern "C" CFArrayRef CGSCopySpacesForWindows(CGSConnectionID Connection, CGSSpa
 extern "C" CGSSpaceID CGSManagedDisplayGetCurrentSpace(CGSConnectionID Connection, CFStringRef DisplayRef);
 extern "C" CFStringRef CGSCopyManagedDisplayForSpace(const CGSConnectionID Connection, CGSSpaceID Space);
 extern "C" CFStringRef CGSCopyManagedDisplayForWindow(const CGSConnectionID Connection, uint32_t WindowId);
+extern "C" bool CGSManagedDisplayIsAnimating(const CGSConnectionID Connection, CFStringRef DisplayRef);
 
 /* NOTE(koekeishiya): Find the UUID associated with a CGDirectDisplayID. */
 internal CFStringRef
@@ -118,6 +119,11 @@ CGRect AXLibGetDisplayBounds(CFStringRef DisplayRef)
 
     free(CGDisplayList);
     return Result;
+}
+
+bool AXLibIsDisplayChangingSpaces(CFStringRef DisplayRef)
+{
+    return CGSManagedDisplayIsAnimating(CGSDefaultConnection, DisplayRef);
 }
 
 /* NOTE(koekeishiya): Caller is responsible for calling CFRelease. */

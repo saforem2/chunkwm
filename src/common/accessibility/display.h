@@ -53,7 +53,9 @@ void AXLibDestroySpace(macos_space *Space);
 
 CFStringRef AXLibGetDisplayIdentifierFromArrangement(unsigned Arrangement);
 CFStringRef AXLibGetDisplayIdentifierFromSpace(CGSSpaceID Space);
+
 CGRect AXLibGetDisplayBounds(CFStringRef DisplayRef);
+bool AXLibIsDisplayChangingSpaces(CFStringRef DisplayRef);
 
 bool AXLibCGSSpaceIDToDesktopID(CGSSpaceID SpaceId, unsigned *OutArrangement, unsigned *OutDesktopId);
 bool AXLibCGSSpaceIDFromDesktopID(unsigned DesktopId, unsigned *OutArrangement, CGSSpaceID *OutSpaceId);
