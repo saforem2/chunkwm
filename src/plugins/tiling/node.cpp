@@ -28,9 +28,9 @@ node *CreateRootNode(uint32_t WindowId)
     memset(Node, 0, sizeof(node));
 
     Node->WindowId = WindowId;
-    Node->Ratio = CVarFloatingPointValue(CVAR_BSP_SPLIT_RATIO);
-    Node->Split = Split_None;
     CreateNodeRegion(Node, Region_Full);
+    Node->Split = OptimalSplitMode(Node);
+    Node->Ratio = CVarFloatingPointValue(CVAR_BSP_SPLIT_RATIO);
 
     return Node;
 }
@@ -40,9 +40,11 @@ node *CreateLeafNode(node *Parent, uint32_t WindowId, region_type Type)
     node *Node = (node *) malloc(sizeof(node));
     memset(Node, 0, sizeof(node));
 
-    Node->WindowId = WindowId;
     Node->Parent = Parent;
+    Node->WindowId = WindowId;
     CreateNodeRegion(Node, Type);
+    Node->Split = OptimalSplitMode(Node);
+    Node->Ratio = CVarFloatingPointValue(CVAR_BSP_SPLIT_RATIO);
 
     return Node;
 }

@@ -135,11 +135,6 @@ LowerHorizontalRegion(node *Node)
 
 void CreateNodeRegion(node *Node, region_type Type)
 {
-    if(Node->Ratio == 0)
-    {
-        Node->Ratio = CVarFloatingPointValue(CVAR_BSP_SPLIT_RATIO);
-    }
-
     ASSERT(Type >= Region_Full && Type <= Region_Lower);
     switch(Type)
     {
@@ -164,11 +159,6 @@ void CreateNodeRegion(node *Node, region_type Type)
             Node->Region = LowerHorizontalRegion(Node->Parent);
         } break;
         default: { /* NOTE(koekeishiya): Invalid region specified. */} break;
-    }
-
-    if(Node->Split == Split_None)
-    {
-        Node->Split = OptimalSplitMode(Node);
     }
 
     Node->Region.Type = Type;
