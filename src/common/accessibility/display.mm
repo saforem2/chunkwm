@@ -147,7 +147,9 @@ CFStringRef AXLibGetDisplayIdentifierFromArrangement(unsigned Arrangement)
 }
 
 
-/* NOTE(koekeishiya): Caller is responsible for calling CFRelease. */
+/* NOTE(koekeishiya): Caller is responsible for calling CFRelease.
+ * This function appears to always return a valid identifier!
+ * Could this potentially return NULL if an invalid CGSSpaceID is passed ? */
 CFStringRef AXLibGetDisplayIdentifierFromSpace(CGSSpaceID Space)
 {
     return CGSCopyManagedDisplayForSpace(CGSDefaultConnection, Space);

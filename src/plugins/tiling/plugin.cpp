@@ -161,8 +161,7 @@ void TileWindow(macos_window *Window)
     bool Success = AXLibActiveSpace(&Space);
     ASSERT(Success);
 
-    // NOTE(koekeishiya): This function uses a private API, not sure
-    // if this function can return NULL or not. Keep assert
+    // NOTE(koekeishiya): This function should always return a valid identifier!
     CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromSpace(Space->Id);
     ASSERT(DisplayRef);
 
@@ -452,8 +451,7 @@ CreateWindowTree()
     bool Success = AXLibActiveSpace(&Space);
     ASSERT(Success);
 
-    // NOTE(koekeishiya): This function uses a private API, not sure
-    // if this function can return NULL or not. Keep assert
+    // NOTE(koekeishiya): This function should always return a valid identifier!
     CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromSpace(Space->Id);
     ASSERT(DisplayRef);
 
@@ -521,8 +519,7 @@ RebalanceWindowTree()
     bool Success = AXLibActiveSpace(&Space);
     ASSERT(Success);
 
-    // NOTE(koekeishiya): This function uses a private API, not sure
-    // if this function can return NULL or not. Keep assert
+    // NOTE(koekeishiya): This function should always return a valid identifier!
     CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromSpace(Space->Id);
     ASSERT(DisplayRef);
 
