@@ -37,11 +37,15 @@ ctrl + alt - j : chunkc window -i south
 ctrl + alt - k : chunkc window -i north
 ctrl + alt - l : chunkc window -i east
 
+# rotate tree
+alt - r : chunkc space -r 90
+
+# toggle window split type
+alt - e : chunkc window -t split
+
 # float / unfloat window
 alt - t : chunkc window -t float
 
 # float next window to be tiled
 shift + alt - t : chunkc config window_float_next 1
 
-# rotate tree
-shift + alt - r : chunkc space -r 90
