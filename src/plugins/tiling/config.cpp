@@ -170,7 +170,7 @@ command_func WindowCommandDispatch[] =
     SwapWindow,
     UseInsertionPoint,
     ToggleWindow,
-    MoveWindow,
+    WarpWindow,
     TemporaryRatio,
     AdjustWindowRatio
 };
@@ -593,7 +593,7 @@ DAEMON_CALLBACK(DaemonCallback)
                 /* NOTE(koekeishiya): flags description:
                  * f: focus
                  * s: swap
-                 * w: detach and reinsert
+                 * w: warp
                  * i: set insertion point (previously 'mark' window)
                  * t: toggle float, fullscreen, (parent ?)
                  * e: adjust edge

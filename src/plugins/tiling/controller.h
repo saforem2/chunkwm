@@ -3,7 +3,7 @@
 
 void FocusWindow(char *Direction);
 void SwapWindow(char *Direction);
-void MoveWindow(char *Direction);
+void WarpWindow(char *Direction);
 void ToggleWindow(char *Type);
 void UseInsertionPoint(char *Direction);
 void TemporaryRatio(char *Ratio);

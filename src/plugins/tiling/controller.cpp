@@ -380,7 +380,7 @@ void SwapWindow(char *Direction)
     AXLibDestroySpace(Space);
 }
 
-void MoveWindow(char *Direction)
+void WarpWindow(char *Direction)
 {
     macos_window *Window = GetWindowByID(CVarIntegerValue(_CVAR_BSP_INSERTION_POINT));
     if(Window)
