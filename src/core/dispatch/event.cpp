@@ -24,8 +24,6 @@ ProcessEventQueue(void *)
         pthread_mutex_lock(&EventLoop.StateLock);
         while(!EventLoop.Queue.empty())
         {
-            // TODO(koekeishiya): Do not process events mid-space transition!
-
             pthread_mutex_lock(&EventLoop.WorkerLock);
             chunk_event Event = EventLoop.Queue.front();
             EventLoop.Queue.pop();
