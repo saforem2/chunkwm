@@ -504,10 +504,10 @@ void ToggleWindow(char *Type)
         uint32_t WindowId = AXLibGetWindowID(WindowRef);
         CFRelease(WindowRef);
 
-        macos_window *Window = GetWindowByID(WindowId);
-        if(Window)
+        if(StringEquals(Type, "float"))
         {
-            if(StringEquals(Type, "float"))
+            macos_window *Window = GetWindowByID(WindowId);
+            if(Window)
             {
                 if(AXLibHasFlags(Window, Window_Float))
                 {
@@ -520,6 +520,37 @@ void ToggleWindow(char *Type)
                     FloatWindow(Window);
                 }
             }
+        }
+        else if(StringEquals(Type, "split"))
+        {
+            macos_space *Space;
+            bool Success = AXLibActiveSpace(&Space);
+            ASSERT(Success);
+
+            if(Space->Type == kCGSSpaceUser)
+            {
+                virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
+                if(VirtualSpace->Tree && VirtualSpace->Mode == Virtual_Space_Bsp)
+                {
+                    node *Node = GetNodeWithId(VirtualSpace->Tree, WindowId, VirtualSpace->Mode);
+                    if(Node && Node->Parent)
+                    {
+                        if(Node->Parent->Split == Split_Horizontal)
+                        {
+                            Node->Parent->Split = Split_Vertical;
+                        }
+                        else if(Node->Parent->Split == Split_Vertical)
+                        {
+                            Node->Parent->Split = Split_Horizontal;
+                        }
+
+                        CreateNodeRegionRecursive(Node->Parent, false);
+                        ApplyNodeRegion(Node->Parent, VirtualSpace->Mode);
+                    }
+                }
+            }
+
+            AXLibDestroySpace(Space);
         }
     }
 }

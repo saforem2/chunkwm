@@ -181,7 +181,8 @@ ParseWindowCommand(const char *Message, command *Chain)
             } break;
             case 't':
             {
-                if((StringEquals(optarg, "float")))
+                if((StringEquals(optarg, "float")) ||
+                   (StringEquals(optarg, "split")))
                 {
                     command *Entry = ConstructCommand(Option, optarg);
                     Command->Next = Entry;
