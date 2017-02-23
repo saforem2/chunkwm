@@ -161,12 +161,10 @@ void TileWindow(macos_window *Window)
     bool Success = AXLibActiveSpace(&Space);
     ASSERT(Success);
 
+    // NOTE(koekeishiya): This function uses a private API, not sure
+    // if this function can return NULL or not. Keep assert
     CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromSpace(Space->Id);
-    if(!DisplayRef)
-    {
-        AXLibDestroySpace(Space);
-        return;
-    }
+    ASSERT(DisplayRef);
 
     if(AXLibIsDisplayChangingSpaces(DisplayRef))
     {
@@ -454,12 +452,10 @@ CreateWindowTree()
     bool Success = AXLibActiveSpace(&Space);
     ASSERT(Success);
 
+    // NOTE(koekeishiya): This function uses a private API, not sure
+    // if this function can return NULL or not. Keep assert
     CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromSpace(Space->Id);
-    if(!DisplayRef)
-    {
-        AXLibDestroySpace(Space);
-        return;
-    }
+    ASSERT(DisplayRef);
 
     if(AXLibIsDisplayChangingSpaces(DisplayRef))
     {
@@ -525,12 +521,10 @@ RebalanceWindowTree()
     bool Success = AXLibActiveSpace(&Space);
     ASSERT(Success);
 
+    // NOTE(koekeishiya): This function uses a private API, not sure
+    // if this function can return NULL or not. Keep assert
     CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromSpace(Space->Id);
-    if(!DisplayRef)
-    {
-        AXLibDestroySpace(Space);
-        return;
-    }
+    ASSERT(DisplayRef);
 
     if(AXLibIsDisplayChangingSpaces(DisplayRef))
     {
