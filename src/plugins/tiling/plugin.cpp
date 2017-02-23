@@ -161,6 +161,19 @@ void TileWindow(macos_window *Window)
     bool Success = AXLibActiveSpace(&Space);
     ASSERT(Success);
 
+    CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromSpace(Space->Id);
+    if(!DisplayRef)
+    {
+        return;
+    }
+
+    if(AXLibIsDisplayChangingSpaces(DisplayRef))
+    {
+        AXLibDestroySpace(Space);
+        CFRelease(DisplayRef);
+        return;
+    }
+
     if(Space->Type == kCGSSpaceUser)
     {
         virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
