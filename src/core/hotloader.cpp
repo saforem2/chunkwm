@@ -80,28 +80,28 @@ void HotloaderAddPath(const char *Path)
         struct stat Buffer;
         if(lstat(Path, &Buffer) == 0)
         {
-          if(S_ISDIR(Buffer.st_mode))
-          {
-              // NOTE(koekeishiya): not a symlink.
-              Directories.push_back(Path);
-          }
-          else if(S_ISLNK(Buffer.st_mode))
-          {
-              ssize_t Size = Buffer.st_size + 1;
-              char Directory[Size];
-              ssize_t Result = readlink(Path, Directory, Size);
+            if(S_ISDIR(Buffer.st_mode))
+            {
+                // NOTE(koekeishiya): not a symlink.
+                Directories.push_back(Path);
+            }
+            else if(S_ISLNK(Buffer.st_mode))
+            {
+                ssize_t Size = Buffer.st_size + 1;
+                char Directory[Size];
+                ssize_t Result = readlink(Path, Directory, Size);
 
-              if(Result != -1)
-              {
-                  Directory[Result] = '\0';
-                  Directories.push_back(strdup(Directory));
-                  printf("hotloader: symlink '%s' -> '%s'\n", Path, Directory);
-              }
-          }
-          else
-          {
-              fprintf(stderr, "hotloader: '%s' is not a directory!\n", Path);
-          }
+                if(Result != -1)
+                {
+                    Directory[Result] = '\0';
+                    Directories.push_back(strdup(Directory));
+                    printf("hotloader: symlink '%s' -> '%s'\n", Path, Directory);
+                }
+            }
+            else
+            {
+                fprintf(stderr, "hotloader: '%s' is not a directory!\n", Path);
+            }
         }
         else
         {
