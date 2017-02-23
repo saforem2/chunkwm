@@ -164,6 +164,7 @@ void TileWindow(macos_window *Window)
     CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromSpace(Space->Id);
     if(!DisplayRef)
     {
+        AXLibDestroySpace(Space);
         return;
     }
 
