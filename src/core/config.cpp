@@ -4,6 +4,8 @@
 #include "../common/misc/assert.h"
 #include "../common/ipc/daemon.h"
 
+#include "constants.h"
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -79,16 +81,16 @@ TokenToInt(token Token)
 DAEMON_CALLBACK(DaemonCallback)
 {
     token Type = GetToken(&Message);
-    if(TokenEquals(Type, "hotload"))
+    if(TokenEquals(Type, CVAR_PLUGIN_HOTLOAD))
     {
         token Token = GetToken(&Message);
         int Status = TokenToInt(Token);
-        UpdateCVar("hotload", Status);
+        UpdateCVar(CVAR_PLUGIN_HOTLOAD, Status);
     }
     else if(TokenEquals(Type, "load"))
     {
         token Token = GetToken(&Message);
-        char *Directory = CVarStringValue("plugin_dir");
+        char *Directory = CVarStringValue(CVAR_PLUGIN_DIR);
         if(Directory)
         {
             char *Filename = TokenToString(Token);
@@ -150,7 +152,7 @@ DAEMON_CALLBACK(DaemonCallback)
     else if(TokenEquals(Type, "unload"))
     {
         token Token = GetToken(&Message);
-        char *Directory = CVarStringValue("plugin_dir");
+        char *Directory = CVarStringValue(CVAR_PLUGIN_DIR);
         if(Directory)
         {
             char *Filename = TokenToString(Token);
@@ -186,10 +188,10 @@ DAEMON_CALLBACK(DaemonCallback)
             }
         }
     }
-    else if(TokenEquals(Type, "plugin_dir"))
+    else if(TokenEquals(Type, CVAR_PLUGIN_DIR))
     {
         token Token = GetToken(&Message);
         char *Directory = TokenToString(Token);
-        UpdateCVar("plugin_dir", Directory);
+        UpdateCVar(CVAR_PLUGIN_DIR, Directory);
     }
 }

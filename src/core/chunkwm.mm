@@ -11,6 +11,8 @@
 #include "plugin.h"
 #include "wqueue.h"
 
+#include "constants.h"
+
 #include "../common/misc/carbon.cpp"
 #include "../common/misc/workspace.mm"
 
@@ -50,11 +52,21 @@ SystemWideElement()
     return Element;
 }
 
-#define CONFIG_FILE  "/.chunkwmrc"
-#define CHUNKWM_PORT 3920
-
 int main(int Count, char **Args)
 {
+    if(Count == 2)
+    {
+        if((strcmp(Args[1], "--version") == 0) ||
+           (strcmp(Args[1], "-v") == 0))
+        {
+            printf("chunkwm %d.%d.%d\n",
+                    CHUNKWM_MAJOR,
+                    CHUNKWM_MINOR,
+                    CHUNKWM_PATCH);
+            return EXIT_SUCCESS;
+        }
+    }
+
     NSApplicationLoad();
     AXUIElementSetMessagingTimeout(SystemWideElement(), 1.0);
 
@@ -84,20 +96,16 @@ int main(int Count, char **Args)
         return EXIT_FAILURE;
     }
 
-    unsigned HomeEnvLength = strlen(HomeEnv);
-    unsigned ConfigFileLength = strlen(CONFIG_FILE);
-    unsigned PathLength = HomeEnvLength + ConfigFileLength;
+    char ConfigFile[MAX_LEN];
+    ConfigFile[0] = '\0';
 
-    char PathToConfigFile[PathLength + 1];
-    PathToConfigFile[PathLength] = '\0';
-
-    memcpy(PathToConfigFile, HomeEnv, HomeEnvLength);
-    memcpy(PathToConfigFile + HomeEnvLength, CONFIG_FILE, ConfigFileLength);
+    snprintf(ConfigFile, sizeof(ConfigFile),
+             "%s/%s", HomeEnv, CHUNKWM_CONFIG);
 
     struct stat Buffer;
-    if(stat(PathToConfigFile, &Buffer) != 0)
+    if(stat(ConfigFile, &Buffer) != 0)
     {
-        fprintf(stderr, "chunkwm: config '%s' not found!\n", PathToConfigFile);
+        fprintf(stderr, "chunkwm: config '%s' not found!\n", ConfigFile);
         return EXIT_FAILURE;
     }
 
@@ -114,11 +122,11 @@ int main(int Count, char **Args)
         BeginDisplayHandler();
 
         // NOTE(koekeishiya): The config file is just an executable bash script!
-        system(PathToConfigFile);
+        system(ConfigFile);
 
         // NOTE(koekeishiya): Read plugin directory from cvar.
-        char *PluginDirectory = CVarStringValue("plugin_dir");
-        if(PluginDirectory && CVarIntegerValue("hotload"))
+        char *PluginDirectory = CVarStringValue(CVAR_PLUGIN_DIR);
+        if(PluginDirectory && CVarIntegerValue(CVAR_PLUGIN_HOTLOAD))
         {
             HotloaderAddPath(PluginDirectory);
             HotloaderInit();
