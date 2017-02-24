@@ -184,7 +184,7 @@ void TileWindow(macos_window *Window)
                 if(!Exists)
                 {
                     node *Node = NULL;
-                    uint32_t InsertionPoint = CVarIntegerValue(_CVAR_BSP_INSERTION_POINT);
+                    uint32_t InsertionPoint = CVarIntegerValue(CVAR_BSP_INSERTION_POINT);
                     if(InsertionPoint)
                     {
                         Node = GetNodeWithId(VirtualSpace->Tree, InsertionPoint, VirtualSpace->Mode);
@@ -655,16 +655,24 @@ void ApplicationActivatedHandler(const char *Data)
         CFRelease(WindowRef);
 
         macos_window *Window = GetWindowByID(WindowId);
-        if((Window) &&
-           (IsWindowValid(Window)) &&
-           (!AXLibHasFlags(Window, Window_Float)))
+        if(Window && IsWindowValid(Window))
         {
-            UpdateCVar(_CVAR_BSP_INSERTION_POINT, (int)Window->Id);
+            UpdateCVar(CVAR_FOCUSED_WINDOW, (int)Window->Id);
+            if(!AXLibHasFlags(Window, Window_Float))
+            {
+                UpdateCVar(CVAR_BSP_INSERTION_POINT, (int)Window->Id);
+            }
+        }
+        else
+        {
+            UpdateCVar(CVAR_FOCUSED_WINDOW, 0);
+            UpdateCVar(CVAR_BSP_INSERTION_POINT, 0);
         }
     }
     else
     {
-        UpdateCVar(_CVAR_BSP_INSERTION_POINT, 0);
+        UpdateCVar(CVAR_FOCUSED_WINDOW, 0);
+        UpdateCVar(CVAR_BSP_INSERTION_POINT, 0);
     }
 }
 
@@ -726,9 +734,18 @@ void WindowFocusedHandler(const char *Data)
     macos_window *Copy = GetWindowByID(Window->Id);
     ASSERT(Copy);
 
-    if(IsWindowValid(Copy) && !AXLibHasFlags(Copy, Window_Float))
+    if(IsWindowValid(Copy))
     {
-        UpdateCVar(_CVAR_BSP_INSERTION_POINT, (int)Copy->Id);
+        UpdateCVar(CVAR_FOCUSED_WINDOW, (int)Copy->Id);
+        if(!AXLibHasFlags(Copy, Window_Float))
+        {
+            UpdateCVar(CVAR_BSP_INSERTION_POINT, (int)Copy->Id);
+        }
+    }
+    else
+    {
+        UpdateCVar(CVAR_FOCUSED_WINDOW, 0);
+        UpdateCVar(CVAR_BSP_INSERTION_POINT, 0);
     }
 }
 
@@ -814,7 +831,9 @@ Init()
     CreateCVar(CVAR_SPACE_OFFSET_RIGHT, 50.0f);
     CreateCVar(CVAR_SPACE_OFFSET_GAP, 20.0f);
 
-    CreateCVar(_CVAR_BSP_INSERTION_POINT, 0);
+    CreateCVar(CVAR_FOCUSED_WINDOW, 0);
+    CreateCVar(CVAR_BSP_INSERTION_POINT, 0);
+
     CreateCVar(CVAR_BSP_SPAWN_LEFT, 1);
     CreateCVar(CVAR_BSP_OPTIMAL_RATIO, 1.618f);
     CreateCVar(CVAR_BSP_SPLIT_RATIO, 0.5f);
@@ -902,9 +921,13 @@ Init()
             macos_window *Window = GetWindowByID(WindowId);
             ASSERT(Window);
 
-            if(IsWindowValid(Window) && !AXLibHasFlags(Window, Window_Float))
+            if(IsWindowValid(Window))
             {
-                UpdateCVar(_CVAR_BSP_INSERTION_POINT, (int)Window->Id);
+                UpdateCVar(CVAR_FOCUSED_WINDOW, (int)Window->Id);
+                if(!AXLibHasFlags(Window, Window_Float))
+                {
+                    UpdateCVar(CVAR_BSP_INSERTION_POINT, (int)Window->Id);
+                }
             }
         }
     }

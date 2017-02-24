@@ -192,7 +192,7 @@ FindClosestWindow(macos_space *Space, virtual_space *VirtualSpace,
 
 void FocusWindow(char *Direction)
 {
-    macos_window *Window = GetWindowByID(CVarIntegerValue(_CVAR_BSP_INSERTION_POINT));
+    macos_window *Window = GetWindowByID(CVarIntegerValue(CVAR_BSP_INSERTION_POINT));
     if(!Window)
     {
         return; // TODO(koekeishiya): Focus first or last leaf ?
@@ -290,7 +290,7 @@ void FocusWindow(char *Direction)
 
 void SwapWindow(char *Direction)
 {
-    macos_window *Window = GetWindowByID(CVarIntegerValue(_CVAR_BSP_INSERTION_POINT));
+    macos_window *Window = GetWindowByID(CVarIntegerValue(CVAR_BSP_INSERTION_POINT));
     if(!Window)
     {
         return; // TODO(koekeishiya): Focus first or last leaf ?
@@ -382,7 +382,7 @@ void SwapWindow(char *Direction)
 
 void WarpWindow(char *Direction)
 {
-    macos_window *Window = GetWindowByID(CVarIntegerValue(_CVAR_BSP_INSERTION_POINT));
+    macos_window *Window = GetWindowByID(CVarIntegerValue(CVAR_BSP_INSERTION_POINT));
     if(Window)
     {
         macos_space *Space;
@@ -415,9 +415,9 @@ void WarpWindow(char *Direction)
                     {
                         // NOTE(koekeishiya): Modify tree layout.
                         UntileWindow(Window);
-                        UpdateCVar(_CVAR_BSP_INSERTION_POINT, (int)ClosestWindow->Id);
+                        UpdateCVar(CVAR_BSP_INSERTION_POINT, (int)ClosestWindow->Id);
                         TileWindow(Window);
-                        UpdateCVar(_CVAR_BSP_INSERTION_POINT, (int)Window->Id);
+                        UpdateCVar(CVAR_BSP_INSERTION_POINT, (int)Window->Id);
 
                         FocusedNode = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
                     }
@@ -492,72 +492,64 @@ void UnfloatWindow(macos_window *Window)
 
 void ToggleWindow(char *Type)
 {
-    // NOTE(koekeishiya): We cannot use our _CVAR_BSP_INSERTION_POINT here
+    // NOTE(koekeishiya): We cannot use our CVAR_BSP_INSERTION_POINT here
     // because the window that we toggle options for may not be in a tree,
     // and we will not be able to perform an operation in that case.
-    AXUIElementRef ApplicationRef = AXLibGetFocusedApplication();
-    AXUIElementRef WindowRef = AXLibGetFocusedWindow(ApplicationRef);
-    CFRelease(ApplicationRef);
-
-    if(WindowRef)
+    if(StringEquals(Type, "float"))
     {
-        uint32_t WindowId = AXLibGetWindowID(WindowRef);
-        CFRelease(WindowRef);
-
-        if(StringEquals(Type, "float"))
+        uint32_t WindowId = CVarIntegerValue(CVAR_FOCUSED_WINDOW);
+        macos_window *Window = GetWindowByID(WindowId);
+        if(Window)
         {
-            macos_window *Window = GetWindowByID(WindowId);
-            if(Window)
+            if(AXLibHasFlags(Window, Window_Float))
             {
-                if(AXLibHasFlags(Window, Window_Float))
-                {
-                    UnfloatWindow(Window);
-                    TileWindow(Window);
-                }
-                else
-                {
-                    UntileWindow(Window);
-                    FloatWindow(Window);
-                }
+                UnfloatWindow(Window);
+                TileWindow(Window);
+            }
+            else
+            {
+                UntileWindow(Window);
+                FloatWindow(Window);
             }
         }
-        else if(StringEquals(Type, "split"))
-        {
-            macos_space *Space;
-            bool Success = AXLibActiveSpace(&Space);
-            ASSERT(Success);
+    }
+    else if(StringEquals(Type, "split"))
+    {
+        macos_space *Space;
+        bool Success = AXLibActiveSpace(&Space);
+        ASSERT(Success);
 
-            if(Space->Type == kCGSSpaceUser)
+        if(Space->Type == kCGSSpaceUser)
+        {
+            virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
+            if(VirtualSpace->Tree && VirtualSpace->Mode == Virtual_Space_Bsp)
             {
-                virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
-                if(VirtualSpace->Tree && VirtualSpace->Mode == Virtual_Space_Bsp)
+                uint32_t WindowId = CVarIntegerValue(CVAR_BSP_INSERTION_POINT);
+                node *Node = GetNodeWithId(VirtualSpace->Tree, WindowId, VirtualSpace->Mode);
+                if(Node && Node->Parent)
                 {
-                    node *Node = GetNodeWithId(VirtualSpace->Tree, WindowId, VirtualSpace->Mode);
-                    if(Node && Node->Parent)
+                    if(Node->Parent->Split == Split_Horizontal)
                     {
-                        if(Node->Parent->Split == Split_Horizontal)
-                        {
-                            Node->Parent->Split = Split_Vertical;
-                        }
-                        else if(Node->Parent->Split == Split_Vertical)
-                        {
-                            Node->Parent->Split = Split_Horizontal;
-                        }
-
-                        CreateNodeRegionRecursive(Node->Parent, false);
-                        ApplyNodeRegion(Node->Parent, VirtualSpace->Mode);
+                        Node->Parent->Split = Split_Vertical;
                     }
+                    else if(Node->Parent->Split == Split_Vertical)
+                    {
+                        Node->Parent->Split = Split_Horizontal;
+                    }
+
+                    CreateNodeRegionRecursive(Node->Parent, false);
+                    ApplyNodeRegion(Node->Parent, VirtualSpace->Mode);
                 }
             }
-
-            AXLibDestroySpace(Space);
         }
+
+        AXLibDestroySpace(Space);
     }
 }
 
 void UseInsertionPoint(char *Direction)
 {
-    macos_window *Window = GetWindowByID(CVarIntegerValue(_CVAR_BSP_INSERTION_POINT));
+    macos_window *Window = GetWindowByID(CVarIntegerValue(CVAR_BSP_INSERTION_POINT));
     if(Window)
     {
         macos_space *Space;
@@ -569,10 +561,17 @@ void UseInsertionPoint(char *Direction)
             virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
             if(VirtualSpace->Tree && VirtualSpace->Mode == Virtual_Space_Bsp)
             {
-                macos_window *ClosestWindow;
-                if(FindClosestWindow(Space, VirtualSpace, Window, &ClosestWindow, Direction, true))
+                if(StringEquals(Direction, "focus"))
                 {
-                    UpdateCVar(_CVAR_BSP_INSERTION_POINT, (int)ClosestWindow->Id);
+                    UpdateCVar(CVAR_BSP_INSERTION_POINT, CVarIntegerValue(CVAR_FOCUSED_WINDOW));
+                }
+                else
+                {
+                    macos_window *ClosestWindow;
+                    if(FindClosestWindow(Space, VirtualSpace, Window, &ClosestWindow, Direction, true))
+                    {
+                        UpdateCVar(CVAR_BSP_INSERTION_POINT, (int)ClosestWindow->Id);
+                    }
                 }
             }
         }
@@ -639,7 +638,7 @@ void RotateWindowTree(char *Degrees)
 
 void AdjustWindowRatio(char *Direction)
 {
-    macos_window *Window = GetWindowByID(CVarIntegerValue(_CVAR_BSP_INSERTION_POINT));
+    macos_window *Window = GetWindowByID(CVarIntegerValue(CVAR_BSP_INSERTION_POINT));
     if(Window)
     {
         macos_space *Space;

@@ -138,10 +138,9 @@ ParseWindowCommand(const char *Message, command *Chain)
     {
         switch(Option)
         {
-            // NOTE(koekeishiya): The '-f', '-s', '-i', '-w' and '-e' flag support the same arguments.
+            // NOTE(koekeishiya): The '-f', '-s', '-w' and '-e' flag support the same arguments.
             case 'f':
             case 's':
-            case 'i':
             case 'w':
             case 'e':
             {
@@ -149,6 +148,26 @@ ParseWindowCommand(const char *Message, command *Chain)
                    (StringEquals(optarg, "east")) ||
                    (StringEquals(optarg, "north")) ||
                    (StringEquals(optarg, "south")))
+                {
+                    command *Entry = ConstructCommand(Option, optarg);
+                    Command->Next = Entry;
+                    Command = Entry;
+                }
+                else
+                {
+                    fprintf(stderr, "    invalid selector '%s' for window flag '%c'\n", optarg, Option);
+                    Success = false;
+                    FreeCommandChain(Chain);
+                    goto End;
+                }
+            } break;
+            case 'i':
+            {
+                if((StringEquals(optarg, "west")) ||
+                   (StringEquals(optarg, "east")) ||
+                   (StringEquals(optarg, "north")) ||
+                   (StringEquals(optarg, "south")) ||
+                   (StringEquals(optarg, "focus")))
                 {
                     command *Entry = ConstructCommand(Option, optarg);
                     Command->Next = Entry;

@@ -17,11 +17,13 @@
 #define CVAR_SPACE_OFFSET_RIGHT     "global_" _CVAR_SPACE_OFFSET_RIGHT
 #define CVAR_SPACE_OFFSET_GAP       "global_" _CVAR_SPACE_OFFSET_GAP
 
-#define _CVAR_BSP_INSERTION_POINT   "_bsp_insertion_point"
 #define CVAR_BSP_SPAWN_LEFT         "bsp_spawn_left"
 #define CVAR_BSP_OPTIMAL_RATIO      "bsp_optimal_ratio"
 #define CVAR_BSP_SPLIT_RATIO        "bsp_split_ratio"
 #define CVAR_BSP_SPLIT_MODE         "bsp_split_mode"
+
+#define CVAR_FOCUSED_WINDOW         "_focused_window"
+#define CVAR_BSP_INSERTION_POINT    "_bsp_insertion_point"
 
 #define CVAR_MOUSE_FOLLOWS_FOCUS    "mouse_follows_focus"
 
@@ -33,5 +35,6 @@
 #define CVAR_WINDOW_FLOAT_TOPMOST   "window_float_topmost"
 
 /*   ---------------------------------------------------------   */
+
 
 #endif
