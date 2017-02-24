@@ -206,6 +206,12 @@ void TileWindow(macos_window *Window)
 
                         CreateLeafNodePair(Node, Node->WindowId, Window->Id, Split);
                         ApplyNodeRegion(Node, VirtualSpace->Mode);
+
+                        // NOTE(koekeishiya): Reset fullscreen-zoom state.
+                        if(VirtualSpace->Tree->Zoom)
+                        {
+                            VirtualSpace->Tree->Zoom = NULL;
+                        }
                     }
                     else if(VirtualSpace->Mode == Virtual_Space_Monocle)
                     {
@@ -275,37 +281,47 @@ void UntileWindow(macos_window *Window)
                         VirtualSpace->Tree->Zoom = NULL;
                     }
 
-                    node *Parent = Node->Parent;
-                    if(Parent && Parent->Left && Parent->Right)
+                    if(Node->Parent && Node->Parent->Left && Node->Parent->Right)
                     {
                         /* NOTE(koekeishiya): The window was in parent-zoom.
                          * We need to null the pointer to prevent a potential bug. */
-                        if(Parent->Zoom == Node)
+                        if(Node->Parent->Zoom == Node)
                         {
-                            Parent->Zoom = NULL;
+                            Node->Parent->Zoom = NULL;
                         }
 
-                        node *Child = IsRightChild(Node) ? Parent->Left : Parent->Right;
-                        Parent->Left = NULL;
-                        Parent->Right = NULL;
+                        node *NewLeaf = Node->Parent;
+                        node *RemainingLeaf = IsRightChild(Node) ? Node->Parent->Left
+                                                                 : Node->Parent->Right;
+                        NewLeaf->Left = NULL;
+                        NewLeaf->Right = NULL;
+                        NewLeaf->Zoom = NULL;
 
-                        Parent->WindowId = Child->WindowId;
-                        if(Child->Left && Child->Right)
+                        NewLeaf->WindowId = RemainingLeaf->WindowId;
+                        if(RemainingLeaf->Left && RemainingLeaf->Right)
                         {
-                            Parent->Left = Child->Left;
-                            Parent->Left->Parent = Parent;
+                            NewLeaf->Left = RemainingLeaf->Left;
+                            NewLeaf->Left->Parent = NewLeaf;
 
-                            Parent->Right = Child->Right;
-                            Parent->Right->Parent = Parent;
+                            NewLeaf->Right = RemainingLeaf->Right;
+                            NewLeaf->Right->Parent = NewLeaf;
 
-                            CreateNodeRegionRecursive(Parent, true);
+                            CreateNodeRegionRecursive(NewLeaf, true);
                         }
 
-                        ApplyNodeRegion(Parent, VirtualSpace->Mode);
-                        free(Child);
+                        /* NOTE(koekeishiya): Re-zoom window after spawned window closes.
+                         * see reference: https://github.com/koekeishiya/chunkwm/issues/20 */
+                        ApplyNodeRegion(NewLeaf, VirtualSpace->Mode);
+                        if(NewLeaf->Parent && NewLeaf->Parent->Zoom)
+                        {
+                            ResizeWindowToExternalRegionSize(NewLeaf->Parent->Zoom,
+                                                             NewLeaf->Parent->Region);
+                        }
+
+                        free(RemainingLeaf);
                         free(Node);
                     }
-                    else if(!Parent)
+                    else if(!Node->Parent)
                     {
                         free(VirtualSpace->Tree);
                         VirtualSpace->Tree = NULL;
