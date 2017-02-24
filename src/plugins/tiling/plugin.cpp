@@ -268,9 +268,23 @@ void UntileWindow(macos_window *Window)
             {
                 if(VirtualSpace->Mode == Virtual_Space_Bsp)
                 {
+                    /* NOTE(koekeishiya): The window was in fullscreen-zoom.
+                     * We need to null the pointer to prevent a potential bug. */
+                    if(VirtualSpace->Tree->Zoom == Node)
+                    {
+                        VirtualSpace->Tree->Zoom = NULL;
+                    }
+
                     node *Parent = Node->Parent;
                     if(Parent && Parent->Left && Parent->Right)
                     {
+                        /* NOTE(koekeishiya): The window was in parent-zoom.
+                         * We need to null the pointer to prevent a potential bug. */
+                        if(Parent->Zoom == Node)
+                        {
+                            Parent->Zoom = NULL;
+                        }
+
                         node *Child = IsRightChild(Node) ? Parent->Left : Parent->Right;
                         Parent->Left = NULL;
                         Parent->Right = NULL;

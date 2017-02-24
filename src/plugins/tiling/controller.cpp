@@ -513,6 +513,78 @@ void ToggleWindow(char *Type)
             }
         }
     }
+    else if(StringEquals(Type, "fullscreen"))
+    {
+        macos_space *Space;
+        bool Success = AXLibActiveSpace(&Space);
+        ASSERT(Success);
+
+        if(Space->Type == kCGSSpaceUser)
+        {
+            virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
+            if(VirtualSpace->Tree && VirtualSpace->Mode == Virtual_Space_Bsp)
+            {
+                uint32_t WindowId = CVarIntegerValue(CVAR_FOCUSED_WINDOW);
+                node *Node = GetNodeWithId(VirtualSpace->Tree, WindowId, VirtualSpace->Mode);
+                if(Node)
+                {
+                    if(VirtualSpace->Tree->Zoom == Node)
+                    {
+                        ResizeWindowToRegionSize(Node);
+                        VirtualSpace->Tree->Zoom = NULL;
+                    }
+                    else
+                    {
+                        if(VirtualSpace->Tree->Zoom)
+                        {
+                            ResizeWindowToRegionSize(VirtualSpace->Tree->Zoom);
+                        }
+
+                        VirtualSpace->Tree->Zoom = Node;
+                        ResizeWindowToExternalRegionSize(Node, VirtualSpace->Tree->Region);
+                    }
+                }
+            }
+        }
+
+        AXLibDestroySpace(Space);
+    }
+    else if(StringEquals(Type, "parent"))
+    {
+        macos_space *Space;
+        bool Success = AXLibActiveSpace(&Space);
+        ASSERT(Success);
+
+        if(Space->Type == kCGSSpaceUser)
+        {
+            virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
+            if(VirtualSpace->Tree && VirtualSpace->Mode == Virtual_Space_Bsp)
+            {
+                uint32_t WindowId = CVarIntegerValue(CVAR_FOCUSED_WINDOW);
+                node *Node = GetNodeWithId(VirtualSpace->Tree, WindowId, VirtualSpace->Mode);
+                if(Node && Node->Parent)
+                {
+                    if(Node->Parent->Zoom == Node)
+                    {
+                        ResizeWindowToRegionSize(Node);
+                        Node->Parent->Zoom = NULL;
+                    }
+                    else
+                    {
+                        if(Node->Parent->Zoom)
+                        {
+                            ResizeWindowToRegionSize(Node->Parent->Zoom);
+                        }
+
+                        Node->Parent->Zoom = Node;
+                        ResizeWindowToExternalRegionSize(Node, Node->Parent->Region);
+                    }
+                }
+            }
+        }
+
+        AXLibDestroySpace(Space);
+    }
     else if(StringEquals(Type, "split"))
     {
         macos_space *Space;

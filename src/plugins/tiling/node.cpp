@@ -120,6 +120,21 @@ void ResizeWindowToRegionSize(node *Node)
     }
 }
 
+void ResizeWindowToExternalRegionSize(node *Node, region Region)
+{
+    // NOTE(koekeishiya): GetWindowByID should not be able to fail!
+    macos_window *Window = GetWindowByID(Node->WindowId);
+    ASSERT(Window);
+
+    bool WindowMoved  = AXLibSetWindowPosition(Window->Ref, Region.X, Region.Y);
+    bool WindowResized = AXLibSetWindowSize(Window->Ref, Region.Width, Region.Height);
+
+    if(WindowMoved || WindowResized)
+    {
+        CenterWindowInRegion(Window, Region);
+    }
+}
+
 void ApplyNodeRegion(node *Node, virtual_space_mode VirtualSpaceMode)
 {
     if(Node->WindowId)

@@ -10,10 +10,6 @@ enum region_type
 
     Region_Upper = 3,
     Region_Lower = 4,
-
-    /* NOTE(koekeishiya): Is this a decent way to handle zoom ? */
-    Region_Zoom_Full,
-    Region_Zoom_Parent,
 };
 
 struct region

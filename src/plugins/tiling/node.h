@@ -24,6 +24,7 @@ struct node
     node *Left;
     node *Right;
 
+    node *Zoom;
     region Region;
 };
 
@@ -33,6 +34,7 @@ node *CreateRootNode(uint32_t WindowId);
 void CreateLeafNodePair(node *Parent, uint32_t FirstWindowID, uint32_t SecondWindowID, node_split Split);
 void ApplyNodeRegion(node *Node, virtual_space_mode VirtualSpaceMode);
 void ResizeWindowToRegionSize(node *Node);
+void ResizeWindowToExternalRegionSize(node *Node, region Region);
 void FreeNodeTree(node *Node, virtual_space_mode VirtualSpaceMode);
 
 bool IsLeafNode(node *Node);
