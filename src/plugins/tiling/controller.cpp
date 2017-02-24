@@ -528,12 +528,6 @@ void ToggleWindow(char *Type)
                 node *Node = GetNodeWithId(VirtualSpace->Tree, WindowId, VirtualSpace->Mode);
                 if(Node)
                 {
-                    // NOTE(koekeishiya): Window is in parent-zoom, reset state.
-                    if(Node->Parent && Node->Parent->Zoom == Node)
-                    {
-                        Node->Parent->Zoom = NULL;
-                    }
-
                     // NOTE(koekeishiya): Window is already in fullscreen-zoom, unzoom it..
                     if(VirtualSpace->Tree->Zoom == Node)
                     {
@@ -542,6 +536,12 @@ void ToggleWindow(char *Type)
                     }
                     else
                     {
+                        // NOTE(koekeishiya): Window is in parent-zoom, reset state.
+                        if(Node->Parent && Node->Parent->Zoom == Node)
+                        {
+                            Node->Parent->Zoom = NULL;
+                        }
+
                         /* NOTE(koekeishiya): Some other window is in
                          * fullscreen zoom, unzoom the existing window. */
                         if(VirtualSpace->Tree->Zoom)
@@ -573,12 +573,6 @@ void ToggleWindow(char *Type)
                 node *Node = GetNodeWithId(VirtualSpace->Tree, WindowId, VirtualSpace->Mode);
                 if(Node && Node->Parent)
                 {
-                    // NOTE(koekeishiya): Window is in fullscreen zoom, reset state.
-                    if(VirtualSpace->Tree->Zoom == Node)
-                    {
-                        VirtualSpace->Tree = NULL;
-                    }
-
                     // NOTE(koekeishiya): Window is already in parent-zoom, unzoom it..
                     if(Node->Parent->Zoom == Node)
                     {
@@ -587,6 +581,12 @@ void ToggleWindow(char *Type)
                     }
                     else
                     {
+                        // NOTE(koekeishiya): Window is in fullscreen zoom, reset state.
+                        if(VirtualSpace->Tree->Zoom == Node)
+                        {
+                            VirtualSpace->Tree->Zoom = NULL;
+                        }
+
                         /* NOTE(koekeishiya): Some other window is in
                          * parent zoom, unzoom the existing window. */
                         if(Node->Parent->Zoom)
