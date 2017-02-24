@@ -1,4 +1,4 @@
-## description
+## Description
 
 **chunkwm** is a tiling window manager for MacOS that uses a plugin architecture.
 
@@ -6,7 +6,7 @@
 
 ![img](https://cloud.githubusercontent.com/assets/6175959/23313599/acf600e2-fabe-11e6-889f-3b0ff20db510.png)
 
-## configuration
+## Configuration
 
 **chunkwm** itself has a very sparse configuration file, located at `$HOME/.chunkwmrc`.
 
@@ -18,7 +18,7 @@ plugins can be loaded and unloaded without having to restart **chunkwm**:
 
 see [sample config](https://github.com/koekeishiya/chunkwm/blob/master/examples/chunkwmrc)
 
-## development
+## Development
 
 requires Xcode-8 command line tools.
 
