@@ -693,16 +693,6 @@ void ApplicationActivatedHandler(const char *Data)
                 UpdateCVar(CVAR_BSP_INSERTION_POINT, (int)Window->Id);
             }
         }
-        else
-        {
-            UpdateCVar(CVAR_FOCUSED_WINDOW, 0);
-            UpdateCVar(CVAR_BSP_INSERTION_POINT, 0);
-        }
-    }
-    else
-    {
-        UpdateCVar(CVAR_FOCUSED_WINDOW, 0);
-        UpdateCVar(CVAR_BSP_INSERTION_POINT, 0);
     }
 }
 
@@ -772,11 +762,6 @@ void WindowFocusedHandler(const char *Data)
             UpdateCVar(CVAR_BSP_INSERTION_POINT, (int)Copy->Id);
         }
     }
-    else
-    {
-        UpdateCVar(CVAR_FOCUSED_WINDOW, 0);
-        UpdateCVar(CVAR_BSP_INSERTION_POINT, 0);
-    }
 }
 
 /*
@@ -839,6 +824,9 @@ PLUGIN_MAIN_FUNC(PluginMain)
     }
     else if(StringEquals(Node, "chunkwm_export_space_changed"))
     {
+        UpdateCVar(CVAR_FOCUSED_WINDOW, 0);
+        UpdateCVar(CVAR_BSP_INSERTION_POINT, 0);
+
         UpdateWindowCollection();
         CreateWindowTree();
         RebalanceWindowTree();
