@@ -4,6 +4,8 @@
 
 [click here to view current project status](https://github.com/koekeishiya/chunkwm/issues/16)
 
+![img](https://cloud.githubusercontent.com/assets/6175959/23313599/acf600e2-fabe-11e6-889f-3b0ff20db510.png)
+
 ## configuration
 
 **chunkwm** itself has a very sparse configuration file, located at `$HOME/.chunkwmrc`.
