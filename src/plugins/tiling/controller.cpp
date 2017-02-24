@@ -560,7 +560,7 @@ void ToggleWindow(char *Type)
             virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
             if(VirtualSpace->Tree && VirtualSpace->Mode == Virtual_Space_Bsp)
             {
-                uint32_t WindowId = CVarIntegerValue(CVAR_FOCUSED_WINDOW);
+                uint32_t WindowId = CVarIntegerValue(CVAR_BSP_INSERTION_POINT);
                 node *Node = GetNodeWithId(VirtualSpace->Tree, WindowId, VirtualSpace->Mode);
                 if(Node && Node->Parent)
                 {
