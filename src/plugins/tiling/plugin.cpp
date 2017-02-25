@@ -480,8 +480,7 @@ GetAllWindowsToRemoveFromTree(std::vector<uint32_t> &VisibleWindows, std::vector
     return Windows;
 }
 
-internal void
-CreateWindowTree()
+void CreateWindowTree()
 {
     macos_space *Space;
     bool Success = AXLibActiveSpace(&Space);
