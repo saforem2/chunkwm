@@ -21,6 +21,7 @@
 
 extern macos_window *GetWindowByID(uint32_t Id);
 extern std::vector<uint32_t> GetAllVisibleWindows();
+extern void CreateWindowTree();
 extern void TileWindow(macos_window *Window);
 extern void UntileWindow(macos_window *Window);
 
@@ -775,4 +776,48 @@ void AdjustWindowRatio(char *Direction)
 
         AXLibDestroySpace(Space);
     }
+}
+
+void ActivateSpaceLayout(char *Layout)
+{
+    macos_space *Space;
+    bool Success = AXLibActiveSpace(&Space);
+    ASSERT(Success);
+
+    if(Space->Type == kCGSSpaceUser)
+    {
+        virtual_space_mode NewLayout;
+        if(StringEquals(Layout, "bsp"))
+        {
+            NewLayout = Virtual_Space_Bsp;
+        }
+        else if(StringEquals(Layout, "monocle"))
+        {
+            NewLayout = Virtual_Space_Monocle;
+        }
+        else if(StringEquals(Layout, "float"))
+        {
+            NewLayout = Virtual_Space_Float;
+        }
+        else
+        {
+            // NOTE(koekeishiya): This can never happen, silence stupid compiler warning..
+            return;
+        }
+
+        virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
+        if(VirtualSpace->Mode != NewLayout)
+        {
+            if(VirtualSpace->Tree)
+            {
+                FreeNodeTree(VirtualSpace->Tree, VirtualSpace->Mode);
+                VirtualSpace->Tree = NULL;
+            }
+
+            VirtualSpace->Mode = NewLayout;
+            CreateWindowTree();
+        }
+    }
+
+    AXLibDestroySpace(Space);
 }

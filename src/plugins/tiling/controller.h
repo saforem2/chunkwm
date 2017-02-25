@@ -10,6 +10,7 @@ void TemporaryRatio(char *Ratio);
 void AdjustWindowRatio(char *Direction);
 
 void RotateWindowTree(char *Degrees);
+void ActivateSpaceLayout(char *Layout);
 
 struct macos_window;
 void FloatWindow(macos_window *Window);

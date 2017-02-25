@@ -236,16 +236,19 @@ End:
 
 command_func SpaceCommandDispatch[] =
 {
-    RotateWindowTree
+    RotateWindowTree,
+    ActivateSpaceLayout,
 };
 
 #define SPACE_FLAG_R 0
+#define SPACE_FLAG_L 1
 
 unsigned SpaceFuncFromFlag(char Flag)
 {
     switch(Flag)
     {
         case 'r': return SPACE_FLAG_R; break;
+        case 'l': return SPACE_FLAG_L; break;
 
         // NOTE(koekeishiya): silence compiler warning.
         default: return 0; break;
@@ -260,7 +263,7 @@ ParseSpaceCommand(const char *Message, command *Chain)
 
     int Option;
     bool Success = true;
-    const char *Short = "r:";
+    const char *Short = "r:l:";
 
     command *Command = Chain;
     while((Option = getopt_long(Count, Args, Short, NULL, NULL)) != -1)
@@ -272,6 +275,24 @@ ParseSpaceCommand(const char *Message, command *Chain)
                 if((StringEquals(optarg, "90")) ||
                    (StringEquals(optarg, "180")) ||
                    (StringEquals(optarg, "270")))
+                {
+                    command *Entry = ConstructCommand(Option, optarg);
+                    Command->Next = Entry;
+                    Command = Entry;
+                }
+                else
+                {
+                    fprintf(stderr, "    invalid selector '%s' for space flag '%c'\n", optarg, Option);
+                    Success = false;
+                    FreeCommandChain(Chain);
+                    goto End;
+                }
+            } break;
+            case 'l':
+            {
+                if((StringEquals(optarg, "bsp")) ||
+                   (StringEquals(optarg, "monocle")) ||
+                   (StringEquals(optarg, "float")))
                 {
                     command *Entry = ConstructCommand(Option, optarg);
                     Command->Next = Entry;
@@ -572,6 +593,7 @@ DAEMON_CALLBACK(DaemonCallback)
 
                 /* NOTE(koekeishiya): flags description:
                  * r: rotate 90, 180, 270 degrees
+                 * l: set laoyout bsp, monocle, float
                  * */
 
                 unsigned Index = SpaceFuncFromFlag(Command->Flag);
