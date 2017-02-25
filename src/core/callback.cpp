@@ -73,9 +73,9 @@ void ChunkwmBroadcast(const char *PluginName, const char *EventName,
     void **Context = (void **) malloc(2 * sizeof(void *));
 
     size_t TotalLength = strlen(PluginName) + strlen(EventName) + 2;
-    char *Name = (char *) malloc(TotalLength);
-    snprintf(Name, TotalLength, "%s_%s", PluginName, EventName);
-    Context[0] = Name;
+    char *Event = (char *) malloc(TotalLength);
+    snprintf(Event, TotalLength, "%s_%s", PluginName, EventName);
+    Context[0] = Event;
 
     if(Size)
     {
@@ -88,7 +88,10 @@ void ChunkwmBroadcast(const char *PluginName, const char *EventName,
         Context[1] = NULL;
     }
 
-    printf("chunkwm: plugin '%s' added broadcast!\n", Name);
+#ifdef CHUNKWM_DEBUG
+    printf("chunkwm: plugin '%s' added event '%s'\n", PluginName, EventName);
+#endif
+
     ConstructEvent(ChunkWM_PluginBroadcast, Context);
 }
 
