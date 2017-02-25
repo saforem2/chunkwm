@@ -39,7 +39,7 @@ build **chunkc**:
 
     make            # optimized build
 
-the binary is placed in `<project>/chunkc/bin`.
+the binary is placed in `<project>/src/chunkc/bin`.
 
 build **plugins**:
 
