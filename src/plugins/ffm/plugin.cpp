@@ -7,6 +7,7 @@
 #include "../../common/dispatch/cgeventtap.h"
 
 #define internal static
+
 internal event_tap EventTap;
 internal bool volatile IsActive;
 
@@ -192,9 +193,9 @@ EVENTTAP_CALLBACK(EventTapCallback)
 }
 
 /*
- * NOTE(koekeishiya): Function parameters
- * const char *Node
- * const char *Data
+ * NOTE(koekeishiya):
+ * parameter: const char *Node
+ * parameter: void *Data
  * return: bool
  * */
 PLUGIN_MAIN_FUNC(PluginMain)
@@ -219,6 +220,7 @@ PLUGIN_MAIN_FUNC(PluginMain)
 
 /*
  * NOTE(koekeishiya):
+ * parameter: plugin_broadcast *Broadcast
  * return: bool -> true if startup succeeded
  */
 PLUGIN_BOOL_FUNC(PluginInit)
@@ -248,4 +250,4 @@ chunkwm_plugin_export Subscriptions[] = { };
 CHUNKWM_PLUGIN_SUBSCRIBE(Subscriptions)
 
 // NOTE(koekeishiya): Generate plugin
-CHUNKWM_PLUGIN("Focus Follows Mouse", "0.0.1")
+CHUNKWM_PLUGIN("Focus Follows Mouse", "0.0.2")

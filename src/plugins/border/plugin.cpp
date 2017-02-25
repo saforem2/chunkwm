@@ -61,14 +61,14 @@ UpdateIfFocusedWindow(AXUIElementRef Element)
 }
 
 internal void
-ApplicationActivatedHandler(const char *Data)
+ApplicationActivatedHandler(void *Data)
 {
     Application = (macos_application *) Data;
     UpdateToFocusedWindow();
 }
 
 internal void
-ApplicationDeactivatedHandler(const char *Data)
+ApplicationDeactivatedHandler(void *Data)
 {
     macos_application *Context = (macos_application *) Data;
     if(Application == Context)
@@ -79,7 +79,7 @@ ApplicationDeactivatedHandler(const char *Data)
 }
 
 internal void
-WindowFocusedHandler(const char *Data)
+WindowFocusedHandler(void *Data)
 {
     macos_window *Window = (macos_window *) Data;
     if((AXLibIsWindowStandard(Window)) &&
@@ -91,7 +91,7 @@ WindowFocusedHandler(const char *Data)
 }
 
 internal void
-WindowDestroyedHandler(const char *Data)
+WindowDestroyedHandler(void *Data)
 {
     macos_window *Window = (macos_window *) Data;
     if(Window->Owner == Application)
@@ -101,21 +101,21 @@ WindowDestroyedHandler(const char *Data)
 }
 
 internal void
-WindowMovedHandler(const char *Data)
+WindowMovedHandler(void *Data)
 {
     macos_window *Window = (macos_window *) Data;
     UpdateIfFocusedWindow(Window->Ref);
 }
 
 internal void
-WindowResizedHandler(const char *Data)
+WindowResizedHandler(void *Data)
 {
     macos_window *Window = (macos_window *) Data;
     UpdateIfFocusedWindow(Window->Ref);
 }
 
 internal void
-WindowMinimizedHandler(const char *Data)
+WindowMinimizedHandler(void *Data)
 {
     macos_window *Window = (macos_window *) Data;
     if(Window->Owner == Application)
@@ -132,9 +132,9 @@ StringsAreEqual(const char *A, const char *B)
 }
 
 /*
- * NOTE(koekeishiya): Function parameters
- * const char *Node
- * const char *Data
+ * NOTE(koekeishiya):
+ * parameter: const char *Node
+ * parameter: void *Data
  * return: bool
  * */
 PLUGIN_MAIN_FUNC(PluginMain)
@@ -195,6 +195,7 @@ PLUGIN_MAIN_FUNC(PluginMain)
 
 /*
  * NOTE(koekeishiya):
+ * parameter: plugin_broadcast *Broadcast
  * return: bool -> true if startup succeeded
  */
 PLUGIN_BOOL_FUNC(PluginInit)
@@ -233,4 +234,4 @@ chunkwm_plugin_export Subscriptions[] =
 CHUNKWM_PLUGIN_SUBSCRIBE(Subscriptions)
 
 // NOTE(koekeishiya): Generate plugin
-CHUNKWM_PLUGIN("Border", "0.0.1")
+CHUNKWM_PLUGIN("Border", "0.0.2")

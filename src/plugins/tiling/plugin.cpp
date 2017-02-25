@@ -44,7 +44,7 @@ extern "C" CGError CGSGetOnScreenWindowList(const CGSConnectionID CID, CGSConnec
 #define CONFIG_FILE "/.chunkwmtilingrc"
 
 internal const char *PluginName = "Tiling";
-internal const char *PluginVersion = "0.0.1";
+internal const char *PluginVersion = "0.0.2";
 
 internal macos_application_map Applications;
 internal macos_window_map Windows;
@@ -605,7 +605,7 @@ RebalanceWindowTree()
     AXLibDestroySpace(Space);
 }
 
-void ApplicationLaunchedHandler(const char *Data)
+void ApplicationLaunchedHandler(void *Data)
 {
     macos_application *Application = (macos_application *) Data;
 
@@ -631,7 +631,7 @@ void ApplicationLaunchedHandler(const char *Data)
     }
 }
 
-void ApplicationTerminatedHandler(const char *Data)
+void ApplicationTerminatedHandler(void *Data)
 {
     macos_application *Application = (macos_application *) Data;
 
@@ -639,13 +639,13 @@ void ApplicationTerminatedHandler(const char *Data)
     RebalanceWindowTree();
 }
 
-void ApplicationHiddenHandler(const char *Data)
+void ApplicationHiddenHandler(void *Data)
 {
     macos_application *Application = (macos_application *) Data;
     RebalanceWindowTree();
 }
 
-void ApplicationUnhiddenHandler(const char *Data)
+void ApplicationUnhiddenHandler(void *Data)
 {
     macos_application *Application = (macos_application *) Data;
 
@@ -680,7 +680,7 @@ void ApplicationUnhiddenHandler(const char *Data)
     AXLibDestroySpace(Space);
 }
 
-void ApplicationActivatedHandler(const char *Data)
+void ApplicationActivatedHandler(void *Data)
 {
     macos_application *Application = (macos_application *) Data;
     AXUIElementRef WindowRef = AXLibGetFocusedWindow(Application->Ref);
@@ -711,7 +711,7 @@ void ApplicationActivatedHandler(const char *Data)
     }
 }
 
-void WindowCreatedHandler(const char *Data)
+void WindowCreatedHandler(void *Data)
 {
     macos_window *Window = (macos_window *) Data;
 
@@ -721,7 +721,7 @@ void WindowCreatedHandler(const char *Data)
     TileWindow(Copy);
 }
 
-void WindowDestroyedHandler(const char *Data)
+void WindowDestroyedHandler(void *Data)
 {
     macos_window *Window = (macos_window *) Data;
 
@@ -732,7 +732,7 @@ void WindowDestroyedHandler(const char *Data)
     AXLibDestroyWindow(Copy);
 }
 
-void WindowMinimizedHandler(const char *Data)
+void WindowMinimizedHandler(void *Data)
 {
     macos_window *Window = (macos_window *) Data;
 
@@ -742,7 +742,7 @@ void WindowMinimizedHandler(const char *Data)
     UntileWindow(Copy);
 }
 
-void WindowDeminimizedHandler(const char *Data)
+void WindowDeminimizedHandler(void *Data)
 {
     macos_window *Window = (macos_window *) Data;
 
@@ -762,7 +762,7 @@ void WindowDeminimizedHandler(const char *Data)
     AXLibDestroySpace(Space);
 }
 
-void WindowFocusedHandler(const char *Data)
+void WindowFocusedHandler(void *Data)
 {
     macos_window *Window = (macos_window *) Data;
 
@@ -778,20 +778,20 @@ void WindowFocusedHandler(const char *Data)
 
             // NOTE(koekeishiya): test global plugin broadcast system.
             int Status = 0;
-            ChunkWMBroadcastEvent(PluginName, "focused_window_float", (char *) &Status, sizeof(int));
+            ChunkWMBroadcastEvent(PluginName, "focused_window_float", &Status, sizeof(int));
         }
         else
         {
             int Status = 1;
-            ChunkWMBroadcastEvent(PluginName, "focused_window_float", (char *) &Status, sizeof(int));
+            ChunkWMBroadcastEvent(PluginName, "focused_window_float", &Status, sizeof(int));
         }
     }
 }
 
 /*
- * NOTE(koekeishiya): Function parameters
- * const char *Node
- * const char *Data
+ * NOTE(koekeishiya):
+ * parameter: const char *Node
+ * parameter: void *Data
  * return: bool
  * */
 PLUGIN_MAIN_FUNC(PluginMain)
@@ -1010,6 +1010,7 @@ Deinit()
 
 /*
  * NOTE(koekeishiya):
+ * parameter: plugin_broadcast *Broadcast
  * return: bool -> true if startup succeeded
  */
 PLUGIN_BOOL_FUNC(PluginInit)

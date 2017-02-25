@@ -21,7 +21,7 @@
     {                                                      \
         plugin *Plugin = It->first;                        \
         Plugin->Run(#plugin_export,                        \
-                    (char *) Context);                     \
+                    (void *) Context);                     \
     }                                                      \
     EndPluginList(plugin_export)
 
@@ -36,7 +36,7 @@
         plugin_work *Work = WorkArray + WorkCount++;       \
         Work->Plugin = It->first;                          \
         Work->Export = (char *) #plugin_export;            \
-        Work->Data = (char *) Context;                     \
+        Work->Data = (void *) Context;                     \
         AddWorkQueueEntry(&Queue,                          \
                           &PluginWorkCallback,             \
                           Work);                           \
@@ -48,7 +48,7 @@ struct plugin_work
 {
     plugin *Plugin;
     char *Export;
-    char *Data;
+    void *Data;
 };
 
 internal work_queue Queue;
@@ -63,14 +63,14 @@ WORK_QUEUE_CALLBACK(PluginWorkCallback)
 
 // NOTE(koekeishiya): We pass a pointer to this function to every plugin as they are loaded.
 void ChunkwmBroadcast(const char *PluginName, const char *EventName,
-                      const char *PluginData, size_t Size)
+                      void *PluginData, size_t Size)
 {
     if(!PluginName || !EventName)
     {
         return;
     }
 
-    char **Context = (char **) malloc(2 * sizeof(char *));
+    void **Context = (void **) malloc(2 * sizeof(void *));
 
     size_t TotalLength = strlen(PluginName) + strlen(EventName) + 2;
     char *Name = (char *) malloc(TotalLength);
@@ -79,7 +79,7 @@ void ChunkwmBroadcast(const char *PluginName, const char *EventName,
 
     if(Size)
     {
-        char *Data = (char *) malloc(Size);
+        void *Data = (void *) malloc(Size);
         memcpy(Data, PluginData, Size);
         Context[1] = Data;
     }
@@ -94,10 +94,10 @@ void ChunkwmBroadcast(const char *PluginName, const char *EventName,
 
 CHUNKWM_CALLBACK(Callback_ChunkWM_PluginBroadcast)
 {
-    char **Context = (char **) Event->Context;
+    void **Context = (void **) Event->Context;
 
-    char *PluginEvent = Context[0];
-    char *EventData = Context[1];
+    char *PluginEvent = (char *) Context[0];
+    void *EventData = (void *) Context[1];
 
     loaded_plugin_list *List = BeginLoadedPluginList();
 

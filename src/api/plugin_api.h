@@ -6,14 +6,14 @@
 #define CHUNKWM_EXTERN extern "C"
 
 // NOTE(koekeishiya): Increment upon ABI breaking changes!
-#define CHUNKWM_PLUGIN_API_VERSION 1
+#define CHUNKWM_PLUGIN_API_VERSION 2
 
 // NOTE(koekeishiya): Forward-declare struct
 struct plugin;
 
 typedef void (plugin_broadcast)(const char *Plugin,
                                 const char *Event,
-                                const char *Data,
+                                void *Data,
                                 size_t Size);
 
 #define PLUGIN_BOOL_FUNC(name) bool name(plugin_broadcast *Broadcast)
@@ -24,7 +24,7 @@ typedef PLUGIN_VOID_FUNC(plugin_void_func);
 
 #define PLUGIN_MAIN_FUNC(name)   \
     bool name(const char *Node,  \
-              const char *Data)
+              void *Data)
 typedef PLUGIN_MAIN_FUNC(plugin_main_func);
 
 struct plugin
@@ -36,7 +36,6 @@ struct plugin
     chunkwm_plugin_export *Subscriptions;
     unsigned SubscriptionCount;
 };
-
 
 CHUNKWM_EXTERN typedef plugin *(*plugin_func)();
 struct plugin_details

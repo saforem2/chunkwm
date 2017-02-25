@@ -4,6 +4,13 @@
 #include "../../api/plugin_api.h"
 #include "../../common/accessibility/application.h"
 
+#define internal static
+
+internal const char *PluginName = "template";
+internal const char *PluginVersion = "0.0.2";
+
+internal plugin_broadcast *ChunkWMBroadcastEvent;
+
 inline bool
 StringsAreEqual(const char *A, const char *B)
 {
@@ -12,9 +19,9 @@ StringsAreEqual(const char *A, const char *B)
 }
 
 /*
- * NOTE(koekeishiya): Function parameters
- * const char *Node
- * const char *Data
+ * NOTE(koekeishiya):
+ * parameter: const char *Node
+ * parameter: void *Data
  * return: bool
  * */
 PLUGIN_MAIN_FUNC(PluginMain)
@@ -35,10 +42,12 @@ PLUGIN_MAIN_FUNC(PluginMain)
 
 /*
  * NOTE(koekeishiya):
+ * parameter: plugin_broadcast *Broadcast
  * return: bool -> true if startup succeeded
  */
 PLUGIN_BOOL_FUNC(PluginInit)
 {
+    ChunkWMBroadcastEvent = Broadcast;
     return true;
 }
 
@@ -64,4 +73,4 @@ chunkwm_plugin_export Subscriptions[] =
 CHUNKWM_PLUGIN_SUBSCRIBE(Subscriptions)
 
 // NOTE(koekeishiya): Generate plugin
-CHUNKWM_PLUGIN("Plugin Template", "0.0.1")
+CHUNKWM_PLUGIN(PluginName, PluginVersion);
