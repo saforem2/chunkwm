@@ -11,7 +11,12 @@
 // NOTE(koekeishiya): Forward-declare struct
 struct plugin;
 
-#define PLUGIN_BOOL_FUNC(name) bool name()
+typedef void (plugin_broadcast)(const char *Plugin,
+                                const char *Event,
+                                const char *Data,
+                                size_t Size);
+
+#define PLUGIN_BOOL_FUNC(name) bool name(plugin_broadcast *Broadcast)
 typedef PLUGIN_BOOL_FUNC(plugin_bool_func);
 
 #define PLUGIN_VOID_FUNC(name) void name()

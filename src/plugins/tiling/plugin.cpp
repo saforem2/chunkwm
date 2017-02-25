@@ -43,8 +43,13 @@ extern "C" CGError CGSGetOnScreenWindowList(const CGSConnectionID CID, CGSConnec
 // TODO(koekeishiya): Shorter name.
 #define CONFIG_FILE "/.chunkwmtilingrc"
 
+internal const char *PluginName = "Tiling";
+internal const char *PluginVersion = "0.0.1";
+
 internal macos_application_map Applications;
 internal macos_window_map Windows;
+
+plugin_broadcast *ChunkWMBroadcastEvent;
 
 /* NOTE(koekeishiya): We need a way to retrieve AXUIElementRef from a CGWindowID.
  * There is no way to do this, without caching AXUIElementRef references.
@@ -691,6 +696,16 @@ void ApplicationActivatedHandler(const char *Data)
             if(!AXLibHasFlags(Window, Window_Float))
             {
                 UpdateCVar(CVAR_BSP_INSERTION_POINT, (int)Window->Id);
+
+                // NOTE(koekeishiya): test global plugin broadcast system.
+                int Status = 0;
+                ChunkWMBroadcastEvent(PluginName, "focused_window_float", (char *) &Status, sizeof(int));
+            }
+            else
+            {
+                // NOTE(koekeishiya): test global plugin broadcast system.
+                int Status = 1;
+                ChunkWMBroadcastEvent(PluginName, "focused_window_float", (char *) &Status, sizeof(int));
             }
         }
     }
@@ -760,6 +775,15 @@ void WindowFocusedHandler(const char *Data)
         if(!AXLibHasFlags(Copy, Window_Float))
         {
             UpdateCVar(CVAR_BSP_INSERTION_POINT, (int)Copy->Id);
+
+            // NOTE(koekeishiya): test global plugin broadcast system.
+            int Status = 0;
+            ChunkWMBroadcastEvent(PluginName, "focused_window_float", (char *) &Status, sizeof(int));
+        }
+        else
+        {
+            int Status = 1;
+            ChunkWMBroadcastEvent(PluginName, "focused_window_float", (char *) &Status, sizeof(int));
         }
     }
 }
@@ -837,8 +861,10 @@ PLUGIN_MAIN_FUNC(PluginMain)
 }
 
 internal bool
-Init()
+Init(plugin_broadcast *ChunkwmBroadcast)
 {
+    ChunkWMBroadcastEvent = ChunkwmBroadcast;
+
     BeginCVars();
 
     CreateCVar(CVAR_SPACE_MODE, Virtual_Space_Bsp);
@@ -988,7 +1014,7 @@ Deinit()
  */
 PLUGIN_BOOL_FUNC(PluginInit)
 {
-    return Init();
+    return Init(Broadcast);
 }
 
 PLUGIN_VOID_FUNC(PluginDeInit)
@@ -1025,4 +1051,4 @@ chunkwm_plugin_export Subscriptions[] =
 CHUNKWM_PLUGIN_SUBSCRIBE(Subscriptions)
 
 // NOTE(koekeishiya): Generate plugin
-CHUNKWM_PLUGIN("Tiling", "0.0.1")
+CHUNKWM_PLUGIN(PluginName, PluginVersion)

@@ -35,6 +35,9 @@ extern CHUNKWM_CALLBACK(Callback_ChunkWM_WindowDeminimized);
 // NOTE(koekeishiya): This property is not exposed to plugins
 extern CHUNKWM_CALLBACK(Callback_ChunkWM_WindowTitleChanged);
 
+// NOTE(koekeishiya): This property is not exposed to plugins
+extern CHUNKWM_CALLBACK(Callback_ChunkWM_PluginBroadcast);
+
 enum event_type
 {
     ChunkWM_ApplicationLaunched,
@@ -61,6 +64,9 @@ enum event_type
 
     // NOTE(koekeishiya): This property is not exposed to plugins
     ChunkWM_WindowTitleChanged,
+
+    // NOTE(koekeishiya): This property is not exposed to plugins
+    ChunkWM_PluginBroadcast,
 };
 
 struct chunk_event

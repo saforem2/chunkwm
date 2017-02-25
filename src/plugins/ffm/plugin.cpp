@@ -8,6 +8,7 @@
 
 #define internal static
 internal event_tap EventTap;
+internal bool volatile IsActive;
 
 internal bool
 IsPointInsideRect(CGPoint *Point, CGRect *Rect)
@@ -175,10 +176,13 @@ EVENTTAP_CALLBACK(EventTapCallback)
         } break;
         case kCGEventMouseMoved:
         {
-            CGEventFlags Flags = CGEventGetFlags(Event);
-            if(!(Flags & Event_Mask_Alt))
+            if(IsActive)
             {
-                FocusWindowBelowCursor();
+                CGEventFlags Flags = CGEventGetFlags(Event);
+                if(!(Flags & Event_Mask_Alt))
+                {
+                    FocusWindowBelowCursor();
+                }
             }
         } break;
         default: {} break;
@@ -195,6 +199,21 @@ EVENTTAP_CALLBACK(EventTapCallback)
  * */
 PLUGIN_MAIN_FUNC(PluginMain)
 {
+    if(strcmp(Node, "Tiling_focused_window_float") == 0)
+    {
+        uint32_t Status = *(uint32_t *) Data;
+        if(Status)
+        {
+            printf("focus-follows-mouse: focused window is floating.");
+            IsActive = false;;
+        }
+        else
+        {
+            printf("focus-follows-mouse: focused window is not floating.");
+            IsActive = true;;
+        }
+        return true;
+    }
     return false;
 }
 
@@ -204,6 +223,7 @@ PLUGIN_MAIN_FUNC(PluginMain)
  */
 PLUGIN_BOOL_FUNC(PluginInit)
 {
+    IsActive = true;
     EventTap.Mask = (1 << kCGEventMouseMoved);
     bool Result = BeginEventTap(&EventTap, &EventTapCallback);
     return Result;

@@ -61,6 +61,78 @@ WORK_QUEUE_CALLBACK(PluginWorkCallback)
                       Work->Data);
 }
 
+// NOTE(koekeishiya): We pass a pointer to this function to every plugin as they are loaded.
+void ChunkwmBroadcast(const char *PluginName, const char *EventName,
+                      const char *PluginData, size_t Size)
+{
+    if(!PluginName || !EventName)
+    {
+        return;
+    }
+
+    char **Context = (char **) malloc(2 * sizeof(char *));
+
+    size_t TotalLength = strlen(PluginName) + strlen(EventName) + 2;
+    char *Name = (char *) malloc(TotalLength);
+    snprintf(Name, TotalLength, "%s_%s", PluginName, EventName);
+    Context[0] = Name;
+
+    if(Size)
+    {
+        char *Data = (char *) malloc(Size);
+        memcpy(Data, PluginData, Size);
+        Context[1] = Data;
+    }
+    else
+    {
+        Context[1] = NULL;
+    }
+
+    printf("chunkwm: plugin '%s' added broadcast!\n", Name);
+    ConstructEvent(ChunkWM_PluginBroadcast, Context);
+}
+
+CHUNKWM_CALLBACK(Callback_ChunkWM_PluginBroadcast)
+{
+    char **Context = (char **) Event->Context;
+
+    char *PluginEvent = Context[0];
+    char *EventData = Context[1];
+
+    loaded_plugin_list *List = BeginLoadedPluginList();
+
+    plugin_work WorkArray[List->size()];
+    int WorkCount = 0;
+
+    for(loaded_plugin_list_iter It = List->begin();
+        It != List->end();
+        ++It)
+    {
+        loaded_plugin *LoadedPlugin = It->second;
+        if(strncmp(LoadedPlugin->Info->PluginName,
+                  PluginEvent,
+                  strlen(LoadedPlugin->Info->PluginName)) != 0)
+        {
+            plugin_work *Work = WorkArray + WorkCount++;
+            Work->Plugin = LoadedPlugin->Plugin;
+            Work->Export = PluginEvent;
+            Work->Data = EventData;
+            AddWorkQueueEntry(&Queue, &PluginWorkCallback, Work);
+        }
+    }
+
+    EndLoadedPluginList();
+    CompleteWorkQueue(&Queue);
+
+    if(EventData)
+    {
+        free(EventData);
+    }
+
+    free(PluginEvent);
+    free(Context);
+}
+
 void BeginCallbackThreads(int Count)
 {
     if((Queue.Semaphore = sem_open("work_queue_semaphore", O_CREAT, 0644, 0)) == SEM_FAILED)

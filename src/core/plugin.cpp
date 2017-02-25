@@ -1,7 +1,5 @@
 #include "plugin.h"
 
-#include "../common/misc/string.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -14,15 +12,8 @@
 
 #define internal static
 
-struct loaded_plugin
-{
-    char *Filename;
-    void *Handle;
-    plugin *Plugin;
-    plugin_details *Info;
-};
-
 internal std::map<const char *, loaded_plugin *, string_comparator> LoadedPlugins;
+internal pthread_mutex_t LoadedPluginLock;
 
 internal pthread_mutex_t Mutexes[chunkwm_export_count];
 internal plugin_list ExportedPlugins[chunkwm_export_count];
@@ -128,12 +119,16 @@ UnhookPlugin(loaded_plugin *LoadedPlugin)
 internal void
 StoreLoadedPlugin(loaded_plugin *LoadedPlugin)
 {
+    BeginLoadedPluginList();
     LoadedPlugins[LoadedPlugin->Filename] = LoadedPlugin;
+    EndLoadedPluginList();
 }
 
 internal loaded_plugin *
 RemoveLoadedPlugin(const char *Filename)
 {
+    BeginLoadedPluginList();
+
     loaded_plugin *Result;
     if(LoadedPlugins.find(Filename) != LoadedPlugins.end())
     {
@@ -145,7 +140,19 @@ RemoveLoadedPlugin(const char *Filename)
         Result = NULL;
     }
 
+    EndLoadedPluginList();
     return Result;
+}
+
+loaded_plugin_list *BeginLoadedPluginList()
+{
+    pthread_mutex_lock(&LoadedPluginLock);
+    return &LoadedPlugins;
+}
+
+void EndLoadedPluginList()
+{
+    pthread_mutex_unlock(&LoadedPluginLock);
 }
 
 bool LoadPlugin(const char *Absolutepath, const char *Filename)
@@ -168,7 +175,7 @@ bool LoadPlugin(const char *Absolutepath, const char *Filename)
                 LoadedPlugin->Plugin = Plugin;
                 LoadedPlugin->Info = Info;
 
-                if(Plugin->Init())
+                if(Plugin->Init(ChunkwmBroadcast))
                 {
                     printf("chunkwm: plugin '%s' loaded!\n", Filename);
                     LoadedPlugin->Filename = strdup(Filename);
@@ -247,6 +254,12 @@ bool BeginPlugins()
             return false;
         }
     }
+
+    if(pthread_mutex_init(&LoadedPluginLock, NULL) != 0)
+    {
+        return false;
+    }
+
 
     return true;
 }
