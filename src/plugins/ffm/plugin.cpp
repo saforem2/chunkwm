@@ -210,7 +210,6 @@ PLUGIN_MAIN_FUNC(PluginMain)
         }
         else
         {
-            printf("focus-follows-mouse: focused window is not floating.");
             IsActive = true;;
         }
         return true;
