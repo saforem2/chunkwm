@@ -3,8 +3,7 @@
 
 static bool BorderCreated = false;
 static int CornerRadius = 6;
-static int BorderWidth = 2;
-static int Inset = BorderWidth / 2;
+static int BorderWidth = 4;
 unsigned int HexColor = 0xddd5c4a1;
 
 NSColor *ColorFromHex(unsigned int Color)
@@ -39,8 +38,7 @@ NSColor *Color = ColorFromHex(HexColor);
     if(Rect.size.height < Frame.size.height)
         return;
 
-    NSRect BorderRect = CGRectInset(Frame, Inset, Inset);
-    NSBezierPath *Border = [NSBezierPath bezierPathWithRoundedRect:BorderRect xRadius:CornerRadius yRadius:CornerRadius];
+    NSBezierPath *Border = [NSBezierPath bezierPathWithRoundedRect:Frame xRadius:CornerRadius yRadius:CornerRadius];
     [Border setLineWidth:BorderWidth];
     [Color set];
     [Border stroke];
@@ -63,7 +61,7 @@ void CreateBorder(int X, int Y, int W, int H)
 {
     NSAutoreleasePool *Pool = [[NSAutoreleasePool alloc] init];
 
-    NSRect GraphicsRect = NSMakeRect(X - Inset, InvertY(Y + Inset, H), W + (2 * Inset), H + (2 * Inset));
+    NSRect GraphicsRect = NSMakeRect(X, InvertY(Y, H), W, H);
     BorderWindow = [[NSWindow alloc]
            initWithContentRect: GraphicsRect
            styleMask: NSFullSizeContentViewWindowMask
@@ -94,7 +92,7 @@ void UpdateBorder(int X, int Y, int W, int H)
         {
             dispatch_async(dispatch_get_main_queue(), ^(void)
             {
-                [BorderWindow setFrame:NSMakeRect(X - Inset, InvertY(Y + Inset, H), W + (2 * Inset), H + (2 * Inset)) display:YES animate:NO];
+                [BorderWindow setFrame:NSMakeRect(X, InvertY(Y, H), W, H) display:YES animate:NO];
             });
         });
     }
