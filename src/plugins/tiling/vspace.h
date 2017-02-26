@@ -23,8 +23,9 @@ struct virtual_space_config
 struct virtual_space
 {
     virtual_space_mode Mode;
-    region_offset Offset;
+    region_offset _Offset;
 
+    region_offset *Offset;
     node *Tree;
 };
 

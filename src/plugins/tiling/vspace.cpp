@@ -64,7 +64,8 @@ CreateAndInitVirtualSpace(macos_space *Space)
 
     virtual_space_config Config = GetVirtualSpaceConfig(DesktopId);
     VirtualSpace->Mode = Config.Mode;
-    VirtualSpace->Offset = Config.Offset;
+    VirtualSpace->_Offset = Config.Offset;
+    VirtualSpace->Offset = &VirtualSpace->_Offset;
 
     return VirtualSpace;
 }

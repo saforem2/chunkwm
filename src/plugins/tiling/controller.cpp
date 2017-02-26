@@ -821,3 +821,38 @@ void ActivateSpaceLayout(char *Layout)
 
     AXLibDestroySpace(Space);
 }
+
+void ToggleSpace(char *Op)
+{
+    macos_space *Space;
+    bool Success = AXLibActiveSpace(&Space);
+    ASSERT(Success);
+
+    if(Space->Type == kCGSSpaceUser)
+    {
+        virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
+        if(VirtualSpace->Mode != Virtual_Space_Float)
+        {
+            if(StringEquals(Op, "offset"))
+            {
+                if(VirtualSpace->Offset)
+                {
+                    VirtualSpace->Offset = NULL;
+                }
+                else
+                {
+                    VirtualSpace->Offset = &VirtualSpace->_Offset;
+                }
+
+                if(VirtualSpace->Tree)
+                {
+                    CreateNodeRegion(VirtualSpace->Tree, Region_Full);
+                    CreateNodeRegionRecursive(VirtualSpace->Tree, false);
+                    ApplyNodeRegion(VirtualSpace->Tree, VirtualSpace->Mode, false);
+                }
+            }
+        }
+    }
+
+    AXLibDestroySpace(Space);
+}
