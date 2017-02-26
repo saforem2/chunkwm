@@ -89,7 +89,7 @@ void ChunkwmBroadcast(const char *PluginName, const char *EventName,
     }
 
 #ifdef CHUNKWM_DEBUG
-    printf("chunkwm: plugin '%s' added event '%s'\n", PluginName, EventName);
+    printf("chunkwm:%s:%s\n", PluginName, EventName);
 #endif
 
     ConstructEvent(ChunkWM_PluginBroadcast, Context);
