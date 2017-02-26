@@ -138,9 +138,12 @@ void ResizeWindowToExternalRegionSize(node *Node, region Region, bool Center)
     bool WindowMoved  = AXLibSetWindowPosition(Window->Ref, Region.X, Region.Y);
     bool WindowResized = AXLibSetWindowSize(Window->Ref, Region.Width, Region.Height);
 
-    if(WindowMoved || WindowResized)
+    if(Center)
     {
-        CenterWindowInRegion(Window, Region);
+        if(WindowMoved || WindowResized)
+        {
+            CenterWindowInRegion(Window, Region);
+        }
     }
 }
 
