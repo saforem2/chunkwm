@@ -385,3 +385,16 @@ bool AXLibStickyWindow(uint32_t WindowId)
 
     return Result;
 }
+
+bool AXLibIsMenuBarAutoHideEnabled()
+{
+    bool Result = false;
+    CFStringRef AutoHide = (CFStringRef) [[NSUserDefaults standardUserDefaults] stringForKey:@"_HIHideMenuBar"];
+    if(AutoHide)
+    {
+        Result = CFStringCompare(AutoHide, CFSTR("1"), 0) == kCFCompareEqualTo;
+        CFRelease(AutoHide);
+    }
+
+    return Result;
+}

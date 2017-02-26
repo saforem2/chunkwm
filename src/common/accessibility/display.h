@@ -63,4 +63,6 @@ bool AXLibCGSSpaceIDFromDesktopID(unsigned DesktopId, unsigned *OutArrangement, 
 bool AXLibSpaceHasWindow(CGSSpaceID SpaceId, uint32_t WindowId);
 bool AXLibStickyWindow(uint32_t WindowId);
 
+bool AXLibIsMenuBarAutoHideEnabled();
+
 #endif
