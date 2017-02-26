@@ -60,3 +60,6 @@ shift + alt - t : chunkc config window_float_next 1
 ctrl + alt - a : chunkc space -l bsp
 ctrl + alt - s : chunkc space -l monocle
 ctrl + alt - d : chunkc space -l float
+
+# toggle space offset
+ctrl + alt - w : chunkc space -t offset

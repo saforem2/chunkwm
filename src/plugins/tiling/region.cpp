@@ -9,6 +9,7 @@
 
 #define internal static
 
+#define OSX_MENU_BAR_HEIGHT 20.0f
 internal region
 FullscreenRegion()
 {
@@ -17,17 +18,31 @@ FullscreenRegion()
     ASSERT(Success);
 
     virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
-    region_offset *Offset = &VirtualSpace->Offset;
+    region_offset *Offset = VirtualSpace->Offset;
 
     CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromSpace(Space->Id);
     CGRect Display = AXLibGetDisplayBounds(DisplayRef);
     CFRelease(DisplayRef);
 
     region Result;
-    Result.X = Display.origin.x + Offset->Left;
-    Result.Y = Display.origin.y + Offset->Top;
-    Result.Width = Display.size.width - Offset->Left - Offset->Right;
-    Result.Height = Display.size.height - Offset->Top - Offset->Bottom;
+    Result.X = Display.origin.x;
+    Result.Y = Display.origin.y;
+    Result.Width = Display.size.width;
+    Result.Height = Display.size.height;
+
+    if(Offset)
+    {
+        Result.X += Offset->Left;
+        Result.Y += Offset->Top;
+        Result.Width -= (Offset->Left + Offset->Right);
+        Result.Height -= (Offset->Top + Offset->Bottom);
+    }
+
+    if(!AXLibIsMenuBarAutoHideEnabled())
+    {
+        Result.Y += OSX_MENU_BAR_HEIGHT;
+        Result.Height -= OSX_MENU_BAR_HEIGHT;
+    }
 
     AXLibDestroySpace(Space);
     return Result;
@@ -43,16 +58,19 @@ LeftVerticalRegion(node *Node)
     ASSERT(Success);
 
     virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
-    region_offset *Offset = &VirtualSpace->Offset;
-
+    region_offset *Offset = VirtualSpace->Offset;
     region *Region = &Node->Region;
-    region Result;
 
+    region Result;
     Result.X = Region->X;
     Result.Y = Region->Y;
-
-    Result.Width = (Region->Width * Node->Ratio) - (Offset->Gap / 2);
+    Result.Width = Region->Width * Node->Ratio;
     Result.Height = Region->Height;
+
+    if(Offset)
+    {
+        Result.Width -= (Offset->Gap / 2);
+    }
 
     AXLibDestroySpace(Space);
     return Result;
@@ -68,16 +86,20 @@ RightVerticalRegion(node *Node)
     ASSERT(Success);
 
     virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
-    region_offset *Offset = &VirtualSpace->Offset;
-
+    region_offset *Offset = VirtualSpace->Offset;
     region *Region = &Node->Region;
+
     region Result;
-
-    Result.X = Region->X + (Region->Width * Node->Ratio) + (Offset->Gap / 2);
+    Result.X = Region->X + (Region->Width * Node->Ratio);
     Result.Y = Region->Y;
-
-    Result.Width = (Region->Width * (1 - Node->Ratio)) - (Offset->Gap / 2);
+    Result.Width = Region->Width * (1 - Node->Ratio);
     Result.Height = Region->Height;
+
+    if(Offset)
+    {
+        Result.X += (Offset->Gap / 2);
+        Result.Width -= (Offset->Gap / 2);
+    }
 
     AXLibDestroySpace(Space);
     return Result;
@@ -93,16 +115,19 @@ UpperHorizontalRegion(node *Node)
     ASSERT(Success);
 
     virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
-    region_offset *Offset = &VirtualSpace->Offset;
-
+    region_offset *Offset = VirtualSpace->Offset;
     region *Region = &Node->Region;
-    region Result;
 
+    region Result;
     Result.X = Region->X;
     Result.Y = Region->Y;
-
     Result.Width = Region->Width;
-    Result.Height = (Region->Height * Node->Ratio) - (Offset->Gap / 2);
+    Result.Height = Region->Height * Node->Ratio;
+
+    if(Offset)
+    {
+        Result.Height -= (Offset->Gap / 2);
+    }
 
     AXLibDestroySpace(Space);
     return Result;
@@ -118,16 +143,20 @@ LowerHorizontalRegion(node *Node)
     ASSERT(Success);
 
     virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
-    region_offset *Offset = &VirtualSpace->Offset;
-
+    region_offset *Offset = VirtualSpace->Offset;
     region *Region = &Node->Region;
+
     region Result;
-
     Result.X = Region->X;
-    Result.Y = Region->Y + (Region->Height * Node->Ratio) + (Offset->Gap / 2);
-
+    Result.Y = Region->Y + (Region->Height * Node->Ratio);
     Result.Width = Region->Width;
-    Result.Height = (Region->Height * (1 - Node->Ratio)) - (Offset->Gap / 2);
+    Result.Height = Region->Height * (1 - Node->Ratio);
+
+    if(Offset)
+    {
+        Result.Y += (Offset->Gap / 2);
+        Result.Height -= (Offset->Gap / 2);
+    }
 
     AXLibDestroySpace(Space);
     return Result;
