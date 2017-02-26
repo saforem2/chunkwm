@@ -12,6 +12,14 @@
 /* NOTE(koekeishiya): Fullscreen applications */
 #define kCGSSpaceFullscreen 4
 
+enum macos_dock_orientation
+{
+    Dock_Orientation_Top = 1,
+    Dock_Orientation_Bottom = 2,
+    Dock_Orientation_Left = 3,
+    Dock_Orientation_Right = 4,
+};
+
 enum CGSSpaceSelector
 {
     kCGSSpaceCurrent = 5,
@@ -64,5 +72,9 @@ bool AXLibSpaceHasWindow(CGSSpaceID SpaceId, uint32_t WindowId);
 bool AXLibStickyWindow(uint32_t WindowId);
 
 bool AXLibIsMenuBarAutoHideEnabled();
+bool AXLibIsDockAutoHideEnabled();
+
+macos_dock_orientation AXLibGetDockOrientation();
+size_t AXLibGetDockTileSize();
 
 #endif

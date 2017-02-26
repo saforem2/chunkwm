@@ -16,6 +16,9 @@ extern "C" CGSSpaceID CGSManagedDisplayGetCurrentSpace(CGSConnectionID Connectio
 extern "C" CFStringRef CGSCopyManagedDisplayForSpace(const CGSConnectionID Connection, CGSSpaceID Space);
 extern "C" CFStringRef CGSCopyManagedDisplayForWindow(const CGSConnectionID Connection, uint32_t WindowId);
 extern "C" bool CGSManagedDisplayIsAnimating(const CGSConnectionID Connection, CFStringRef DisplayRef);
+extern "C" Boolean CoreDockGetAutoHideEnabled(void);
+extern "C" float CoreDockGetTileSize(void);
+extern "C" void  CoreDockGetOrientationAndPinning(macos_dock_orientation *Orientation, int *Pinning);
 
 /* NOTE(koekeishiya): Find the UUID associated with a CGDirectDisplayID. */
 internal CFStringRef
@@ -396,5 +399,30 @@ bool AXLibIsMenuBarAutoHideEnabled()
         CFRelease(AutoHide);
     }
 
+    return Result;
+}
+
+bool AXLibIsDockAutoHideEnabled()
+{
+    return CoreDockGetAutoHideEnabled() != 0;
+}
+
+macos_dock_orientation AXLibGetDockOrientation()
+{
+    int Unused;
+    macos_dock_orientation Orientation;
+    CoreDockGetOrientationAndPinning(&Orientation, &Unused);
+    return Orientation;
+}
+
+/* NOTE(koekeishiya): CoreDock API returns a float in the range 0.0 -> 1.0
+ * the minimum size of the Dock is 16 and the maximum size is 128. We translate
+ * our value back into this number range. */
+#define DOCK_MAX_TILESIZE 128
+#define DOCK_MIN_TILESIZE  16
+size_t AXLibGetDockTileSize()
+{
+    float Ratio = CoreDockGetTileSize();
+    size_t Result = (Ratio * (DOCK_MAX_TILESIZE - DOCK_MIN_TILESIZE)) + DOCK_MIN_TILESIZE;
     return Result;
 }
