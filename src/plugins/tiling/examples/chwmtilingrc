@@ -7,10 +7,10 @@ chunkc config global_space_mode           bsp
 chunkc config 2_space_mode            monocle
 chunkc config 5_space_mode              float
 
-chunkc config global_space_offset_top      50
-chunkc config global_space_offset_bottom   50
-chunkc config global_space_offset_left     50
-chunkc config global_space_offset_right    50
+chunkc config global_space_offset_top      20
+chunkc config global_space_offset_bottom   20
+chunkc config global_space_offset_left     20
+chunkc config global_space_offset_right    20
 chunkc config global_space_offset_gap      15
 
 chunkc config 1_space_offset_top          190
