@@ -30,12 +30,17 @@ struct node
 
 node_split OptimalSplitMode(node *Node);
 node *CreateRootNode(uint32_t WindowId);
-
 void CreateLeafNodePair(node *Parent, uint32_t FirstWindowID, uint32_t SecondWindowID, node_split Split);
-void ApplyNodeRegion(node *Node, virtual_space_mode VirtualSpaceMode);
-void ResizeWindowToRegionSize(node *Node);
-void ResizeWindowToExternalRegionSize(node *Node, region Region);
 void FreeNodeTree(node *Node, virtual_space_mode VirtualSpaceMode);
+
+void ApplyNodeRegion(node *Node, virtual_space_mode VirtualSpaceMode);
+void ApplyNodeRegion(node *Node, virtual_space_mode VirtualSpaceMode, bool Center);
+
+void ResizeWindowToRegionSize(node *Node);
+void ResizeWindowToRegionSize(node *Node, bool Center);
+
+void ResizeWindowToExternalRegionSize(node *Node, region Region);
+void ResizeWindowToExternalRegionSize(node *Node, region Region, bool Center);
 
 bool IsLeafNode(node *Node);
 bool IsLeftChild(node *Node);

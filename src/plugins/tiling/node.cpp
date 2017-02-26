@@ -105,7 +105,7 @@ CenterWindowInRegion(macos_window *Window, region Region)
     }
 }
 
-void ResizeWindowToRegionSize(node *Node)
+void ResizeWindowToRegionSize(node *Node, bool Center)
 {
     // NOTE(koekeishiya): GetWindowByID should not be able to fail!
     macos_window *Window = GetWindowByID(Node->WindowId);
@@ -114,13 +114,22 @@ void ResizeWindowToRegionSize(node *Node)
     bool WindowMoved  = AXLibSetWindowPosition(Window->Ref, Node->Region.X, Node->Region.Y);
     bool WindowResized = AXLibSetWindowSize(Window->Ref, Node->Region.Width, Node->Region.Height);
 
-    if(WindowMoved || WindowResized)
+    if(Center)
     {
-        CenterWindowInRegion(Window, Node->Region);
+        if(WindowMoved || WindowResized)
+        {
+            CenterWindowInRegion(Window, Node->Region);
+        }
     }
 }
 
-void ResizeWindowToExternalRegionSize(node *Node, region Region)
+// NOTE(koekeishiya): Call ResizeWindowToRegionSize with center -> true
+void ResizeWindowToRegionSize(node *Node)
+{
+    ResizeWindowToRegionSize(Node, true);
+}
+
+void ResizeWindowToExternalRegionSize(node *Node, region Region, bool Center)
 {
     // NOTE(koekeishiya): GetWindowByID should not be able to fail!
     macos_window *Window = GetWindowByID(Node->WindowId);
@@ -135,22 +144,34 @@ void ResizeWindowToExternalRegionSize(node *Node, region Region)
     }
 }
 
-void ApplyNodeRegion(node *Node, virtual_space_mode VirtualSpaceMode)
+// NOTE(koekeishiya): Call ResizeWindowToExternalRegionSize with center -> true
+void ResizeWindowToExternalRegionSize(node *Node, region Region)
+{
+    ResizeWindowToExternalRegionSize(Node, Region, true);
+}
+
+void ApplyNodeRegion(node *Node, virtual_space_mode VirtualSpaceMode, bool Center)
 {
     if(Node->WindowId)
     {
-        ResizeWindowToRegionSize(Node);
+        ResizeWindowToRegionSize(Node, Center);
     }
 
     if(Node->Left && VirtualSpaceMode == Virtual_Space_Bsp)
     {
-        ApplyNodeRegion(Node->Left, VirtualSpaceMode);
+        ApplyNodeRegion(Node->Left, VirtualSpaceMode, Center);
     }
 
     if(Node->Right)
     {
-        ApplyNodeRegion(Node->Right, VirtualSpaceMode);
+        ApplyNodeRegion(Node->Right, VirtualSpaceMode, Center);
     }
+}
+
+// NOTE(koekeishiya): Call ApplyNodeRegion with center -> true
+void ApplyNodeRegion(node *Node, virtual_space_mode VirtualSpaceMode)
+{
+    ApplyNodeRegion(Node, VirtualSpaceMode, true);
 }
 
 void FreeNodeTree(node *Node, virtual_space_mode VirtualSpaceMode)
