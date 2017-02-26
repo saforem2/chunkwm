@@ -2,7 +2,7 @@
 #include "overlay.h"
 
 static bool BorderCreated = false;
-static int CornerRadius = 6;
+static int CornerRadius = 4;
 static int BorderWidth = 4;
 unsigned int HexColor = 0xddd5c4a1;
 
