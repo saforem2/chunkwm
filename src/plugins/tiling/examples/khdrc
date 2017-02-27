@@ -41,6 +41,9 @@ ctrl + alt - l : chunkc window -i east
 # rotate tree
 alt - r : chunkc space -r 90
 
+# toggle space offset
+alt - a : chunkc space -t offset
+
 # toggle window fullscreen
 alt - f : chunkc window -t fullscreen
 
@@ -60,6 +63,3 @@ shift + alt - t : chunkc config window_float_next 1
 ctrl + alt - a : chunkc space -l bsp
 ctrl + alt - s : chunkc space -l monocle
 ctrl + alt - d : chunkc space -l float
-
-# toggle space offset
-ctrl + alt - w : chunkc space -t offset
