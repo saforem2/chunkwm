@@ -889,6 +889,13 @@ PLUGIN_MAIN_FUNC(PluginMain)
         RebalanceWindowTree();
         return true;
     }
+    else if(StringEquals(Node, "chunkwm_export_display_changed"))
+    {
+        UpdateWindowCollection();
+        CreateWindowTree();
+        RebalanceWindowTree();
+        return true;
+    }
 
     return false;
 }
@@ -1083,6 +1090,7 @@ chunkwm_plugin_export Subscriptions[] =
     chunkwm_export_window_focused,
 
     chunkwm_export_space_changed,
+    chunkwm_export_display_changed,
 };
 CHUNKWM_PLUGIN_SUBSCRIBE(Subscriptions)
 
