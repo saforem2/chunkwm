@@ -185,6 +185,11 @@ PLUGIN_MAIN_FUNC(PluginMain)
         }
 
         DrawBorder = Result;
+        if(!DrawBorder)
+        {
+            UpdateBorder(0, 0, 0, 0);
+        }
+
         return true;
     }
 
