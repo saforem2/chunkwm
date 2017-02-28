@@ -176,8 +176,6 @@ PLUGIN_MAIN_FUNC(PluginMain)
     }
     else if(StringsAreEqual(Node, "chunkwm_export_space_changed"))
     {
-        UpdateBorder(0, 0, 0, 0);
-
         macos_space *Space;
         bool Result = AXLibActiveSpace(&Space);
         if(Result)
