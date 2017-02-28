@@ -507,6 +507,7 @@ DAEMON_CALLBACK(DaemonCallback)
                 char *StringValue = TokenToString(Value);
                 printf("        value: '%s'\n", StringValue);
                 UpdateCVar(Variable, StringValue);
+                free(StringValue);
             }
             else
             {
