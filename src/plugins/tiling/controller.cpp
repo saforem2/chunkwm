@@ -333,7 +333,6 @@ void SwapWindow(char *Direction)
             }
             else if(VirtualSpace->Mode == Virtual_Space_Monocle)
             {
-                // TODO(koekeishiya): NYI
                 node *WindowNode = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
                 if(WindowNode)
                 {
