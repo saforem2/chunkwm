@@ -4,6 +4,10 @@
 
 [click here to view current project status](https://github.com/koekeishiya/chunkwm/issues/16)
 
+Development is happening on and primarily for MacOS Sierra (10.12.3).
+
+Older versions may or may not be compatible and will not be officially supported.
+
 ![img](https://cloud.githubusercontent.com/assets/6175959/23313599/acf600e2-fabe-11e6-889f-3b0ff20db510.png)
 
 ## Configuration
