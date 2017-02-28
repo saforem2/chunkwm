@@ -114,11 +114,7 @@ void DestroyBorder()
     {
         [BorderWindow close];
         BorderWindow = nil;
-    }
-
-    if(BorderView)
-    {
-        [BorderView release];
         BorderView = nil;
+        BorderCreated = false;
     }
 }
