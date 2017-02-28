@@ -6,7 +6,7 @@
 #define CHUNKWM_EXTERN extern "C"
 
 // NOTE(koekeishiya): Increment upon ABI breaking changes!
-#define CHUNKWM_PLUGIN_API_VERSION 2
+#define CHUNKWM_PLUGIN_API_VERSION 3
 
 // NOTE(koekeishiya): Forward-declare struct
 struct plugin;
