@@ -64,7 +64,7 @@ void CreateBorder(int X, int Y, int W, int H)
     NSRect GraphicsRect = NSMakeRect(X, InvertY(Y, H), W, H);
     BorderWindow = [[NSWindow alloc]
            initWithContentRect: GraphicsRect
-           styleMask: NSFullSizeContentViewWindowMask
+           styleMask: NSWindowStyleMaskFullSizeContentView
            backing: NSBackingStoreBuffered
            defer: NO];
 
