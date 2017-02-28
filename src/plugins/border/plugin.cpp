@@ -32,7 +32,15 @@ UpdateToFocusedWindow()
     AXUIElementRef WindowRef = AXLibGetFocusedWindow(Application->Ref);
     if(WindowRef)
     {
-        UpdateWindow(WindowRef);
+        uint32_t WindowId = AXLibGetWindowID(WindowRef);
+        if(WindowId)
+        {
+            UpdateWindow(WindowRef);
+        }
+        else
+        {
+            UpdateBorder(0, 0, 0, 0);
+        }
         CFRelease(WindowRef);
     }
     else
