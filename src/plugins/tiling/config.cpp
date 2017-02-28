@@ -496,6 +496,25 @@ DAEMON_CALLBACK(DaemonCallback)
 
             free(Variable);
         }
+        else if(TokenEquals(Command, CVAR_WINDOW_FOCUS_CYCLE))
+        {
+            char *Variable = TokenToString(Command);
+            printf("        command: '%s'\n", Variable);
+
+            token Value = GetToken(&Message);
+            if(Value.Length > 0)
+            {
+                char *StringValue = TokenToString(Value);
+                printf("        value: '%s'\n", StringValue);
+                UpdateCVar(Variable, StringValue);
+            }
+            else
+            {
+                fprintf(stderr, "        value: MISSING!!!\n");
+            }
+
+            free(Variable);
+        }
         else
         {
             // NOTE(koekeishiya): The command we got is not a pre-defined string, but

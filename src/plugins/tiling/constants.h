@@ -22,6 +22,11 @@
 #define CVAR_BSP_SPLIT_RATIO        "bsp_split_ratio"
 #define CVAR_BSP_SPLIT_MODE         "bsp_split_mode"
 
+#define CVAR_WINDOW_FOCUS_CYCLE     "window_focus_cycle"
+#define Window_Focus_Cycle_None     "none"
+#define Window_Focus_Cycle_Monitor  "monitor"
+#define Window_Focus_Cycle_All      "all"
+
 #define CVAR_FOCUSED_WINDOW         "_focused_window"
 #define CVAR_BSP_INSERTION_POINT    "_bsp_insertion_point"
 

@@ -210,22 +210,33 @@ void FocusWindow(char *Direction)
         {
             if(VirtualSpace->Mode == Virtual_Space_Bsp)
             {
-                macos_window *ClosestWindow;
-                if(FindClosestWindow(Space, VirtualSpace, Window, &ClosestWindow, Direction, true))
+                char *FocusCycleMode = CVarStringValue(CVAR_WINDOW_FOCUS_CYCLE);
+                ASSERT(FocusCycleMode);
+
+                if(StringEquals(FocusCycleMode, Window_Focus_Cycle_All))
                 {
-                    AXLibSetFocusedWindow(ClosestWindow->Ref);
-                    AXLibSetFocusedApplication(ClosestWindow->Owner->PSN);
-
-                    if(CVarIntegerValue(CVAR_MOUSE_FOLLOWS_FOCUS))
+                    // TODO(koekeishiya): NYI
+                }
+                else
+                {
+                    bool WrapMonitor = StringEquals(FocusCycleMode, Window_Focus_Cycle_Monitor);
+                    macos_window *ClosestWindow;
+                    if(FindClosestWindow(Space, VirtualSpace, Window, &ClosestWindow, Direction, WrapMonitor))
                     {
-                        node *Node = GetNodeWithId(VirtualSpace->Tree, ClosestWindow->Id, VirtualSpace->Mode);
-                        ASSERT(Node);
+                        AXLibSetFocusedWindow(ClosestWindow->Ref);
+                        AXLibSetFocusedApplication(ClosestWindow->Owner->PSN);
 
-                        if(!IsCursorInRegion(Node->Region))
+                        if(CVarIntegerValue(CVAR_MOUSE_FOLLOWS_FOCUS))
                         {
-                            CGPoint Center = CGPointMake(Node->Region.X + Node->Region.Width / 2,
-                                                         Node->Region.Y + Node->Region.Height / 2);
-                            CGWarpMouseCursorPosition(Center);
+                            node *Node = GetNodeWithId(VirtualSpace->Tree, ClosestWindow->Id, VirtualSpace->Mode);
+                            ASSERT(Node);
+
+                            if(!IsCursorInRegion(Node->Region))
+                            {
+                                CGPoint Center = CGPointMake(Node->Region.X + Node->Region.Width / 2,
+                                                             Node->Region.Y + Node->Region.Height / 2);
+                                CGWarpMouseCursorPosition(Center);
+                            }
                         }
                     }
                 }
@@ -308,11 +319,16 @@ void SwapWindow(char *Direction)
         {
             if(VirtualSpace->Mode == Virtual_Space_Bsp)
             {
+                // TODO(koekeishiya): Do we want to support this cross-monitor ??
+                char *FocusCycleMode = CVarStringValue(CVAR_WINDOW_FOCUS_CYCLE);
+                ASSERT(FocusCycleMode);
+
                 node *WindowNode = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
                 if(WindowNode)
                 {
+                    bool WrapMonitor = StringEquals(FocusCycleMode, Window_Focus_Cycle_Monitor);
                     macos_window *ClosestWindow;
-                    if(FindClosestWindow(Space, VirtualSpace, Window, &ClosestWindow, Direction, true))
+                    if(FindClosestWindow(Space, VirtualSpace, Window, &ClosestWindow, Direction, WrapMonitor))
                     {
                         node *ClosestNode = GetNodeWithId(VirtualSpace->Tree, ClosestWindow->Id, VirtualSpace->Mode);
                         ASSERT(ClosestNode);
