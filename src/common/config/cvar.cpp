@@ -57,7 +57,7 @@ _CreateCVar(const char *Name, char *Value)
 
     Var->Name = strdup(Name);
     Var->Type = CVar_String;
-    Var->String = Value;
+    Var->String = strdup(Value);
 
     return Var;
 }
@@ -118,7 +118,9 @@ void UpdateCVar(const char *Name, char *Value)
     if(Var)
     {
         ASSERT(Var->Type == CVar_String);
-        Var->String = Value;
+        ASSERT(Var->String);
+        free(Var->String);
+        Var->String = strdup(Value);
     }
     else
     {
