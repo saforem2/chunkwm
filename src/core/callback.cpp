@@ -387,6 +387,18 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_DisplayResized)
 CHUNKWM_CALLBACK(Callback_ChunkWM_DisplayChanged)
 {
     /* NOTE(koekeishiya): This event does not take an argument. */
+    ASSERT(Event->Context == NULL);
+
+    /* NOTE(koekeishiya): Applications that are not on our focused space fails to have their
+     * existing windows added to our windw collection. We must force update our collection on
+     * every space change. Windows that are already tracked is NOT added multiple times. */
+    UpdateWindowCollection();
+
+#if 0
+    ProcessPluginList(chunkwm_export_space_changed, NULL);
+#else
+    ProcessPluginListThreaded(chunkwm_export_display_changed, NULL);
+#endif
 }
 
 // NOTE(koekeishiya): Window-related callbacks
