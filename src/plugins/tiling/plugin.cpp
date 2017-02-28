@@ -362,6 +362,40 @@ void UntileWindow(macos_window *Window)
 }
 
 /* NOTE(koekeishiya): Returns a vector of CGWindowIDs. */
+std::vector<uint32_t> GetAllVisibleWindowsForSpace(macos_space *Space)
+{
+    std::vector<uint32_t> Windows;
+
+    int WindowCount = 0;
+    CGError Error = CGSGetOnScreenWindowCount(CGSDefaultConnection, 0, &WindowCount);
+    if(Error == kCGErrorSuccess)
+    {
+        int WindowList[WindowCount];
+        Error = CGSGetOnScreenWindowList(CGSDefaultConnection, 0, WindowCount, WindowList, &WindowCount);
+        if(Error == kCGErrorSuccess)
+        {
+            for(int Index = 0;
+                Index < WindowCount;
+                ++Index)
+            {
+                uint32_t WindowId = WindowList[Index];
+
+                /* NOTE(koekeishiya): The onscreenwindowlist can contain windowids
+                 * that we do not care about. Check that the window in question is
+                 * in our cache and on the correct monitor. */
+                if((GetWindowByID(WindowId)) &&
+                   (AXLibSpaceHasWindow(Space->Id, WindowId)))
+                {
+                    Windows.push_back(WindowList[Index]);
+                }
+            }
+        }
+    }
+
+    return Windows;
+}
+
+/* NOTE(koekeishiya): Returns a vector of CGWindowIDs. */
 std::vector<uint32_t> GetAllVisibleWindows()
 {
     std::vector<uint32_t> Windows;
@@ -419,7 +453,7 @@ GetAllWindowsInTree(node *Tree, virtual_space_mode VirtualSpaceMode)
 }
 
 internal std::vector<uint32_t>
-GetAllWindowsToAddToTree(macos_space *Space, std::vector<uint32_t> &VisibleWindows, std::vector<uint32_t> &WindowsInTree)
+GetAllWindowsToAddToTree(std::vector<uint32_t> &VisibleWindows, std::vector<uint32_t> &WindowsInTree)
 {
     std::vector<uint32_t> Windows;
     for(size_t WindowIndex = 0;
@@ -440,9 +474,7 @@ GetAllWindowsToAddToTree(macos_space *Space, std::vector<uint32_t> &VisibleWindo
             }
         }
 
-        if((!Found) &&
-           (AXLibSpaceHasWindow(Space->Id, WindowId)) &&
-           (!AXLibStickyWindow(WindowId)))
+        if((!Found) && (!AXLibStickyWindow(WindowId)))
         {
             Windows.push_back(WindowId);
         }
@@ -460,11 +492,13 @@ GetAllWindowsToRemoveFromTree(std::vector<uint32_t> &VisibleWindows, std::vector
         ++Index)
     {
         bool Found = false;
+        uint32_t WindowId = WindowsInTree[Index];
+
         for(size_t WindowIndex = 0;
             WindowIndex < VisibleWindows.size();
             ++WindowIndex)
         {
-            if(VisibleWindows[WindowIndex] == WindowsInTree[Index])
+            if(VisibleWindows[WindowIndex] == WindowId)
             {
                 Found = true;
                 break;
@@ -503,7 +537,7 @@ void CreateWindowTree()
         virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
         if(!VirtualSpace->Tree && VirtualSpace->Mode != Virtual_Space_Float)
         {
-            std::vector<uint32_t> Windows = GetAllVisibleWindows();
+            std::vector<uint32_t> Windows = GetAllVisibleWindowsForSpace(Space);
             if(!Windows.empty())
             {
                 node *Root = CreateRootNode(Windows[0]);
@@ -572,9 +606,9 @@ RebalanceWindowTree()
         virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
         if(VirtualSpace->Tree && VirtualSpace->Mode != Virtual_Space_Float)
         {
-            std::vector<uint32_t> Windows = GetAllVisibleWindows();
+            std::vector<uint32_t> Windows = GetAllVisibleWindowsForSpace(Space);
             std::vector<uint32_t> WindowsInTree = GetAllWindowsInTree(VirtualSpace->Tree, VirtualSpace->Mode);
-            std::vector<uint32_t> WindowsToAdd = GetAllWindowsToAddToTree(Space, Windows, WindowsInTree);
+            std::vector<uint32_t> WindowsToAdd = GetAllWindowsToAddToTree(Windows, WindowsInTree);
             std::vector<uint32_t> WindowsToRemove = GetAllWindowsToRemoveFromTree(Windows, WindowsInTree);
 
             for(size_t Index = 0;
@@ -881,6 +915,8 @@ Init(plugin_broadcast *ChunkwmBroadcast)
     CreateCVar(CVAR_BSP_OPTIMAL_RATIO, 1.618f);
     CreateCVar(CVAR_BSP_SPLIT_RATIO, 0.5f);
     CreateCVar(CVAR_BSP_SPLIT_MODE, Split_Optimal);
+
+    CreateCVar(CVAR_WINDOW_FOCUS_CYCLE, strdup("none"));
 
     CreateCVar(CVAR_MOUSE_FOLLOWS_FOCUS, 1);
 
