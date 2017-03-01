@@ -879,17 +879,8 @@ PLUGIN_MAIN_FUNC(PluginMain)
         WindowFocusedHandler(Data);
         return true;
     }
-    else if(StringEquals(Node, "chunkwm_export_space_changed"))
-    {
-        UpdateCVar(CVAR_FOCUSED_WINDOW, 0);
-        UpdateCVar(CVAR_BSP_INSERTION_POINT, 0);
-
-        UpdateWindowCollection();
-        CreateWindowTree();
-        RebalanceWindowTree();
-        return true;
-    }
-    else if(StringEquals(Node, "chunkwm_export_display_changed"))
+    else if((StringEquals(Node, "chunkwm_export_space_changed")) ||
+            (StringEquals(Node, "chunkwm_export_display_changed")))
     {
         UpdateWindowCollection();
         CreateWindowTree();
