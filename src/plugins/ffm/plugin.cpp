@@ -4,7 +4,9 @@
 
 #include "../../api/plugin_api.h"
 #include "../../common/accessibility/element.h"
+#include "../../common/accessibility/display.h"
 #include "../../common/dispatch/cgeventtap.h"
+#include "../../common/misc/assert.h"
 
 #define internal static
 
@@ -182,7 +184,20 @@ EVENTTAP_CALLBACK(EventTapCallback)
                 CGEventFlags Flags = CGEventGetFlags(Event);
                 if(!(Flags & Event_Mask_Alt))
                 {
-                    FocusWindowBelowCursor();
+                    macos_space *Space;
+                    bool Success = AXLibActiveSpace(&Space);
+                    ASSERT(Success);
+
+                    CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromSpace(Space->Id);
+                    ASSERT(DisplayRef);
+                    AXLibDestroySpace(Space);
+
+                    if(!AXLibIsDisplayChangingSpaces(DisplayRef))
+                    {
+                        FocusWindowBelowCursor();
+                    }
+
+                    CFRelease(DisplayRef);
                 }
             }
         } break;
