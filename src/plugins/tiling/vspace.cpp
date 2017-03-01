@@ -52,14 +52,10 @@ CreateAndInitVirtualSpace(macos_space *Space)
     virtual_space *VirtualSpace = (virtual_space *) malloc(sizeof(virtual_space));
     VirtualSpace->Tree = NULL;
 
-    unsigned Arrangement = 0;
+    // NOTE(koekeishiya): The monitor arrangement is not necessary here.
+    // We are able to address spaces using mission-control indexing.
     unsigned DesktopId = 1;
-
-    // TODO(koekeishiya): The arrangement should not be necessary here.
-    // We should now be able to address spaces using mission-control indexing,
-    // Need to confirm that this actually works properly when I get access to an
-    // external display.
-    bool Success = AXLibCGSSpaceIDToDesktopID(Space->Id, &Arrangement, &DesktopId);
+    bool Success = AXLibCGSSpaceIDToDesktopID(Space->Id, NULL, &DesktopId);
     ASSERT(Success);
 
     virtual_space_config Config = GetVirtualSpaceConfig(DesktopId);
