@@ -297,7 +297,7 @@ ParseSpaceCommand(const char *Message, command *Chain)
                 }
                 else
                 {
-                    fprintf(stderr, "    invalid selector '%s' for space flag '%c'\n", optarg, Option);
+                    fprintf(stderr, "    invalid selector '%s' for desktop flag '%c'\n", optarg, Option);
                     Success = false;
                     FreeCommandChain(Chain);
                     goto End;
@@ -315,7 +315,7 @@ ParseSpaceCommand(const char *Message, command *Chain)
                 }
                 else
                 {
-                    fprintf(stderr, "    invalid selector '%s' for space flag '%c'\n", optarg, Option);
+                    fprintf(stderr, "    invalid selector '%s' for desktop flag '%c'\n", optarg, Option);
                     Success = false;
                     FreeCommandChain(Chain);
                     goto End;
@@ -331,7 +331,7 @@ ParseSpaceCommand(const char *Message, command *Chain)
                 }
                 else
                 {
-                    fprintf(stderr, "    invalid selector '%s' for space flag '%c'\n", optarg, Option);
+                    fprintf(stderr, "    invalid selector '%s' for desktop flag '%c'\n", optarg, Option);
                     Success = false;
                     FreeCommandChain(Chain);
                     goto End;
@@ -631,7 +631,7 @@ DAEMON_CALLBACK(DaemonCallback)
             FreeCommandChain(&Chain);
         }
     }
-    else if(TokenEquals(Type, "space"))
+    else if(TokenEquals(Type, "desktop"))
     {
         command Chain = {};
         bool Success = ParseSpaceCommand(Message, &Chain);

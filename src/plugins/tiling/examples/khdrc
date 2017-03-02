@@ -39,10 +39,10 @@ ctrl + alt - k : chunkc window -i north
 ctrl + alt - l : chunkc window -i east
 
 # rotate tree
-alt - r : chunkc space -r 90
+alt - r : chunkc desktop -r 90
 
-# toggle space offset
-alt - a : chunkc space -t offset
+# toggle desktop offset
+alt - a : chunkc desktop -t offset
 
 # toggle window fullscreen
 alt - f : chunkc window -t fullscreen
@@ -59,7 +59,7 @@ alt - t : chunkc window -t float
 # float next window to be tiled
 shift + alt - t : chunkc config window_float_next 1
 
-# change layout of space
-ctrl + alt - a : chunkc space -l bsp
-ctrl + alt - s : chunkc space -l monocle
-ctrl + alt - d : chunkc space -l float
+# change layout of desktop
+ctrl + alt - a : chunkc desktop -l bsp
+ctrl + alt - s : chunkc desktop -l monocle
+ctrl + alt - d : chunkc desktop -l float

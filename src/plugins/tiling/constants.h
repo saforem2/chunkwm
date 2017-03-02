@@ -3,12 +3,12 @@
 
 #define BUFFER_SIZE                 256
 
-#define _CVAR_SPACE_MODE            "space_mode"
-#define _CVAR_SPACE_OFFSET_TOP      "space_offset_top"
-#define _CVAR_SPACE_OFFSET_BOTTOM   "space_offset_bottom"
-#define _CVAR_SPACE_OFFSET_LEFT     "space_offset_left"
-#define _CVAR_SPACE_OFFSET_RIGHT    "space_offset_right"
-#define _CVAR_SPACE_OFFSET_GAP      "space_offset_gap"
+#define _CVAR_SPACE_MODE            "desktop_mode"
+#define _CVAR_SPACE_OFFSET_TOP      "desktop_offset_top"
+#define _CVAR_SPACE_OFFSET_BOTTOM   "desktop_offset_bottom"
+#define _CVAR_SPACE_OFFSET_LEFT     "desktop_offset_left"
+#define _CVAR_SPACE_OFFSET_RIGHT    "desktop_offset_right"
+#define _CVAR_SPACE_OFFSET_GAP      "desktop_offset_gap"
 
 #define CVAR_SPACE_MODE             "global_" _CVAR_SPACE_MODE
 #define CVAR_SPACE_OFFSET_TOP       "global_" _CVAR_SPACE_OFFSET_TOP
