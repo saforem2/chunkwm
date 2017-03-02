@@ -133,8 +133,20 @@ ParseWindowCommand(const char *Message, command *Chain)
     bool Success = true;
     const char *Short = "f:s:i:t:w:r:e:";
 
+    struct option Long[] =
+    {
+        { "focus-window", required_argument, NULL, 'f' },
+        { "swap-window", required_argument, NULL, 's' },
+        { "use-insertion-point", required_argument, NULL, 'i' },
+        { "toggle-window", required_argument, NULL, 't' },
+        { "warp-window", required_argument, NULL, 'w' },
+        { "use-temporary-ratio", required_argument, NULL, 'r' },
+        { "adjust-window-edge", required_argument, NULL, 'e' },
+        { NULL, 0, NULL, 0 }
+    };
+
     command *Command = Chain;
-    while((Option = getopt_long(Count, Args, Short, NULL, NULL)) != -1)
+    while((Option = getopt_long(Count, Args, Short, Long, NULL)) != -1)
     {
         switch(Option)
         {
@@ -596,15 +608,15 @@ DAEMON_CALLBACK(DaemonCallback)
                 printf("    command: '%c', arg: '%s'\n", Command->Flag, Command->Arg);
 
                 /* NOTE(koekeishiya): flags description:
-                 * f: focus
-                 * s: swap
-                 * w: warp
-                 * i: set insertion point (previously 'mark' window)
-                 * t: toggle float, fullscreen, (parent ?)
-                 * e: adjust edge
-                 * d: move to desktop
-                 * m: move to monitor
-                 * r: set ratio, works with 'w' and 'e'
+                 * -f | --focus-window
+                 * -s | --swap-window
+                 * -w | --warp-window
+                 * -i | --use-insertion-point   | (previously 'mark window' in kwm)
+                 * -t | --toggle-window         | (float, fullscreen, parent)
+                 * -e | --adjust-window-edge
+                 * -d | --move-to-desktop
+                 * -m | --move-to-monitor
+                 * -r | --use-temporary-ratio   | (works with 'w' and 'e')
                  * */
 
                 unsigned Index = WindowFuncFromFlag(Command->Flag);
