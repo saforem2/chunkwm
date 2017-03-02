@@ -15,7 +15,7 @@
 internal virtual_space_map VirtualSpaces;
 
 internal virtual_space_config
-GetVirtualSpaceConfig(int SpaceIndex)
+GetVirtualSpaceConfig(unsigned SpaceIndex)
 {
     virtual_space_config Config;
 
