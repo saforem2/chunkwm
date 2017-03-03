@@ -741,7 +741,7 @@ void RotateWindowTree(char *Degrees)
 internal node *
 MirrorBSPTree(node *Tree, node_split Axis)
 {
-    if(Tree->Left && Tree->Right)
+    if(!IsLeafNode(Tree))
     {
         node *Left = MirrorBSPTree(Tree->Left, Axis);
         node *Right = MirrorBSPTree(Tree->Right, Axis);
