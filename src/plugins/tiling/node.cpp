@@ -255,15 +255,8 @@ node *GetFirstMinDepthLeafNode(node *Tree)
             return Node;
         }
 
-        if(Node->Left)
-        {
-            Queue.push(Node->Left);
-        }
-
-        if(Node->Right)
-        {
-            Queue.push(Node->Right);
-        }
+        Queue.push(Node->Left);
+        Queue.push(Node->Right);
     }
 
     /* NOTE(koekeishiya): Unreachable return;
