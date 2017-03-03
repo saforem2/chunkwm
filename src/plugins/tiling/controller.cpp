@@ -770,15 +770,14 @@ void MirrorWindowTree(char *Direction)
             if(StringEquals(Direction, "vertical"))
             {
                 VirtualSpace->Tree = MirrorBSPTree(VirtualSpace->Tree, Split_Vertical);
-                CreateNodeRegionRecursive(VirtualSpace->Tree, false);
-                ApplyNodeRegion(VirtualSpace->Tree, VirtualSpace->Mode);
             }
             else if(StringEquals(Direction, "horizontal"))
             {
                 VirtualSpace->Tree = MirrorBSPTree(VirtualSpace->Tree, Split_Horizontal);
-                CreateNodeRegionRecursive(VirtualSpace->Tree, false);
-                ApplyNodeRegion(VirtualSpace->Tree, VirtualSpace->Mode);
             }
+
+            CreateNodeRegionRecursive(VirtualSpace->Tree, false);
+            ApplyNodeRegion(VirtualSpace->Tree, VirtualSpace->Mode);
         }
     }
 
