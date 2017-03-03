@@ -41,6 +41,12 @@ ctrl + alt - l : chunkc window -i east
 # rotate tree
 alt - r : chunkc desktop -r 90
 
+# mirror tree y-axis
+alt - y : chunkc desktop -m vertical
+
+# mirror tree x-axis
+alt - x : chunkc desktop -m horizontal
+
 # toggle desktop offset
 alt - a : chunkc desktop -t offset
 

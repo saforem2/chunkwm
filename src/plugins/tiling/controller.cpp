@@ -711,13 +711,9 @@ RotateBSPTree(node *Node, char *Degrees)
         }
     }
 
-    if(Node->Left)
+    if(!IsLeafNode(Node))
     {
         RotateBSPTree(Node->Left, Degrees);
-    }
-
-    if(Node->Right)
-    {
         RotateBSPTree(Node->Right, Degrees);
     }
 }
@@ -736,6 +732,53 @@ void RotateWindowTree(char *Degrees)
             RotateBSPTree(VirtualSpace->Tree, Degrees);
             CreateNodeRegionRecursive(VirtualSpace->Tree, false);
             ApplyNodeRegion(VirtualSpace->Tree, VirtualSpace->Mode);
+        }
+    }
+
+    AXLibDestroySpace(Space);
+}
+
+internal node *
+MirrorBSPTree(node *Tree, node_split Axis)
+{
+    if(Tree->Left && Tree->Right)
+    {
+        node *Left = MirrorBSPTree(Tree->Left, Axis);
+        node *Right = MirrorBSPTree(Tree->Right, Axis);
+
+        if(Tree->Split == Axis)
+        {
+            Tree->Left = Right;
+            Tree->Right = Left;
+        }
+    }
+
+    return Tree;
+}
+
+void MirrorWindowTree(char *Direction)
+{
+    macos_space *Space;
+    bool Success = AXLibActiveSpace(&Space);
+    ASSERT(Success);
+
+    if(Space->Type == kCGSSpaceUser)
+    {
+        virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
+        if(VirtualSpace->Tree && VirtualSpace->Mode == Virtual_Space_Bsp)
+        {
+            if(StringEquals(Direction, "vertical"))
+            {
+                VirtualSpace->Tree = MirrorBSPTree(VirtualSpace->Tree, Split_Vertical);
+                CreateNodeRegionRecursive(VirtualSpace->Tree, false);
+                ApplyNodeRegion(VirtualSpace->Tree, VirtualSpace->Mode);
+            }
+            else if(StringEquals(Direction, "horizontal"))
+            {
+                VirtualSpace->Tree = MirrorBSPTree(VirtualSpace->Tree, Split_Horizontal);
+                CreateNodeRegionRecursive(VirtualSpace->Tree, false);
+                ApplyNodeRegion(VirtualSpace->Tree, VirtualSpace->Mode);
+            }
         }
     }
 

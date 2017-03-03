@@ -251,11 +251,13 @@ command_func SpaceCommandDispatch[] =
     RotateWindowTree,
     ActivateSpaceLayout,
     ToggleSpace,
+    MirrorWindowTree,
 };
 
 #define SPACE_FLAG_R 0
 #define SPACE_FLAG_L 1
 #define SPACE_FLAG_T 2
+#define SPACE_FLAG_M 3
 
 unsigned SpaceFuncFromFlag(char Flag)
 {
@@ -264,6 +266,7 @@ unsigned SpaceFuncFromFlag(char Flag)
         case 'r': return SPACE_FLAG_R; break;
         case 'l': return SPACE_FLAG_L; break;
         case 't': return SPACE_FLAG_T; break;
+        case 'm': return SPACE_FLAG_M; break;
 
         // NOTE(koekeishiya): silence compiler warning.
         default: return 0; break;
@@ -278,7 +281,7 @@ ParseSpaceCommand(const char *Message, command *Chain)
 
     int Option;
     bool Success = true;
-    const char *Short = "r:l:t:";
+    const char *Short = "r:l:t:m:";
 
     command *Command = Chain;
     while((Option = getopt_long(Count, Args, Short, NULL, NULL)) != -1)
@@ -324,6 +327,23 @@ ParseSpaceCommand(const char *Message, command *Chain)
             case 't':
             {
                 if((StringEquals(optarg, "offset")))
+                {
+                    command *Entry = ConstructCommand(Option, optarg);
+                    Command->Next = Entry;
+                    Command = Entry;
+                }
+                else
+                {
+                    fprintf(stderr, "    invalid selector '%s' for desktop flag '%c'\n", optarg, Option);
+                    Success = false;
+                    FreeCommandChain(Chain);
+                    goto End;
+                }
+            } break;
+            case 'm':
+            {
+                if((StringEquals(optarg, "vertical")) ||
+                   (StringEquals(optarg, "horizontal")))
                 {
                     command *Entry = ConstructCommand(Option, optarg);
                     Command->Next = Entry;

@@ -10,6 +10,8 @@ void TemporaryRatio(char *Ratio);
 void AdjustWindowRatio(char *Direction);
 
 void RotateWindowTree(char *Degrees);
+void MirrorWindowTree(char *Direction);
+
 void ActivateSpaceLayout(char *Layout);
 void ToggleSpace(char *Op);
 
