@@ -969,7 +969,6 @@ Init(plugin_broadcast *ChunkwmBroadcast)
         fprintf(stderr,"    tiling: 'env HOME' not set!\n");
     }
 
-
     uint32_t ProcessPolicy = Process_Policy_Regular;
     std::vector<macos_application *> Applications = AXLibRunningProcesses(ProcessPolicy);
 
