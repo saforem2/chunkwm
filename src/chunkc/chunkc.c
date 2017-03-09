@@ -79,6 +79,8 @@ int main(int Count, char **Argv)
         fprintf(stderr, "chunkc: failed to send data!\n");
     }
 
+    // TODO(koekeishiya): Take a closer look at this later.
+#if 0
     char Response[BUFSIZ];
     int BytesRead;
 
@@ -88,6 +90,7 @@ int main(int Count, char **Argv)
         printf("%s", Response);
         fflush(stdout);
     }
+#endif
 
     shutdown(SockFD, SHUT_RDWR);
     close(SockFD);
