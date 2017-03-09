@@ -916,12 +916,15 @@ void ToggleSpace(char *Op)
 
 // NOTE(koekeishiya): Used to properly adjust window position when moved between monitors
 internal CGRect
-NormalizeWindowRect(CGPoint Position, CGSize Size, CFStringRef SourceMonitor, CFStringRef DestinationMonitor)
+NormalizeWindowRect(AXUIElementRef WindowRef, CFStringRef SourceMonitor, CFStringRef DestinationMonitor)
 {
     CGRect Result;
 
     CGRect SourceBounds = AXLibGetDisplayBounds(SourceMonitor);
     CGRect DestinationBounds = AXLibGetDisplayBounds(DestinationMonitor);
+
+    CGPoint Position = AXLibGetWindowPosition(WindowRef);
+    CGSize Size = AXLibGetWindowSize(WindowRef);
 
     // NOTE(koekeishiya): Calculate amount of pixels between window and the monitor edge.
     float OffsetX = Position.x - SourceBounds.origin.x;
@@ -994,9 +997,7 @@ void SendWindowToDesktop(char *Op)
                     CFStringRef DestinationMonitorRef = AXLibGetDisplayIdentifierFromSpace(DestinationSpaceId);
                     ASSERT(DestinationMonitorRef);
 
-                    CGPoint Position = AXLibGetWindowPosition(Window->Ref);
-                    CGSize Size = AXLibGetWindowSize(Window->Ref);
-                    CGRect Normalized = NormalizeWindowRect(Position, Size, SourceMonitorRef, DestinationMonitorRef);
+                    CGRect Normalized = NormalizeWindowRect(Window->Ref, SourceMonitorRef, DestinationMonitorRef);
                     AXLibSetWindowPosition(Window->Ref, Normalized.origin.x, Normalized.origin.y);
                     AXLibSetWindowSize(Window->Ref, Normalized.size.width, Normalized.size.height);
 
@@ -1065,9 +1066,7 @@ void SendWindowToMonitor(char *Op)
                     ASSERT(SourceMonitorRef);
 
                     /* NOTE(koekeishiya): We need to normalize the window x and y position, or it will be out of bounds. */
-                    CGPoint Position = AXLibGetWindowPosition(Window->Ref);
-                    CGSize Size = AXLibGetWindowSize(Window->Ref);
-                    CGRect Normalized = NormalizeWindowRect(Position, Size, SourceMonitorRef, DestinationMonitorRef);
+                    CGRect Normalized = NormalizeWindowRect(Window->Ref, SourceMonitorRef, DestinationMonitorRef);
                     AXLibSetWindowPosition(Window->Ref, Normalized.origin.x, Normalized.origin.y);
                     AXLibSetWindowSize(Window->Ref, Normalized.size.width, Normalized.size.height);
 
