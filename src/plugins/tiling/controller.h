@@ -15,6 +15,9 @@ void MirrorWindowTree(char *Direction);
 void ActivateSpaceLayout(char *Layout);
 void ToggleSpace(char *Op);
 
+void SendWindowToDesktop(char *Op);
+void SendWindowToMonitor(char *Op);
+
 struct macos_window;
 void FloatWindow(macos_window *Window);
 void UnfloatWindow(macos_window *Window);

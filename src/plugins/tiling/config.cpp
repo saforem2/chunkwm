@@ -95,7 +95,9 @@ command_func WindowCommandDispatch[] =
     ToggleWindow,
     WarpWindow,
     TemporaryRatio,
-    AdjustWindowRatio
+    AdjustWindowRatio,
+    SendWindowToDesktop,
+    SendWindowToMonitor,
 };
 
 #define WINDOW_FLAG_F 0
@@ -105,6 +107,8 @@ command_func WindowCommandDispatch[] =
 #define WINDOW_FLAG_W 4
 #define WINDOW_FLAG_R 5
 #define WINDOW_FLAG_E 6
+#define WINDOW_FLAG_D 7
+#define WINDOW_FLAG_M 8
 
 unsigned WindowFuncFromFlag(char Flag)
 {
@@ -117,6 +121,8 @@ unsigned WindowFuncFromFlag(char Flag)
         case 'w': return WINDOW_FLAG_W; break;
         case 'r': return WINDOW_FLAG_R; break;
         case 'e': return WINDOW_FLAG_E; break;
+        case 'd': return WINDOW_FLAG_D; break;
+        case 'm': return WINDOW_FLAG_M; break;
 
         // NOTE(koekeishiya): silence compiler warning.
         default: return 0; break;
@@ -131,7 +137,7 @@ ParseWindowCommand(const char *Message, command *Chain)
 
     int Option;
     bool Success = true;
-    const char *Short = "f:s:i:t:w:r:e:";
+    const char *Short = "f:s:i:t:w:r:e:d:m:";
 
     struct option Long[] =
     {
@@ -142,6 +148,8 @@ ParseWindowCommand(const char *Message, command *Chain)
         { "warp-window", required_argument, NULL, 'w' },
         { "use-temporary-ratio", required_argument, NULL, 'r' },
         { "adjust-window-edge", required_argument, NULL, 'e' },
+        { "send-to-desktop", required_argument, NULL, 'd' },
+        { "send-to-monitor", required_argument, NULL, 'm' },
         { NULL, 0, NULL, 0 }
     };
 
@@ -196,7 +204,7 @@ ParseWindowCommand(const char *Message, command *Chain)
             case 'r':
             {
                 float Float;
-                if(sscanf(optarg, "%f", &Float))
+                if(sscanf(optarg, "%f", &Float) == 1)
                 {
                     command *Entry = ConstructCommand(Option, optarg);
                     Command->Next = Entry;
@@ -216,6 +224,26 @@ ParseWindowCommand(const char *Message, command *Chain)
                    (StringEquals(optarg, "split")) ||
                    (StringEquals(optarg, "fullscreen")) ||
                    (StringEquals(optarg, "parent")))
+                {
+                    command *Entry = ConstructCommand(Option, optarg);
+                    Command->Next = Entry;
+                    Command = Entry;
+                }
+                else
+                {
+                    fprintf(stderr, "    invalid selector '%s' for window flag '%c'\n", optarg, Option);
+                    Success = false;
+                    FreeCommandChain(Chain);
+                    goto End;
+                }
+            } break;
+            case 'd':
+            case 'm':
+            {
+                unsigned Unsigned;
+                if((StringEquals(optarg, "prev")) ||
+                   (StringEquals(optarg, "next")) ||
+                   (sscanf(optarg, "%d", &Unsigned) == 1))
                 {
                     command *Entry = ConstructCommand(Option, optarg);
                     Command->Next = Entry;
@@ -382,6 +410,7 @@ End:
  * */
 DAEMON_CALLBACK(DaemonCallback)
 {
+    printf(" msg: '%s'\n", Message);
     token Type = GetToken(&Message);
 
     if(TokenEquals(Type, "config"))
@@ -634,8 +663,8 @@ DAEMON_CALLBACK(DaemonCallback)
                  * -i | --use-insertion-point   | (previously 'mark window' in kwm)
                  * -t | --toggle-window         | (float, fullscreen, parent)
                  * -e | --adjust-window-edge
-                 * -d | --move-to-desktop
-                 * -m | --move-to-monitor
+                 * -d | --send-to-desktop
+                 * -m | --send-to-monitor
                  * -r | --use-temporary-ratio   | (works with 'w' and 'e')
                  * */
 

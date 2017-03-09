@@ -913,3 +913,131 @@ void ToggleSpace(char *Op)
 
     AXLibDestroySpace(Space);
 }
+
+void SendWindowToDesktop(char *Op)
+{
+    macos_window *Window = GetWindowByID(CVarIntegerValue(CVAR_BSP_INSERTION_POINT));
+    if(Window)
+    {
+        macos_space *Space;
+        bool Success = AXLibActiveSpace(&Space);
+        ASSERT(Success);
+
+        if(Space->Type == kCGSSpaceUser)
+        {
+            unsigned SourceMonitor;
+            unsigned SourceDesktopId;
+            bool Success = AXLibCGSSpaceIDToDesktopID(Space->Id, &SourceMonitor, &SourceDesktopId);
+            ASSERT(Success);
+
+            unsigned DestinationDesktopId = 0;
+            if(StringEquals(Op, "prev"))
+            {
+                DestinationDesktopId = SourceDesktopId - 1;
+            }
+            else if(StringEquals(Op, "next"))
+            {
+                DestinationDesktopId = SourceDesktopId + 1;
+            }
+            else
+            {
+                sscanf(Op, "%d", &DestinationDesktopId);
+            }
+
+            unsigned DestinationMonitor;
+            CGSSpaceID DestinationSpaceId;
+            Success = AXLibCGSSpaceIDFromDesktopID(DestinationDesktopId, &DestinationMonitor, &DestinationSpaceId);
+            if(Success)
+            {
+                /* TODO(koekeishiya): The window that we move has to get untiled from the
+                 * desktop that it is currently on.
+                 * virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
+                 */
+                AXLibSpaceAddWindow(DestinationSpaceId, Window->Id);
+                AXLibSpaceRemoveWindow(Space->Id, Window->Id);
+
+                /* TODO(koekeishiya): If the destination space is on a different monitor,
+                 * we need to normalize the window x and y position, or it will be waaay
+                 * out of bounds.
+                if(DestinationMonitor != SourceMonitor)
+                {
+                }
+                */
+
+                // TODO(koekeishiya): MacOS does not update focus when we send the window
+                // to a different desktop or monitor using this method. Need to figure out
+                // how we should deal with this in an intuitive and user-friendly way.
+            }
+            else
+            {
+                fprintf(stderr,
+                        "invalid destination desktop specified, desktop '%d' does not exist!\n",
+                        DestinationDesktopId);
+            }
+        }
+
+        AXLibDestroySpace(Space);
+    }
+}
+
+void SendWindowToMonitor(char *Op)
+{
+    macos_window *Window = GetWindowByID(CVarIntegerValue(CVAR_BSP_INSERTION_POINT));
+    if(Window)
+    {
+        macos_space *Space;
+        bool Success = AXLibActiveSpace(&Space);
+        ASSERT(Success);
+
+        if(Space->Type == kCGSSpaceUser)
+        {
+            unsigned SourceMonitor;
+            bool Success = AXLibCGSSpaceIDToDesktopID(Space->Id, &SourceMonitor, NULL);
+            ASSERT(Success);
+
+            unsigned DestinationMonitor;
+            if(StringEquals(Op, "prev"))
+            {
+                DestinationMonitor = SourceMonitor - 1;
+            }
+            else if(StringEquals(Op, "next"))
+            {
+                DestinationMonitor = SourceMonitor + 1;
+            }
+            else
+            {
+                sscanf(Op, "%d", &DestinationMonitor);
+            }
+
+            if(DestinationMonitor != SourceMonitor)
+            {
+                CFStringRef DestinationMonitorRef = AXLibGetDisplayIdentifierFromArrangement(DestinationMonitor);
+                if(DestinationMonitorRef)
+                {
+                    // TODO(koekeishiya): might want to use AXLibActiveSpace(DestinationMonitorRef); instead
+                    // so that we can make sure that the destination space is not a native fullscreen space !!!
+                    CGSSpaceID DestinationSpaceId = AXLibActiveCGSSpaceID(DestinationMonitorRef);
+                    CFRelease(DestinationMonitorRef);
+
+                    AXLibSpaceAddWindow(DestinationSpaceId, Window->Id);
+                    AXLibSpaceRemoveWindow(Space->Id, Window->Id);
+
+                    /* TODO(koekeishiya): We need to normalize the window x and y position,
+                     * or it will be waaay out of bounds. */
+
+                    // TODO(koekeishiya): MacOS does not update focus when we send the window
+                    // to a different monitor using this method. Need to figure out how we
+                    // should deal with this in an intuitive and user-friendly way.
+                }
+                else
+                {
+                    fprintf(stderr,
+                            "invalid destination monitor specified, monitor '%d' does not exist!\n",
+                            DestinationMonitor);
+                }
+            }
+        }
+
+        AXLibDestroySpace(Space);
+    }
+}
