@@ -69,3 +69,12 @@ shift + alt - t : chunkc config window_float_next 1
 ctrl + alt - a : chunkc desktop -l bsp
 ctrl + alt - s : chunkc desktop -l monocle
 ctrl + alt - d : chunkc desktop -l float
+
+# remap caps-lock to escape for this config only !!!
+# macos sierra can also perform this remap for a given keyboard
+- capslock : khd -p "- escape"
+
+# key remap for norwegian layout \ { }
+cmd - 7 : khd -p "shift + alt - 7"
+cmd - 8 : khd -p "shift + alt - 8"
+cmd - 9 : khd -p "shift + alt - 9"
