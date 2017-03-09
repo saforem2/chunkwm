@@ -9,13 +9,17 @@ typedef int CGSConnectionID;
 
 extern "C" CGSConnectionID _CGSDefaultConnection(void);
 
-extern "C" CGSSpaceType CGSSpaceGetType(CGSConnectionID Connection, CGSSpaceID Id);
+extern "C" CGSSpaceType CGSSpaceGetType(CGSConnectionID Connection, CGSSpaceID SpaceId);
 extern "C" CFArrayRef CGSCopyManagedDisplaySpaces(const CGSConnectionID Connection);
 extern "C" CFArrayRef CGSCopySpacesForWindows(CGSConnectionID Connection, CGSSpaceSelector Type, CFArrayRef Windows);
+extern "C" void CGSRemoveWindowsFromSpaces(CGSConnectionID Connection, CFArrayRef Windows, CFArrayRef Spaces);
+extern "C" void CGSAddWindowsToSpaces(CGSConnectionID Connection, CFArrayRef Windows, CFArrayRef Spaces);
+
 extern "C" CGSSpaceID CGSManagedDisplayGetCurrentSpace(CGSConnectionID Connection, CFStringRef DisplayRef);
-extern "C" CFStringRef CGSCopyManagedDisplayForSpace(const CGSConnectionID Connection, CGSSpaceID Space);
+extern "C" CFStringRef CGSCopyManagedDisplayForSpace(const CGSConnectionID Connection, CGSSpaceID SpaceId);
 extern "C" CFStringRef CGSCopyManagedDisplayForWindow(const CGSConnectionID Connection, uint32_t WindowId);
 extern "C" bool CGSManagedDisplayIsAnimating(const CGSConnectionID Connection, CFStringRef DisplayRef);
+
 extern "C" Boolean CoreDockGetAutoHideEnabled(void);
 extern "C" float CoreDockGetTileSize(void);
 extern "C" void  CoreDockGetOrientationAndPinning(macos_dock_orientation *Orientation, int *Pinning);
@@ -153,9 +157,9 @@ CFStringRef AXLibGetDisplayIdentifierFromArrangement(unsigned Arrangement)
 /* NOTE(koekeishiya): Caller is responsible for calling CFRelease.
  * This function appears to always return a valid identifier!
  * Could this potentially return NULL if an invalid CGSSpaceID is passed ? */
-CFStringRef AXLibGetDisplayIdentifierFromSpace(CGSSpaceID Space)
+CFStringRef AXLibGetDisplayIdentifierFromSpace(CGSSpaceID SpaceId)
 {
-    return CGSCopyManagedDisplayForSpace(CGSDefaultConnection, Space);
+    return CGSCopyManagedDisplayForSpace(CGSDefaultConnection, SpaceId);
 }
 
 /* NOTE(koekeishiya): Caller is responsible for calling CFRelease. */
@@ -345,6 +349,24 @@ End:
 
     CFRelease(ScreenDictionaries);
     return Result;
+}
+
+void AXLibSpaceAddWindow(CGSSpaceID SpaceId, uint32_t WindowId)
+{
+    NSArray *NSArrayWindow = @[ @(WindowId) ];
+    NSArray *NSArrayDestinationSpace = @[ @(SpaceId) ];
+    CGSAddWindowsToSpaces(CGSDefaultConnection, (__bridge CFArrayRef)NSArrayWindow, (__bridge CFArrayRef)NSArrayDestinationSpace);
+    [NSArrayWindow release];
+    [NSArrayDestinationSpace release];
+}
+
+void AXLibSpaceRemoveWindow(CGSSpaceID SpaceId, uint32_t WindowId)
+{
+    NSArray *NSArrayWindow = @[ @(WindowId) ];
+    NSArray *NSArraySourceSpace = @[ @(SpaceId) ];
+    CGSRemoveWindowsFromSpaces(CGSDefaultConnection, (__bridge CFArrayRef)NSArrayWindow, (__bridge CFArrayRef)NSArraySourceSpace);
+    [NSArrayWindow release];
+    [NSArraySourceSpace release];
 }
 
 bool AXLibSpaceHasWindow(CGSSpaceID SpaceId, uint32_t WindowId)
