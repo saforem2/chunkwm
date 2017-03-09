@@ -12,9 +12,9 @@
 // NOTE(koekeishiya): 4131 is the port used by chwm tiling plugin.
 #define FALLBACK_PORT 4131
 
-int main(int Count, char **Argv)
+int main(int Argc, char **Argv)
 {
-    if(Count < 2)
+    if(Argc < 2)
     {
         fprintf(stderr, "chunkc: no arguments found!\n");
         exit(1);
@@ -33,8 +33,8 @@ int main(int Count, char **Argv)
     }
 
     int SockFD;
-    struct sockaddr_in srv_addr;
-    struct hostent *server;
+    struct sockaddr_in SrvAddr;
+    struct hostent *Server;
 
     if((SockFD = socket(AF_INET, SOCK_STREAM, 0)) == -1)
     {
@@ -42,39 +42,39 @@ int main(int Count, char **Argv)
         exit(1);
     }
 
-    server = gethostbyname("localhost");
-    srv_addr.sin_family = AF_INET;
-    srv_addr.sin_port = htons(Port);
-    memcpy(&srv_addr.sin_addr.s_addr, server->h_addr, server->h_length);
-    memset(&srv_addr.sin_zero, '\0', 8);
+    Server = gethostbyname("localhost");
+    SrvAddr.sin_family = AF_INET;
+    SrvAddr.sin_port = htons(Port);
+    memcpy(&SrvAddr.sin_addr.s_addr, Server->h_addr, Server->h_length);
+    memset(&SrvAddr.sin_zero, '\0', 8);
 
-    if(connect(SockFD, (struct sockaddr*) &srv_addr, sizeof(struct sockaddr)) == -1)
+    if(connect(SockFD, (struct sockaddr*) &SrvAddr, sizeof(struct sockaddr)) == -1)
     {
         fprintf(stderr, "chunkc: connection failed!\n");
         exit(1);
     }
 
-    size_t CommandLength = Count - 1;
-    size_t ArgLength[Count];
+    size_t MessageLength = Argc - 1;
+    size_t Argl[Argc];
 
-    for(size_t Index = 1; Index < Count; ++Index)
+    for(size_t Index = 1; Index < Argc; ++Index)
     {
-        ArgLength[Index] = strlen(Argv[Index]);
-        CommandLength += ArgLength[Index];
+        Argl[Index] = strlen(Argv[Index]);
+        MessageLength += Argl[Index];
     }
 
-    char Command[CommandLength];
-    char *Temp = Command;
+    char Message[MessageLength];
+    char *Temp = Message;
 
-    for(size_t Index = 1; Index < Count; ++Index)
+    for(size_t Index = 1; Index < Argc; ++Index)
     {
-        memcpy(Temp, Argv[Index], ArgLength[Index]);
-        Temp += ArgLength[Index];
+        memcpy(Temp, Argv[Index], Argl[Index]);
+        Temp += Argl[Index];
         *Temp++ = ' ';
     }
     *(Temp - 1) = '\0';
 
-    if(send(SockFD, Command, CommandLength, 0) == -1)
+    if(send(SockFD, Message, MessageLength, 0) == -1)
     {
         fprintf(stderr, "chunkc: failed to send data!\n");
     }
