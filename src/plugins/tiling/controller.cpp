@@ -915,10 +915,10 @@ void ToggleSpace(char *Op)
 }
 
 // NOTE(koekeishiya): Used to properly adjust window position when moved between monitors
-internal CGPoint
-NormalizeWindowPosition(CGPoint Position, CFStringRef SourceMonitor, CFStringRef DestinationMonitor)
+internal CGRect
+NormalizeWindowRect(CGPoint Position, CGSize Size, CFStringRef SourceMonitor, CFStringRef DestinationMonitor)
 {
-    CGPoint Result;
+    CGRect Result;
 
     CGRect SourceBounds = AXLibGetDisplayBounds(SourceMonitor);
     CGRect DestinationBounds = AXLibGetDisplayBounds(DestinationMonitor);
@@ -929,12 +929,15 @@ NormalizeWindowPosition(CGPoint Position, CFStringRef SourceMonitor, CFStringRef
 
     // NOTE(koekeishiya): We might want to apply a scale due to different monitor resolutions.
     float ScaleX = SourceBounds.size.width / DestinationBounds.size.width;
-    Result.x = ScaleX > 1.0f ? OffsetX / ScaleX + DestinationBounds.origin.x
-                             : OffsetX + DestinationBounds.origin.x;
+    Result.origin.x = ScaleX > 1.0f ? OffsetX / ScaleX + DestinationBounds.origin.x
+                                    : OffsetX + DestinationBounds.origin.x;
 
     float ScaleY = SourceBounds.size.height / DestinationBounds.size.height;
-    Result.y = ScaleY > 1.0f ? OffsetY / ScaleY + DestinationBounds.origin.y
-                             : OffsetY + DestinationBounds.origin.y;
+    Result.origin.y = ScaleY > 1.0f ? OffsetY / ScaleY + DestinationBounds.origin.y
+                                    : OffsetY + DestinationBounds.origin.y;
+
+    Result.size.width = Size.width / ScaleX;
+    Result.size.height = Size.height / ScaleY;
 
     return Result;
 }
@@ -991,9 +994,11 @@ void SendWindowToDesktop(char *Op)
                     CFStringRef DestinationMonitorRef = AXLibGetDisplayIdentifierFromSpace(DestinationSpaceId);
                     ASSERT(DestinationMonitorRef);
 
-                    CGPoint WindowPosition = AXLibGetWindowPosition(Window->Ref);
-                    CGPoint NormalizedPosition = NormalizeWindowPosition(WindowPosition, SourceMonitorRef, DestinationMonitorRef);
-                    AXLibSetWindowPosition(Window->Ref, NormalizedPosition.x, NormalizedPosition.y);
+                    CGPoint Position = AXLibGetWindowPosition(Window->Ref);
+                    CGSize Size = AXLibGetWindowSize(Window->Ref);
+                    CGRect Normalized = NormalizeWindowRect(Position, Size, SourceMonitorRef, DestinationMonitorRef);
+                    AXLibSetWindowPosition(Window->Ref, Normalized.origin.x, Normalized.origin.y);
+                    AXLibSetWindowSize(Window->Ref, Normalized.size.width, Normalized.size.height);
 
                     CFRelease(DestinationMonitorRef);
                     CFRelease(SourceMonitorRef);
@@ -1060,9 +1065,11 @@ void SendWindowToMonitor(char *Op)
                     ASSERT(SourceMonitorRef);
 
                     /* NOTE(koekeishiya): We need to normalize the window x and y position, or it will be out of bounds. */
-                    CGPoint WindowPosition = AXLibGetWindowPosition(Window->Ref);
-                    CGPoint NormalizedPosition = NormalizeWindowPosition(WindowPosition, SourceMonitorRef, DestinationMonitorRef);
-                    AXLibSetWindowPosition(Window->Ref, NormalizedPosition.x, NormalizedPosition.y);
+                    CGPoint Position = AXLibGetWindowPosition(Window->Ref);
+                    CGSize Size = AXLibGetWindowSize(Window->Ref);
+                    CGRect Normalized = NormalizeWindowRect(Position, Size, SourceMonitorRef, DestinationMonitorRef);
+                    AXLibSetWindowPosition(Window->Ref, Normalized.origin.x, Normalized.origin.y);
+                    AXLibSetWindowSize(Window->Ref, Normalized.size.width, Normalized.size.height);
 
                     CFRelease(DestinationMonitorRef);
                     CFRelease(SourceMonitorRef);
