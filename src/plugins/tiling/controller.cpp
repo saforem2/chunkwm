@@ -914,6 +914,35 @@ void ToggleSpace(char *Op)
     AXLibDestroySpace(Space);
 }
 
+// NOTE(koekeishiya): Used to properly adjust window position when moved between monitors
+internal CGPoint
+NormalizeWindowPosition(CGPoint Position, CFStringRef SourceMonitor, CFStringRef DestinationMonitor)
+{
+    CGPoint Result;
+
+    CGRect SourceBounds = AXLibGetDisplayBounds(SourceMonitor);
+    CGRect DestinationBounds = AXLibGetDisplayBounds(DestinationMonitor);
+
+    // NOTE(koekeishiya): Calculate amount of pixels between window and the monitor edge.
+    float OffsetX = Position.x - SourceBounds.origin.x;
+    float OffsetY = Position.y - SourceBounds.origin.y;
+
+    // NOTE(koekeishiya): We might want to apply a scale due to different monitor resolutions.
+    float Scale = SourceBounds.size.width / DestinationBounds.size.width;
+    if(Scale > 1.0f)
+    {
+        Result.x = (OffsetX / Scale) + DestinationBounds.origin.x;
+        Result.y = (OffsetY / Scale) + DestinationBounds.origin.y;
+    }
+    else
+    {
+        Result.x = OffsetX + DestinationBounds.origin.x;
+        Result.y = OffsetY + DestinationBounds.origin.y;
+    }
+
+    return Result;
+}
+
 void SendWindowToDesktop(char *Op)
 {
     macos_window *Window = GetWindowByID(CVarIntegerValue(CVAR_BSP_INSERTION_POINT));
@@ -956,13 +985,23 @@ void SendWindowToDesktop(char *Op)
                 AXLibSpaceAddWindow(DestinationSpaceId, Window->Id);
                 AXLibSpaceRemoveWindow(Space->Id, Window->Id);
 
-                /* TODO(koekeishiya): If the destination space is on a different monitor,
-                 * we need to normalize the window x and y position, or it will be waaay
-                 * out of bounds.
+                /* NOTE(koekeishiya): If the destination space is on a different monitor,
+                 * we need to normalize the window x and y position, or it will be out of bounds. */
                 if(DestinationMonitor != SourceMonitor)
                 {
+                    CFStringRef SourceMonitorRef = AXLibGetDisplayIdentifierFromSpace(Space->Id);
+                    ASSERT(SourceMonitorRef);
+
+                    CFStringRef DestinationMonitorRef = AXLibGetDisplayIdentifierFromSpace(DestinationSpaceId);
+                    ASSERT(DestinationMonitorRef);
+
+                    CGPoint WindowPosition = AXLibGetWindowPosition(Window->Ref);
+                    CGPoint NormalizedPosition = NormalizeWindowPosition(WindowPosition, SourceMonitorRef, DestinationMonitorRef);
+                    AXLibSetWindowPosition(Window->Ref, NormalizedPosition.x, NormalizedPosition.y);
+
+                    CFRelease(DestinationMonitorRef);
+                    CFRelease(SourceMonitorRef);
                 }
-                */
 
                 // TODO(koekeishiya): MacOS does not update focus when we send the window
                 // to a different desktop or monitor using this method. Need to figure out
@@ -1017,13 +1056,20 @@ void SendWindowToMonitor(char *Op)
                     // TODO(koekeishiya): might want to use AXLibActiveSpace(DestinationMonitorRef); instead
                     // so that we can make sure that the destination space is not a native fullscreen space !!!
                     CGSSpaceID DestinationSpaceId = AXLibActiveCGSSpaceID(DestinationMonitorRef);
-                    CFRelease(DestinationMonitorRef);
 
                     AXLibSpaceAddWindow(DestinationSpaceId, Window->Id);
                     AXLibSpaceRemoveWindow(Space->Id, Window->Id);
 
-                    /* TODO(koekeishiya): We need to normalize the window x and y position,
-                     * or it will be waaay out of bounds. */
+                    CFStringRef SourceMonitorRef = AXLibGetDisplayIdentifierFromSpace(Space->Id);
+                    ASSERT(SourceMonitorRef);
+
+                    /* NOTE(koekeishiya): We need to normalize the window x and y position, or it will be out of bounds. */
+                    CGPoint WindowPosition = AXLibGetWindowPosition(Window->Ref);
+                    CGPoint NormalizedPosition = NormalizeWindowPosition(WindowPosition, SourceMonitorRef, DestinationMonitorRef);
+                    AXLibSetWindowPosition(Window->Ref, NormalizedPosition.x, NormalizedPosition.y);
+
+                    CFRelease(DestinationMonitorRef);
+                    CFRelease(SourceMonitorRef);
 
                     // TODO(koekeishiya): MacOS does not update focus when we send the window
                     // to a different monitor using this method. Need to figure out how we
