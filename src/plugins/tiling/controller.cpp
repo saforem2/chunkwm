@@ -928,17 +928,13 @@ NormalizeWindowPosition(CGPoint Position, CFStringRef SourceMonitor, CFStringRef
     float OffsetY = Position.y - SourceBounds.origin.y;
 
     // NOTE(koekeishiya): We might want to apply a scale due to different monitor resolutions.
-    float Scale = SourceBounds.size.width / DestinationBounds.size.width;
-    if(Scale > 1.0f)
-    {
-        Result.x = (OffsetX / Scale) + DestinationBounds.origin.x;
-        Result.y = (OffsetY / Scale) + DestinationBounds.origin.y;
-    }
-    else
-    {
-        Result.x = OffsetX + DestinationBounds.origin.x;
-        Result.y = OffsetY + DestinationBounds.origin.y;
-    }
+    float ScaleX = SourceBounds.size.width / DestinationBounds.size.width;
+    Result.x = ScaleX > 1.0f ? OffsetX / ScaleX + DestinationBounds.origin.x
+                             : OffsetX + DestinationBounds.origin.x;
+
+    float ScaleY = SourceBounds.size.height / DestinationBounds.size.height;
+    Result.y = ScaleY > 1.0f ? OffsetY / ScaleY + DestinationBounds.origin.y
+                             : OffsetY + DestinationBounds.origin.y;
 
     return Result;
 }
