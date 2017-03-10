@@ -520,8 +520,9 @@ void CreateWindowTree()
     bool Success = AXLibActiveSpace(&Space);
     ASSERT(Success);
 
-    /* NOTE(koekeishiya): This function appears to always return a valid identifier!
-     * Could this potentially return NULL if an invalid CGSSpaceID is passed ? */
+    /* NOTE(koekeishiya): This function appears to always return a valid identifier,
+     * as long as 'Displays have separate spaces' is enabled. Otherwise it returns NULL.
+     * Probably returns NULL if an invalid CGSSpaceID is passed as well. */
     CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromSpace(Space->Id);
     ASSERT(DisplayRef);
 
