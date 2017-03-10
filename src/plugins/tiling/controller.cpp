@@ -993,6 +993,26 @@ void SendWindowToDesktop(char *Op)
                 AXLibSpaceAddWindow(DestinationSpaceId, Window->Id);
                 AXLibSpaceRemoveWindow(Space->Id, Window->Id);
 
+                // NOTE(koekeishiya): MacOS does not update focus when we send the window
+                // to a different desktop using this method. This results in a desync causing
+                // a bad user-experience.
+                //
+                // We retain focus on this space by giving focus to the window with the highest
+                // priority as reported by MacOS. If there are no windows left on the source space,
+                // we still experience desync. Not exactly sure what can be done about that.
+                uint32_t FocusedWindowId = CVarIntegerValue(CVAR_FOCUSED_WINDOW);
+                if(FocusedWindowId == Window->Id)
+                {
+                    std::vector<uint32_t> WindowIds = GetAllVisibleWindowsForSpace(Space);
+                    if(!WindowIds.empty())
+                    {
+                        uint32_t WindowId = WindowIds[0];
+                        macos_window *Window = GetWindowByID(WindowId);
+                        AXLibSetFocusedWindow(Window->Ref);
+                        AXLibSetFocusedApplication(Window->Owner->PSN);
+                    }
+                }
+
                 /* NOTE(koekeishiya): If the destination space is on a different monitor,
                  * we need to normalize the window x and y position, or it will be out of bounds. */
                 if(DestinationMonitor != SourceMonitor)
@@ -1010,8 +1030,7 @@ void SendWindowToDesktop(char *Op)
                     if(ValidWindow)
                     {
                         macos_space *DestinationMonitorActiveSpace = AXLibActiveSpace(DestinationMonitorRef);
-                        if((DestinationMonitorActiveSpace->Id == DestinationSpaceId) &&
-                           (DestinationMonitorActiveSpace->Type == kCGSSpaceUser))
+                        if(DestinationMonitorActiveSpace->Id == DestinationSpaceId)
                         {
                             TileWindowOnSpace(Window, DestinationMonitorActiveSpace);
                         }
@@ -1021,22 +1040,6 @@ void SendWindowToDesktop(char *Op)
 
                     CFRelease(DestinationMonitorRef);
                     CFRelease(SourceMonitorRef);
-                }
-
-                // NOTE(koekeishiya): MacOS does not update focus when we send the window
-                // to a different desktop using this method. This results in a desync causing
-                // a bad user-experience.
-                //
-                // We retain focus on this space by giving focus to the window with the highest
-                // priority as reported by MacOS. If there are no windows left on the source space,
-                // we still experience desync. Not exactly sure what can be done about that.
-                std::vector<uint32_t> WindowIds = GetAllVisibleWindowsForSpace(Space);
-                if(!WindowIds.empty())
-                {
-                    uint32_t WindowId = WindowIds[0];
-                    macos_window *Window = GetWindowByID(WindowId);
-                    AXLibSetFocusedWindow(Window->Ref);
-                    AXLibSetFocusedApplication(Window->Owner->PSN);
                 }
             }
             else
@@ -1097,6 +1100,26 @@ void SendWindowToMonitor(char *Op)
                         AXLibSpaceAddWindow(DestinationSpace->Id, Window->Id);
                         AXLibSpaceRemoveWindow(Space->Id, Window->Id);
 
+                        // NOTE(koekeishiya): MacOS does not update focus when we send the window
+                        // to a different monitor using this method. This results in a desync causing
+                        // problems with some of the MacOS APIs that we rely on.
+                        //
+                        // We retain focus on this monitor by giving focus to the window with the highest
+                        // priority as reported by MacOS. If there are no windows left on the source monitor,
+                        // we still experience desync. Not exactly sure what can be done about that.
+                        uint32_t FocusedWindowId = CVarIntegerValue(CVAR_FOCUSED_WINDOW);
+                        if(FocusedWindowId == Window->Id)
+                        {
+                            std::vector<uint32_t> WindowIds = GetAllVisibleWindowsForSpace(Space);
+                            if(!WindowIds.empty())
+                            {
+                                uint32_t WindowId = WindowIds[0];
+                                macos_window *Window = GetWindowByID(WindowId);
+                                AXLibSetFocusedWindow(Window->Ref);
+                                AXLibSetFocusedApplication(Window->Owner->PSN);
+                            }
+                        }
+
                         CFStringRef SourceMonitorRef = AXLibGetDisplayIdentifierFromSpace(Space->Id);
                         ASSERT(SourceMonitorRef);
 
@@ -1112,22 +1135,6 @@ void SendWindowToMonitor(char *Op)
 
                         CFRelease(DestinationMonitorRef);
                         CFRelease(SourceMonitorRef);
-
-                        // NOTE(koekeishiya): MacOS does not update focus when we send the window
-                        // to a different monitor using this method. This results in a desync causing
-                        // problems with some of the MacOS APIs that we rely on.
-                        //
-                        // We retain focus on this monitor by giving focus to the window with the highest
-                        // priority as reported by MacOS. If there are no windows left on the source monitor,
-                        // we still experience desync. Not exactly sure what can be done about that.
-                        std::vector<uint32_t> WindowIds = GetAllVisibleWindowsForSpace(Space);
-                        if(!WindowIds.empty())
-                        {
-                            uint32_t WindowId = WindowIds[0];
-                            macos_window *Window = GetWindowByID(WindowId);
-                            AXLibSetFocusedWindow(Window->Ref);
-                            AXLibSetFocusedApplication(Window->Owner->PSN);
-                        }
                     }
 
                     AXLibDestroySpace(DestinationSpace);
