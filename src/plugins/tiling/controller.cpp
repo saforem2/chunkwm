@@ -980,10 +980,7 @@ void SendWindowToDesktop(char *Op)
             Success = AXLibCGSSpaceIDFromDesktopID(DestinationDesktopId, &DestinationMonitor, &DestinationSpaceId);
             if(Success)
             {
-                /* TODO(koekeishiya): The window that we move has to get untiled from the
-                 * desktop that it is currently on.
-                 * virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
-                 */
+                UntileWindow(Window);
                 AXLibSpaceAddWindow(DestinationSpaceId, Window->Id);
                 AXLibSpaceRemoveWindow(Space->Id, Window->Id);
 
@@ -1059,6 +1056,7 @@ void SendWindowToMonitor(char *Op)
                     // so that we can make sure that the destination space is not a native fullscreen space !!!
                     CGSSpaceID DestinationSpaceId = AXLibActiveCGSSpaceID(DestinationMonitorRef);
 
+                    UntileWindow(Window);
                     AXLibSpaceAddWindow(DestinationSpaceId, Window->Id);
                     AXLibSpaceRemoveWindow(Space->Id, Window->Id);
 
