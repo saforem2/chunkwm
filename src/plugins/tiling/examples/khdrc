@@ -13,6 +13,16 @@ shift + alt - j : chunkc window -s south
 shift + alt - k : chunkc window -s north
 shift + alt - l : chunkc window -s east
 
+# send window to desktop and switch desktop
+shift + alt - z : chunkc window -d prev; khd -p "cmd + alt - z"
+shift + alt - c : chunkc window -d next; khd -p "cmd + alt - c"
+shift + alt - 1 : chunkc window -d 1; khd -p "cmd + alt - 1"
+shift + alt - 2 : chunkc window -d 2; khd -p "cmd + alt - 2"
+shift + alt - 3 : chunkc window -d 3; khd -p "cmd + alt - 3"
+shift + alt - 4 : chunkc window -d 4; khd -p "cmd + alt - 4"
+shift + alt - 5 : chunkc window -d 5; khd -p "cmd + alt - 5"
+shift + alt - 6 : chunkc window -d 6; khd -p "cmd + alt - 6"
+
 # move window
 shift + cmd - h : chunkc window -w west
 shift + cmd - j : chunkc window -w south
