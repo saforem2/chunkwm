@@ -133,8 +133,7 @@ RemoveApplication(macos_application *Application)
     }
 }
 
-internal bool
-IsWindowValid(macos_window *Window)
+bool IsWindowValid(macos_window *Window)
 {
     bool Result = ((AXLibIsWindowStandard(Window)) &&
                    (AXLibHasFlags(Window, Window_Movable)) &&
@@ -142,30 +141,8 @@ IsWindowValid(macos_window *Window)
     return Result;
 }
 
-void TileWindow(macos_window *Window)
+void TileWindowOnSpace(macos_window *Window, macos_space *Space)
 {
-    if(AXLibHasFlags(Window, Window_Float))
-    {
-        return;
-    }
-
-    if(!IsWindowValid(Window))
-    {
-        FloatWindow(Window);
-        return;
-    }
-
-    if(CVarIntegerValue(CVAR_WINDOW_FLOAT_NEXT))
-    {
-        FloatWindow(Window);
-        UpdateCVar(CVAR_WINDOW_FLOAT_NEXT, 0);
-        return;
-    }
-
-    macos_space *Space;
-    bool Success = AXLibActiveSpace(&Space);
-    ASSERT(Success);
-
     /* NOTE(koekeishiya): This function appears to always return a valid identifier!
      * Could this potentially return NULL if an invalid CGSSpaceID is passed ? */
     CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromSpace(Space->Id);
@@ -173,7 +150,6 @@ void TileWindow(macos_window *Window)
 
     if(AXLibIsDisplayChangingSpaces(DisplayRef))
     {
-        AXLibDestroySpace(Space);
         CFRelease(DisplayRef);
         return;
     }
@@ -249,11 +225,9 @@ void TileWindow(macos_window *Window)
             }
         }
     }
-
-    AXLibDestroySpace(Space);
 }
 
-void UntileWindow(macos_window *Window)
+void TileWindow(macos_window *Window)
 {
     if(AXLibHasFlags(Window, Window_Float))
     {
@@ -262,6 +236,14 @@ void UntileWindow(macos_window *Window)
 
     if(!IsWindowValid(Window))
     {
+        FloatWindow(Window);
+        return;
+    }
+
+    if(CVarIntegerValue(CVAR_WINDOW_FLOAT_NEXT))
+    {
+        FloatWindow(Window);
+        UpdateCVar(CVAR_WINDOW_FLOAT_NEXT, 0);
         return;
     }
 
@@ -269,6 +251,13 @@ void UntileWindow(macos_window *Window)
     bool Success = AXLibActiveSpace(&Space);
     ASSERT(Success);
 
+    TileWindowOnSpace(Window, Space);
+
+    AXLibDestroySpace(Space);
+}
+
+void UntileWindowFromSpace(macos_window *Window, macos_space *Space)
+{
     if(Space->Type == kCGSSpaceUser)
     {
         virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
@@ -357,6 +346,25 @@ void UntileWindow(macos_window *Window)
             }
         }
     }
+}
+
+void UntileWindow(macos_window *Window)
+{
+    if(AXLibHasFlags(Window, Window_Float))
+    {
+        return;
+    }
+
+    if(!IsWindowValid(Window))
+    {
+        return;
+    }
+
+    macos_space *Space;
+    bool Success = AXLibActiveSpace(&Space);
+    ASSERT(Success);
+
+    UntileWindowFromSpace(Window, Space);
 
     AXLibDestroySpace(Space);
 }

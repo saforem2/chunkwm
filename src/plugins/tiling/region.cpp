@@ -11,18 +11,15 @@
 
 #define OSX_MENU_BAR_HEIGHT 20.0f
 internal region
-FullscreenRegion()
+FullscreenRegion(CFStringRef DisplayRef)
 {
-    macos_space *Space;
-    bool Success = AXLibActiveSpace(&Space);
-    ASSERT(Success);
+    macos_space *Space = AXLibActiveSpace(DisplayRef);
+    ASSERT(Space);
 
     virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
     region_offset *Offset = VirtualSpace->Offset;
 
-    CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromSpace(Space->Id);
     CGRect Display = AXLibGetDisplayBounds(DisplayRef);
-    CFRelease(DisplayRef);
 
     region Result;
     Result.X = Display.origin.x;
@@ -78,13 +75,12 @@ FullscreenRegion()
 }
 
 internal region
-LeftVerticalRegion(node *Node)
+LeftVerticalRegion(CFStringRef DisplayRef, node *Node)
 {
     ASSERT(Node);
 
-    macos_space *Space;
-    bool Success = AXLibActiveSpace(&Space);
-    ASSERT(Success);
+    macos_space *Space = AXLibActiveSpace(DisplayRef);
+    ASSERT(Space);
 
     virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
     region_offset *Offset = VirtualSpace->Offset;
@@ -106,13 +102,12 @@ LeftVerticalRegion(node *Node)
 }
 
 internal region
-RightVerticalRegion(node *Node)
+RightVerticalRegion(CFStringRef DisplayRef, node *Node)
 {
     ASSERT(Node);
 
-    macos_space *Space;
-    bool Success = AXLibActiveSpace(&Space);
-    ASSERT(Success);
+    macos_space *Space = AXLibActiveSpace(DisplayRef);
+    ASSERT(Space);
 
     virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
     region_offset *Offset = VirtualSpace->Offset;
@@ -135,13 +130,12 @@ RightVerticalRegion(node *Node)
 }
 
 internal region
-UpperHorizontalRegion(node *Node)
+UpperHorizontalRegion(CFStringRef DisplayRef, node *Node)
 {
     ASSERT(Node);
 
-    macos_space *Space;
-    bool Success = AXLibActiveSpace(&Space);
-    ASSERT(Success);
+    macos_space *Space = AXLibActiveSpace(DisplayRef);
+    ASSERT(Space);
 
     virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
     region_offset *Offset = VirtualSpace->Offset;
@@ -163,13 +157,12 @@ UpperHorizontalRegion(node *Node)
 }
 
 internal region
-LowerHorizontalRegion(node *Node)
+LowerHorizontalRegion(CFStringRef DisplayRef, node *Node)
 {
     ASSERT(Node);
 
-    macos_space *Space;
-    bool Success = AXLibActiveSpace(&Space);
-    ASSERT(Success);
+    macos_space *Space = AXLibActiveSpace(DisplayRef);
+    ASSERT(Space);
 
     virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
     region_offset *Offset = VirtualSpace->Offset;
@@ -194,32 +187,36 @@ LowerHorizontalRegion(node *Node)
 void CreateNodeRegion(node *Node, region_type Type)
 {
     ASSERT(Type >= Region_Full && Type <= Region_Lower);
+    CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromWindow(Node->WindowId);
+    ASSERT(DisplayRef);
+
     switch(Type)
     {
         case Region_Full:
         {
-            Node->Region = FullscreenRegion();
+            Node->Region = FullscreenRegion(DisplayRef);
         } break;
         case Region_Left:
         {
-            Node->Region = LeftVerticalRegion(Node->Parent);
+            Node->Region = LeftVerticalRegion(DisplayRef, Node->Parent);
         } break;
         case Region_Right:
         {
-            Node->Region = RightVerticalRegion(Node->Parent);
+            Node->Region = RightVerticalRegion(DisplayRef, Node->Parent);
         } break;
         case Region_Upper:
         {
-            Node->Region = UpperHorizontalRegion(Node->Parent);
+            Node->Region = UpperHorizontalRegion(DisplayRef, Node->Parent);
         } break;
         case Region_Lower:
         {
-            Node->Region = LowerHorizontalRegion(Node->Parent);
+            Node->Region = LowerHorizontalRegion(DisplayRef, Node->Parent);
         } break;
         default: { /* NOTE(koekeishiya): Invalid region specified. */} break;
     }
 
     Node->Region.Type = Type;
+    CFRelease(DisplayRef);
 }
 
 internal void
