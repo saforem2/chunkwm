@@ -1078,9 +1078,15 @@ void SendWindowToMonitor(char *Op)
             {
                 DestinationMonitor = SourceMonitor + 1;
             }
+            else if(sscanf(Op, "%d", &DestinationMonitor) == 1)
+            {
+                // NOTE(koekeishiya): Convert 1-indexed back to 0-index expected by the system.
+                --DestinationMonitor;
+            }
             else
             {
-                sscanf(Op, "%d", &DestinationMonitor);
+                // NOTE(koekeishiya): Invalid monitor specified, do nothing.
+                DestinationMonitor = SourceMonitor;
             }
 
             if(DestinationMonitor != SourceMonitor)
