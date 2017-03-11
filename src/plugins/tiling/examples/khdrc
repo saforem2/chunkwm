@@ -42,9 +42,9 @@ shift + cmd - 6 : chunkc window -d 6; khd -p "cmd + alt - 6"
 # focus monitor
 ctrl + alt - z  : chunkc monitor -f prev
 ctrl + alt - c  : chunkc monitor -f next
-ctrl + alt - 1  : chunkc monitor -f 0
-ctrl + alt - 2  : chunkc monitor -f 1
-ctrl + alt - 3  : chunkc monitor -f 2
+ctrl + alt - 1  : chunkc monitor -f 1
+ctrl + alt - 2  : chunkc monitor -f 2
+ctrl + alt - 3  : chunkc monitor -f 3
 
 # increase region size
 shift + alt - a : chunkc window -r 0.1 -e west
