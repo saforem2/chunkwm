@@ -1083,11 +1083,6 @@ void SendWindowToMonitor(char *Op)
                 // NOTE(koekeishiya): Convert 1-indexed back to 0-index expected by the system.
                 --DestinationMonitor;
             }
-            else
-            {
-                // NOTE(koekeishiya): Invalid monitor specified, do nothing.
-                DestinationMonitor = SourceMonitor;
-            }
 
             if(DestinationMonitor != SourceMonitor)
             {
@@ -1181,11 +1176,6 @@ void FocusMonitor(char *Op)
     {
         // NOTE(koekeishiya): Convert 1-indexed back to 0-index expected by the system.
         --DestinationMonitor;
-    }
-    else
-    {
-        // NOTE(koekeishiya): Invalid monitor specified, do nothing.
-        DestinationMonitor = SourceMonitor;
     }
 
     if(DestinationMonitor != SourceMonitor)
