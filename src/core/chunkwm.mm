@@ -53,6 +53,25 @@ SystemWideElement()
     return Element;
 }
 
+inline bool
+CheckAccessibilityPrivileges()
+{
+    const void *Keys[] = { kAXTrustedCheckOptionPrompt };
+    const void *Values[] = { kCFBooleanTrue };
+
+    CFDictionaryRef Options = CFDictionaryCreate(kCFAllocatorDefault,
+                                                 Keys,
+                                                 Values,
+                                                 sizeof(Keys) / sizeof(*Keys),
+                                                 &kCFCopyStringDictionaryKeyCallBacks,
+                                                 &kCFTypeDictionaryValueCallBacks);
+
+    bool Result = AXIsProcessTrustedWithOptions(Options);
+    CFRelease(Options);
+
+    return Result;
+}
+
 int main(int Count, char **Args)
 {
     if(Count == 2)
@@ -66,6 +85,12 @@ int main(int Count, char **Args)
                     CHUNKWM_PATCH);
             return EXIT_SUCCESS;
         }
+    }
+
+    if(!CheckAccessibilityPrivileges())
+    {
+        fprintf(stderr, "chunkwm: could not access accessibility features! abort..\n");
+        return EXIT_FAILURE;
     }
 
     NSApplicationLoad();
