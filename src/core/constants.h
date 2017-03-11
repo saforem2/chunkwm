@@ -5,7 +5,7 @@
 
 #define CHUNKWM_MAJOR           0
 #define CHUNKWM_MINOR           0
-#define CHUNKWM_PATCH           12
+#define CHUNKWM_PATCH           13
 
 #define CHUNKWM_CONFIG          ".chunkwmrc"
 #define CHUNKWM_PORT            3920
