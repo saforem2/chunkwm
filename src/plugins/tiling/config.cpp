@@ -402,6 +402,74 @@ End:
     return Success;
 }
 
+command_func MonitorCommandDispatch[] =
+{
+    FocusMonitor,
+};
+
+#define MONITOR_FLAG_F 0
+
+unsigned MonitorFuncFromFlag(char Flag)
+{
+    switch(Flag)
+    {
+        case 'f': return MONITOR_FLAG_F; break;
+
+        // NOTE(koekeishiya): silence compiler warning.
+        default: return 0; break;
+    }
+}
+
+inline bool
+ParseMonitorCommand(const char *Message, command *Chain)
+{
+    int Count;
+    char **Args = BuildArguments(Message, &Count);
+
+    int Option;
+    bool Success = true;
+    const char *Short = "f:";
+
+    command *Command = Chain;
+    while((Option = getopt_long(Count, Args, Short, NULL, NULL)) != -1)
+    {
+        switch(Option)
+        {
+            case 'f':
+            {
+                unsigned Unsigned;
+                if((StringEquals(optarg, "prev")) ||
+                   (StringEquals(optarg, "next")) ||
+                   (sscanf(optarg, "%d", &Unsigned) == 1))
+                {
+                    command *Entry = ConstructCommand(Option, optarg);
+                    Command->Next = Entry;
+                    Command = Entry;
+                }
+                else
+                {
+                    fprintf(stderr, "    invalid selector '%s' for monitor flag '%c'\n", optarg, Option);
+                    Success = false;
+                    FreeCommandChain(Chain);
+                    goto End;
+                }
+            } break;
+            case '?':
+            {
+                Success = false;
+                FreeCommandChain(Chain);
+                goto End;
+            } break;
+        }
+    }
+
+End:
+    // NOTE(koekeishiya): Reset getopt.
+    optind = 1;
+
+    FreeArguments(Count, Args);
+    return Success;
+}
 /* NOTE(koekeishiya): Parameters
  *
  * const char *Message
@@ -698,6 +766,28 @@ DAEMON_CALLBACK(DaemonCallback)
 
                 unsigned Index = SpaceFuncFromFlag(Command->Flag);
                 SpaceCommandDispatch[Index](Command->Arg);
+            }
+
+            FreeCommandChain(&Chain);
+        }
+    }
+    else if(TokenEquals(Type, "monitor"))
+    {
+        command Chain = {};
+        bool Success = ParseMonitorCommand(Message, &Chain);
+        if(Success)
+        {
+            command *Command = &Chain;
+            while((Command = Command->Next))
+            {
+                printf("    command: '%c', arg: '%s'\n", Command->Flag, Command->Arg);
+
+                /* NOTE(koekeishiya): flags description:
+                 * f: focus monitor
+                 * */
+
+                unsigned Index = MonitorFuncFromFlag(Command->Flag);
+                MonitorCommandDispatch[Index](Command->Arg);
             }
 
             FreeCommandChain(&Chain);

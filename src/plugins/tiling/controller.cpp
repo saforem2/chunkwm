@@ -1133,11 +1133,11 @@ void SendWindowToMonitor(char *Op)
                             TileWindowOnSpace(Window, DestinationSpace);
                         }
 
-                        CFRelease(DestinationMonitorRef);
                         CFRelease(SourceMonitorRef);
                     }
 
                     AXLibDestroySpace(DestinationSpace);
+                    CFRelease(DestinationMonitorRef);
                 }
                 else
                 {
@@ -1150,4 +1150,69 @@ void SendWindowToMonitor(char *Op)
 
         AXLibDestroySpace(Space);
     }
+}
+
+void FocusMonitor(char *Op)
+{
+    macos_space *Space;
+    bool Success = AXLibActiveSpace(&Space);
+    ASSERT(Success);
+
+    unsigned SourceMonitor;
+    Success = AXLibCGSSpaceIDToDesktopID(Space->Id, &SourceMonitor, NULL);
+    ASSERT(Success);
+
+    unsigned DestinationMonitor;
+    if(StringEquals(Op, "prev"))
+    {
+        DestinationMonitor = SourceMonitor - 1;
+    }
+    else if(StringEquals(Op, "next"))
+    {
+        DestinationMonitor = SourceMonitor + 1;
+    }
+    else
+    {
+        sscanf(Op, "%d", &DestinationMonitor);
+    }
+
+    if(DestinationMonitor != SourceMonitor)
+    {
+        CFStringRef DestinationMonitorRef = AXLibGetDisplayIdentifierFromArrangement(DestinationMonitor);
+        if(DestinationMonitorRef)
+        {
+            macos_space *DestinationSpace = AXLibActiveSpace(DestinationMonitorRef);
+            if(DestinationSpace->Type == kCGSSpaceUser)
+            {
+                std::vector<uint32_t> WindowIds = GetAllVisibleWindowsForSpace(DestinationSpace);
+                if(!WindowIds.empty())
+                {
+                    uint32_t WindowId = WindowIds[0];
+                    macos_window *Window = GetWindowByID(WindowId);
+                    AXLibSetFocusedWindow(Window->Ref);
+                    AXLibSetFocusedApplication(Window->Owner->PSN);
+
+                    if(CVarIntegerValue(CVAR_MOUSE_FOLLOWS_FOCUS))
+                    {
+                        CGPoint Position = AXLibGetWindowPosition(Window->Ref);
+                        CGSize Size = AXLibGetWindowSize(Window->Ref);
+                        CGPoint Center = CGPointMake(Position.x + Size.width / 2,
+                                                     Position.y + Size.height / 2);
+                        CGWarpMouseCursorPosition(Center);
+                    }
+                }
+            }
+
+            AXLibDestroySpace(DestinationSpace);
+            CFRelease(DestinationMonitorRef);
+        }
+        else
+        {
+            fprintf(stderr,
+                    "invalid destination monitor specified, monitor '%d' does not exist!\n",
+                    DestinationMonitor);
+        }
+    }
+
+    AXLibDestroySpace(Space);
 }

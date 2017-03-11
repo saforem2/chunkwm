@@ -22,4 +22,6 @@ struct macos_window;
 void FloatWindow(macos_window *Window);
 void UnfloatWindow(macos_window *Window);
 
+void FocusMonitor(char *Op);
+
 #endif
