@@ -1142,9 +1142,10 @@ void SendWindowToMonitor(char *Op)
                 }
                 else
                 {
+                    // NOTE(koekeishiya): Convert 0-indexed back to 1-index when printng error to user.
                     fprintf(stderr,
                             "invalid destination monitor specified, monitor '%d' does not exist!\n",
-                            DestinationMonitor);
+                            DestinationMonitor + 1);
                 }
             }
         }
@@ -1210,9 +1211,10 @@ void FocusMonitor(char *Op)
         }
         else
         {
+            // NOTE(koekeishiya): Convert 0-indexed back to 1-index when printng error to user.
             fprintf(stderr,
                     "invalid destination monitor specified, monitor '%d' does not exist!\n",
-                    DestinationMonitor);
+                    DestinationMonitor + 1);
         }
     }
 
