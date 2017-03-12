@@ -87,42 +87,19 @@ ConstructCommand(char Flag, char *Arg)
 }
 
 typedef void (*command_func)(char *);
-command_func WindowCommandDispatch[] =
-{
-    FocusWindow,
-    SwapWindow,
-    UseInsertionPoint,
-    ToggleWindow,
-    WarpWindow,
-    TemporaryRatio,
-    AdjustWindowRatio,
-    SendWindowToDesktop,
-    SendWindowToMonitor,
-};
-
-#define WINDOW_FLAG_F 0
-#define WINDOW_FLAG_S 1
-#define WINDOW_FLAG_I 2
-#define WINDOW_FLAG_T 3
-#define WINDOW_FLAG_W 4
-#define WINDOW_FLAG_R 5
-#define WINDOW_FLAG_E 6
-#define WINDOW_FLAG_D 7
-#define WINDOW_FLAG_M 8
-
-unsigned WindowFuncFromFlag(char Flag)
+command_func WindowCommandDispatch(char Flag)
 {
     switch(Flag)
     {
-        case 'f': return WINDOW_FLAG_F; break;
-        case 's': return WINDOW_FLAG_S; break;
-        case 'i': return WINDOW_FLAG_I; break;
-        case 't': return WINDOW_FLAG_T; break;
-        case 'w': return WINDOW_FLAG_W; break;
-        case 'r': return WINDOW_FLAG_R; break;
-        case 'e': return WINDOW_FLAG_E; break;
-        case 'd': return WINDOW_FLAG_D; break;
-        case 'm': return WINDOW_FLAG_M; break;
+        case 'f': return FocusWindow;           break;
+        case 's': return SwapWindow;            break;
+        case 'i': return UseInsertionPoint;     break;
+        case 't': return ToggleWindow;          break;
+        case 'w': return WarpWindow;            break;
+        case 'r': return TemporaryRatio;        break;
+        case 'e': return AdjustWindowRatio;     break;
+        case 'd': return SendWindowToDesktop;   break;
+        case 'm': return SendWindowToMonitor;   break;
 
         // NOTE(koekeishiya): silence compiler warning.
         default: return 0; break;
@@ -274,27 +251,14 @@ End:
     return Success;
 }
 
-command_func SpaceCommandDispatch[] =
-{
-    RotateWindowTree,
-    ActivateSpaceLayout,
-    ToggleSpace,
-    MirrorWindowTree,
-};
-
-#define SPACE_FLAG_R 0
-#define SPACE_FLAG_L 1
-#define SPACE_FLAG_T 2
-#define SPACE_FLAG_M 3
-
-unsigned SpaceFuncFromFlag(char Flag)
+command_func SpaceCommandDispatch(char Flag)
 {
     switch(Flag)
     {
-        case 'r': return SPACE_FLAG_R; break;
-        case 'l': return SPACE_FLAG_L; break;
-        case 't': return SPACE_FLAG_T; break;
-        case 'm': return SPACE_FLAG_M; break;
+        case 'r': return RotateWindowTree;       break;
+        case 'l': return ActivateSpaceLayout;    break;
+        case 't': return ToggleSpace;            break;
+        case 'm': return MirrorWindowTree;       break;
 
         // NOTE(koekeishiya): silence compiler warning.
         default: return 0; break;
@@ -402,18 +366,11 @@ End:
     return Success;
 }
 
-command_func MonitorCommandDispatch[] =
-{
-    FocusMonitor,
-};
-
-#define MONITOR_FLAG_F 0
-
-unsigned MonitorFuncFromFlag(char Flag)
+command_func MonitorCommandDispatch(char Flag)
 {
     switch(Flag)
     {
-        case 'f': return MONITOR_FLAG_F; break;
+        case 'f': return FocusMonitor; break;
 
         // NOTE(koekeishiya): silence compiler warning.
         default: return 0; break;
@@ -723,21 +680,7 @@ DAEMON_CALLBACK(DaemonCallback)
             while((Command = Command->Next))
             {
                 printf("    command: '%c', arg: '%s'\n", Command->Flag, Command->Arg);
-
-                /* NOTE(koekeishiya): flags description:
-                 * -f | --focus-window
-                 * -s | --swap-window
-                 * -w | --warp-window
-                 * -i | --use-insertion-point   | (previously 'mark window' in kwm)
-                 * -t | --toggle-window         | (float, fullscreen, parent)
-                 * -e | --adjust-window-edge
-                 * -d | --send-to-desktop
-                 * -m | --send-to-monitor
-                 * -r | --use-temporary-ratio   | (works with 'w' and 'e')
-                 * */
-
-                unsigned Index = WindowFuncFromFlag(Command->Flag);
-                WindowCommandDispatch[Index](Command->Arg);
+                (*WindowCommandDispatch(Command->Flag))(Command->Arg);
             }
 
             if(Ratio != CVarFloatingPointValue(CVAR_BSP_SPLIT_RATIO))
@@ -758,14 +701,7 @@ DAEMON_CALLBACK(DaemonCallback)
             while((Command = Command->Next))
             {
                 printf("    command: '%c', arg: '%s'\n", Command->Flag, Command->Arg);
-
-                /* NOTE(koekeishiya): flags description:
-                 * r: rotate 90, 180, 270 degrees
-                 * l: set laoyout bsp, monocle, float
-                 * */
-
-                unsigned Index = SpaceFuncFromFlag(Command->Flag);
-                SpaceCommandDispatch[Index](Command->Arg);
+                (*SpaceCommandDispatch(Command->Flag))(Command->Arg);
             }
 
             FreeCommandChain(&Chain);
@@ -781,13 +717,7 @@ DAEMON_CALLBACK(DaemonCallback)
             while((Command = Command->Next))
             {
                 printf("    command: '%c', arg: '%s'\n", Command->Flag, Command->Arg);
-
-                /* NOTE(koekeishiya): flags description:
-                 * f: focus monitor
-                 * */
-
-                unsigned Index = MonitorFuncFromFlag(Command->Flag);
-                MonitorCommandDispatch[Index](Command->Arg);
+                (*MonitorCommandDispatch(Command->Flag))(Command->Arg);
             }
 
             FreeCommandChain(&Chain);
