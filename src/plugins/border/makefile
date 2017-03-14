@@ -14,8 +14,11 @@ install: clean $(BINS)
 
 .PHONY: all clean install
 
-clean:
+$(BUILD_PATH):
+	mkdir -p $(BUILD_PATH)
+
+clean: | $(BUILD_PATH)
 	rm -f $(BUILD_PATH)/border.so
 
-$(BUILD_PATH)/border.so: $(SRC)
+$(BUILD_PATH)/border.so: $(SRC) | $(BUILD_PATH)
 	clang++ $^ $(BUILD_FLAGS) -o $@ $(LINK)
