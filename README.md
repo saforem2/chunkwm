@@ -18,9 +18,9 @@ a symlink can be made for people who wish to keep the actual file in some other 
 
 the config file is simply a bash script that specifies which plugins to load and how they are loaded.
 
-plugins can be loaded and unloaded without having to restart **chunkwm**:
+plugins can be loaded and unloaded without having to restart **chunkwm**.
 
-see [sample config](https://github.com/koekeishiya/chunkwm/blob/master/examples/chunkwmrc)
+see [sample config](https://github.com/koekeishiya/chunkwm/blob/master/examples/chunkwmrc).
 
 ## Development
 
