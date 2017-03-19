@@ -17,7 +17,7 @@ install: clean $(BINS)
 $(BUILD_PATH):
 	mkdir -p $(BUILD_PATH)
 
-clean: | $(BUILD_PATH)
+clean:
 	rm -f $(BUILD_PATH)/ffm.so
 
 $(BUILD_PATH)/ffm.so: $(SRC) | $(BUILD_PATH)

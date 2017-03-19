@@ -14,7 +14,7 @@ install: clean $(BINS)
 $(BUILD_PATH):
 	mkdir -p $(BUILD_PATH)
 
-clean: | $(BUILD_PATH)
+clean:
 	rm -f $(BUILD_PATH)/template.so
 
 $(BUILD_PATH)/template.so: $(SRC) | $(BUILD_PATH)

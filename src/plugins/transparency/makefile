@@ -21,7 +21,7 @@ install: clean $(BINS)
 $(BUILD_PATH):
 	mkdir -p $(BUILD_PATH)
 
-clean: | $(BUILD_PATH)
+clean:
 	rm -f $(BUILD_PATH)/transparency.so
 
 $(BUILD_PATH)/transparency.so: $(SRC) | $(BUILD_PATH)
