@@ -29,7 +29,7 @@ chunkc config bsp_optimal_ratio           1.618
 chunkc config bsp_split_mode            optimal
 chunkc config bsp_split_ratio               0.5
 
-chunkc config window_focus_cycle           none
+chunkc config window_focus_cycle            all
 chunkc config mouse_follows_focus             1
 chunkc config window_float_next               0
 
