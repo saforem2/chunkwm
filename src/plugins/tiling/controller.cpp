@@ -219,7 +219,36 @@ void FocusWindow(char *Direction)
 
                 if(StringEquals(FocusCycleMode, Window_Focus_Cycle_All))
                 {
-                    // TODO(koekeishiya): NYI
+                    macos_window *ClosestWindow;
+                    if(FindClosestWindow(Space, VirtualSpace, Window, &ClosestWindow, Direction, false))
+                    {
+                        AXLibSetFocusedWindow(ClosestWindow->Ref);
+                        AXLibSetFocusedApplication(ClosestWindow->Owner->PSN);
+
+                        if(CVarIntegerValue(CVAR_MOUSE_FOLLOWS_FOCUS))
+                        {
+                            node *Node = GetNodeWithId(VirtualSpace->Tree, ClosestWindow->Id, VirtualSpace->Mode);
+                            ASSERT(Node);
+
+                            if(!IsCursorInRegion(Node->Region))
+                            {
+                                CGPoint Center = CGPointMake(Node->Region.X + Node->Region.Width / 2,
+                                                             Node->Region.Y + Node->Region.Height / 2);
+                                CGWarpMouseCursorPosition(Center);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if(StringEquals(Direction, "east"))
+                        {
+                            FocusMonitor("next");
+                        }
+                        else if(StringEquals(Direction, "west"))
+                        {
+                            FocusMonitor("prev");
+                        }
+                    }
                 }
                 else
                 {
