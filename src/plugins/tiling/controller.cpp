@@ -363,16 +363,11 @@ void SwapWindow(char *Direction)
         {
             if(VirtualSpace->Mode == Virtual_Space_Bsp)
             {
-                // TODO(koekeishiya): Do we want to support this cross-monitor ??
-                char *FocusCycleMode = CVarStringValue(CVAR_WINDOW_FOCUS_CYCLE);
-                ASSERT(FocusCycleMode);
-
                 node *WindowNode = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
                 if(WindowNode)
                 {
-                    bool WrapMonitor = StringEquals(FocusCycleMode, Window_Focus_Cycle_Monitor);
                     macos_window *ClosestWindow;
-                    if(FindClosestWindow(Space, VirtualSpace, Window, &ClosestWindow, Direction, WrapMonitor))
+                    if(FindClosestWindow(Space, VirtualSpace, Window, &ClosestWindow, Direction, false))
                     {
                         node *ClosestNode = GetNodeWithId(VirtualSpace->Tree, ClosestWindow->Id, VirtualSpace->Mode);
                         ASSERT(ClosestNode);
