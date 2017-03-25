@@ -276,6 +276,9 @@ void FocusWindow(char *Direction)
             }
             else if(VirtualSpace->Mode == Virtual_Space_Monocle)
             {
+                char *FocusCycleMode = CVarStringValue(CVAR_WINDOW_FOCUS_CYCLE);
+                ASSERT(FocusCycleMode);
+
                 node *WindowNode = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
                 if(WindowNode)
                 {
@@ -288,10 +291,14 @@ void FocusWindow(char *Direction)
                         }
                         else
                         {
-                            // TODO(koekeishiya): This code is a duplicate of the one found in SwapWindow
-                            // for monocle spaces. This should be refactored when implementing different
-                            // types of window_cycle_focus behaviour.
-                            Node = GetLastLeafNode(VirtualSpace->Tree);
+                            if(StringEquals(FocusCycleMode, Window_Focus_Cycle_All))
+                            {
+                                FocusMonitor("prev");
+                            }
+                            else if(StringEquals(FocusCycleMode, Window_Focus_Cycle_Monitor))
+                            {
+                                Node = GetLastLeafNode(VirtualSpace->Tree);
+                            }
                         }
                     }
                     else if(StringEquals(Direction, "east"))
@@ -302,10 +309,14 @@ void FocusWindow(char *Direction)
                         }
                         else
                         {
-                            // TODO(koekeishiya): This code is a duplicate of the one found in SwapWindow
-                            // for monocle spaces. This should be refactored when implementing different
-                            // types of window_cycle_focus behaviour.
-                            Node = GetFirstLeafNode(VirtualSpace->Tree);
+                            if(StringEquals(FocusCycleMode, Window_Focus_Cycle_All))
+                            {
+                                FocusMonitor("next");
+                            }
+                            else if(StringEquals(FocusCycleMode, Window_Focus_Cycle_Monitor))
+                            {
+                                Node = GetFirstLeafNode(VirtualSpace->Tree);
+                            }
                         }
                     }
 
@@ -394,9 +405,6 @@ void SwapWindow(char *Direction)
                         }
                         else
                         {
-                            // TODO(koekeishiya): This code is a duplicate of the one found in FocusWindow
-                            // for monocle spaces. This should be refactored when implementing different
-                            // types of window_cycle_focus behaviour.
                             ClosestNode = GetLastLeafNode(VirtualSpace->Tree);
                         }
                     }
@@ -408,9 +416,6 @@ void SwapWindow(char *Direction)
                         }
                         else
                         {
-                            // TODO(koekeishiya): This code is a duplicate of the one found in FocusWindow
-                            // for monocle spaces. This should be refactored when implementing different
-                            // types of window_cycle_focus behaviour.
                             ClosestNode = GetFirstLeafNode(VirtualSpace->Tree);
                         }
                     }
