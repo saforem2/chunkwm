@@ -24,6 +24,7 @@ struct macos_window
     char *Name;
 
     uint32_t Flags;
+    uint32_t Level;
 };
 
 macos_window *AXLibConstructWindow(macos_application *Application, AXUIElementRef WindowRef);

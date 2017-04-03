@@ -6,6 +6,10 @@
 
 #define internal static
 
+typedef int CGSConnectionID;
+extern "C" CGSConnectionID _CGSDefaultConnection(void);
+extern "C" CGError CGSGetWindowLevel(const CGSConnectionID Connection, uint32_t WindowId, uint32_t *WindowLevel);
+
 /*
  * NOTE(koekeishiya): The following files must also be linked against:
  *
@@ -26,6 +30,7 @@ macos_window *AXLibConstructWindow(macos_application *Application, AXUIElementRe
     Window->Owner = Application;
     Window->Id = AXLibGetWindowID(Window->Ref);
     Window->Name = AXLibGetWindowTitle(Window->Ref);
+    CGSGetWindowLevel(_CGSDefaultConnection(), Window->Id, &Window->Level);
 
     if(AXLibIsWindowMovable(Window->Ref))
         AXLibAddFlags(Window, Window_Movable);
