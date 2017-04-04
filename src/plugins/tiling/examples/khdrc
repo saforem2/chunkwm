@@ -13,6 +13,12 @@ shift + alt - j : chunkc window -s south
 shift + alt - k : chunkc window -s north
 shift + alt - l : chunkc window -s east
 
+# move window
+shift + cmd - h : chunkc window -w west
+shift + cmd - j : chunkc window -w south
+shift + cmd - k : chunkc window -w north
+shift + cmd - l : chunkc window -w east
+
 # send window to desktop
 shift + alt - z : chunkc window -d prev
 shift + alt - c : chunkc window -d next
@@ -22,12 +28,6 @@ shift + alt - 3 : chunkc window -d 3
 shift + alt - 4 : chunkc window -d 4
 shift + alt - 5 : chunkc window -d 5
 shift + alt - 6 : chunkc window -d 6
-
-# move window
-shift + cmd - h : chunkc window -w west
-shift + cmd - j : chunkc window -w south
-shift + cmd - k : chunkc window -w north
-shift + cmd - l : chunkc window -w east
 
 # send window to desktop and switch desktop
 shift + cmd - z : chunkc window -d prev; khd -p "cmd + alt - z"
@@ -45,6 +45,13 @@ ctrl + alt - c  : chunkc monitor -f next
 ctrl + alt - 1  : chunkc monitor -f 1
 ctrl + alt - 2  : chunkc monitor -f 2
 ctrl + alt - 3  : chunkc monitor -f 3
+
+# send window to monitor and follow focus
+ctrl + cmd - z  : chunkc window -m prev; chunkc monitor -f prev
+ctrl + cmd - c  : chunkc window -m next; chunkc monitor -f next
+ctrl + cmd - 1  : chunkc window -m 1; chunkc monitor -f 1
+ctrl + cmd - 2  : chunkc window -m 2; chunkc monitor -f 2
+ctrl + cmd - 3  : chunkc window -m 3; chunkc monitor -f 3
 
 # increase region size
 shift + alt - a : chunkc window -r 0.1 -e west
