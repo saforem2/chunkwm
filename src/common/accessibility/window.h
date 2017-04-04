@@ -3,6 +3,8 @@
 
 #include <Carbon/Carbon.h>
 
+#define WINDOW_LEVEL_CONTEXT_MENU 101
+
 enum macos_window_flags
 {
     Window_Movable = (1 << 0),
