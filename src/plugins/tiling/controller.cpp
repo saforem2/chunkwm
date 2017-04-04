@@ -548,7 +548,8 @@ void FloatWindow(macos_window *Window)
         ExtendedDockSetTopmost(Window);
     }
 
-    if(CVarIntegerValue(CVAR_WINDOW_FLOAT_CENTER))
+    if(CVarIntegerValue(CVAR_WINDOW_FLOAT_CENTER) &&
+      (Window->Level != WINDOW_LEVEL_CONTEXT_MENU))
     {
         CenterWindow(Window);
     }
