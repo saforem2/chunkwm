@@ -478,6 +478,8 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_WindowMoved)
     macos_window *Window = (macos_window *) Event->Context;
     ASSERT(Window);
 
+    Window->Position = AXLibGetWindowPosition(Window->Ref);
+
 #ifdef CHUNKWM_DEBUG
     printf("%s:%s window moved\n", Window->Owner->Name, Window->Name);
 #endif
@@ -493,6 +495,9 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_WindowResized)
 {
     macos_window *Window = (macos_window *) Event->Context;
     ASSERT(Window);
+
+    Window->Position = AXLibGetWindowPosition(Window->Ref);
+    Window->Size = AXLibGetWindowSize(Window->Ref);
 
 #ifdef CHUNKWM_DEBUG
     printf("%s:%s window resized\n", Window->Owner->Name, Window->Name);

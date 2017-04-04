@@ -25,6 +25,9 @@ struct macos_window
 
     uint32_t Flags;
     uint32_t Level;
+
+    CGPoint Position;
+    CGSize Size;
 };
 
 macos_window *AXLibConstructWindow(macos_application *Application, AXUIElementRef WindowRef);

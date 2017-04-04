@@ -32,6 +32,9 @@ macos_window *AXLibConstructWindow(macos_application *Application, AXUIElementRe
     Window->Name = AXLibGetWindowTitle(Window->Ref);
     CGSGetWindowLevel(_CGSDefaultConnection(), Window->Id, &Window->Level);
 
+    Window->Position = AXLibGetWindowPosition(Window->Ref);
+    Window->Size = AXLibGetWindowSize(Window->Ref);
+
     if(AXLibIsWindowMovable(Window->Ref))
         AXLibAddFlags(Window, Window_Movable);
 
