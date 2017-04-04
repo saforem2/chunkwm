@@ -66,6 +66,9 @@ macos_window *AXLibCopyWindow(macos_window *Window)
     Result->Owner = Window->Owner;
     Result->Id = Window->Id;
     Result->Name = strdup(Window->Name);
+    Result->Level = Window->Level;
+    Result->Position = Window->Position;
+    Result->Size = Window->Size;
     Result->Flags = Window->Flags;
 
     return Result;
