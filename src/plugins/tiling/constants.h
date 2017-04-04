@@ -33,6 +33,7 @@
 #define CVAR_MOUSE_FOLLOWS_FOCUS    "mouse_follows_focus"
 
 #define CVAR_WINDOW_FLOAT_NEXT      "window_float_next"
+#define CVAR_WINDOW_FLOAT_CENTER    "window_float_center"
 
 /* NOTE(koekeishiya): The following cvars requires extended dock
  * functionality provided by chwm-sa to work. */

@@ -962,12 +962,7 @@ Init(plugin_broadcast *ChunkwmBroadcast)
     CreateCVar(CVAR_MOUSE_FOLLOWS_FOCUS, 1);
 
     CreateCVar(CVAR_WINDOW_FLOAT_NEXT, 0);
-
-    /* NOTE(koekeishiya): The following cvars do nothing for now. */
-
-    CreateCVar("window_float_center", 0);
-
-    /*   ---------------------------------------------------------   */
+    CreateCVar(CVAR_WINDOW_FLOAT_CENTER, 0);
 
     /* NOTE(koekeishiya): The following cvars requires extended dock
      * functionality provided by chwm-sa to work. */

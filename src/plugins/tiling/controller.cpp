@@ -521,12 +521,36 @@ ExtendedDockResetTopmost(macos_window *Window)
     CloseSocket(SockFD);
 }
 
+internal void
+CenterWindow(macos_window *Window)
+{
+    CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromWindowRect(Window->Position, Window->Size);
+    ASSERT(DisplayRef);
+
+    CGRect DisplayFrame = AXLibGetDisplayBounds(DisplayRef);
+
+    AXLibSetWindowPosition(Window->Ref,
+                           DisplayFrame.origin.x + DisplayFrame.size.width / 4,
+                           DisplayFrame.origin.y + DisplayFrame.size.height / 4);
+
+    AXLibSetWindowSize(Window->Ref,
+                       DisplayFrame.size.width / 2,
+                       DisplayFrame.size.height / 2);
+
+    CFRelease(DisplayRef);
+}
+
 void FloatWindow(macos_window *Window)
 {
     AXLibAddFlags(Window, Window_Float);
     if(CVarIntegerValue(CVAR_WINDOW_FLOAT_TOPMOST))
     {
         ExtendedDockSetTopmost(Window);
+    }
+
+    if(CVarIntegerValue(CVAR_WINDOW_FLOAT_CENTER))
+    {
+        CenterWindow(Window);
     }
 }
 
