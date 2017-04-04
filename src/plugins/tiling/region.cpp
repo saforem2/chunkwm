@@ -6,8 +6,11 @@
 #include "../../common/config/cvar.h"
 #include "../../common/misc/assert.h"
 #include "../../common/accessibility/display.h"
+#include "../../common/accessibility/window.h"
 
 #define internal static
+
+extern macos_window *GetWindowByID(uint32_t Id);
 
 #define OSX_MENU_BAR_HEIGHT 20.0f
 internal region
@@ -187,7 +190,16 @@ LowerHorizontalRegion(CFStringRef DisplayRef, node *Node)
 void CreateNodeRegion(node *Node, region_type Type)
 {
     ASSERT(Type >= Region_Full && Type <= Region_Lower);
-    CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromWindow(Node->WindowId);
+
+    // NOTE(koekeishiya): This private API appears to be inconsistent
+    // as it does not return a value for all windows. Fails for 'mpv.app'
+    // and probably others.
+    // CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromWindow(Node->WindowId);
+
+    macos_window *Window = GetWindowByID(Node->WindowId);
+    ASSERT(Window);
+
+    CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromWindowRect(Window->Position, Window->Size);
     ASSERT(DisplayRef);
 
     switch(Type)
