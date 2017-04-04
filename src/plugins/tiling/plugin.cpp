@@ -360,12 +360,15 @@ void UntileWindow(macos_window *Window)
         return;
     }
 
-    macos_space *Space;
-    bool Success = AXLibActiveSpace(&Space);
-    ASSERT(Success);
+    CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromWindowRect(Window->Position, Window->Size);
+    ASSERT(DisplayRef);
+
+    macos_space *Space = AXLibActiveSpace(DisplayRef);
+    ASSERT(Space);
 
     UntileWindowFromSpace(Window, Space);
 
+    CFRelease(DisplayRef);
     AXLibDestroySpace(Space);
 }
 
@@ -830,6 +833,27 @@ void WindowFocusedHandler(void *Data)
     }
 }
 
+void WindowMovedHandler(void *Data)
+{
+    macos_window *Window = (macos_window *) Data;
+
+    macos_window *Copy = GetWindowByID(Window->Id);
+    ASSERT(Copy);
+
+    Copy->Position = Window->Position;
+}
+
+void WindowResizedHandler(void *Data)
+{
+    macos_window *Window = (macos_window *) Data;
+
+    macos_window *Copy = GetWindowByID(Window->Id);
+    ASSERT(Copy);
+
+    Copy->Position = Window->Position;
+    Copy->Size = Window->Size;
+}
+
 /*
  * NOTE(koekeishiya):
  * parameter: const char *Node
@@ -886,6 +910,16 @@ PLUGIN_MAIN_FUNC(PluginMain)
     else if(StringEquals(Node, "chunkwm_export_window_focused"))
     {
         WindowFocusedHandler(Data);
+        return true;
+    }
+    else if(StringEquals(Node, "chunkwm_export_window_moved"))
+    {
+        WindowMovedHandler(Data);
+        return true;
+    }
+    else if(StringEquals(Node, "chunkwm_export_window_resized"))
+    {
+        WindowResizedHandler(Data);
         return true;
     }
     else if((StringEquals(Node, "chunkwm_export_space_changed")) ||
@@ -1087,6 +1121,9 @@ chunkwm_plugin_export Subscriptions[] =
     chunkwm_export_window_minimized,
     chunkwm_export_window_deminimized,
     chunkwm_export_window_focused,
+
+    chunkwm_export_window_moved,
+    chunkwm_export_window_resized,
 
     chunkwm_export_space_changed,
     chunkwm_export_display_changed,
