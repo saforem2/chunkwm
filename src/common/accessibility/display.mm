@@ -179,8 +179,6 @@ CFStringRef AXLibGetDisplayIdentifierFromWindowRect(CGPoint Position, CGSize Siz
     CGGetActiveDisplayList(MAX_DISPLAY_COUNT, CGDisplayList, &Count);
 
     CGRect WindowFrame = { Position, Size };
-    printf("Window Frame: %f,%f    %f,%f\n", Position.x, Position.y, Size.width, Size.height);
-
     CGFloat HighestVolume = 0;
     CGDirectDisplayID BestResult = 0;
 
@@ -190,13 +188,8 @@ CFStringRef AXLibGetDisplayIdentifierFromWindowRect(CGPoint Position, CGSize Siz
     {
         CGDirectDisplayID DisplayId = CGDisplayList[Index];
         CGRect DisplayFrame = CGDisplayBounds(DisplayId);
-        printf("%d: Display Frame: %f,%f    %f,%f\n", DisplayId, DisplayFrame.origin.x, DisplayFrame.origin.y, DisplayFrame.size.width, DisplayFrame.size.height);
-
         CGRect Intersection = CGRectIntersection(WindowFrame, DisplayFrame);
-        printf("Intersection: %f,%f    %f,%f\n", Intersection.origin.x, Intersection.origin.y, Intersection.size.width, Intersection.size.height);
-
         CGFloat Volume = Intersection.size.width * Intersection.size.height;
-        printf("Volume %f\n", Volume);
 
         if(Volume > HighestVolume)
         {
