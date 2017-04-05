@@ -549,8 +549,12 @@ void FloatWindow(macos_window *Window)
     }
 
     if(CVarIntegerValue(CVAR_WINDOW_FLOAT_CENTER) &&
-      (Window->Level != WINDOW_LEVEL_CONTEXT_MENU))
+      (Window->Level != Window_Level_ContextMenu) &&
+      (Window->Level != Window_Level_ToolTipWindow))
     {
+#ifdef CHUNKWM_DEBUG
+        printf("FloatWindow -> CenterWindow -> window level '%d'\n", Window->Level);
+#endif
         CenterWindow(Window);
     }
 }
