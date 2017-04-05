@@ -550,6 +550,7 @@ void FloatWindow(macos_window *Window)
 
     if(CVarIntegerValue(CVAR_WINDOW_FLOAT_CENTER) &&
       (Window->Level != Window_Level_ContextMenu) &&
+      (Window->Level != Window_Level_Notification) &&
       (Window->Level != Window_Level_ToolTipWindow))
     {
 #ifdef CHUNKWM_DEBUG

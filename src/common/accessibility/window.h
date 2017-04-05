@@ -10,6 +10,9 @@ enum macos_window_level
 
     // NOTE(koekeishiya): Used by Blizzard Battle.net for tooltip windows, probably other applications as well.
     Window_Level_ToolTipWindow = 1000,
+
+    // NOTE(koekeishiya): Used by Blizzard Battle.net for notifications, probably other applications as well.
+    Window_Level_Notification = 8,
 };
 
 enum macos_window_flags
