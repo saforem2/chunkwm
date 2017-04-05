@@ -3,7 +3,14 @@
 
 #include <Carbon/Carbon.h>
 
-#define WINDOW_LEVEL_CONTEXT_MENU 101
+enum macos_window_level
+{
+    // NOTE(koekeishiya): Used by all (?) context menus (firefox, dock, apple applications).
+    Window_Level_ContextMenu = 101,
+
+    // NOTE(koekeishiya): Used by Blizzard Battle.net for tooltip windows, probably other applications as well.
+    Window_Level_ToolTipWindow = 1000,
+}
 
 enum macos_window_flags
 {
