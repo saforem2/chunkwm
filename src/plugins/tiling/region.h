@@ -28,6 +28,8 @@ struct region_offset
 
 struct node;
 
+void ConstrainRegion(region *Region);
+
 void CreateNodeRegion(node *Node, region_type Type);
 void CreateNodeRegionRecursive(node *Node, bool Optimal);
 

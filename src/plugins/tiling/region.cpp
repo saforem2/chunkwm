@@ -13,6 +13,45 @@
 extern macos_window *GetWindowByID(uint32_t Id);
 
 #define OSX_MENU_BAR_HEIGHT 20.0f
+void ConstrainRegion(region *Region)
+{
+    // NOTE(koekeishiya): Automatically adjust padding to account for osx menubar status.
+    if(!AXLibIsMenuBarAutoHideEnabled())
+    {
+        Region->Y += OSX_MENU_BAR_HEIGHT;
+        Region->Height -= OSX_MENU_BAR_HEIGHT;
+    }
+
+    /* TODO(koekeishiya): is the Dock only ever visible on the primary display when autohide is disabled ?
+     * We need to figure out if the display that we are creating our region for should apply
+     * padding for the Dock or not. Right now it is applied to all displays !
+     *
+     * Revisit when doing multi-monitor support !!! */
+    if(!AXLibIsDockAutoHideEnabled())
+    {
+        macos_dock_orientation Orientation = AXLibGetDockOrientation();
+        size_t TileSize = AXLibGetDockTileSize() + 16;
+
+        switch(Orientation)
+        {
+            case Dock_Orientation_Left:
+            {
+                Region->X += TileSize;
+                Region->Width -= TileSize;
+            } break;
+            case Dock_Orientation_Right:
+            {
+                Region->Width -= TileSize;
+            } break;
+            case Dock_Orientation_Bottom:
+            {
+                Region->Height -= TileSize;
+            } break;
+        }
+    }
+
+}
+
 internal region
 FullscreenRegion(CFStringRef DisplayRef)
 {
@@ -38,40 +77,7 @@ FullscreenRegion(CFStringRef DisplayRef)
         Result.Height -= (Offset->Top + Offset->Bottom);
     }
 
-    // NOTE(koekeishiya): Automatically adjust padding to account for osx menubar status.
-    if(!AXLibIsMenuBarAutoHideEnabled())
-    {
-        Result.Y += OSX_MENU_BAR_HEIGHT;
-        Result.Height -= OSX_MENU_BAR_HEIGHT;
-    }
-
-    /* TODO(koekeishiya): is the Dock only ever visible on the primary display when autohide is disabled ?
-     * We need to figure out if the display that we are creating our region for should apply
-     * padding for the Dock or not. Right now it is applied to all displays !
-     *
-     * Revisit when doing multi-monitor support !!! */
-    if(!AXLibIsDockAutoHideEnabled())
-    {
-        macos_dock_orientation Orientation = AXLibGetDockOrientation();
-        size_t TileSize = AXLibGetDockTileSize() + 16;
-
-        switch(Orientation)
-        {
-            case Dock_Orientation_Left:
-            {
-                Result.X += TileSize;
-                Result.Width -= TileSize;
-            } break;
-            case Dock_Orientation_Right:
-            {
-                Result.Width -= TileSize;
-            } break;
-            case Dock_Orientation_Bottom:
-            {
-                Result.Height -= TileSize;
-            } break;
-        }
-    }
+    ConstrainRegion(&Result);
 
     AXLibDestroySpace(Space);
     return Result;

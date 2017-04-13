@@ -1279,3 +1279,68 @@ void FocusMonitor(char *Op)
 
     AXLibDestroySpace(Space);
 }
+
+void WarpFloatingWindow(char *Op)
+{
+    macos_window *Window = GetWindowByID(CVarIntegerValue(CVAR_FOCUSED_WINDOW));
+    if(Window)
+    {
+        CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromWindowRect(Window->Position, Window->Size);
+        ASSERT(DisplayRef);
+
+        macos_space *Space = AXLibActiveSpace(DisplayRef);
+        ASSERT(Space);
+
+        virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
+
+        if((AXLibHasFlags(Window, Window_Float)) ||
+           (VirtualSpace->Mode == Virtual_Space_Float))
+        {
+            CGRect DisplayFrame = AXLibGetDisplayBounds(DisplayRef);
+            region Region = { (float) DisplayFrame.origin.x, (float) DisplayFrame.origin.y,
+                              (float) DisplayFrame.size.width, (float) DisplayFrame.size.height,
+                              Region_Full };
+            ConstrainRegion(&Region);
+
+            if(StringEquals(Op, "fullscreen"))
+            {
+                AXLibSetWindowPosition(Window->Ref, Region.X, Region.Y);
+                AXLibSetWindowSize(Window->Ref, Region.Width, Region.Height);
+
+            }
+            else if(StringEquals(Op, "left"))
+            {
+                AXLibSetWindowPosition(Window->Ref, Region.X, Region.Y);
+                AXLibSetWindowSize(Window->Ref, Region.Width / 2, Region.Height);
+            }
+            else if(StringEquals(Op, "right"))
+            {
+                AXLibSetWindowPosition(Window->Ref, Region.X + Region.Width / 2, Region.Y);
+                AXLibSetWindowSize(Window->Ref, Region.Width / 2, Region.Height);
+            }
+            else if(StringEquals(Op, "top-left"))
+            {
+                AXLibSetWindowPosition(Window->Ref, Region.X, Region.Y);
+                AXLibSetWindowSize(Window->Ref, Region.Width / 2, Region.Height / 2);
+            }
+            else if(StringEquals(Op, "top-right"))
+            {
+                AXLibSetWindowPosition(Window->Ref, Region.X + Region.Width / 2, Region.Y);
+                AXLibSetWindowSize(Window->Ref, Region.Width / 2, Region.Height / 2);
+            }
+            else if(StringEquals(Op, "bottom-left"))
+            {
+                AXLibSetWindowPosition(Window->Ref, Region.X, Region.Y + Region.Height / 2);
+                AXLibSetWindowSize(Window->Ref, Region.Width / 2, Region.Height / 2);
+            }
+            else if(StringEquals(Op, "bottom-right"))
+            {
+                AXLibSetWindowPosition(Window->Ref, Region.X + Region.Width / 2, Region.Y + Region.Height / 2);
+                AXLibSetWindowSize(Window->Ref, Region.Width / 2, Region.Height / 2);
+            }
+        }
+
+        AXLibDestroySpace(Space);
+        CFRelease(DisplayRef);
+    }
+}

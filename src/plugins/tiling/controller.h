@@ -4,6 +4,7 @@
 void FocusWindow(char *Direction);
 void SwapWindow(char *Direction);
 void WarpWindow(char *Direction);
+void WarpFloatingWindow(char *Op);
 void ToggleWindow(char *Type);
 void UseInsertionPoint(char *Direction);
 void TemporaryRatio(char *Ratio);

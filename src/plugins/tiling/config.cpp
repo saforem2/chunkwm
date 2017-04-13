@@ -96,6 +96,7 @@ command_func WindowCommandDispatch(char Flag)
         case 'i': return UseInsertionPoint;     break;
         case 't': return ToggleWindow;          break;
         case 'w': return WarpWindow;            break;
+        case 'W': return WarpFloatingWindow;    break;
         case 'r': return TemporaryRatio;        break;
         case 'e': return AdjustWindowRatio;     break;
         case 'd': return SendWindowToDesktop;   break;
@@ -114,7 +115,7 @@ ParseWindowCommand(const char *Message, command *Chain)
 
     int Option;
     bool Success = true;
-    const char *Short = "f:s:i:t:w:r:e:d:m:";
+    const char *Short = "f:s:i:t:w:W:r:e:d:m:";
 
     struct option Long[] =
     {
@@ -123,6 +124,7 @@ ParseWindowCommand(const char *Message, command *Chain)
         { "use-insertion-point", required_argument, NULL, 'i' },
         { "toggle-window", required_argument, NULL, 't' },
         { "warp-window", required_argument, NULL, 'w' },
+        { "warp-floating-window", required_argument, NULL, 'W' },
         { "use-temporary-ratio", required_argument, NULL, 'r' },
         { "adjust-window-edge", required_argument, NULL, 'e' },
         { "send-to-desktop", required_argument, NULL, 'd' },
@@ -221,6 +223,28 @@ ParseWindowCommand(const char *Message, command *Chain)
                 if((StringEquals(optarg, "prev")) ||
                    (StringEquals(optarg, "next")) ||
                    (sscanf(optarg, "%d", &Unsigned) == 1))
+                {
+                    command *Entry = ConstructCommand(Option, optarg);
+                    Command->Next = Entry;
+                    Command = Entry;
+                }
+                else
+                {
+                    fprintf(stderr, "    invalid selector '%s' for window flag '%c'\n", optarg, Option);
+                    Success = false;
+                    FreeCommandChain(Chain);
+                    goto End;
+                }
+            } break;
+            case 'W':
+            {
+                if((StringEquals(optarg, "fullscreen")) ||
+                   (StringEquals(optarg, "left")) ||
+                   (StringEquals(optarg, "right")) ||
+                   (StringEquals(optarg, "top-left")) ||
+                   (StringEquals(optarg, "top-right")) ||
+                   (StringEquals(optarg, "bottom-left")) ||
+                   (StringEquals(optarg, "bottom-right")))
                 {
                     command *Entry = ConstructCommand(Option, optarg);
                     Command->Next = Entry;

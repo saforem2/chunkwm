@@ -19,6 +19,15 @@ shift + cmd - j : chunkc window -w south
 shift + cmd - k : chunkc window -w north
 shift + cmd - l : chunkc window -w east
 
+# move floating windows / windows on a floating space
+shift + alt - up     : chunkc window -W fullscreen
+shift + alt - left   : chunkc window -W left
+shift + alt - right  : chunkc window -W right
+shift + cmd - left   : chunkc window -W top-left
+shift + cmd - right  : chunkc window -W top-right
+shift + ctrl - left  : chunkc window -W bottom-left
+shift + ctrl - right : chunkc window -W bottom-right
+
 # send window to desktop
 shift + alt - z : chunkc window -d prev
 shift + alt - c : chunkc window -d next
