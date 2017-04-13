@@ -12,6 +12,14 @@
 
 extern macos_window *GetWindowByID(uint32_t Id);
 
+region CGRectToRegion(CGRect Rect)
+{
+    region Result = { (float) Rect.origin.x,   (float) Rect.origin.y,
+                      (float) Rect.size.width, (float) Rect.size.height,
+                      Region_Full };
+    return Result;
+}
+
 #define OSX_MENU_BAR_HEIGHT 20.0f
 void ConstrainRegion(region *Region)
 {
@@ -61,13 +69,8 @@ FullscreenRegion(CFStringRef DisplayRef)
     virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
     region_offset *Offset = VirtualSpace->Offset;
 
-    CGRect Display = AXLibGetDisplayBounds(DisplayRef);
-
-    region Result;
-    Result.X = Display.origin.x;
-    Result.Y = Display.origin.y;
-    Result.Width = Display.size.width;
-    Result.Height = Display.size.height;
+    region Result = CGRectToRegion(AXLibGetDisplayBounds(DisplayRef));
+    ConstrainRegion(&Result);
 
     if(Offset)
     {
@@ -76,8 +79,6 @@ FullscreenRegion(CFStringRef DisplayRef)
         Result.Width -= (Offset->Left + Offset->Right);
         Result.Height -= (Offset->Top + Offset->Bottom);
     }
-
-    ConstrainRegion(&Result);
 
     AXLibDestroySpace(Space);
     return Result;

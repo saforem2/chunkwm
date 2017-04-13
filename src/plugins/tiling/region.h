@@ -1,6 +1,8 @@
 #ifndef PLUGIN_REGION_H
 #define PLUGIN_REGION_H
 
+#include <CoreGraphics/CGGeometry.h>
+
 enum region_type
 {
     Region_Full = 0,
@@ -28,6 +30,7 @@ struct region_offset
 
 struct node;
 
+region CGRectToRegion(CGRect Rect);
 void ConstrainRegion(region *Region);
 
 void CreateNodeRegion(node *Node, region_type Type);

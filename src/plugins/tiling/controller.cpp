@@ -1296,17 +1296,13 @@ void WarpFloatingWindow(char *Op)
         if((AXLibHasFlags(Window, Window_Float)) ||
            (VirtualSpace->Mode == Virtual_Space_Float))
         {
-            CGRect DisplayFrame = AXLibGetDisplayBounds(DisplayRef);
-            region Region = { (float) DisplayFrame.origin.x, (float) DisplayFrame.origin.y,
-                              (float) DisplayFrame.size.width, (float) DisplayFrame.size.height,
-                              Region_Full };
+            region Region = CGRectToRegion(AXLibGetDisplayBounds(DisplayRef));
             ConstrainRegion(&Region);
 
             if(StringEquals(Op, "fullscreen"))
             {
                 AXLibSetWindowPosition(Window->Ref, Region.X, Region.Y);
                 AXLibSetWindowSize(Window->Ref, Region.Width, Region.Height);
-
             }
             else if(StringEquals(Op, "left"))
             {
