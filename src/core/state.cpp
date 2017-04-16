@@ -205,8 +205,7 @@ OBSERVER_CALLBACK(ApplicationCallback)
             // double-free situation, thanks Apple..
             // free(WindowId);
 
-            AXLibAddFlags(Window, Window_Invalid);
-            __sync_synchronize();
+            __sync_fetch_and_or(&Window->Flags, Window_Invalid);
 
             ConstructEvent(ChunkWM_WindowDestroyed, Window);
         }
