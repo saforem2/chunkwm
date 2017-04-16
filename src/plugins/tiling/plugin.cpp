@@ -137,7 +137,8 @@ bool IsWindowValid(macos_window *Window)
 {
     bool Result = ((AXLibIsWindowStandard(Window)) &&
                    (AXLibHasFlags(Window, Window_Movable)) &&
-                   (AXLibHasFlags(Window, Window_Resizable)));
+                   (AXLibHasFlags(Window, Window_Resizable)) &&
+                   (!AXLibHasFlags(Window, Window_Invalid)));
     return Result;
 }
 
@@ -771,10 +772,18 @@ void WindowDestroyedHandler(void *Data)
     macos_window *Window = (macos_window *) Data;
 
     macos_window *Copy = RemoveWindowFromCollection(Window);
-    ASSERT(Copy);
-
-    UntileWindow(Copy);
-    AXLibDestroyWindow(Copy);
+    if(Copy)
+    {
+        UntileWindow(Copy);
+        AXLibDestroyWindow(Copy);
+    }
+    else
+    {
+        // NOTE(koekeishiya): Due to unknown reasons, copy returns null for
+        // some windows that we receive a destroyed event for, in particular
+        // this happens a lot with Steam, what the.. ??
+        UntileWindow(Window);
+    }
 }
 
 void WindowMinimizedHandler(void *Data)
@@ -812,9 +821,7 @@ void WindowFocusedHandler(void *Data)
     macos_window *Window = (macos_window *) Data;
 
     macos_window *Copy = GetWindowByID(Window->Id);
-    ASSERT(Copy);
-
-    if(IsWindowValid(Copy))
+    if(Copy && IsWindowValid(Copy))
     {
         UpdateCVar(CVAR_FOCUSED_WINDOW, (int)Copy->Id);
         if(!AXLibHasFlags(Copy, Window_Float))
@@ -838,9 +845,10 @@ void WindowMovedHandler(void *Data)
     macos_window *Window = (macos_window *) Data;
 
     macos_window *Copy = GetWindowByID(Window->Id);
-    ASSERT(Copy);
-
-    Copy->Position = Window->Position;
+    if(Copy)
+    {
+        Copy->Position = Window->Position;
+    }
 }
 
 void WindowResizedHandler(void *Data)
@@ -848,10 +856,11 @@ void WindowResizedHandler(void *Data)
     macos_window *Window = (macos_window *) Data;
 
     macos_window *Copy = GetWindowByID(Window->Id);
-    ASSERT(Copy);
-
-    Copy->Position = Window->Position;
-    Copy->Size = Window->Size;
+    if(Copy)
+    {
+        Copy->Position = Window->Position;
+        Copy->Size = Window->Size;
+    }
 }
 
 /*

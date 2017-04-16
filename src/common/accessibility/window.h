@@ -21,6 +21,7 @@ enum macos_window_flags
     Window_Resizable = (1 << 1),
     Window_Minimized = (1 << 2),
     Window_Float = (1 << 3),
+    Window_Invalid = (1 << 4),
 };
 
 struct macos_application;
@@ -35,7 +36,7 @@ struct macos_window
     uint32_t Id;
     char *Name;
 
-    uint32_t Flags;
+    uint32_t volatile Flags;
     uint32_t Level;
 
     CGPoint Position;

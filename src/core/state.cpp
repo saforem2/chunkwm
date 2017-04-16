@@ -48,10 +48,14 @@ bool AddWindowToCollection(macos_window *Window)
         return false;
     }
 
+    uint32_t *WindowId = (uint32_t *) malloc(sizeof(uint32_t));
+    ASSERT(WindowId);
+
+    *WindowId = Window->Id;
     AXError Success = AXLibAddObserverNotification(&Window->Owner->Observer,
                                                    Window->Ref,
                                                    kAXUIElementDestroyedNotification,
-                                                   Window);
+                                                   WindowId);
     bool Result = (Success == kAXErrorSuccess);
     if(Result)
     {
@@ -66,6 +70,10 @@ bool AddWindowToCollection(macos_window *Window)
         pthread_mutex_lock(&WindowsLock);
         Windows[Window->Id] = Window;
         pthread_mutex_unlock(&WindowsLock);
+    }
+    else
+    {
+        free(WindowId);
     }
 
     return Result;
@@ -118,6 +126,7 @@ AddApplicationWindowsToCollection(macos_application *Application)
 #ifdef CHUNKWM_DEBUG
                     printf("%s:%s is not destructible, ignore!\n", Window->Owner->Name, Window->Name);
 #endif
+                    AXLibRemoveObserverNotification(&Window->Owner->Observer, Window->Ref, kAXUIElementDestroyedNotification);
                     AXLibDestroyWindow(Window);
                 }
             }
@@ -184,8 +193,23 @@ OBSERVER_CALLBACK(ApplicationCallback)
 
         /* NOTE(koekeishiya): Option 'b' has been implemented. Leave note for future reference. */
 
-        macos_window *Window = (macos_window *) Reference;
-        ConstructEvent(ChunkWM_WindowDestroyed, Window);
+        uint32_t *WindowId = (uint32_t *) Reference;
+        macos_window *Window = GetWindowByID(*WindowId);
+        if(Window)
+        {
+            RemoveWindowFromCollection(Window);
+
+            // TODO(koekeishiya): MacOS does not always properly unregister our
+            // notification when we tell it do so. If we then free this pointer
+            // (we should, to avoid memory leaks), we end up in a potential
+            // double-free situation, thanks Apple..
+            // free(WindowId);
+
+            AXLibAddFlags(Window, Window_Invalid);
+            __sync_synchronize();
+
+            ConstructEvent(ChunkWM_WindowDestroyed, Window);
+        }
     }
     else if(CFEqual(Notification, kAXFocusedWindowChangedNotification))
     {

@@ -447,7 +447,6 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_WindowDestroyed)
 #else
     ProcessPluginListThreaded(chunkwm_export_window_destroyed, Window);
 #endif
-    RemoveWindowFromCollection(Window);
     AXLibDestroyWindow(Window);
 }
 
@@ -456,20 +455,29 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_WindowFocused)
     macos_window *Window = (macos_window *) Event->Context;
     ASSERT(Window);
 
-    /* NOTE(koekeishiya): When a window is deminimized, we receive this notification before
-     * the deminimized notification (window is not yet visible). Skip this notification and
-     * post it after a 'ChunkWM_WindowDeminimized' event has been processed. */
-    if(!AXLibHasFlags(Window, Window_Minimized))
+    uint32_t Flags = Window->Flags;
+    bool Result = __sync_bool_compare_and_swap(&Window->Flags, Flags, Flags);
+    if(Result && !AXLibHasFlags(Window, Window_Invalid))
     {
+        /* NOTE(koekeishiya): When a window is deminimized, we receive this notification before
+         * the deminimized notification (window is not yet visible). Skip this notification and
+         * post it after a 'ChunkWM_WindowDeminimized' event has been processed. */
+        if(!AXLibHasFlags(Window, Window_Minimized))
+        {
 #ifdef CHUNKWM_DEBUG
-        printf("%s:%s window focused\n", Window->Owner->Name, Window->Name);
+            printf("%s:%s window focused\n", Window->Owner->Name, Window->Name);
 #endif
 
 #if 0
-        ProcessPluginList(chunkwm_export_window_focused, Window);
+            ProcessPluginList(chunkwm_export_window_focused, Window);
 #else
-        ProcessPluginListThreaded(chunkwm_export_window_focused, Window);
+            ProcessPluginListThreaded(chunkwm_export_window_focused, Window);
 #endif
+        }
+    }
+    else
+    {
+        printf("chunkwm:%s: __sync_bool_compare_and_swap failed\n", __FUNCTION__);
     }
 }
 
@@ -478,17 +486,26 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_WindowMoved)
     macos_window *Window = (macos_window *) Event->Context;
     ASSERT(Window);
 
-    Window->Position = AXLibGetWindowPosition(Window->Ref);
+    uint32_t Flags = Window->Flags;
+    bool Result = __sync_bool_compare_and_swap(&Window->Flags, Flags, Flags);
+    if(Result && !AXLibHasFlags(Window, Window_Invalid))
+    {
+        Window->Position = AXLibGetWindowPosition(Window->Ref);
 
 #ifdef CHUNKWM_DEBUG
-    printf("%s:%s window moved\n", Window->Owner->Name, Window->Name);
+        printf("%s:%s window moved\n", Window->Owner->Name, Window->Name);
 #endif
 
 #if 0
-    ProcessPluginList(chunkwm_export_window_moved, Window);
+        ProcessPluginList(chunkwm_export_window_moved, Window);
 #else
-    ProcessPluginListThreaded(chunkwm_export_window_moved, Window);
+        ProcessPluginListThreaded(chunkwm_export_window_moved, Window);
 #endif
+    }
+    else
+    {
+        printf("chunkwm:%s: __sync_bool_compare_and_swap failed\n", __FUNCTION__);
+    }
 }
 
 CHUNKWM_CALLBACK(Callback_ChunkWM_WindowResized)
@@ -496,18 +513,27 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_WindowResized)
     macos_window *Window = (macos_window *) Event->Context;
     ASSERT(Window);
 
-    Window->Position = AXLibGetWindowPosition(Window->Ref);
-    Window->Size = AXLibGetWindowSize(Window->Ref);
+    uint32_t Flags = Window->Flags;
+    bool Result = __sync_bool_compare_and_swap(&Window->Flags, Flags, Flags);
+    if(Result && !AXLibHasFlags(Window, Window_Invalid))
+    {
+        Window->Position = AXLibGetWindowPosition(Window->Ref);
+        Window->Size = AXLibGetWindowSize(Window->Ref);
 
 #ifdef CHUNKWM_DEBUG
-    printf("%s:%s window resized\n", Window->Owner->Name, Window->Name);
+        printf("%s:%s window resized\n", Window->Owner->Name, Window->Name);
 #endif
 
 #if 0
-    ProcessPluginList(chunkwm_export_window_resized, Window);
+        ProcessPluginList(chunkwm_export_window_resized, Window);
 #else
-    ProcessPluginListThreaded(chunkwm_export_window_resized, Window);
+        ProcessPluginListThreaded(chunkwm_export_window_resized, Window);
 #endif
+    }
+    else
+    {
+        printf("chunkwm:%s: __sync_bool_compare_and_swap failed\n", __FUNCTION__);
+    }
 }
 
 CHUNKWM_CALLBACK(Callback_ChunkWM_WindowMinimized)
@@ -515,16 +541,25 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_WindowMinimized)
     macos_window *Window = (macos_window *) Event->Context;
     ASSERT(Window);
 
+    uint32_t Flags = Window->Flags;
+    bool Result = __sync_bool_compare_and_swap(&Window->Flags, Flags, Flags);
+    if(Result && !AXLibHasFlags(Window, Window_Invalid))
+    {
 #ifdef CHUNKWM_DEBUG
-    printf("%s:%s window minimized\n", Window->Owner->Name, Window->Name);
+        printf("%s:%s window minimized\n", Window->Owner->Name, Window->Name);
 #endif
 
-    AXLibAddFlags(Window, Window_Minimized);
+        AXLibAddFlags(Window, Window_Minimized);
 #if 0
-    ProcessPluginList(chunkwm_export_window_minimized, Window);
+        ProcessPluginList(chunkwm_export_window_minimized, Window);
 #else
-    ProcessPluginListThreaded(chunkwm_export_window_minimized, Window);
+        ProcessPluginListThreaded(chunkwm_export_window_minimized, Window);
 #endif
+    }
+    else
+    {
+        printf("chunkwm:%s: __sync_bool_compare_and_swap failed\n", __FUNCTION__);
+    }
 }
 
 CHUNKWM_CALLBACK(Callback_ChunkWM_WindowDeminimized)
@@ -532,21 +567,30 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_WindowDeminimized)
     macos_window *Window = (macos_window *) Event->Context;
     ASSERT(Window);
 
+    uint32_t Flags = Window->Flags;
+    bool Result = __sync_bool_compare_and_swap(&Window->Flags, Flags, Flags);
+    if(Result && !AXLibHasFlags(Window, Window_Invalid))
+    {
 #ifdef CHUNKWM_DEBUG
-    printf("%s:%s window deminimized\n", Window->Owner->Name, Window->Name);
+        printf("%s:%s window deminimized\n", Window->Owner->Name, Window->Name);
 #endif
 
-    AXLibClearFlags(Window, Window_Minimized);
+        AXLibClearFlags(Window, Window_Minimized);
 #if 0
-    ProcessPluginList(chunkwm_export_window_deminimized, Window);
+        ProcessPluginList(chunkwm_export_window_deminimized, Window);
 #else
-    ProcessPluginListThreaded(chunkwm_export_window_deminimized, Window);
+        ProcessPluginListThreaded(chunkwm_export_window_deminimized, Window);
 #endif
 
-    /* NOTE(koekeishiya): When a window is deminimized, we incorrectly
-     * receive the kAXFocusedWindowChangedNotification first, We discard
-     * that notification and restore it when we have the window to work with. */
-    ConstructEvent(ChunkWM_WindowFocused, Window);
+        /* NOTE(koekeishiya): When a window is deminimized, we incorrectly
+         * receive the kAXFocusedWindowChangedNotification first, We discard
+         * that notification and restore it when we have the window to work with. */
+        ConstructEvent(ChunkWM_WindowFocused, Window);
+    }
+    else
+    {
+        printf("chunkwm:%s: __sync_bool_compare_and_swap failed\n", __FUNCTION__);
+    }
 }
 
 /* NOTE(koekeishiya): If a plugin has stored a pointer to our macos_window structs
@@ -557,9 +601,18 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_WindowTitleChanged)
     macos_window *Window = (macos_window *) Event->Context;
     ASSERT(Window);
 
-    UpdateWindowTitle(Window);
+    uint32_t Flags = Window->Flags;
+    bool Result = __sync_bool_compare_and_swap(&Window->Flags, Flags, Flags);
+    if(Result && !AXLibHasFlags(Window, Window_Invalid))
+    {
+        UpdateWindowTitle(Window);
 
 #ifdef CHUNKWM_DEBUG
-    printf("%s:%s window title changed\n", Window->Owner->Name, Window->Name);
+        printf("%s:%s window title changed\n", Window->Owner->Name, Window->Name);
 #endif
+    }
+    else
+    {
+        printf("chunkwm:%s: __sync_bool_compare_and_swap failed\n", __FUNCTION__);
+    }
 }
