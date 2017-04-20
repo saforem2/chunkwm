@@ -30,11 +30,6 @@ void ConstrainRegion(CFStringRef DisplayRef, region *Region)
         Region->Height -= OSX_MENU_BAR_HEIGHT;
     }
 
-    /* TODO(koekeishiya): is the Dock only ever visible on the primary display when autohide is disabled ?
-     * We need to figure out if the display that we are creating our region for should apply
-     * padding for the Dock or not. Right now it is applied to all displays !
-     *
-     * Revisit when doing multi-monitor support !!! */
     if(!AXLibIsDockAutoHideEnabled())
     {
         macos_dock_orientation Orientation = AXLibGetDockOrientation();
