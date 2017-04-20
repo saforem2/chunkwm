@@ -153,6 +153,68 @@ CFStringRef AXLibGetDisplayIdentifierFromArrangement(unsigned Arrangement)
     return Result;
 }
 
+internal CFStringRef
+AXLibGetDisplayIdentifierForEdgeDisplay(int Side)
+{
+    CFStringRef Result = NULL;
+
+    CGDirectDisplayID *CGDisplayList =
+        (CGDirectDisplayID *) malloc(sizeof(CGDirectDisplayID) * MAX_DISPLAY_COUNT);
+
+    unsigned Count = 0;
+    CGGetActiveDisplayList(MAX_DISPLAY_COUNT, CGDisplayList, &Count);
+
+    CGPoint Position = {};
+    CGDirectDisplayID BestResult = 0;
+
+    for(unsigned Index = 0;
+        Index < Count;
+        ++Index)
+    {
+        CGDirectDisplayID DisplayId = CGDisplayList[Index];
+        CGRect DisplayFrame = CGDisplayBounds(DisplayId);
+
+        if(Side == -1)
+        {
+            if(DisplayFrame.origin.x < Position.x)
+            {
+                Position = DisplayFrame.origin;
+                BestResult = DisplayId;
+            }
+        }
+        else if(Side == 1)
+        {
+            if(DisplayFrame.origin.x > Position.x)
+            {
+                Position = DisplayFrame.origin;
+                BestResult = DisplayId;
+            }
+        }
+    }
+
+    Result = AXLibDisplayIdentifier(BestResult);
+
+    free(CGDisplayList);
+    return Result;
+}
+
+/* NOTE(koekeishiya): Caller is responsible for calling CFRelease. */
+CFStringRef AXLibGetDisplayIdentifierForLeftMostDisplay()
+{
+    return AXLibGetDisplayIdentifierForEdgeDisplay(-1);
+}
+
+/* NOTE(koekeishiya): Caller is responsible for calling CFRelease. */
+CFStringRef AXLibGetDisplayIdentifierForRightMostDisplay()
+{
+    return AXLibGetDisplayIdentifierForEdgeDisplay(1);
+}
+
+/* NOTE(koekeishiya): Caller is responsible for calling CFRelease. */
+CFStringRef AXLibGetDisplayIdentifierForMainDisplay()
+{
+    return AXLibGetDisplayIdentifierFromArrangement(0);
+}
 
 /* NOTE(koekeishiya): Caller is responsible for calling CFRelease.
  * This function appears to always return a valid identifier!

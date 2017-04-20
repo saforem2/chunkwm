@@ -21,7 +21,7 @@ region CGRectToRegion(CGRect Rect)
 }
 
 #define OSX_MENU_BAR_HEIGHT 20.0f
-void ConstrainRegion(region *Region)
+void ConstrainRegion(CFStringRef DisplayRef, region *Region)
 {
     // NOTE(koekeishiya): Automatically adjust padding to account for osx menubar status.
     if(!AXLibIsMenuBarAutoHideEnabled())
@@ -44,16 +44,40 @@ void ConstrainRegion(region *Region)
         {
             case Dock_Orientation_Left:
             {
-                Region->X += TileSize;
-                Region->Width -= TileSize;
+                CFStringRef LeftMostDisplayRef = AXLibGetDisplayIdentifierForLeftMostDisplay();
+                ASSERT(LeftMostDisplayRef);
+
+                if(CFStringCompare(DisplayRef, LeftMostDisplayRef, 0) == kCFCompareEqualTo)
+                {
+                    Region->X += TileSize;
+                    Region->Width -= TileSize;
+                }
+
+                CFRelease(LeftMostDisplayRef);
             } break;
             case Dock_Orientation_Right:
             {
-                Region->Width -= TileSize;
+                CFStringRef RightMostDisplayRef = AXLibGetDisplayIdentifierForRightMostDisplay();
+                ASSERT(RightMostDisplayRef);
+
+                if(CFStringCompare(DisplayRef, RightMostDisplayRef, 0) == kCFCompareEqualTo)
+                {
+                    Region->Width -= TileSize;
+                }
+
+                CFRelease(RightMostDisplayRef);
             } break;
             case Dock_Orientation_Bottom:
             {
-                Region->Height -= TileSize;
+                CFStringRef MainDisplayRef = AXLibGetDisplayIdentifierForMainDisplay();
+                ASSERT(MainDisplayRef);
+
+                if(CFStringCompare(DisplayRef, MainDisplayRef, 0) == kCFCompareEqualTo)
+                {
+                    Region->Height -= TileSize;
+                }
+
+                CFRelease(MainDisplayRef);
             } break;
         }
     }
@@ -70,7 +94,7 @@ FullscreenRegion(CFStringRef DisplayRef)
     region_offset *Offset = VirtualSpace->Offset;
 
     region Result = CGRectToRegion(AXLibGetDisplayBounds(DisplayRef));
-    ConstrainRegion(&Result);
+    ConstrainRegion(DisplayRef, &Result);
 
     if(Offset)
     {

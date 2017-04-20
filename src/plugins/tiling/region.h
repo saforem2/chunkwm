@@ -31,7 +31,7 @@ struct region_offset
 struct node;
 
 region CGRectToRegion(CGRect Rect);
-void ConstrainRegion(region *Region);
+void ConstrainRegion(CFStringRef DisplayRef, region *Region);
 
 void CreateNodeRegion(node *Node, region_type Type);
 void CreateNodeRegionRecursive(node *Node, bool Optimal);

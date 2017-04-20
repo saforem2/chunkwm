@@ -1297,7 +1297,7 @@ void WarpFloatingWindow(char *Op)
            (VirtualSpace->Mode == Virtual_Space_Float))
         {
             region Region = CGRectToRegion(AXLibGetDisplayBounds(DisplayRef));
-            ConstrainRegion(&Region);
+            ConstrainRegion(DisplayRef, &Region);
 
             if(StringEquals(Op, "fullscreen"))
             {
