@@ -16,6 +16,9 @@ void MirrorWindowTree(char *Direction);
 void ActivateSpaceLayout(char *Layout);
 void ToggleSpace(char *Op);
 
+void AdjustSpacePadding(char *Op);
+void AdjustSpaceGap(char *Op);
+
 void SendWindowToDesktop(char *Op);
 void SendWindowToMonitor(char *Op);
 

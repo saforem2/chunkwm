@@ -283,6 +283,8 @@ command_func SpaceCommandDispatch(char Flag)
         case 'l': return ActivateSpaceLayout;    break;
         case 't': return ToggleSpace;            break;
         case 'm': return MirrorWindowTree;       break;
+        case 'p': return AdjustSpacePadding;     break;
+        case 'g': return AdjustSpaceGap;         break;
 
         // NOTE(koekeishiya): silence compiler warning.
         default: return 0; break;
@@ -297,7 +299,7 @@ ParseSpaceCommand(const char *Message, command *Chain)
 
     int Option;
     bool Success = true;
-    const char *Short = "r:l:t:m:";
+    const char *Short = "r:l:t:m:p:g:";
 
     command *Command = Chain;
     while((Option = getopt_long(Count, Args, Short, NULL, NULL)) != -1)
@@ -360,6 +362,24 @@ ParseSpaceCommand(const char *Message, command *Chain)
             {
                 if((StringEquals(optarg, "vertical")) ||
                    (StringEquals(optarg, "horizontal")))
+                {
+                    command *Entry = ConstructCommand(Option, optarg);
+                    Command->Next = Entry;
+                    Command = Entry;
+                }
+                else
+                {
+                    fprintf(stderr, "    invalid selector '%s' for desktop flag '%c'\n", optarg, Option);
+                    Success = false;
+                    FreeCommandChain(Chain);
+                    goto End;
+                }
+            } break;
+            case 'p':
+            case 'g':
+            {
+                if((StringEquals(optarg, "inc")) ||
+                   (StringEquals(optarg, "dec")))
                 {
                     command *Entry = ConstructCommand(Option, optarg);
                     Command->Next = Entry;
@@ -498,7 +518,9 @@ DAEMON_CALLBACK(DaemonCallback)
                 (TokenEquals(Command, CVAR_SPACE_OFFSET_BOTTOM)) ||
                 (TokenEquals(Command, CVAR_SPACE_OFFSET_LEFT)) ||
                 (TokenEquals(Command, CVAR_SPACE_OFFSET_RIGHT)) ||
-                (TokenEquals(Command, CVAR_SPACE_OFFSET_GAP)))
+                (TokenEquals(Command, CVAR_SPACE_OFFSET_GAP)) ||
+                (TokenEquals(Command, CVAR_PADDING_STEP_SIZE)) ||
+                (TokenEquals(Command, CVAR_GAP_STEP_SIZE)))
         {
             char *Variable = TokenToString(Command);
             printf("        command: '%s'\n", Variable);

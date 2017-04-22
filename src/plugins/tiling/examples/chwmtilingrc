@@ -24,6 +24,9 @@ chunkc config 3_desktop_offset_bottom       190
 chunkc config 3_desktop_offset_left         190
 chunkc config 3_desktop_offset_right        190
 
+chunkc config desktop_padding_step_size    10.0
+chunkc config desktop_gap_step_size         5.0
+
 chunkc config bsp_spawn_left                  1
 chunkc config bsp_optimal_ratio           1.618
 chunkc config bsp_split_mode            optimal

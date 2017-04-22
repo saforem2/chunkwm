@@ -958,6 +958,9 @@ Init(plugin_broadcast *ChunkwmBroadcast)
     CreateCVar(CVAR_SPACE_OFFSET_RIGHT, 50.0f);
     CreateCVar(CVAR_SPACE_OFFSET_GAP, 20.0f);
 
+    CreateCVar(CVAR_PADDING_STEP_SIZE, 10.0f);
+    CreateCVar(CVAR_GAP_STEP_SIZE, 5.0f);
+
     CreateCVar(CVAR_FOCUSED_WINDOW, 0);
     CreateCVar(CVAR_BSP_INSERTION_POINT, 0);
 

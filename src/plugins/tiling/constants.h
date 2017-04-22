@@ -17,6 +17,9 @@
 #define CVAR_SPACE_OFFSET_RIGHT     "global_" _CVAR_SPACE_OFFSET_RIGHT
 #define CVAR_SPACE_OFFSET_GAP       "global_" _CVAR_SPACE_OFFSET_GAP
 
+#define CVAR_PADDING_STEP_SIZE      "desktop_padding_step_size"
+#define CVAR_GAP_STEP_SIZE          "desktop_gap_step_size"
+
 #define CVAR_BSP_SPAWN_LEFT         "bsp_spawn_left"
 #define CVAR_BSP_OPTIMAL_RATIO      "bsp_optimal_ratio"
 #define CVAR_BSP_SPLIT_RATIO        "bsp_split_ratio"

@@ -977,6 +977,86 @@ void ToggleSpace(char *Op)
     AXLibDestroySpace(Space);
 }
 
+void AdjustSpacePadding(char *Op)
+{
+    macos_space *Space;
+    bool Success = AXLibActiveSpace(&Space);
+    ASSERT(Success);
+
+    if(Space->Type == kCGSSpaceUser)
+    {
+        virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
+        if(VirtualSpace->Mode != Virtual_Space_Float)
+        {
+            float Delta = CVarFloatingPointValue(CVAR_PADDING_STEP_SIZE);
+            if(StringEquals(Op, "dec"))
+            {
+                Delta = -Delta;
+            }
+
+            float NewTop = VirtualSpace->_Offset.Top + Delta;
+            float NewBottom = VirtualSpace->_Offset.Bottom + Delta;
+            float NewLeft = VirtualSpace->_Offset.Left + Delta;
+            float NewRight = VirtualSpace->_Offset.Right + Delta;
+
+            if((NewTop >= 0) &&
+               (NewBottom >= 0) &&
+               (NewLeft >= 0) &&
+               (NewRight >= 0))
+            {
+                VirtualSpace->_Offset.Top = NewTop;
+                VirtualSpace->_Offset.Bottom = NewBottom;
+                VirtualSpace->_Offset.Left = NewLeft;
+                VirtualSpace->_Offset.Right = NewRight;
+            }
+
+            if(VirtualSpace->Tree)
+            {
+                CreateNodeRegion(VirtualSpace->Tree, Region_Full);
+                CreateNodeRegionRecursive(VirtualSpace->Tree, false);
+                ApplyNodeRegion(VirtualSpace->Tree, VirtualSpace->Mode, false);
+            }
+        }
+    }
+
+    AXLibDestroySpace(Space);
+}
+
+void AdjustSpaceGap(char *Op)
+{
+    macos_space *Space;
+    bool Success = AXLibActiveSpace(&Space);
+    ASSERT(Success);
+
+    if(Space->Type == kCGSSpaceUser)
+    {
+        virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
+        if(VirtualSpace->Mode != Virtual_Space_Float)
+        {
+            float Delta = CVarFloatingPointValue(CVAR_GAP_STEP_SIZE);
+            if(StringEquals(Op, "dec"))
+            {
+                Delta = -Delta;
+            }
+
+            float NewGap = VirtualSpace->_Offset.Gap + Delta;
+            if(NewGap >= 0)
+            {
+                VirtualSpace->_Offset.Gap = NewGap;
+            }
+
+            if(VirtualSpace->Tree)
+            {
+                CreateNodeRegion(VirtualSpace->Tree, Region_Full);
+                CreateNodeRegionRecursive(VirtualSpace->Tree, false);
+                ApplyNodeRegion(VirtualSpace->Tree, VirtualSpace->Mode, false);
+            }
+        }
+    }
+
+    AXLibDestroySpace(Space);
+}
+
 // NOTE(koekeishiya): Used to properly adjust window position when moved between monitors
 internal CGRect
 NormalizeWindowRect(AXUIElementRef WindowRef, CFStringRef SourceMonitor, CFStringRef DestinationMonitor)
