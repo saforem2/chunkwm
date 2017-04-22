@@ -268,6 +268,5 @@ bool BeginPlugins()
         return false;
     }
 
-
     return true;
 }

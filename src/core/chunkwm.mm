@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdarg.h>
 
 #include "dispatch/carbon.h"
 #include "dispatch/workspace.h"
@@ -72,7 +73,8 @@ CheckAccessibilityPrivileges()
     return Result;
 }
 
-int main(int Count, char **Args)
+inline bool
+CheckArguments(int Count, char **Args)
 {
     if(Count == 2)
     {
@@ -83,43 +85,58 @@ int main(int Count, char **Args)
                     CHUNKWM_MAJOR,
                     CHUNKWM_MINOR,
                     CHUNKWM_PATCH);
-            return EXIT_SUCCESS;
+            return true;
         }
+    }
+
+    return false;
+}
+
+inline void
+Fail(const char *Format, ...)
+{
+    va_list Args;
+    va_start(Args, Format);
+    vfprintf(stderr, Format, Args);
+    va_end(Args);
+    exit(EXIT_FAILURE);
+}
+
+inline void
+Warn(const char *Format, ...)
+{
+    va_list Args;
+    va_start(Args, Format);
+    vfprintf(stderr, Format, Args);
+    va_end(Args);
+}
+
+int main(int Count, char **Args)
+{
+    if(CheckArguments(Count, Args))
+    {
+        return EXIT_SUCCESS;
     }
 
     if(!CheckAccessibilityPrivileges())
     {
-        fprintf(stderr, "chunkwm: could not access accessibility features! abort..\n");
-        return EXIT_FAILURE;
-    }
-
-    NSApplicationLoad();
-    AXUIElementSetMessagingTimeout(SystemWideElement(), 1.0);
-
-    carbon_event_handler Carbon = {};
-    if(!BeginCarbonEventHandler(&Carbon))
-    {
-        fprintf(stderr, "chunkwm: failed to install carbon eventhandler! abort..\n");
-        return EXIT_FAILURE;
+        Fail("chunkwm: could not access accessibility features! abort..\n");
     }
 
     if(!BeginCVars())
     {
-        fprintf(stderr, "chunkwm: failed to initialize cvars! abort..\n");
-        return EXIT_FAILURE;
+        Fail("chunkwm: failed to initialize cvars! abort..\n");
     }
 
     if(!StartDaemon(CHUNKWM_PORT, DaemonCallback))
     {
-        fprintf(stderr, "chunkwm: failed to initialize daemon! abort..\n");
-        return EXIT_FAILURE;
+        Fail("chunkwm: failed to initialize daemon! abort..\n");
     }
 
     const char *HomeEnv = getenv("HOME");
     if(!HomeEnv)
     {
-        fprintf(stderr, "chunkwm: 'env HOME' not set! abort..\n");
-        return EXIT_FAILURE;
+        Fail("chunkwm: 'env HOME' not set! abort..\n");
     }
 
     char ConfigFile[MAX_LEN];
@@ -131,41 +148,53 @@ int main(int Count, char **Args)
     struct stat Buffer;
     if(stat(ConfigFile, &Buffer) != 0)
     {
-        fprintf(stderr, "chunkwm: config '%s' not found!\n", ConfigFile);
-        return EXIT_FAILURE;
+        Fail("chunkwm: config '%s' not found!\n", ConfigFile);
     }
 
     if(!BeginPlugins())
     {
-        fprintf(stderr, "chunkwm: failed to initialize critical mutex! abort..\n");
-        return EXIT_FAILURE;
+        Fail("chunkwm: failed to initialize critical mutex! abort..\n");
     }
 
-    if(InitState())
+    NSApplicationLoad();
+    AXUIElementSetMessagingTimeout(SystemWideElement(), 1.0);
+
+    carbon_event_handler Carbon = {};
+    if(!BeginCarbonEventHandler(&Carbon))
     {
-        BeginCallbackThreads(4);
-        BeginSharedWorkspace();
-        BeginDisplayHandler();
-
-        // NOTE(koekeishiya): The config file is just an executable bash script!
-        system(ConfigFile);
-
-        // NOTE(koekeishiya): Read plugin directory from cvar.
-        char *PluginDirectory = CVarStringValue(CVAR_PLUGIN_DIR);
-        if(PluginDirectory && CVarIntegerValue(CVAR_PLUGIN_HOTLOAD))
-        {
-            HotloaderAddPath(PluginDirectory);
-            HotloaderInit();
-        }
-
-        StartEventLoop();
-        CFRunLoopRun();
+        Fail("chunkwm: failed to install carbon eventhandler! abort..\n");
     }
-    else
+
+    if(!InitState())
     {
-        fprintf(stderr, "chunkwm: failed to initialize critical mutex! abort..\n");
-        return EXIT_FAILURE;
+        Fail("chunkwm: failed to initialize critical mutex! abort..\n");
     }
+
+    if(!BeginDisplayHandler())
+    {
+        Warn("chunkwm: could not register for display notifications..\n");
+    }
+
+    if(!BeginCallbackThreads(4))
+    {
+        Warn("chunkwm: could not get semaphore, callback multi-threading disabled..\n");
+    }
+
+    BeginSharedWorkspace();
+
+    // NOTE(koekeishiya): The config file is just an executable bash script!
+    system(ConfigFile);
+
+    // NOTE(koekeishiya): Read plugin directory from cvar.
+    char *PluginDirectory = CVarStringValue(CVAR_PLUGIN_DIR);
+    if(PluginDirectory && CVarIntegerValue(CVAR_PLUGIN_HOTLOAD))
+    {
+        HotloaderAddPath(PluginDirectory);
+        HotloaderInit();
+    }
+
+    StartEventLoop();
+    CFRunLoopRun();
 
     return EXIT_SUCCESS;
 }

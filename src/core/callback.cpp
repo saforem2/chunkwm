@@ -136,14 +136,11 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_PluginBroadcast)
     free(Context);
 }
 
-void BeginCallbackThreads(int Count)
+bool BeginCallbackThreads(int Count)
 {
     if((Queue.Semaphore = sem_open("work_queue_semaphore", O_CREAT, 0644, 0)) == SEM_FAILED)
     {
-        fprintf(stderr,
-                "chunkwm: could not create semaphore for work queue, "
-                "multi-threading disabled!\n");
-        return;
+        return false;
     }
 
     pthread_t Thread[Count];
@@ -153,6 +150,8 @@ void BeginCallbackThreads(int Count)
     {
         pthread_create(&Thread[Count], NULL, &WorkQueueThreadProc, &Queue);
     }
+
+    return true;
 }
 
 internal bool
