@@ -1166,11 +1166,19 @@ void SendWindowToDesktop(char *Op)
                     AXLibSetWindowPosition(Window->Ref, Normalized.origin.x, Normalized.origin.y);
                     AXLibSetWindowSize(Window->Ref, Normalized.size.width, Normalized.size.height);
 
+                    // NOTE(koekeishiya): We need to update our cached window dimensions, as they are
+                    // used when we attempt to tile the window on the new monitor. If we don't update
+                    // these values, we will tile the window on the old monitor. This only happens
+                    // when the window is being created as the root window, using 'Region_Full'.
+                    Window->Position = Normalized.origin;
+                    Window->Size = Normalized.size;
+
                     if(ValidWindow)
                     {
                         macos_space *DestinationMonitorActiveSpace = AXLibActiveSpace(DestinationMonitorRef);
                         if(DestinationMonitorActiveSpace->Id == DestinationSpaceId)
                         {
+
                             TileWindowOnSpace(Window, DestinationMonitorActiveSpace);
                         }
 
@@ -1267,6 +1275,13 @@ void SendWindowToMonitor(char *Op)
                         CGRect Normalized = NormalizeWindowRect(Window->Ref, SourceMonitorRef, DestinationMonitorRef);
                         AXLibSetWindowPosition(Window->Ref, Normalized.origin.x, Normalized.origin.y);
                         AXLibSetWindowSize(Window->Ref, Normalized.size.width, Normalized.size.height);
+
+                        // NOTE(koekeishiya): We need to update our cached window dimensions, as they are
+                        // used when we attempt to tile the window on the new monitor. If we don't update
+                        // these values, we will tile the window on the old monitor. This only happens
+                        // when the window is being created as the root window, using 'Region_Full'.
+                        Window->Position = Normalized.origin;
+                        Window->Size = Normalized.size;
 
                         if(ValidWindow)
                         {
