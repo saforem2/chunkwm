@@ -285,6 +285,7 @@ command_func SpaceCommandDispatch(char Flag)
         case 'm': return MirrorWindowTree;       break;
         case 'p': return AdjustSpacePadding;     break;
         case 'g': return AdjustSpaceGap;         break;
+        case 'e': return EqualizeWindowTree;     break;
 
         // NOTE(koekeishiya): silence compiler warning.
         default: return 0; break;
@@ -299,7 +300,7 @@ ParseSpaceCommand(const char *Message, command *Chain)
 
     int Option;
     bool Success = true;
-    const char *Short = "r:l:t:m:p:g:";
+    const char *Short = "r:l:t:m:p:g:e:";
 
     command *Command = Chain;
     while((Option = getopt_long(Count, Args, Short, NULL, NULL)) != -1)
@@ -380,6 +381,22 @@ ParseSpaceCommand(const char *Message, command *Chain)
             {
                 if((StringEquals(optarg, "inc")) ||
                    (StringEquals(optarg, "dec")))
+                {
+                    command *Entry = ConstructCommand(Option, optarg);
+                    Command->Next = Entry;
+                    Command = Entry;
+                }
+                else
+                {
+                    fprintf(stderr, "    invalid selector '%s' for desktop flag '%c'\n", optarg, Option);
+                    Success = false;
+                    FreeCommandChain(Chain);
+                    goto End;
+                }
+            } break;
+            case 'e':
+            {
+                if(StringEquals(optarg, "root"))
                 {
                     command *Entry = ConstructCommand(Option, optarg);
                     Command->Next = Entry;

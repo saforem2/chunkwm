@@ -1435,3 +1435,26 @@ void WarpFloatingWindow(char *Op)
         CFRelease(DisplayRef);
     }
 }
+
+void EqualizeWindowTree(char *Op)
+{
+    macos_space *Space;
+    bool Success = AXLibActiveSpace(&Space);
+    ASSERT(Success);
+
+    if(Space->Type == kCGSSpaceUser)
+    {
+        virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
+        if(VirtualSpace->Tree && VirtualSpace->Mode == Virtual_Space_Bsp)
+        {
+            if(StringEquals(Op, "root"))
+            {
+                EqualizeNodeTree(VirtualSpace->Tree);
+                ResizeNodeRegion(VirtualSpace->Tree);
+                ApplyNodeRegion(VirtualSpace->Tree, VirtualSpace->Mode);
+            }
+        }
+    }
+
+    AXLibDestroySpace(Space);
+}

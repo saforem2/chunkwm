@@ -315,6 +315,25 @@ node *GetLowestCommonAncestor(node *A, node *B)
     return NULL;
 }
 
+int EqualizeNodeTree(node *Tree)
+{
+    if(IsLeafNode(Tree))
+    {
+        return 1;
+    }
+
+    int LeftLeafs = EqualizeNodeTree(Tree->Left);
+    int RightLeafs = EqualizeNodeTree(Tree->Right);
+    int TotalLeafs = LeftLeafs + RightLeafs;
+
+    if(LeftLeafs && RightLeafs)
+    {
+        Tree->Ratio = (float) LeftLeafs / TotalLeafs;
+    }
+
+    return TotalLeafs;
+}
+
 node *GetNodeWithId(node *Tree, uint32_t WindowId, virtual_space_mode VirtualSpaceMode)
 {
     node *Node = GetFirstLeafNode(Tree);

@@ -32,6 +32,7 @@ node_split OptimalSplitMode(node *Node);
 node *CreateRootNode(uint32_t WindowId);
 void CreateLeafNodePair(node *Parent, uint32_t FirstWindowID, uint32_t SecondWindowID, node_split Split);
 void FreeNodeTree(node *Node, virtual_space_mode VirtualSpaceMode);
+int EqualizeNodeTree(node *Tree);
 
 void ApplyNodeRegion(node *Node, virtual_space_mode VirtualSpaceMode);
 void ApplyNodeRegion(node *Node, virtual_space_mode VirtualSpaceMode, bool Center);
