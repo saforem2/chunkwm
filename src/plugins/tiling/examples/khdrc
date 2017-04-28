@@ -7,6 +7,9 @@ alt - j : chunkc window -f south
 alt - k : chunkc window -f north
 alt - l : chunkc window -f east
 
+# equalize size of windows
+shift + alt - 0 : chunkc desktop -e root
+
 # swap window
 shift + alt - h : chunkc window -s west
 shift + alt - j : chunkc window -s south
