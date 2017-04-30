@@ -8,7 +8,7 @@ Development is happening on and primarily for MacOS Sierra (10.12.3).
 
 Older versions may or may not be compatible and will not be officially supported.
 
-![img](https://cloud.githubusercontent.com/assets/6175959/23313599/acf600e2-fabe-11e6-889f-3b0ff20db510.png)
+![chunkwm_demo](https://cloud.githubusercontent.com/assets/6175959/25564340/93bf2a24-2db1-11e7-80ab-ec84d77f7973.gif)
 
 ## Configuration
 
