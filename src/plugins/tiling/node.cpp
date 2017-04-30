@@ -316,6 +316,7 @@ node *GetLowestCommonAncestor(node *A, node *B)
 }
 
 #define MAX(A, B) ((A) > (B) ? (A) : (B))
+#define MIN(A, B) ((A) < (B) ? (A) : (B))
 equalize_node EqualizeNodeTree(node *Tree)
 {
     if(IsLeafNode(Tree))
@@ -349,7 +350,22 @@ equalize_node EqualizeNodeTree(node *Tree)
     }
     else
     {
-        Tree->Ratio = (float) LeftLeafs.VerticalCount / TotalLeafs.VerticalCount;
+        int Min = MIN(LeftLeafs.HorizontalCount, RightLeafs.HorizontalCount);
+        if(!Min)
+        {
+            ++TotalLeafs.HorizontalCount;
+        }
+
+        int Max = MAX(LeftLeafs.HorizontalCount, RightLeafs.HorizontalCount);
+        float Ratio = (float) Max / TotalLeafs.HorizontalCount;
+        if(Max == LeftLeafs.HorizontalCount)
+        {
+            Tree->Ratio = Ratio;
+        }
+        else
+        {
+            Tree->Ratio = 1 - Ratio;
+        }
     }
 
     return TotalLeafs;
