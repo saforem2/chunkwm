@@ -28,11 +28,22 @@ struct node
     region Region;
 };
 
+struct equalize_node
+{
+    int VerticalCount;
+    int HorizontalCount;
+};
+inline equalize_node operator+(const equalize_node A, const equalize_node B)
+{
+    return { A.VerticalCount + B.VerticalCount,
+             A.HorizontalCount + B.HorizontalCount };
+}
+
 node_split OptimalSplitMode(node *Node);
 node *CreateRootNode(uint32_t WindowId);
 void CreateLeafNodePair(node *Parent, uint32_t FirstWindowID, uint32_t SecondWindowID, node_split Split);
 void FreeNodeTree(node *Node, virtual_space_mode VirtualSpaceMode);
-int EqualizeNodeTree(node *Tree);
+equalize_node EqualizeNodeTree(node *Tree);
 
 void ApplyNodeRegion(node *Node, virtual_space_mode VirtualSpaceMode);
 void ApplyNodeRegion(node *Node, virtual_space_mode VirtualSpaceMode, bool Center);

@@ -315,18 +315,26 @@ node *GetLowestCommonAncestor(node *A, node *B)
     return NULL;
 }
 
-int EqualizeNodeTree(node *Tree)
+equalize_node EqualizeNodeTree(node *Tree)
 {
     if(IsLeafNode(Tree))
     {
-        return 1;
+        return { 1, Tree->Parent->Split == Split_Horizontal };
     }
 
-    int LeftLeafs = EqualizeNodeTree(Tree->Left);
-    int RightLeafs = EqualizeNodeTree(Tree->Right);
-    int TotalLeafs = LeftLeafs + RightLeafs;
+    equalize_node LeftLeafs = EqualizeNodeTree(Tree->Left);
+    equalize_node RightLeafs = EqualizeNodeTree(Tree->Right);
+    equalize_node TotalLeafs = LeftLeafs + RightLeafs;
 
-    Tree->Ratio = (float) LeftLeafs / TotalLeafs;
+    if(Tree->Split == Split_Vertical)
+    {
+        int Sub = ceil((float)TotalLeafs.HorizontalCount / 2);
+        Tree->Ratio = (float) (LeftLeafs.VerticalCount - Sub) / (TotalLeafs.VerticalCount - Sub);
+    }
+    else
+    {
+        Tree->Ratio = (float) LeftLeafs.VerticalCount / TotalLeafs.VerticalCount;
+    }
 
     return TotalLeafs;
 }
