@@ -1447,12 +1447,9 @@ void EqualizeWindowTree(char *Op)
         virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
         if(VirtualSpace->Tree && VirtualSpace->Mode == Virtual_Space_Bsp)
         {
-            if(StringEquals(Op, "root"))
-            {
-                EqualizeNodeTree(VirtualSpace->Tree);
-                ResizeNodeRegion(VirtualSpace->Tree);
-                ApplyNodeRegion(VirtualSpace->Tree, VirtualSpace->Mode);
-            }
+            EqualizeNodeTree(VirtualSpace->Tree);
+            ResizeNodeRegion(VirtualSpace->Tree);
+            ApplyNodeRegion(VirtualSpace->Tree, VirtualSpace->Mode);
         }
     }
 

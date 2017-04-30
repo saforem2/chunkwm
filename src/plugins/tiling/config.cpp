@@ -80,7 +80,7 @@ ConstructCommand(char Flag, char *Arg)
     command *Command = (command *) malloc(sizeof(command));
 
     Command->Flag = Flag;
-    Command->Arg = strdup(Arg);
+    Command->Arg = Arg ? strdup(Arg) : NULL;
     Command->Next = NULL;
 
     return Command;
@@ -119,12 +119,12 @@ ParseWindowCommand(const char *Message, command *Chain)
 
     struct option Long[] =
     {
-        { "focus-window", required_argument, NULL, 'f' },
-        { "swap-window", required_argument, NULL, 's' },
+        { "focus", required_argument, NULL, 'f' },
+        { "swap", required_argument, NULL, 's' },
         { "use-insertion-point", required_argument, NULL, 'i' },
-        { "toggle-window", required_argument, NULL, 't' },
-        { "warp-window", required_argument, NULL, 'w' },
-        { "warp-floating-window", required_argument, NULL, 'W' },
+        { "toggle", required_argument, NULL, 't' },
+        { "warp", required_argument, NULL, 'w' },
+        { "warp-floating", required_argument, NULL, 'W' },
         { "use-temporary-ratio", required_argument, NULL, 'r' },
         { "adjust-window-edge", required_argument, NULL, 'e' },
         { "send-to-desktop", required_argument, NULL, 'd' },
@@ -300,10 +300,22 @@ ParseSpaceCommand(const char *Message, command *Chain)
 
     int Option;
     bool Success = true;
-    const char *Short = "r:l:t:m:p:g:e:";
+    const char *Short = "r:l:t:m:p:g:e";
+
+    struct option Long[] =
+    {
+        { "rotate", required_argument, NULL, 'r' },
+        { "layout", required_argument, NULL, 'l' },
+        { "toggle", required_argument, NULL, 't' },
+        { "mirror", required_argument, NULL, 'm' },
+        { "padding", required_argument, NULL, 'p' },
+        { "gap", required_argument, NULL, 'g' },
+        { "equalize", no_argument, NULL, 'e' },
+        { NULL, 0, NULL, 0 }
+    };
 
     command *Command = Chain;
-    while((Option = getopt_long(Count, Args, Short, NULL, NULL)) != -1)
+    while((Option = getopt_long(Count, Args, Short, Long, NULL)) != -1)
     {
         switch(Option)
         {
@@ -396,19 +408,10 @@ ParseSpaceCommand(const char *Message, command *Chain)
             } break;
             case 'e':
             {
-                if(StringEquals(optarg, "root"))
-                {
-                    command *Entry = ConstructCommand(Option, optarg);
-                    Command->Next = Entry;
-                    Command = Entry;
-                }
-                else
-                {
-                    fprintf(stderr, "    invalid selector '%s' for desktop flag '%c'\n", optarg, Option);
-                    Success = false;
-                    FreeCommandChain(Chain);
-                    goto End;
-                }
+                // NOTE(koekeishiya): This option takes no arguments
+                command *Entry = ConstructCommand(Option, NULL);
+                Command->Next = Entry;
+                Command = Entry;
             } break;
             case '?':
             {
