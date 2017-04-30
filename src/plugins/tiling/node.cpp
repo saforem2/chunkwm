@@ -315,6 +315,7 @@ node *GetLowestCommonAncestor(node *A, node *B)
     return NULL;
 }
 
+#define MAX(A, B) ((A) > (B) ? (A) : (B))
 equalize_node EqualizeNodeTree(node *Tree)
 {
     if(IsLeafNode(Tree))
@@ -328,8 +329,23 @@ equalize_node EqualizeNodeTree(node *Tree)
 
     if(Tree->Split == Split_Vertical)
     {
-        int Sub = ceil((float)TotalLeafs.HorizontalCount / 2);
-        Tree->Ratio = (float) (LeftLeafs.VerticalCount - Sub) / (TotalLeafs.VerticalCount - Sub);
+        int Max = MAX(LeftLeafs.VerticalCount, RightLeafs.VerticalCount);
+
+        int SubTotal = ceil((float)TotalLeafs.HorizontalCount / 2);
+        int TotalLeafsVertical = TotalLeafs.VerticalCount - SubTotal;
+
+        if(Max == LeftLeafs.VerticalCount)
+        {
+            int SubLeft = ceil((float)LeftLeafs.HorizontalCount / 2);
+            float Ratio = (float) (Max - SubLeft) / TotalLeafsVertical;
+            Tree->Ratio = Ratio;
+        }
+        else
+        {
+            int SubRight = ceil((float)RightLeafs.HorizontalCount / 2);
+            float Ratio = (float) (Max - SubRight) / TotalLeafsVertical;
+            Tree->Ratio = 1 - Ratio;
+        }
     }
     else
     {
