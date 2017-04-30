@@ -326,10 +326,7 @@ int EqualizeNodeTree(node *Tree)
     int RightLeafs = EqualizeNodeTree(Tree->Right);
     int TotalLeafs = LeftLeafs + RightLeafs;
 
-    if(LeftLeafs && RightLeafs)
-    {
-        Tree->Ratio = (float) LeftLeafs / TotalLeafs;
-    }
+    Tree->Ratio = (float) LeftLeafs / TotalLeafs;
 
     return TotalLeafs;
 }
