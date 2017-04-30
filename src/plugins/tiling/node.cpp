@@ -321,7 +321,10 @@ equalize_node EqualizeNodeTree(node *Tree)
 {
     if(IsLeafNode(Tree))
     {
-        return { 1, Tree->Parent->Split == Split_Horizontal };
+        return { 1,
+                 Tree->Parent ? Tree->Parent->Split == Split_Horizontal
+                              : 0
+               };
     }
 
     equalize_node LeftLeafs = EqualizeNodeTree(Tree->Left);
