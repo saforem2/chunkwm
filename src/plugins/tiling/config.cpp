@@ -5,6 +5,7 @@
 #include "constants.h"
 #include "misc.h"
 
+#include "../../common/ipc/daemon.h"
 #include "../../common/config/cvar.h"
 #include "../../common/config/tokenize.h"
 #include "../../common/misc/assert.h"
@@ -491,6 +492,447 @@ End:
     FreeArguments(Count, Args);
     return Success;
 }
+
+inline void
+ParseConfigCommand(const char *Message)
+{
+    token Command = GetToken(&Message);
+    if(TokenEquals(Command, CVAR_SPACE_MODE))
+    {
+        char *Variable = TokenToString(Command);
+        printf("        command: '%s'\n", Variable);
+
+        token Value = GetToken(&Message);
+        if(Value.Length > 0)
+        {
+            printf("        value: '%.*s'\n", Value.Length, Value.Text);
+            if(TokenEquals(Value, "bsp"))
+            {
+                UpdateCVar(Variable, Virtual_Space_Bsp);
+            }
+            else if(TokenEquals(Value, "monocle"))
+            {
+                UpdateCVar(Variable, Virtual_Space_Monocle);
+            }
+            else if(TokenEquals(Value, "float"))
+            {
+                UpdateCVar(Variable, Virtual_Space_Float);
+            }
+        }
+        else
+        {
+            fprintf(stderr, "        value: MISSING!!!\n");
+        }
+
+        free(Variable);
+    }
+    else if((TokenEquals(Command, CVAR_SPACE_OFFSET_TOP)) ||
+            (TokenEquals(Command, CVAR_SPACE_OFFSET_BOTTOM)) ||
+            (TokenEquals(Command, CVAR_SPACE_OFFSET_LEFT)) ||
+            (TokenEquals(Command, CVAR_SPACE_OFFSET_RIGHT)) ||
+            (TokenEquals(Command, CVAR_SPACE_OFFSET_GAP)) ||
+            (TokenEquals(Command, CVAR_PADDING_STEP_SIZE)) ||
+            (TokenEquals(Command, CVAR_GAP_STEP_SIZE)))
+    {
+        char *Variable = TokenToString(Command);
+        printf("        command: '%s'\n", Variable);
+
+        token Value = GetToken(&Message);
+        if(Value.Length > 0)
+        {
+            float FloatValue = TokenToFloat(Value);
+            printf("        value: '%f'\n", FloatValue);
+            UpdateCVar(Variable, FloatValue);
+        }
+        else
+        {
+            fprintf(stderr, "        value: MISSING!!!\n");
+        }
+
+        free(Variable);
+    }
+    else if(TokenEquals(Command, CVAR_BSP_SPAWN_LEFT))
+    {
+        char *Variable = TokenToString(Command);
+        printf("        command: '%s'\n", Variable);
+
+        token Value = GetToken(&Message);
+        if(Value.Length > 0)
+        {
+            int IntValue = TokenToInt(Value);
+            printf("        value: '%d'\n", IntValue);
+            UpdateCVar(Variable, IntValue);
+        }
+        else
+        {
+            fprintf(stderr, "        value: MISSING!!!\n");
+        }
+
+        free(Variable);
+    }
+    else if((TokenEquals(Command, CVAR_BSP_OPTIMAL_RATIO)) ||
+            (TokenEquals(Command, CVAR_BSP_SPLIT_RATIO)))
+    {
+        char *Variable = TokenToString(Command);
+        printf("        command: '%s'\n", Variable);
+
+        token Value = GetToken(&Message);
+        if(Value.Length > 0)
+        {
+            float FloatValue = TokenToFloat(Value);
+            printf("        value: '%f'\n", FloatValue);
+            UpdateCVar(Variable, FloatValue);
+        }
+        else
+        {
+            fprintf(stderr, "        value: MISSING!!!\n");
+        }
+
+        free(Variable);
+    }
+    else if(TokenEquals(Command, CVAR_BSP_SPLIT_MODE))
+    {
+        char *Variable = TokenToString(Command);
+        printf("        command: '%s'\n", Variable);
+
+        token Value = GetToken(&Message);
+        if(Value.Length > 0)
+        {
+            printf("        value: '%.*s'\n", Value.Length, Value.Text);
+            if(TokenEquals(Value, "optimal"))
+            {
+                UpdateCVar(Variable, Split_Optimal);
+            }
+            else if(TokenEquals(Value, "vertical"))
+            {
+                UpdateCVar(Variable, Split_Vertical);
+            }
+            else if(TokenEquals(Value, "horizontal"))
+            {
+                UpdateCVar(Variable, Split_Horizontal);
+            }
+        }
+        else
+        {
+            fprintf(stderr, "        value: MISSING!!!\n");
+        }
+
+        free(Variable);
+    }
+    else if((TokenEquals(Command, CVAR_WINDOW_FLOAT_TOPMOST)) ||
+            (TokenEquals(Command, CVAR_WINDOW_FLOAT_NEXT)) ||
+            (TokenEquals(Command, CVAR_WINDOW_FLOAT_CENTER)) ||
+            (TokenEquals(Command, CVAR_MOUSE_FOLLOWS_FOCUS)))
+    {
+        char *Variable = TokenToString(Command);
+        printf("        command: '%s'\n", Variable);
+
+        token Value = GetToken(&Message);
+        if(Value.Length > 0)
+        {
+            int IntValue = TokenToInt(Value);
+            printf("        value: '%d'\n", IntValue);
+            UpdateCVar(Variable, IntValue);
+        }
+        else
+        {
+            fprintf(stderr, "        value: MISSING!!!\n");
+        }
+
+        free(Variable);
+    }
+    else if(TokenEquals(Command, CVAR_WINDOW_FOCUS_CYCLE))
+    {
+        char *Variable = TokenToString(Command);
+        printf("        command: '%s'\n", Variable);
+
+        token Value = GetToken(&Message);
+        if(Value.Length > 0)
+        {
+            char *StringValue = TokenToString(Value);
+            printf("        value: '%s'\n", StringValue);
+            UpdateCVar(Variable, StringValue);
+            free(StringValue);
+        }
+        else
+        {
+            fprintf(stderr, "        value: MISSING!!!\n");
+        }
+
+        free(Variable);
+    }
+    else
+    {
+        // NOTE(koekeishiya): The command we got is not a pre-defined string, but
+        // we do allow custom options used for space-specific settings, etc...
+
+        char *Variable = TokenToString(Command);
+        printf("        command: '%s'\n", Variable);
+
+        char Buffer[BUFFER_SIZE];
+        int First;
+
+        if(sscanf(Variable, "%d_%s", &First, Buffer) == 2)
+        {
+            if((StringEquals(Buffer, _CVAR_SPACE_OFFSET_TOP)) ||
+                    (StringEquals(Buffer, _CVAR_SPACE_OFFSET_BOTTOM)) ||
+                    (StringEquals(Buffer, _CVAR_SPACE_OFFSET_LEFT)) ||
+                    (StringEquals(Buffer, _CVAR_SPACE_OFFSET_RIGHT)) ||
+                    (StringEquals(Buffer, _CVAR_SPACE_OFFSET_GAP)))
+            {
+                token Value = GetToken(&Message);
+                if(Value.Length > 0)
+                {
+                    float FloatValue = TokenToFloat(Value);
+                    printf("        value: '%f'\n", FloatValue);
+                    UpdateCVar(Variable, FloatValue);
+                }
+                else
+                {
+                    fprintf(stderr, "        value: MISSING!!!\n");
+                }
+            }
+            else if(StringEquals(Buffer, _CVAR_SPACE_MODE))
+            {
+                token Value = GetToken(&Message);
+                if(Value.Length > 0)
+                {
+                    printf("        value: '%.*s'\n", Value.Length, Value.Text);
+                    if(TokenEquals(Value, "bsp"))
+                    {
+                        UpdateCVar(Variable, Virtual_Space_Bsp);
+                    }
+                    else if(TokenEquals(Value, "monocle"))
+                    {
+                        UpdateCVar(Variable, Virtual_Space_Monocle);
+                    }
+                    else if(TokenEquals(Value, "float"))
+                    {
+                        UpdateCVar(Variable, Virtual_Space_Float);
+                    }
+                }
+                else
+                {
+                    fprintf(stderr, "        value: MISSING!!!\n");
+                }
+            }
+            else
+            {
+                fprintf(stderr, " tiling daemon: '%s' is not a valid config option!\n", Variable);
+            }
+        }
+        else
+        {
+            fprintf(stderr, " tiling daemon: '%.*s' is not a valid config option!\n", Command.Length, Command.Text);
+        }
+        free(Variable);
+    }
+}
+
+inline void
+FetchAndSendIntegerCVar(char *Variable, int SockFD)
+{
+    char Response[32];
+    Response[0] = '\0';
+
+    int Value = CVarIntegerValue(Variable);
+    snprintf(Response, sizeof(Response), "%d", Value);
+
+    WriteToSocket(Response, SockFD);
+}
+
+inline void
+FetchAndSendFloatingPointCVar(char *Variable, int SockFD)
+{
+    char Response[32];
+    Response[0] = '\0';
+
+    float Value = CVarFloatingPointValue(Variable);
+    snprintf(Response, sizeof(Response), "%f", Value);
+
+    WriteToSocket(Response, SockFD);
+}
+
+inline void
+FetchAndSendStringCVar(char *Variable, int SockFD)
+{
+    char *Value = CVarStringValue(Variable);
+    WriteToSocket(Value, SockFD);
+}
+
+inline void
+ParseQueryCommand(const char *Message, int SockFD)
+{
+    token Command = GetToken(&Message);
+    if(TokenEquals(Command, CVAR_SPACE_MODE))
+    {
+        char *Variable = TokenToString(Command);
+        printf("        command: '%s'\n", Variable);
+
+        char Response[32];
+        Response[0] = '\0';
+
+        int Value = CVarIntegerValue(Variable);
+        switch(Value)
+        {
+            case Virtual_Space_Bsp:
+            {
+                snprintf(Response, sizeof(Response), "%s", "bsp");
+            } break;
+            case Virtual_Space_Monocle:
+            {
+                snprintf(Response, sizeof(Response), "%s", "monocle");
+            } break;
+            case Virtual_Space_Float:
+            {
+                snprintf(Response, sizeof(Response), "%s", "float");
+            } break;
+        }
+
+        WriteToSocket(Response, SockFD);
+        free(Variable);
+    }
+    else if((TokenEquals(Command, CVAR_SPACE_OFFSET_TOP)) ||
+            (TokenEquals(Command, CVAR_SPACE_OFFSET_BOTTOM)) ||
+            (TokenEquals(Command, CVAR_SPACE_OFFSET_LEFT)) ||
+            (TokenEquals(Command, CVAR_SPACE_OFFSET_RIGHT)) ||
+            (TokenEquals(Command, CVAR_SPACE_OFFSET_GAP)) ||
+            (TokenEquals(Command, CVAR_PADDING_STEP_SIZE)) ||
+            (TokenEquals(Command, CVAR_GAP_STEP_SIZE)))
+    {
+        char *Variable = TokenToString(Command);
+        printf("        command: '%s'\n", Variable);
+
+        FetchAndSendFloatingPointCVar(Variable, SockFD);
+
+        free(Variable);
+    }
+    else if(TokenEquals(Command, CVAR_BSP_SPAWN_LEFT))
+    {
+        char *Variable = TokenToString(Command);
+        printf("        command: '%s'\n", Variable);
+
+        FetchAndSendIntegerCVar(Variable, SockFD);
+
+        free(Variable);
+    }
+    else if((TokenEquals(Command, CVAR_BSP_OPTIMAL_RATIO)) ||
+            (TokenEquals(Command, CVAR_BSP_SPLIT_RATIO)))
+    {
+        char *Variable = TokenToString(Command);
+        printf("        command: '%s'\n", Variable);
+
+        FetchAndSendFloatingPointCVar(Variable, SockFD);
+
+        free(Variable);
+    }
+    else if(TokenEquals(Command, CVAR_BSP_SPLIT_MODE))
+    {
+        char *Variable = TokenToString(Command);
+        printf("        command: '%s'\n", Variable);
+
+        char Response[32];
+        Response[0] = '\0';
+
+        int Value = CVarIntegerValue(Variable);
+        switch(Value)
+        {
+            case Split_Optimal:
+            {
+                snprintf(Response, sizeof(Response), "%s", "optimal");
+            } break;
+            case Split_Vertical:
+            {
+                snprintf(Response, sizeof(Response), "%s", "vertical");
+            } break;
+            case Split_Horizontal:
+            {
+                snprintf(Response, sizeof(Response), "%s", "horizontal");
+            } break;
+        }
+
+        WriteToSocket(Response, SockFD);
+        free(Variable);
+    }
+    else if((TokenEquals(Command, CVAR_WINDOW_FLOAT_TOPMOST)) ||
+            (TokenEquals(Command, CVAR_WINDOW_FLOAT_NEXT)) ||
+            (TokenEquals(Command, CVAR_WINDOW_FLOAT_CENTER)) ||
+            (TokenEquals(Command, CVAR_MOUSE_FOLLOWS_FOCUS)))
+    {
+        char *Variable = TokenToString(Command);
+        printf("        command: '%s'\n", Variable);
+
+        FetchAndSendIntegerCVar(Variable, SockFD);
+
+        free(Variable);
+    }
+    else if(TokenEquals(Command, CVAR_WINDOW_FOCUS_CYCLE))
+    {
+        char *Variable = TokenToString(Command);
+        printf("        command: '%s'\n", Variable);
+
+        FetchAndSendStringCVar(Variable, SockFD);
+
+        free(Variable);
+    }
+    else
+    {
+        // NOTE(koekeishiya): The command we got is not a pre-defined string, but
+        // we do allow custom options used for space-specific settings, etc...
+
+        char *Variable = TokenToString(Command);
+        printf("        command: '%s'\n", Variable);
+
+        char Buffer[BUFFER_SIZE];
+        int First;
+
+        if(sscanf(Variable, "%d_%s", &First, Buffer) == 2)
+        {
+            if((StringEquals(Buffer, _CVAR_SPACE_OFFSET_TOP)) ||
+               (StringEquals(Buffer, _CVAR_SPACE_OFFSET_BOTTOM)) ||
+               (StringEquals(Buffer, _CVAR_SPACE_OFFSET_LEFT)) ||
+               (StringEquals(Buffer, _CVAR_SPACE_OFFSET_RIGHT)) ||
+               (StringEquals(Buffer, _CVAR_SPACE_OFFSET_GAP)))
+            {
+                FetchAndSendFloatingPointCVar(Variable, SockFD);
+            }
+            else if(StringEquals(Buffer, _CVAR_SPACE_MODE))
+            {
+                char Response[32];
+                Response[0] = '\0';
+
+                int Value = CVarIntegerValue(Variable);
+                switch(Value)
+                {
+                    case Virtual_Space_Bsp:
+                    {
+                        snprintf(Response, sizeof(Response), "%s", "bsp");
+                    } break;
+                    case Virtual_Space_Monocle:
+                    {
+                        snprintf(Response, sizeof(Response), "%s", "monocle");
+                    } break;
+                    case Virtual_Space_Float:
+                    {
+                        snprintf(Response, sizeof(Response), "%s", "float");
+                    } break;
+                }
+
+                WriteToSocket(Response, SockFD);
+            }
+            else
+            {
+                fprintf(stderr, " tiling daemon: '%s' is not a valid config option!\n", Variable);
+            }
+        }
+        else
+        {
+            fprintf(stderr, " tiling daemon: '%.*s' is not a valid config option!\n", Command.Length, Command.Text);
+        }
+        free(Variable);
+    }
+}
+
 /* NOTE(koekeishiya): Parameters
  *
  * const char *Message
@@ -504,237 +946,11 @@ DAEMON_CALLBACK(DaemonCallback)
 
     if(TokenEquals(Type, "config"))
     {
-        token Command = GetToken(&Message);
-        if(TokenEquals(Command, CVAR_SPACE_MODE))
-        {
-            char *Variable = TokenToString(Command);
-            printf("        command: '%s'\n", Variable);
-
-            token Value = GetToken(&Message);
-            if(Value.Length > 0)
-            {
-                printf("        value: '%.*s'\n", Value.Length, Value.Text);
-                if(TokenEquals(Value, "bsp"))
-                {
-                    UpdateCVar(Variable, Virtual_Space_Bsp);
-                }
-                else if(TokenEquals(Value, "monocle"))
-                {
-                    UpdateCVar(Variable, Virtual_Space_Monocle);
-                }
-                else if(TokenEquals(Value, "float"))
-                {
-                    UpdateCVar(Variable, Virtual_Space_Float);
-                }
-            }
-            else
-            {
-                fprintf(stderr, "        value: MISSING!!!\n");
-            }
-
-            free(Variable);
-        }
-        else if((TokenEquals(Command, CVAR_SPACE_OFFSET_TOP)) ||
-                (TokenEquals(Command, CVAR_SPACE_OFFSET_BOTTOM)) ||
-                (TokenEquals(Command, CVAR_SPACE_OFFSET_LEFT)) ||
-                (TokenEquals(Command, CVAR_SPACE_OFFSET_RIGHT)) ||
-                (TokenEquals(Command, CVAR_SPACE_OFFSET_GAP)) ||
-                (TokenEquals(Command, CVAR_PADDING_STEP_SIZE)) ||
-                (TokenEquals(Command, CVAR_GAP_STEP_SIZE)))
-        {
-            char *Variable = TokenToString(Command);
-            printf("        command: '%s'\n", Variable);
-
-            token Value = GetToken(&Message);
-            if(Value.Length > 0)
-            {
-                float FloatValue = TokenToFloat(Value);
-                printf("        value: '%f'\n", FloatValue);
-                UpdateCVar(Variable, FloatValue);
-            }
-            else
-            {
-                fprintf(stderr, "        value: MISSING!!!\n");
-            }
-
-            free(Variable);
-        }
-        else if(TokenEquals(Command, CVAR_BSP_SPAWN_LEFT))
-        {
-            char *Variable = TokenToString(Command);
-            printf("        command: '%s'\n", Variable);
-
-            token Value = GetToken(&Message);
-            if(Value.Length > 0)
-            {
-                int IntValue = TokenToInt(Value);
-                printf("        value: '%d'\n", IntValue);
-                UpdateCVar(Variable, IntValue);
-            }
-            else
-            {
-                fprintf(stderr, "        value: MISSING!!!\n");
-            }
-
-            free(Variable);
-        }
-        else if((TokenEquals(Command, CVAR_BSP_OPTIMAL_RATIO)) ||
-                (TokenEquals(Command, CVAR_BSP_SPLIT_RATIO)))
-        {
-            char *Variable = TokenToString(Command);
-            printf("        command: '%s'\n", Variable);
-
-            token Value = GetToken(&Message);
-            if(Value.Length > 0)
-            {
-                float FloatValue = TokenToFloat(Value);
-                printf("        value: '%f'\n", FloatValue);
-                UpdateCVar(Variable, FloatValue);
-            }
-            else
-            {
-                fprintf(stderr, "        value: MISSING!!!\n");
-            }
-
-            free(Variable);
-        }
-        else if(TokenEquals(Command, CVAR_BSP_SPLIT_MODE))
-        {
-            char *Variable = TokenToString(Command);
-            printf("        command: '%s'\n", Variable);
-
-            token Value = GetToken(&Message);
-            if(Value.Length > 0)
-            {
-                printf("        value: '%.*s'\n", Value.Length, Value.Text);
-                if(TokenEquals(Value, "optimal"))
-                {
-                    UpdateCVar(Variable, Split_Optimal);
-                }
-                else if(TokenEquals(Value, "vertical"))
-                {
-                    UpdateCVar(Variable, Split_Vertical);
-                }
-                else if(TokenEquals(Value, "horizontal"))
-                {
-                    UpdateCVar(Variable, Split_Horizontal);
-                }
-            }
-            else
-            {
-                fprintf(stderr, "        value: MISSING!!!\n");
-            }
-
-            free(Variable);
-        }
-        else if((TokenEquals(Command, CVAR_WINDOW_FLOAT_TOPMOST)) ||
-                (TokenEquals(Command, CVAR_WINDOW_FLOAT_NEXT)) ||
-                (TokenEquals(Command, CVAR_WINDOW_FLOAT_CENTER)) ||
-                (TokenEquals(Command, CVAR_MOUSE_FOLLOWS_FOCUS)))
-        {
-            char *Variable = TokenToString(Command);
-            printf("        command: '%s'\n", Variable);
-
-            token Value = GetToken(&Message);
-            if(Value.Length > 0)
-            {
-                int IntValue = TokenToInt(Value);
-                printf("        value: '%d'\n", IntValue);
-                UpdateCVar(Variable, IntValue);
-            }
-            else
-            {
-                fprintf(stderr, "        value: MISSING!!!\n");
-            }
-
-            free(Variable);
-        }
-        else if(TokenEquals(Command, CVAR_WINDOW_FOCUS_CYCLE))
-        {
-            char *Variable = TokenToString(Command);
-            printf("        command: '%s'\n", Variable);
-
-            token Value = GetToken(&Message);
-            if(Value.Length > 0)
-            {
-                char *StringValue = TokenToString(Value);
-                printf("        value: '%s'\n", StringValue);
-                UpdateCVar(Variable, StringValue);
-                free(StringValue);
-            }
-            else
-            {
-                fprintf(stderr, "        value: MISSING!!!\n");
-            }
-
-            free(Variable);
-        }
-        else
-        {
-            // NOTE(koekeishiya): The command we got is not a pre-defined string, but
-            // we do allow custom options used for space-specific settings, etc...
-
-            char *Variable = TokenToString(Command);
-            printf("        command: '%s'\n", Variable);
-
-            char Buffer[BUFFER_SIZE];
-            int First;
-
-            if(sscanf(Variable, "%d_%s", &First, Buffer) == 2)
-            {
-                if((StringEquals(Buffer, _CVAR_SPACE_OFFSET_TOP)) ||
-                   (StringEquals(Buffer, _CVAR_SPACE_OFFSET_BOTTOM)) ||
-                   (StringEquals(Buffer, _CVAR_SPACE_OFFSET_LEFT)) ||
-                   (StringEquals(Buffer, _CVAR_SPACE_OFFSET_RIGHT)) ||
-                   (StringEquals(Buffer, _CVAR_SPACE_OFFSET_GAP)))
-                {
-                    token Value = GetToken(&Message);
-                    if(Value.Length > 0)
-                    {
-                        float FloatValue = TokenToFloat(Value);
-                        printf("        value: '%f'\n", FloatValue);
-                        UpdateCVar(Variable, FloatValue);
-                    }
-                    else
-                    {
-                        fprintf(stderr, "        value: MISSING!!!\n");
-                    }
-                }
-                else if(StringEquals(Buffer, _CVAR_SPACE_MODE))
-                {
-                    token Value = GetToken(&Message);
-                    if(Value.Length > 0)
-                    {
-                        printf("        value: '%.*s'\n", Value.Length, Value.Text);
-                        if(TokenEquals(Value, "bsp"))
-                        {
-                            UpdateCVar(Variable, Virtual_Space_Bsp);
-                        }
-                        else if(TokenEquals(Value, "monocle"))
-                        {
-                            UpdateCVar(Variable, Virtual_Space_Monocle);
-                        }
-                        else if(TokenEquals(Value, "float"))
-                        {
-                            UpdateCVar(Variable, Virtual_Space_Float);
-                        }
-                    }
-                    else
-                    {
-                        fprintf(stderr, "        value: MISSING!!!\n");
-                    }
-                }
-                else
-                {
-                    fprintf(stderr, " tiling daemon: '%s' is not a valid config option!\n", Variable);
-                }
-            }
-            else
-            {
-                fprintf(stderr, " tiling daemon: '%.*s' is not a valid config option!\n", Command.Length, Command.Text);
-            }
-            free(Variable);
-        }
+        ParseConfigCommand(Message);
+    }
+    else if(TokenEquals(Type, "query"))
+    {
+        ParseQueryCommand(Message, SockFD);
     }
     else if(TokenEquals(Type, "window"))
     {
