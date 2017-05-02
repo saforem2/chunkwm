@@ -494,15 +494,15 @@ End:
 }
 
 inline void
-ParseConfigCommand(const char *Message)
+ParseConfigCommand(const char **Message)
 {
-    token Command = GetToken(&Message);
+    token Command = GetToken(Message);
     if(TokenEquals(Command, CVAR_SPACE_MODE))
     {
         char *Variable = TokenToString(Command);
         printf("        command: '%s'\n", Variable);
 
-        token Value = GetToken(&Message);
+        token Value = GetToken(Message);
         if(Value.Length > 0)
         {
             printf("        value: '%.*s'\n", Value.Length, Value.Text);
@@ -537,7 +537,7 @@ ParseConfigCommand(const char *Message)
         char *Variable = TokenToString(Command);
         printf("        command: '%s'\n", Variable);
 
-        token Value = GetToken(&Message);
+        token Value = GetToken(Message);
         if(Value.Length > 0)
         {
             float FloatValue = TokenToFloat(Value);
@@ -556,7 +556,7 @@ ParseConfigCommand(const char *Message)
         char *Variable = TokenToString(Command);
         printf("        command: '%s'\n", Variable);
 
-        token Value = GetToken(&Message);
+        token Value = GetToken(Message);
         if(Value.Length > 0)
         {
             int IntValue = TokenToInt(Value);
@@ -576,7 +576,7 @@ ParseConfigCommand(const char *Message)
         char *Variable = TokenToString(Command);
         printf("        command: '%s'\n", Variable);
 
-        token Value = GetToken(&Message);
+        token Value = GetToken(Message);
         if(Value.Length > 0)
         {
             float FloatValue = TokenToFloat(Value);
@@ -595,7 +595,7 @@ ParseConfigCommand(const char *Message)
         char *Variable = TokenToString(Command);
         printf("        command: '%s'\n", Variable);
 
-        token Value = GetToken(&Message);
+        token Value = GetToken(Message);
         if(Value.Length > 0)
         {
             printf("        value: '%.*s'\n", Value.Length, Value.Text);
@@ -627,7 +627,7 @@ ParseConfigCommand(const char *Message)
         char *Variable = TokenToString(Command);
         printf("        command: '%s'\n", Variable);
 
-        token Value = GetToken(&Message);
+        token Value = GetToken(Message);
         if(Value.Length > 0)
         {
             int IntValue = TokenToInt(Value);
@@ -646,7 +646,7 @@ ParseConfigCommand(const char *Message)
         char *Variable = TokenToString(Command);
         printf("        command: '%s'\n", Variable);
 
-        token Value = GetToken(&Message);
+        token Value = GetToken(Message);
         if(Value.Length > 0)
         {
             char *StringValue = TokenToString(Value);
@@ -680,7 +680,7 @@ ParseConfigCommand(const char *Message)
                     (StringEquals(Buffer, _CVAR_SPACE_OFFSET_RIGHT)) ||
                     (StringEquals(Buffer, _CVAR_SPACE_OFFSET_GAP)))
             {
-                token Value = GetToken(&Message);
+                token Value = GetToken(Message);
                 if(Value.Length > 0)
                 {
                     float FloatValue = TokenToFloat(Value);
@@ -694,7 +694,7 @@ ParseConfigCommand(const char *Message)
             }
             else if(StringEquals(Buffer, _CVAR_SPACE_MODE))
             {
-                token Value = GetToken(&Message);
+                token Value = GetToken(Message);
                 if(Value.Length > 0)
                 {
                     printf("        value: '%.*s'\n", Value.Length, Value.Text);
@@ -761,9 +761,9 @@ FetchAndSendStringCVar(char *Variable, int SockFD)
 }
 
 inline void
-ParseQueryCommand(const char *Message, int SockFD)
+ParseQueryCommand(const char **Message, int SockFD)
 {
-    token Command = GetToken(&Message);
+    token Command = GetToken(Message);
     if(TokenEquals(Command, CVAR_SPACE_MODE))
     {
         char *Variable = TokenToString(Command);
@@ -956,11 +956,11 @@ DAEMON_CALLBACK(DaemonCallback)
 
     if(TokenEquals(Type, "config"))
     {
-        ParseConfigCommand(Message);
+        ParseConfigCommand(&Message);
     }
     else if(TokenEquals(Type, "query"))
     {
-        ParseQueryCommand(Message, SockFD);
+        ParseQueryCommand(&Message, SockFD);
     }
     else if(TokenEquals(Type, "window"))
     {
