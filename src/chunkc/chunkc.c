@@ -7,6 +7,7 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <netdb.h>
+#include <fcntl.h>
 #include <unistd.h>
 
 // NOTE(koekeishiya): 4131 is the port used by chwm tiling plugin.
@@ -78,19 +79,32 @@ int main(int Argc, char **Argv)
     {
         fprintf(stderr, "chunkc: failed to send data!\n");
     }
-
-    // TODO(koekeishiya): Take a closer look at this later.
-#if 0
-    char Response[BUFSIZ];
-    int BytesRead;
-
-    while((BytesRead = recv(SockFD, Response, sizeof(Response) - 1, 0)) > 0)
+    else
     {
-        Response[BytesRead] = '\0';
-        printf("%s", Response);
-        fflush(stdout);
+        // NOTE(koekeishiya): Should we read and print a response ??
+        struct timeval TimeVal;
+        fd_set ReadFDs;
+
+        TimeVal.tv_sec = 0;
+        TimeVal.tv_usec = 10000;
+
+        FD_ZERO(&ReadFDs);
+        FD_SET(SockFD, &ReadFDs);
+
+        select(SockFD + 1, &ReadFDs, NULL, NULL, &TimeVal);
+        if(FD_ISSET(SockFD, &ReadFDs))
+        {
+            char Response[BUFSIZ];
+            int BytesRead;
+
+            while((BytesRead = recv(SockFD, Response, sizeof(Response) - 1, 0)) > 0)
+            {
+                Response[BytesRead] = '\0';
+                printf("%s", Response);
+                fflush(stdout);
+            }
+        }
     }
-#endif
 
     shutdown(SockFD, SHUT_RDWR);
     close(SockFD);
