@@ -866,6 +866,16 @@ ParseQueryCommand(const char *Message, int SockFD)
 
         free(Variable);
     }
+    else if((TokenEquals(Command, CVAR_FOCUSED_WINDOW)) ||
+            (TokenEquals(Command, CVAR_BSP_INSERTION_POINT)))
+    {
+        char *Variable = TokenToString(Command);
+        printf("        command: '%s'\n", Variable);
+
+        FetchAndSendIntegerCVar(Variable, SockFD);
+
+        free(Variable);
+    }
     else if(TokenEquals(Command, CVAR_WINDOW_FOCUS_CYCLE))
     {
         char *Variable = TokenToString(Command);

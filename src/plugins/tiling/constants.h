@@ -30,9 +30,6 @@
 #define Window_Focus_Cycle_Monitor  "monitor"
 #define Window_Focus_Cycle_All      "all"
 
-#define CVAR_FOCUSED_WINDOW         "_focused_window"
-#define CVAR_BSP_INSERTION_POINT    "_bsp_insertion_point"
-
 #define CVAR_MOUSE_FOLLOWS_FOCUS    "mouse_follows_focus"
 
 #define CVAR_WINDOW_FLOAT_NEXT      "window_float_next"
@@ -45,5 +42,11 @@
 
 /*   ---------------------------------------------------------   */
 
+/* NOTE(koekeishiya): These cvars are read-only !!               */
+
+#define CVAR_FOCUSED_WINDOW         "_focused_window"
+#define CVAR_BSP_INSERTION_POINT    "_bsp_insertion_point"
+
+/*   ---------------------------------------------------------   */
 
 #endif
