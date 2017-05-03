@@ -43,7 +43,7 @@ shift + alt - 5 : chunkc window --send-to-desktop 5
 shift + alt - 6 : chunkc window --send-to-desktop 6
 
 # send window to desktop and switch desktop
-shift + cmd - f : `id=$(chunkc query _last_active_desktop); chunkc window -d $id; khd -p "cmd + alt - $id" > /dev/null 2>&1`
+shift + cmd - f : `id=$(chunkc query _last_active_desktop); chunkc window -d $id; khd -p "cmd + alt - $id" &> /dev/null`
 shift + cmd - z : chunkc window -d prev; khd -p "cmd + alt - z"
 shift + cmd - c : chunkc window -d next; khd -p "cmd + alt - c"
 shift + cmd - 1 : chunkc window -d 1; khd -p "cmd + alt - 1"
@@ -54,7 +54,7 @@ shift + cmd - 5 : chunkc window -d 5; khd -p "cmd + alt - 5"
 shift + cmd - 6 : chunkc window -d 6; khd -p "cmd + alt - 6"
 
 # switch to last active desktop
-cmd + alt - f   : `id=$(chunkc query _last_active_desktop); khd -p "cmd + alt - $id" > /dev/null 2>&1`
+cmd + alt - f   : `id=$(chunkc query _last_active_desktop); khd -p "cmd + alt - $id" &> /dev/null`
 
 # focus monitor
 ctrl + alt - z  : chunkc monitor -f prev
