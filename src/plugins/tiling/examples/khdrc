@@ -32,6 +32,7 @@ shift + ctrl - left  : chunkc window --warp-floating bottom-left
 shift + ctrl - right : chunkc window --warp-floating bottom-right
 
 # send window to desktop
+shift + alt - f : chunkc window --send-to-desktop $(chunkc query _last_active_desktop)
 shift + alt - z : chunkc window --send-to-desktop prev
 shift + alt - c : chunkc window --send-to-desktop next
 shift + alt - 1 : chunkc window --send-to-desktop 1
@@ -42,6 +43,8 @@ shift + alt - 5 : chunkc window --send-to-desktop 5
 shift + alt - 6 : chunkc window --send-to-desktop 6
 
 # send window to desktop and switch desktop
+shift + cmd - f : ~/.chunkwm_scripts/window_to_last_active_desktop_and_follow.sh
+# this path is a symlink to the script provided in the examples folder
 shift + cmd - z : chunkc window -d prev; khd -p "cmd + alt - z"
 shift + cmd - c : chunkc window -d next; khd -p "cmd + alt - c"
 shift + cmd - 1 : chunkc window -d 1; khd -p "cmd + alt - 1"
