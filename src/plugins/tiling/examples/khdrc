@@ -53,6 +53,9 @@ shift + cmd - 4 : chunkc window -d 4; khd -p "cmd + alt - 4"
 shift + cmd - 5 : chunkc window -d 5; khd -p "cmd + alt - 5"
 shift + cmd - 6 : chunkc window -d 6; khd -p "cmd + alt - 6"
 
+# switch to last active desktop
+cmd + alt - f   : `id=$(chunkc query _last_active_desktop); khd -p "cmd + alt - $id"`
+
 # focus monitor
 ctrl + alt - z  : chunkc monitor -f prev
 ctrl + alt - c  : chunkc monitor -f next
