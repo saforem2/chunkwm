@@ -867,7 +867,9 @@ ParseQueryCommand(const char **Message, int SockFD)
         free(Variable);
     }
     else if((TokenEquals(Command, CVAR_FOCUSED_WINDOW)) ||
-            (TokenEquals(Command, CVAR_BSP_INSERTION_POINT)))
+            (TokenEquals(Command, CVAR_BSP_INSERTION_POINT)) ||
+            (TokenEquals(Command, CVAR_ACTIVE_DESKTOP)) ||
+            (TokenEquals(Command, CVAR_LAST_ACTIVE_DESKTOP)))
     {
         char *Variable = TokenToString(Command);
         printf("        command: '%s'\n", Variable);

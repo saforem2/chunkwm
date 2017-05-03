@@ -47,6 +47,9 @@
 #define CVAR_FOCUSED_WINDOW         "_focused_window"
 #define CVAR_BSP_INSERTION_POINT    "_bsp_insertion_point"
 
+#define CVAR_ACTIVE_DESKTOP         "_active_desktop"
+#define CVAR_LAST_ACTIVE_DESKTOP    "_last_active_desktop"
+
 /*   ---------------------------------------------------------   */
 
 #endif

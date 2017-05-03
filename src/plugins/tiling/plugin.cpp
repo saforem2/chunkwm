@@ -934,6 +934,23 @@ PLUGIN_MAIN_FUNC(PluginMain)
     else if((StringEquals(Node, "chunkwm_export_space_changed")) ||
             (StringEquals(Node, "chunkwm_export_display_changed")))
     {
+        macos_space *Space;
+        bool Success = AXLibActiveSpace(&Space);
+        ASSERT(Success);
+
+        unsigned DesktopId;
+        Success = AXLibCGSSpaceIDToDesktopID(Space->Id, NULL, &DesktopId);
+        ASSERT(Success);
+
+        AXLibDestroySpace(Space);
+
+        int CachedDesktopId = CVarIntegerValue(CVAR_ACTIVE_DESKTOP);
+        if(CachedDesktopId != DesktopId)
+        {
+            UpdateCVar(CVAR_LAST_ACTIVE_DESKTOP, CachedDesktopId);
+            UpdateCVar(CVAR_ACTIVE_DESKTOP, (int)DesktopId);
+        }
+
         UpdateWindowCollection();
         CreateWindowTree();
         RebalanceWindowTree();
@@ -963,6 +980,9 @@ Init(plugin_broadcast *ChunkwmBroadcast)
 
     CreateCVar(CVAR_FOCUSED_WINDOW, 0);
     CreateCVar(CVAR_BSP_INSERTION_POINT, 0);
+
+    CreateCVar(CVAR_ACTIVE_DESKTOP, 0);
+    CreateCVar(CVAR_LAST_ACTIVE_DESKTOP, 0);
 
     CreateCVar(CVAR_BSP_SPAWN_LEFT, 1);
     CreateCVar(CVAR_BSP_OPTIMAL_RATIO, 1.618f);
@@ -1057,6 +1077,19 @@ Init(plugin_broadcast *ChunkwmBroadcast)
             }
         }
     }
+
+    macos_space *Space;
+    bool Success = AXLibActiveSpace(&Space);
+    ASSERT(Success);
+
+    unsigned DesktopId = 1;
+    Success = AXLibCGSSpaceIDToDesktopID(Space->Id, NULL, &DesktopId);
+    ASSERT(Success);
+
+    AXLibDestroySpace(Space);
+
+    UpdateCVar(CVAR_ACTIVE_DESKTOP, (int)DesktopId);
+    UpdateCVar(CVAR_LAST_ACTIVE_DESKTOP, (int)DesktopId);
 
     bool Result = true;
     return Result;
