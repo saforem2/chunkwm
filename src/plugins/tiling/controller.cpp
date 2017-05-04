@@ -465,9 +465,9 @@ void WarpWindow(char *Direction)
                     else
                     {
                         // NOTE(koekeishiya): Modify tree layout.
-                        UntileWindow(Window);
+                        UntileWindowFromSpace(Window, Space, VirtualSpace);
                         UpdateCVar(CVAR_BSP_INSERTION_POINT, (int)ClosestWindow->Id);
-                        TileWindow(Window);
+                        TileWindowOnSpace(Window, Space, VirtualSpace);
                         UpdateCVar(CVAR_BSP_INSERTION_POINT, (int)Window->Id);
 
                         FocusedNode = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
