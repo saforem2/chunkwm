@@ -193,6 +193,7 @@ void CreateNodeRegion(node *Node, region_type Type, macos_space *Space, virtual_
     ASSERT(Type >= Region_Full && Type <= Region_Lower);
 
     CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromSpace(Space->Id);
+    ASSERT(DisplayRef);
 
     switch(Type)
     {
