@@ -5,6 +5,7 @@
 
 #include "../../common/misc/string.h"
 
+#include <pthread.h>
 #include <map>
 
 enum virtual_space_mode
@@ -27,6 +28,8 @@ struct virtual_space
 
     region_offset *Offset;
     node *Tree;
+
+    pthread_mutex_t Lock;
 };
 
 typedef std::map<const char *, virtual_space *, string_comparator> virtual_space_map;
@@ -34,6 +37,9 @@ typedef virtual_space_map::iterator virtual_space_map_it;
 
 struct macos_space;
 virtual_space *AcquireVirtualSpace(macos_space *Space);
-void ReleaseVirtualSpaces();
+void ReleaseVirtualSpace(virtual_space *VirtualSpace);
+
+bool BeginVirtualSpaces();
+void EndVirtualSpaces();
 
 #endif

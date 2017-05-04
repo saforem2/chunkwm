@@ -8,11 +8,13 @@
 #include "../../common/misc/assert.h"
 
 #include <stdlib.h>
+#include <pthread.h>
 
 #define internal static
 #define local_persist static
 
 internal virtual_space_map VirtualSpaces;
+internal pthread_mutex_t VirtualSpacesLock;
 
 internal virtual_space_config
 GetVirtualSpaceConfig(unsigned SpaceIndex)
@@ -52,6 +54,9 @@ CreateAndInitVirtualSpace(macos_space *Space)
     virtual_space *VirtualSpace = (virtual_space *) malloc(sizeof(virtual_space));
     VirtualSpace->Tree = NULL;
 
+    bool Mutex = pthread_mutex_init(&VirtualSpace->Lock, NULL) == 0;
+    ASSERT(Mutex);
+
     // NOTE(koekeishiya): The monitor arrangement is not necessary here.
     // We are able to address spaces using mission-control indexing.
     unsigned DesktopId = 1;
@@ -69,27 +74,40 @@ CreateAndInitVirtualSpace(macos_space *Space)
 // NOTE(koekeishiya): If the requested space does not exist, we create it.
 virtual_space *AcquireVirtualSpace(macos_space *Space)
 {
-    virtual_space *Result;
+    virtual_space *VirtualSpace;
 
     char *SpaceCRef = CopyCFStringToC(Space->Ref);
     ASSERT(SpaceCRef);
 
+    pthread_mutex_lock(&VirtualSpacesLock);
     virtual_space_map_it It = VirtualSpaces.find(SpaceCRef);
     if(It != VirtualSpaces.end())
     {
-        Result = It->second;
+        VirtualSpace = It->second;
         free(SpaceCRef);
     }
     else
     {
-        Result = CreateAndInitVirtualSpace(Space);
-        VirtualSpaces[SpaceCRef] = Result;
+        VirtualSpace = CreateAndInitVirtualSpace(Space);
+        VirtualSpaces[SpaceCRef] = VirtualSpace;
     }
+    pthread_mutex_unlock(&VirtualSpacesLock);
 
-    return Result;
+    pthread_mutex_lock(&VirtualSpace->Lock);
+    return VirtualSpace;
 }
 
-void ReleaseVirtualSpaces()
+void ReleaseVirtualSpace(virtual_space *VirtualSpace)
+{
+    pthread_mutex_unlock(&VirtualSpace->Lock);
+}
+
+bool BeginVirtualSpaces()
+{
+    return pthread_mutex_init(&VirtualSpacesLock, NULL) == 0;
+}
+
+void EndVirtualSpaces()
 {
     for(virtual_space_map_it It = VirtualSpaces.begin();
         It != VirtualSpaces.end();
@@ -102,9 +120,11 @@ void ReleaseVirtualSpaces()
             FreeNodeTree(VirtualSpace->Tree, VirtualSpace->Mode);
         }
 
+        pthread_mutex_destroy(&VirtualSpace->Lock);
         free(VirtualSpace);
         free((char *) It->first);
     }
 
     VirtualSpaces.clear();
+    pthread_mutex_destroy(&VirtualSpacesLock);
 }

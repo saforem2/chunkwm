@@ -24,9 +24,9 @@ extern std::vector<uint32_t> GetAllVisibleWindows();
 extern std::vector<uint32_t> GetAllVisibleWindowsForSpace(macos_space *Space);
 extern void CreateWindowTree();
 extern void TileWindow(macos_window *Window);
-extern void TileWindowOnSpace(macos_window *Window, macos_space *Space);
+extern void TileWindowOnSpace(macos_window *Window, macos_space *Space, virtual_space *VirtualSpace);
 extern void UntileWindow(macos_window *Window);
-extern void UntileWindowFromSpace(macos_window *Window, macos_space *Space);
+extern void UntileWindowFromSpace(macos_window *Window, macos_space *Space, virtual_space *VirtualSpace);
 extern bool IsWindowValid(macos_window *Window);
 
 internal bool
@@ -339,6 +339,7 @@ void FocusWindow(char *Direction)
                 }
             }
         }
+        ReleaseVirtualSpace(VirtualSpace);
     }
 
     AXLibDestroySpace(Space);
@@ -424,6 +425,7 @@ void SwapWindow(char *Direction)
                 }
             }
         }
+        ReleaseVirtualSpace(VirtualSpace);
     }
 
     AXLibDestroySpace(Space);
@@ -482,6 +484,7 @@ void WarpWindow(char *Direction)
                     }
                 }
             }
+            ReleaseVirtualSpace(VirtualSpace);
         }
 
         AXLibDestroySpace(Space);
@@ -633,6 +636,7 @@ void ToggleWindow(char *Type)
                     }
                 }
             }
+            ReleaseVirtualSpace(VirtualSpace);
         }
 
         AXLibDestroySpace(Space);
@@ -678,6 +682,7 @@ void ToggleWindow(char *Type)
                     }
                 }
             }
+            ReleaseVirtualSpace(VirtualSpace);
         }
 
         AXLibDestroySpace(Space);
@@ -706,10 +711,11 @@ void ToggleWindow(char *Type)
                         Node->Parent->Split = Split_Horizontal;
                     }
 
-                    CreateNodeRegionRecursive(Node->Parent, false);
+                    CreateNodeRegionRecursive(Node->Parent, false, Space, VirtualSpace);
                     ApplyNodeRegion(Node->Parent, VirtualSpace->Mode);
                 }
             }
+            ReleaseVirtualSpace(VirtualSpace);
         }
 
         AXLibDestroySpace(Space);
@@ -743,6 +749,7 @@ void UseInsertionPoint(char *Direction)
                     }
                 }
             }
+            ReleaseVirtualSpace(VirtualSpace);
         }
 
         AXLibDestroySpace(Space);
@@ -793,9 +800,10 @@ void RotateWindowTree(char *Degrees)
         if(VirtualSpace->Tree && VirtualSpace->Mode == Virtual_Space_Bsp)
         {
             RotateBSPTree(VirtualSpace->Tree, Degrees);
-            CreateNodeRegionRecursive(VirtualSpace->Tree, false);
+            CreateNodeRegionRecursive(VirtualSpace->Tree, false, Space, VirtualSpace);
             ApplyNodeRegion(VirtualSpace->Tree, VirtualSpace->Mode);
         }
+        ReleaseVirtualSpace(VirtualSpace);
     }
 
     AXLibDestroySpace(Space);
@@ -839,9 +847,10 @@ void MirrorWindowTree(char *Direction)
                 VirtualSpace->Tree = MirrorBSPTree(VirtualSpace->Tree, Split_Horizontal);
             }
 
-            CreateNodeRegionRecursive(VirtualSpace->Tree, false);
+            CreateNodeRegionRecursive(VirtualSpace->Tree, false, Space, VirtualSpace);
             ApplyNodeRegion(VirtualSpace->Tree, VirtualSpace->Mode);
         }
+        ReleaseVirtualSpace(VirtualSpace);
     }
 
     AXLibDestroySpace(Space);
@@ -885,13 +894,14 @@ void AdjustWindowRatio(char *Direction)
                             if(Ratio >= 0.1 && Ratio <= 0.9)
                             {
                                 Ancestor->Ratio = Ratio;
-                                ResizeNodeRegion(Ancestor);
+                                ResizeNodeRegion(Ancestor, Space, VirtualSpace);
                                 ApplyNodeRegion(Ancestor, VirtualSpace->Mode);
                             }
                         }
                     }
                 }
             }
+            ReleaseVirtualSpace(VirtualSpace);
         }
 
         AXLibDestroySpace(Space);
@@ -937,6 +947,7 @@ void ActivateSpaceLayout(char *Layout)
             VirtualSpace->Mode = NewLayout;
             CreateWindowTree();
         }
+        ReleaseVirtualSpace(VirtualSpace);
     }
 
     AXLibDestroySpace(Space);
@@ -966,12 +977,13 @@ void ToggleSpace(char *Op)
 
                 if(VirtualSpace->Tree)
                 {
-                    CreateNodeRegion(VirtualSpace->Tree, Region_Full);
-                    CreateNodeRegionRecursive(VirtualSpace->Tree, false);
+                    CreateNodeRegion(VirtualSpace->Tree, Region_Full, Space, VirtualSpace);
+                    CreateNodeRegionRecursive(VirtualSpace->Tree, false, Space, VirtualSpace);
                     ApplyNodeRegion(VirtualSpace->Tree, VirtualSpace->Mode, false);
                 }
             }
         }
+        ReleaseVirtualSpace(VirtualSpace);
     }
 
     AXLibDestroySpace(Space);
@@ -1012,11 +1024,12 @@ void AdjustSpacePadding(char *Op)
 
             if(VirtualSpace->Tree)
             {
-                CreateNodeRegion(VirtualSpace->Tree, Region_Full);
-                CreateNodeRegionRecursive(VirtualSpace->Tree, false);
+                CreateNodeRegion(VirtualSpace->Tree, Region_Full, Space, VirtualSpace);
+                CreateNodeRegionRecursive(VirtualSpace->Tree, false, Space, VirtualSpace);
                 ApplyNodeRegion(VirtualSpace->Tree, VirtualSpace->Mode, false);
             }
         }
+        ReleaseVirtualSpace(VirtualSpace);
     }
 
     AXLibDestroySpace(Space);
@@ -1047,11 +1060,12 @@ void AdjustSpaceGap(char *Op)
 
             if(VirtualSpace->Tree)
             {
-                CreateNodeRegion(VirtualSpace->Tree, Region_Full);
-                CreateNodeRegionRecursive(VirtualSpace->Tree, false);
+                CreateNodeRegion(VirtualSpace->Tree, Region_Full, Space, VirtualSpace);
+                CreateNodeRegionRecursive(VirtualSpace->Tree, false, Space, VirtualSpace);
                 ApplyNodeRegion(VirtualSpace->Tree, VirtualSpace->Mode, false);
             }
         }
+        ReleaseVirtualSpace(VirtualSpace);
     }
 
     AXLibDestroySpace(Space);
@@ -1126,7 +1140,9 @@ void SendWindowToDesktop(char *Op)
                 bool ValidWindow = ((!AXLibHasFlags(Window, Window_Float)) && (IsWindowValid(Window)));
                 if(ValidWindow)
                 {
-                    UntileWindowFromSpace(Window, Space);
+                    virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
+                    UntileWindowFromSpace(Window, Space, VirtualSpace);
+                    ReleaseVirtualSpace(VirtualSpace);
                 }
 
                 AXLibSpaceAddWindow(DestinationSpaceId, Window->Id);
@@ -1178,8 +1194,9 @@ void SendWindowToDesktop(char *Op)
                         macos_space *DestinationMonitorActiveSpace = AXLibActiveSpace(DestinationMonitorRef);
                         if(DestinationMonitorActiveSpace->Id == DestinationSpaceId)
                         {
-
-                            TileWindowOnSpace(Window, DestinationMonitorActiveSpace);
+                            virtual_space *DestinationMonitorVirtualSpace = AcquireVirtualSpace(DestinationMonitorActiveSpace);
+                            TileWindowOnSpace(Window, DestinationMonitorActiveSpace, DestinationMonitorVirtualSpace);
+                            ReleaseVirtualSpace(DestinationMonitorVirtualSpace);
                         }
 
                         AXLibDestroySpace(DestinationMonitorActiveSpace);
@@ -1242,7 +1259,9 @@ void SendWindowToMonitor(char *Op)
                         bool ValidWindow = ((!AXLibHasFlags(Window, Window_Float)) && (IsWindowValid(Window)));
                         if(ValidWindow)
                         {
-                            UntileWindowFromSpace(Window, Space);
+                            virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
+                            UntileWindowFromSpace(Window, Space, VirtualSpace);
+                            ReleaseVirtualSpace(VirtualSpace);
                         }
 
                         AXLibSpaceAddWindow(DestinationSpace->Id, Window->Id);
@@ -1285,7 +1304,9 @@ void SendWindowToMonitor(char *Op)
 
                         if(ValidWindow)
                         {
-                            TileWindowOnSpace(Window, DestinationSpace);
+                            virtual_space *DestinationVirtualSpace = AcquireVirtualSpace(DestinationSpace);
+                            TileWindowOnSpace(Window, DestinationSpace, DestinationVirtualSpace);
+                            ReleaseVirtualSpace(DestinationVirtualSpace);
                         }
 
                         CFRelease(SourceMonitorRef);
@@ -1431,6 +1452,7 @@ void WarpFloatingWindow(char *Op)
             }
         }
 
+        ReleaseVirtualSpace(VirtualSpace);
         AXLibDestroySpace(Space);
         CFRelease(DisplayRef);
     }
@@ -1448,9 +1470,10 @@ void EqualizeWindowTree(char *Op)
         if(VirtualSpace->Tree && VirtualSpace->Mode == Virtual_Space_Bsp)
         {
             EqualizeNodeTree(VirtualSpace->Tree);
-            ResizeNodeRegion(VirtualSpace->Tree);
+            ResizeNodeRegion(VirtualSpace->Tree, Space, VirtualSpace);
             ApplyNodeRegion(VirtualSpace->Tree, VirtualSpace->Mode);
         }
+        ReleaseVirtualSpace(VirtualSpace);
     }
 
     AXLibDestroySpace(Space);

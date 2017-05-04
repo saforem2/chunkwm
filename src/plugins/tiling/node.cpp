@@ -22,34 +22,34 @@ node_split OptimalSplitMode(node *Node)
     return NodeRatio >= OptimalRatio ? Split_Vertical : Split_Horizontal;
 }
 
-node *CreateRootNode(uint32_t WindowId)
+node *CreateRootNode(uint32_t WindowId, macos_space *Space, virtual_space *VirtualSpace)
 {
     node *Node = (node *) malloc(sizeof(node));
     memset(Node, 0, sizeof(node));
 
     Node->WindowId = WindowId;
-    CreateNodeRegion(Node, Region_Full);
+    CreateNodeRegion(Node, Region_Full, Space, VirtualSpace);
     Node->Split = OptimalSplitMode(Node);
     Node->Ratio = CVarFloatingPointValue(CVAR_BSP_SPLIT_RATIO);
 
     return Node;
 }
 
-node *CreateLeafNode(node *Parent, uint32_t WindowId, region_type Type)
+node *CreateLeafNode(node *Parent, uint32_t WindowId, region_type Type, macos_space *Space, virtual_space *VirtualSpace)
 {
     node *Node = (node *) malloc(sizeof(node));
     memset(Node, 0, sizeof(node));
 
     Node->Parent = Parent;
     Node->WindowId = WindowId;
-    CreateNodeRegion(Node, Type);
+    CreateNodeRegion(Node, Type, Space, VirtualSpace);
     Node->Split = OptimalSplitMode(Node);
     Node->Ratio = CVarFloatingPointValue(CVAR_BSP_SPLIT_RATIO);
 
     return Node;
 }
 
-void CreateLeafNodePair(node *Parent, uint32_t ExistingWindowId, uint32_t SpawnedWindowId, node_split Split)
+void CreateLeafNodePair(node *Parent, uint32_t ExistingWindowId, uint32_t SpawnedWindowId, node_split Split, macos_space *Space, virtual_space *VirtualSpace)
 {
     Parent->WindowId = 0;
     Parent->Split = Split;
@@ -70,13 +70,13 @@ void CreateLeafNodePair(node *Parent, uint32_t ExistingWindowId, uint32_t Spawne
     ASSERT(Split == Split_Vertical || Split == Split_Horizontal);
     if(Split == Split_Vertical)
     {
-        Parent->Left = CreateLeafNode(Parent, LeftWindowId, Region_Left);
-        Parent->Right = CreateLeafNode(Parent, RightWindowId, Region_Right);
+        Parent->Left = CreateLeafNode(Parent, LeftWindowId, Region_Left, Space, VirtualSpace);
+        Parent->Right = CreateLeafNode(Parent, RightWindowId, Region_Right, Space, VirtualSpace);
     }
     else if(Split == Split_Horizontal)
     {
-        Parent->Left = CreateLeafNode(Parent, LeftWindowId, Region_Upper);
-        Parent->Right = CreateLeafNode(Parent, RightWindowId, Region_Lower);
+        Parent->Left = CreateLeafNode(Parent, LeftWindowId, Region_Upper, Space, VirtualSpace);
+        Parent->Right = CreateLeafNode(Parent, RightWindowId, Region_Lower, Space, VirtualSpace);
     }
 }
 

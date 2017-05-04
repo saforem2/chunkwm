@@ -80,12 +80,8 @@ void ConstrainRegion(CFStringRef DisplayRef, region *Region)
 }
 
 internal region
-FullscreenRegion(CFStringRef DisplayRef)
+FullscreenRegion(CFStringRef DisplayRef, virtual_space *VirtualSpace)
 {
-    macos_space *Space = AXLibActiveSpace(DisplayRef);
-    ASSERT(Space);
-
-    virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
     region_offset *Offset = VirtualSpace->Offset;
 
     region Result = CGRectToRegion(AXLibGetDisplayBounds(DisplayRef));
@@ -99,19 +95,14 @@ FullscreenRegion(CFStringRef DisplayRef)
         Result.Height -= (Offset->Top + Offset->Bottom);
     }
 
-    AXLibDestroySpace(Space);
     return Result;
 }
 
 internal region
-LeftVerticalRegion(CFStringRef DisplayRef, node *Node)
+LeftVerticalRegion(node *Node, virtual_space *VirtualSpace)
 {
     ASSERT(Node);
 
-    macos_space *Space = AXLibActiveSpace(DisplayRef);
-    ASSERT(Space);
-
-    virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
     region_offset *Offset = VirtualSpace->Offset;
     region *Region = &Node->Region;
 
@@ -126,19 +117,14 @@ LeftVerticalRegion(CFStringRef DisplayRef, node *Node)
         Result.Width -= (Offset->Gap / 2);
     }
 
-    AXLibDestroySpace(Space);
     return Result;
 }
 
 internal region
-RightVerticalRegion(CFStringRef DisplayRef, node *Node)
+RightVerticalRegion(node *Node, virtual_space *VirtualSpace)
 {
     ASSERT(Node);
 
-    macos_space *Space = AXLibActiveSpace(DisplayRef);
-    ASSERT(Space);
-
-    virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
     region_offset *Offset = VirtualSpace->Offset;
     region *Region = &Node->Region;
 
@@ -154,19 +140,14 @@ RightVerticalRegion(CFStringRef DisplayRef, node *Node)
         Result.Width -= (Offset->Gap / 2);
     }
 
-    AXLibDestroySpace(Space);
     return Result;
 }
 
 internal region
-UpperHorizontalRegion(CFStringRef DisplayRef, node *Node)
+UpperHorizontalRegion(node *Node, virtual_space *VirtualSpace)
 {
     ASSERT(Node);
 
-    macos_space *Space = AXLibActiveSpace(DisplayRef);
-    ASSERT(Space);
-
-    virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
     region_offset *Offset = VirtualSpace->Offset;
     region *Region = &Node->Region;
 
@@ -181,19 +162,14 @@ UpperHorizontalRegion(CFStringRef DisplayRef, node *Node)
         Result.Height -= (Offset->Gap / 2);
     }
 
-    AXLibDestroySpace(Space);
     return Result;
 }
 
 internal region
-LowerHorizontalRegion(CFStringRef DisplayRef, node *Node)
+LowerHorizontalRegion(node *Node, virtual_space *VirtualSpace)
 {
     ASSERT(Node);
 
-    macos_space *Space = AXLibActiveSpace(DisplayRef);
-    ASSERT(Space);
-
-    virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
     region_offset *Offset = VirtualSpace->Offset;
     region *Region = &Node->Region;
 
@@ -209,46 +185,36 @@ LowerHorizontalRegion(CFStringRef DisplayRef, node *Node)
         Result.Height -= (Offset->Gap / 2);
     }
 
-    AXLibDestroySpace(Space);
     return Result;
 }
 
-void CreateNodeRegion(node *Node, region_type Type)
+void CreateNodeRegion(node *Node, region_type Type, macos_space *Space, virtual_space *VirtualSpace)
 {
     ASSERT(Type >= Region_Full && Type <= Region_Lower);
 
-    // NOTE(koekeishiya): This private API appears to be inconsistent
-    // as it does not return a value for all windows. Fails for 'mpv.app'
-    // and probably others.
-    // CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromWindow(Node->WindowId);
-
-    macos_window *Window = GetWindowByID(Node->WindowId);
-    ASSERT(Window);
-
-    CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromWindowRect(Window->Position, Window->Size);
-    ASSERT(DisplayRef);
+    CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromSpace(Space->Id);
 
     switch(Type)
     {
         case Region_Full:
         {
-            Node->Region = FullscreenRegion(DisplayRef);
+            Node->Region = FullscreenRegion(DisplayRef, VirtualSpace);
         } break;
         case Region_Left:
         {
-            Node->Region = LeftVerticalRegion(DisplayRef, Node->Parent);
+            Node->Region = LeftVerticalRegion(Node->Parent, VirtualSpace);
         } break;
         case Region_Right:
         {
-            Node->Region = RightVerticalRegion(DisplayRef, Node->Parent);
+            Node->Region = RightVerticalRegion(Node->Parent, VirtualSpace);
         } break;
         case Region_Upper:
         {
-            Node->Region = UpperHorizontalRegion(DisplayRef, Node->Parent);
+            Node->Region = UpperHorizontalRegion(Node->Parent, VirtualSpace);
         } break;
         case Region_Lower:
         {
-            Node->Region = LowerHorizontalRegion(DisplayRef, Node->Parent);
+            Node->Region = LowerHorizontalRegion(Node->Parent, VirtualSpace);
         } break;
         default: { /* NOTE(koekeishiya): Invalid region specified. */} break;
     }
@@ -258,47 +224,47 @@ void CreateNodeRegion(node *Node, region_type Type)
 }
 
 internal void
-CreateNodeRegionPair(node *Left, node *Right, node_split Split)
+CreateNodeRegionPair(node *Left, node *Right, node_split Split, macos_space *Space, virtual_space *VirtualSpace)
 {
     ASSERT(Split == Split_Vertical || Split == Split_Horizontal);
     if(Split == Split_Vertical)
     {
-        CreateNodeRegion(Left, Region_Left);
-        CreateNodeRegion(Right, Region_Right);
+        CreateNodeRegion(Left, Region_Left, Space, VirtualSpace);
+        CreateNodeRegion(Right, Region_Right, Space, VirtualSpace);
     }
     else if (Split == Split_Horizontal)
     {
-        CreateNodeRegion(Left, Region_Upper);
-        CreateNodeRegion(Right, Region_Lower);
+        CreateNodeRegion(Left, Region_Upper, Space, VirtualSpace);
+        CreateNodeRegion(Right, Region_Lower, Space, VirtualSpace);
     }
 }
 
-void ResizeNodeRegion(node *Node)
+void ResizeNodeRegion(node *Node, macos_space *Space, virtual_space *VirtualSpace)
 {
     if(Node)
     {
         if(Node->Left)
         {
-            CreateNodeRegion(Node->Left, Node->Left->Region.Type);
-            ResizeNodeRegion(Node->Left);
+            CreateNodeRegion(Node->Left, Node->Left->Region.Type, Space, VirtualSpace);
+            ResizeNodeRegion(Node->Left, Space, VirtualSpace);
         }
 
         if(Node->Right)
         {
-            CreateNodeRegion(Node->Right, Node->Right->Region.Type);
-            ResizeNodeRegion(Node->Right);
+            CreateNodeRegion(Node->Right, Node->Right->Region.Type, Space, VirtualSpace);
+            ResizeNodeRegion(Node->Right, Space, VirtualSpace);
         }
     }
 }
 
-void CreateNodeRegionRecursive(node *Node, bool Optimal)
+void CreateNodeRegionRecursive(node *Node, bool Optimal, macos_space *Space, virtual_space *VirtualSpace)
 {
     if(Node && Node->Left && Node->Right)
     {
         Node->Split = Optimal ? OptimalSplitMode(Node) : Node->Split;
-        CreateNodeRegionPair(Node->Left, Node->Right, Node->Split);
+        CreateNodeRegionPair(Node->Left, Node->Right, Node->Split, Space, VirtualSpace);
 
-        CreateNodeRegionRecursive(Node->Left, Optimal);
-        CreateNodeRegionRecursive(Node->Right, Optimal);
+        CreateNodeRegionRecursive(Node->Left, Optimal, Space, VirtualSpace);
+        CreateNodeRegionRecursive(Node->Right, Optimal, Space, VirtualSpace);
     }
 }

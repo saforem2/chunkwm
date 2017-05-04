@@ -29,13 +29,15 @@ struct region_offset
 };
 
 struct node;
+struct macos_space;
+struct virtual_space;
 
 region CGRectToRegion(CGRect Rect);
 void ConstrainRegion(CFStringRef DisplayRef, region *Region);
 
-void CreateNodeRegion(node *Node, region_type Type);
-void CreateNodeRegionRecursive(node *Node, bool Optimal);
+void CreateNodeRegion(node *Node, region_type Type, macos_space *Space, virtual_space *VirtualSpace);
+void CreateNodeRegionRecursive(node *Node, bool Optimal, macos_space *Space, virtual_space *VirtualSpace);
 
-void ResizeNodeRegion(node *Node);
+void ResizeNodeRegion(node *Node, macos_space *Space, virtual_space *VirtualSpace);
 
 #endif
