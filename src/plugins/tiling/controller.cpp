@@ -935,6 +935,8 @@ void ActivateSpaceLayout(char *Layout)
             return;
         }
 
+        bool LayoutChanged = false;
+
         virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
         if(VirtualSpace->Mode != NewLayout)
         {
@@ -945,9 +947,14 @@ void ActivateSpaceLayout(char *Layout)
             }
 
             VirtualSpace->Mode = NewLayout;
-            CreateWindowTree();
+            LayoutChanged = true;
         }
         ReleaseVirtualSpace(VirtualSpace);
+
+        if(LayoutChanged)
+        {
+            CreateWindowTree();
+        }
     }
 
     AXLibDestroySpace(Space);
