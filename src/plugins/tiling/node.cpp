@@ -315,16 +315,12 @@ node *GetLowestCommonAncestor(node *A, node *B)
     return NULL;
 }
 
-#define MAX(A, B) ((A) > (B) ? (A) : (B))
-#define MIN(A, B) ((A) < (B) ? (A) : (B))
 equalize_node EqualizeNodeTree(node *Tree)
 {
     if(IsLeafNode(Tree))
     {
-        return { 1,
-                 Tree->Parent ? Tree->Parent->Split == Split_Horizontal
-                              : 0
-               };
+        return { Tree->Parent ? Tree->Parent->Split == Split_Vertical   : 0,
+                 Tree->Parent ? Tree->Parent->Split == Split_Horizontal : 0 };
     }
 
     equalize_node LeftLeafs = EqualizeNodeTree(Tree->Left);
@@ -333,81 +329,19 @@ equalize_node EqualizeNodeTree(node *Tree)
 
     if(Tree->Split == Split_Vertical)
     {
-        int Max = MAX(LeftLeafs.VerticalCount, RightLeafs.VerticalCount);
-
-        int SubTotal = ceil((float)TotalLeafs.HorizontalCount / 2);
-        int TotalLeafsVertical = TotalLeafs.VerticalCount - SubTotal;
-
-        if(Max == LeftLeafs.VerticalCount)
-        {
-            if(LeftLeafs.VerticalCount == LeftLeafs.HorizontalCount)
-            {
-                Max = LeftLeafs.VerticalCount = 1;
-                LeftLeafs.HorizontalCount = 0;
-                TotalLeafs = LeftLeafs + RightLeafs;
-                SubTotal = ceil((float)TotalLeafs.HorizontalCount / 2);
-                TotalLeafsVertical = TotalLeafs.VerticalCount - SubTotal;
-            }
-
-            int SubLeft = ceil((float)LeftLeafs.HorizontalCount / 2);
-            float Ratio = (float) (Max - SubLeft) / TotalLeafsVertical;
-            Tree->Ratio = Ratio;
-        }
-        else
-        {
-            if(RightLeafs.VerticalCount == RightLeafs.HorizontalCount)
-            {
-                Max = RightLeafs.VerticalCount = 1;
-                RightLeafs.HorizontalCount = 0;
-                TotalLeafs = LeftLeafs + RightLeafs;
-                SubTotal = ceil((float)TotalLeafs.HorizontalCount / 2);
-                TotalLeafsVertical = TotalLeafs.VerticalCount - SubTotal;
-            }
-
-            int SubRight = ceil((float)RightLeafs.HorizontalCount / 2);
-            float Ratio = (float) (Max - SubRight) / TotalLeafsVertical;
-            Tree->Ratio = 1 - Ratio;
-        }
+        Tree->Ratio = (float) LeftLeafs.VerticalCount / TotalLeafs.VerticalCount;
+        --TotalLeafs.VerticalCount;
     }
-    else
+    else if(Tree->Split == Split_Horizontal)
     {
-        int Min = MIN(LeftLeafs.HorizontalCount, RightLeafs.HorizontalCount);
-        if(!Min)
-        {
-            if(LeftLeafs.HorizontalCount == RightLeafs.HorizontalCount)
-            {
-                ++TotalLeafs.HorizontalCount;
-            }
+        Tree->Ratio = (float) LeftLeafs.HorizontalCount / TotalLeafs.HorizontalCount;
+        --TotalLeafs.HorizontalCount;
+    }
 
-            ++TotalLeafs.HorizontalCount;
-        }
-
-        int Max = MAX(LeftLeafs.HorizontalCount, RightLeafs.HorizontalCount);
-        if(!Max)
-        {
-            if(LeftLeafs.HorizontalCount == RightLeafs.HorizontalCount)
-            {
-                Max = LeftLeafs.HorizontalCount = 1;
-            }
-            else if(Max == LeftLeafs.HorizontalCount)
-            {
-                Max = LeftLeafs.HorizontalCount = 1;
-            }
-            else if(Max == RightLeafs.HorizontalCount)
-            {
-                Max = 1;
-            }
-        }
-
-        float Ratio = (float) Max / TotalLeafs.HorizontalCount;
-        if(Max == LeftLeafs.HorizontalCount)
-        {
-            Tree->Ratio = Ratio;
-        }
-        else
-        {
-            Tree->Ratio = 1 - Ratio;
-        }
+    if(Tree->Parent)
+    {
+        TotalLeafs.VerticalCount += Tree->Parent->Split == Split_Vertical;
+        TotalLeafs.HorizontalCount += Tree->Parent->Split == Split_Horizontal;
     }
 
     return TotalLeafs;
