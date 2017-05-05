@@ -1111,7 +1111,7 @@ NormalizeWindowRect(AXUIElementRef WindowRef, CFStringRef SourceMonitor, CFStrin
 
 void SendWindowToDesktop(char *Op)
 {
-    macos_window *Window = GetWindowByID(CVarIntegerValue(CVAR_BSP_INSERTION_POINT));
+    macos_window *Window = GetWindowByID(CVarIntegerValue(CVAR_FOCUSED_WINDOW));
     if(Window)
     {
         macos_space *Space;
@@ -1227,7 +1227,7 @@ void SendWindowToDesktop(char *Op)
 
 void SendWindowToMonitor(char *Op)
 {
-    macos_window *Window = GetWindowByID(CVarIntegerValue(CVAR_BSP_INSERTION_POINT));
+    macos_window *Window = GetWindowByID(CVarIntegerValue(CVAR_FOCUSED_WINDOW));
     if(Window)
     {
         macos_space *Space;
