@@ -435,7 +435,9 @@ std::vector<uint32_t> GetAllVisibleWindowsForSpace(macos_space *Space)
                 /* NOTE(koekeishiya): The onscreenwindowlist can contain windowids
                  * that we do not care about. Check that the window in question is
                  * in our cache and on the correct monitor. */
-                if((GetWindowByID(WindowId)) &&
+                macos_window *Window = GetWindowByID(WindowId);
+                if((Window) &&
+                   (!AXLibHasFlags(Window, Window_Float)) &&
                    (AXLibSpaceHasWindow(Space->Id, WindowId)))
                 {
                     Windows.push_back(WindowList[Index]);
