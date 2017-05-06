@@ -55,15 +55,12 @@ struct plugin_details
         Plugin->Run = PlMain;                                    \
     }
 
-#define ArrayCount(array) (sizeof(array) / sizeof(*(array)))
-
-#define CHUNKWM_PLUGIN_SUBSCRIBE(SubscriptionArray)              \
+#define CHUNKWM_PLUGIN_SUBSCRIBE(Sub)                            \
     void InitPluginSubscriptions(plugin *Plugin)                 \
     {                                                            \
-        int Count = ArrayCount(SubscriptionArray);               \
-        Plugin->SubscriptionCount = Count;                       \
-        Plugin->Subscriptions = SubscriptionArray;               \
-     }
+        Plugin->SubscriptionCount = sizeof(Sub) / sizeof(*Sub);  \
+        Plugin->Subscriptions = Sub;                             \
+    }
 
 #define CHUNKWM_PLUGIN(PluginName, PluginVersion)                \
       CHUNKWM_EXTERN                                             \

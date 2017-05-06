@@ -5,9 +5,8 @@
 #include <pthread.h>
 
 #define internal static
-#ifndef ArrayCount
+
 #define ArrayCount(Array) (sizeof(Array) / sizeof(*(Array)))
-#endif
 
 internal bool
 DoNextWorkQueueEntry(work_queue *Queue)

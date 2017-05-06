@@ -26,18 +26,7 @@ BeginWorkspaceApplicationDetails(NSNotification *Notification)
     const char *Name = [[[Notification.userInfo objectForKey:NSWorkspaceApplicationKey] localizedName] UTF8String];
     Info->PID = [[Notification.userInfo objectForKey:NSWorkspaceApplicationKey] processIdentifier];
     GetProcessForPID(Info->PID, &Info->PSN);
-
-    if(Name)
-    {
-        unsigned int Length = strlen(Name);
-        Info->ProcessName = (char *) malloc(Length + 1);
-        strncpy(Info->ProcessName, (char *) Name, Length);
-        Info->ProcessName[Length] = '\0';
-    }
-    else
-    {
-        Info->ProcessName = strdup("<unknown>");
-    }
+    Info->ProcessName = Name ? strdup(Name) : strdup("<unknown>");
 
     return Info;
 }
