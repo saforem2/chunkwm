@@ -1,6 +1,7 @@
 #include "event.h"
 
 #define internal static
+
 internal event_loop EventLoop = {};
 
 /* NOTE(koekeishiya): Must be thread-safe! Called through ConstructEvent macro */
@@ -43,7 +44,6 @@ ProcessEventQueue(void *)
             pthread_threadid_np(NULL, &ID);
             fprintf(stderr, "%lld: sem_wait(..) failed\n", ID);
         }
-
     }
 
     return NULL;
