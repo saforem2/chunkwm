@@ -157,58 +157,68 @@ void EndLoadedPluginList()
 
 bool LoadPlugin(const char *Absolutepath, const char *Filename)
 {
-    void *Handle = dlopen(Absolutepath, RTLD_LAZY);
-    if(Handle)
-    {
-        plugin_details *Info = (plugin_details *) dlsym(Handle, "Exports");
-        if(Info)
-        {
-            if(VerifyPluginABI(Info))
-            {
-                plugin *Plugin = Info->Initialize();
-#ifdef CHUNKWM_DEBUG
-                PrintPluginDetails(Info);
-#endif
+    bool Result = true;
 
-                loaded_plugin *LoadedPlugin = (loaded_plugin *) malloc(sizeof(loaded_plugin));
-                LoadedPlugin->Handle = Handle;
-                LoadedPlugin->Plugin = Plugin;
-                LoadedPlugin->Info = Info;
+    void *Handle;
+    plugin_details *Info;
+    plugin *Plugin;
+    loaded_plugin *LoadedPlugin;
 
-                if(Plugin->Init(ChunkwmBroadcast))
-                {
-                    printf("chunkwm: plugin '%s' loaded!\n", Filename);
-                    LoadedPlugin->Filename = strdup(Filename);
-                    StoreLoadedPlugin(LoadedPlugin);
-                    HookPlugin(LoadedPlugin);
-                    return true;
-                }
-                else
-                {
-                    free(LoadedPlugin);
-                    fprintf(stderr, "chunkwm: plugin '%s' init failed!\n", Info->PluginName);
-                    dlclose(Handle);
-                }
-            }
-            else
-            {
-                fprintf(stderr, "chunkwm: plugin '%s' ABI mismatch; expected %d, was %d\n",
-                        Info->PluginName, CHUNKWM_PLUGIN_API_VERSION, Info->ApiVersion);
-                dlclose(Handle);
-            }
-        }
-        else
-        {
-            fprintf(stderr, "chunkwm: dlsym '%s' plugin details missing!\n", Absolutepath);
-            dlclose(Handle);
-        }
-    }
-    else
+    Handle = dlopen(Absolutepath, RTLD_LAZY);
+    if(!Handle)
     {
         fprintf(stderr, "chunkwm: dlopen '%s' failed!\n", Absolutepath);
+        goto handle_err;
     }
 
-    return false;
+    Info = (plugin_details *) dlsym(Handle, "Exports");
+    if(!Info)
+    {
+        fprintf(stderr, "chunkwm: dlsym '%s' plugin details missing!\n", Absolutepath);
+        goto info_err;
+    }
+
+    if(!VerifyPluginABI(Info))
+    {
+        fprintf(stderr, "chunkwm: plugin '%s' ABI mismatch; expected %d, was %d\n",
+                Info->PluginName, CHUNKWM_PLUGIN_API_VERSION, Info->ApiVersion);
+        goto abi_err;
+    }
+
+    Plugin = Info->Initialize();
+#ifdef CHUNKWM_DEBUG
+    PrintPluginDetails(Info);
+#endif
+
+    LoadedPlugin = (loaded_plugin *) malloc(sizeof(loaded_plugin));
+    LoadedPlugin->Handle = Handle;
+    LoadedPlugin->Plugin = Plugin;
+    LoadedPlugin->Info = Info;
+
+    if(!Plugin->Init(ChunkwmBroadcast))
+    {
+        fprintf(stderr, "chunkwm: plugin '%s' init failed!\n", Info->PluginName);
+        goto plugin_init_err;
+    }
+
+    printf("chunkwm: plugin '%s' loaded!\n", Filename);
+    LoadedPlugin->Filename = strdup(Filename);
+    StoreLoadedPlugin(LoadedPlugin);
+    HookPlugin(LoadedPlugin);
+    goto out;
+
+plugin_init_err:
+    free(LoadedPlugin);
+
+abi_err:
+info_err:
+    dlclose(Handle);
+
+handle_err:
+    Result = false;
+
+out:
+    return Result;
 }
 
 bool UnloadPlugin(const char *Absolutepath, const char *Filename)
@@ -263,10 +273,5 @@ bool BeginPlugins()
         }
     }
 
-    if(pthread_mutex_init(&LoadedPluginLock, NULL) != 0)
-    {
-        return false;
-    }
-
-    return true;
+    return (pthread_mutex_init(&LoadedPluginLock, NULL) == 0);
 }
