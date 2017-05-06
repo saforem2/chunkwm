@@ -10,9 +10,8 @@ void AddEvent(chunk_event Event)
     {
         pthread_mutex_lock(&EventLoop.WorkerLock);
         EventLoop.Queue.push(Event);
-
-        pthread_cond_signal(&EventLoop.State);
         pthread_mutex_unlock(&EventLoop.WorkerLock);
+        sem_post(EventLoop.Semaphore);
     }
 }
 
@@ -32,8 +31,13 @@ ProcessEventQueue(void *)
             (*Event.Handle)(&Event);
         }
 
-        while(EventLoop.Queue.empty() && EventLoop.Running)
-            pthread_cond_wait(&EventLoop.State, &EventLoop.StateLock);
+        int Result = sem_wait(EventLoop.Semaphore);
+        if(Result)
+        {
+            uint64_t ID;
+            pthread_threadid_np(NULL, &ID);
+            fprintf(stderr, "%lld: sem_wait(..) failed\n", ID);
+        }
 
         pthread_mutex_unlock(&EventLoop.StateLock);
     }
@@ -41,38 +45,52 @@ ProcessEventQueue(void *)
     return NULL;
 }
 
-/* NOTE(koekeishiya): Initialize required mutexes and condition for the event-loop */
+/* NOTE(koekeishiya): Initialize required mutexes and semaphore for the eventloop */
 internal bool
 BeginEventLoop()
 {
-   if(pthread_mutex_init(&EventLoop.WorkerLock, NULL) != 0)
-   {
-       return false;
-   }
+    bool Result = true;
 
-   if(pthread_mutex_init(&EventLoop.StateLock, NULL) != 0)
-   {
-       pthread_mutex_destroy(&EventLoop.WorkerLock);
-       return false;
-   }
+    if((EventLoop.Semaphore = sem_open("eventloop_semaphore", O_CREAT, 0644, 0)) == SEM_FAILED)
+    {
+        fprintf(stderr, "chunkwm: could not initialize semaphore!");
+        goto sem_err;
+    }
 
-   if(pthread_cond_init(&EventLoop.State, NULL) != 0)
-   {
-        pthread_mutex_destroy(&EventLoop.WorkerLock);
-        pthread_mutex_destroy(&EventLoop.StateLock);
-        return false;
-   }
+    if(pthread_mutex_init(&EventLoop.WorkerLock, NULL) != 0)
+    {
+        fprintf(stderr, "chunkwm: could not initialize work mutex!");
+        goto work_err;
+    }
 
-   return true;
+    if(pthread_mutex_init(&EventLoop.StateLock, NULL) != 0)
+    {
+        fprintf(stderr, "chunkwm: could not initialize state mutex!");
+        goto state_err;
+    }
+
+    goto out;
+
+state_err:
+    pthread_mutex_destroy(&EventLoop.WorkerLock);
+
+work_err:
+    sem_destroy(EventLoop.Semaphore);
+
+sem_err:
+    Result = false;
+
+out:
+    return Result;
 }
 
 /* NOTE(koekeishiya): Destroy mutexes and condition used by the event-loop */
 internal void
 EndEventLoop()
 {
-    pthread_cond_destroy(&EventLoop.State);
     pthread_mutex_destroy(&EventLoop.StateLock);
     pthread_mutex_destroy(&EventLoop.WorkerLock);
+    sem_destroy(EventLoop.Semaphore);
 }
 
 void PauseEventLoop()
@@ -109,7 +127,6 @@ void StopEventLoop()
     if(EventLoop.Running)
     {
         EventLoop.Running = false;
-        pthread_cond_signal(&EventLoop.State);
         pthread_join(EventLoop.Worker, NULL);
         EndEventLoop();
     }

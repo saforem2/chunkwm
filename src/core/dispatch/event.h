@@ -2,6 +2,7 @@
 #define CHUNKWM_OSX_EVENT_H
 
 #include <pthread.h>
+#include <semaphore.h>
 #include <queue>
 
 struct chunk_event;
@@ -77,9 +78,9 @@ struct chunk_event
 
 struct event_loop
 {
-    pthread_cond_t State;
     pthread_mutex_t StateLock;
     pthread_mutex_t WorkerLock;
+    sem_t *Semaphore;
     pthread_t Worker;
     bool Running;
     std::queue<chunk_event> Queue;
