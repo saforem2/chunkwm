@@ -193,8 +193,11 @@ int main(int Count, char **Args)
         HotloaderInit();
     }
 
-    StartEventLoop();
-    CFRunLoopRun();
+    if(!StartEventLoop())
+    {
+        Fail("chunkwm: failed to start eventloop! abort..\n");
+    }
 
+    CFRunLoopRun();
     return EXIT_SUCCESS;
 }
