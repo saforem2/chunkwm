@@ -97,8 +97,8 @@ PLUGIN_VOID_FUNC(PluginDeInit)
 
 // NOTE(koekeishiya): Enable to manually trigger ABI mismatch
 #if 0
-#undef PLUGIN_API_VERSION
-#define PLUGIN_API_VERSION 0
+#undef CHUNKWM_PLUGIN_API_VERSION
+#define CHUNKWM_PLUGIN_API_VERSION 0
 #endif
 
 // NOTE(koekeishiya): Initialize plugin function pointers.
