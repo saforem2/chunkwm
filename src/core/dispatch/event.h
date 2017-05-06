@@ -78,11 +78,10 @@ struct chunk_event
 
 struct event_loop
 {
-    pthread_mutex_t StateLock;
-    pthread_mutex_t WorkerLock;
-    sem_t *Semaphore;
-    pthread_t Worker;
     bool Running;
+    pthread_t Thread;
+    sem_t *Semaphore;
+    pthread_mutex_t Lock;
     std::queue<chunk_event> Queue;
 };
 

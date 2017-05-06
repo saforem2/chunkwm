@@ -8,9 +8,9 @@ void AddEvent(chunk_event Event)
 {
     if(EventLoop.Running && Event.Handle)
     {
-        pthread_mutex_lock(&EventLoop.WorkerLock);
+        pthread_mutex_lock(&EventLoop.Lock);
         EventLoop.Queue.push(Event);
-        pthread_mutex_unlock(&EventLoop.WorkerLock);
+        pthread_mutex_unlock(&EventLoop.Lock);
         sem_post(EventLoop.Semaphore);
     }
 }
@@ -20,13 +20,18 @@ ProcessEventQueue(void *)
 {
     while(EventLoop.Running)
     {
-        pthread_mutex_lock(&EventLoop.StateLock);
-        while(!EventLoop.Queue.empty())
+        pthread_mutex_lock(&EventLoop.Lock);
+        bool HasWork = !EventLoop.Queue.empty();
+        pthread_mutex_unlock(&EventLoop.Lock);
+
+        while(HasWork)
         {
-            pthread_mutex_lock(&EventLoop.WorkerLock);
+            pthread_mutex_lock(&EventLoop.Lock);
             chunk_event Event = EventLoop.Queue.front();
             EventLoop.Queue.pop();
-            pthread_mutex_unlock(&EventLoop.WorkerLock);
+
+            HasWork = !EventLoop.Queue.empty();
+            pthread_mutex_unlock(&EventLoop.Lock);
 
             (*Event.Handle)(&Event);
         }
@@ -39,7 +44,6 @@ ProcessEventQueue(void *)
             fprintf(stderr, "%lld: sem_wait(..) failed\n", ID);
         }
 
-        pthread_mutex_unlock(&EventLoop.StateLock);
     }
 
     return NULL;
@@ -57,22 +61,13 @@ BeginEventLoop()
         goto sem_err;
     }
 
-    if(pthread_mutex_init(&EventLoop.WorkerLock, NULL) != 0)
+    if(pthread_mutex_init(&EventLoop.Lock, NULL) != 0)
     {
         fprintf(stderr, "chunkwm: could not initialize work mutex!");
         goto work_err;
     }
 
-    if(pthread_mutex_init(&EventLoop.StateLock, NULL) != 0)
-    {
-        fprintf(stderr, "chunkwm: could not initialize state mutex!");
-        goto state_err;
-    }
-
     goto out;
-
-state_err:
-    pthread_mutex_destroy(&EventLoop.WorkerLock);
 
 work_err:
     sem_destroy(EventLoop.Semaphore);
@@ -88,25 +83,18 @@ out:
 internal void
 EndEventLoop()
 {
-    pthread_mutex_destroy(&EventLoop.StateLock);
-    pthread_mutex_destroy(&EventLoop.WorkerLock);
+    pthread_mutex_destroy(&EventLoop.Lock);
     sem_destroy(EventLoop.Semaphore);
 }
 
 void PauseEventLoop()
 {
-    if(EventLoop.Running)
-    {
-        pthread_mutex_lock(&EventLoop.StateLock);
-    }
+    // TODO(koekeishiya): Probably want a proper way to temporarily ignore all events
 }
 
 void ResumeEventLoop()
 {
-    if(EventLoop.Running)
-    {
-        pthread_mutex_unlock(&EventLoop.StateLock);
-    }
+    // TODO(koekeishiya): NYI
 }
 
 bool StartEventLoop()
@@ -115,7 +103,7 @@ bool StartEventLoop()
        (BeginEventLoop()))
     {
         EventLoop.Running = true;
-        pthread_create(&EventLoop.Worker, NULL, &ProcessEventQueue, NULL);
+        pthread_create(&EventLoop.Thread, NULL, &ProcessEventQueue, NULL);
         return true;
     }
 
@@ -127,7 +115,7 @@ void StopEventLoop()
     if(EventLoop.Running)
     {
         EventLoop.Running = false;
-        pthread_join(EventLoop.Worker, NULL);
+        pthread_join(EventLoop.Thread, NULL);
         EndEventLoop();
     }
 }
