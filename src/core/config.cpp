@@ -14,7 +14,8 @@
 
 // NOTE(koekeishiya): The char * we return points to a location
 // in the provided absolutepath string, thus, it should NOT be freed.
-char *PluginFilenameFromAbsolutepath(char *Absolutepath)
+internal char *
+PluginFilenameFromAbsolutepath(char *Absolutepath)
 {
     char *Filename = NULL;
     char *LastSlash = strrchr(Absolutepath, '/');
