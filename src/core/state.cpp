@@ -42,40 +42,44 @@ GetWindowByID(uint32_t Id)
  * If the window can not be added to the collection, caller is responsible for memory. */
 bool AddWindowToCollection(macos_window *Window)
 {
-    // NOTE(koekeishiya): A window with id 0 is never valid!
-    if(Window->Id == 0)
-    {
-        return false;
-    }
+    bool Result = true;
+    uint32_t *WindowId;
+    AXError Success;
 
-    uint32_t *WindowId = (uint32_t *) malloc(sizeof(uint32_t));
+    // NOTE(koekeishiya): A window with id 0 is never valid!
+    if(!Window->Id) goto win_zero;
+
+    WindowId = (uint32_t *) malloc(sizeof(uint32_t));
     ASSERT(WindowId);
 
     *WindowId = Window->Id;
-    AXError Success = AXLibAddObserverNotification(&Window->Owner->Observer,
-                                                   Window->Ref,
-                                                   kAXUIElementDestroyedNotification,
-                                                   WindowId);
-    bool Result = (Success == kAXErrorSuccess);
-    if(Result)
-    {
-        AXLibAddObserverNotification(&Window->Owner->Observer,
-                                     Window->Ref,
-                                     kAXWindowMiniaturizedNotification,
-                                     Window);
-        AXLibAddObserverNotification(&Window->Owner->Observer,
-                                     Window->Ref,
-                                     kAXWindowDeminiaturizedNotification,
-                                     Window);
-        pthread_mutex_lock(&WindowsLock);
-        Windows[Window->Id] = Window;
-        pthread_mutex_unlock(&WindowsLock);
-    }
-    else
-    {
-        free(WindowId);
-    }
+    Success = AXLibAddObserverNotification(&Window->Owner->Observer,
+                                           Window->Ref,
+                                           kAXUIElementDestroyedNotification,
+                                           WindowId);
+    if(Success != kAXErrorSuccess) goto ax_err;
 
+    AXLibAddObserverNotification(&Window->Owner->Observer,
+                                 Window->Ref,
+                                 kAXWindowMiniaturizedNotification,
+                                 Window);
+    AXLibAddObserverNotification(&Window->Owner->Observer,
+                                 Window->Ref,
+                                 kAXWindowDeminiaturizedNotification,
+                                 Window);
+    pthread_mutex_lock(&WindowsLock);
+    Windows[Window->Id] = Window;
+    pthread_mutex_unlock(&WindowsLock);
+
+    goto out;
+
+ax_err:
+    free(WindowId);
+
+win_zero:
+    Result = false;
+
+out:
     return Result;
 }
 
@@ -115,21 +119,20 @@ AddApplicationWindowsToCollection(macos_application *Application)
 
         while((Window = *List++))
         {
-            if(GetWindowByID(Window->Id))
-            {
-                AXLibDestroyWindow(Window);
-            }
-            else
-            {
-                if(!AddWindowToCollection(Window))
-                {
+            if(GetWindowByID(Window->Id))      goto win_dupe;
+            if(!AddWindowToCollection(Window)) goto win_invalid;
+            goto success;
+
+win_invalid:
 #ifdef CHUNKWM_DEBUG
-                    printf("%s:%s is not destructible, ignore!\n", Window->Owner->Name, Window->Name);
+            printf("%s:%s is not destructible, ignore!\n", Window->Owner->Name, Window->Name);
 #endif
-                    AXLibRemoveObserverNotification(&Window->Owner->Observer, Window->Ref, kAXUIElementDestroyedNotification);
-                    AXLibDestroyWindow(Window);
-                }
-            }
+            AXLibRemoveObserverNotification(&Window->Owner->Observer, Window->Ref, kAXUIElementDestroyedNotification);
+
+win_dupe:
+            AXLibDestroyWindow(Window);
+
+success:;
         }
 
         free(WindowList);
