@@ -6,6 +6,9 @@
 #include "../common/accessibility/window.h"
 #include "../common/accessibility/element.h"
 
+#include "../common/misc/assert.h"
+#include "../common/misc/debug.h"
+
 #include <pthread.h>
 
 #include <map>
@@ -124,9 +127,7 @@ AddApplicationWindowsToCollection(macos_application *Application)
             goto success;
 
 win_invalid:
-#ifdef CHUNKWM_DEBUG
-            printf("%s:%s is not destructible, ignore!\n", Window->Owner->Name, Window->Name);
-#endif
+            DEBUG_PRINT("%s:%s is not destructible, ignore!\n", Window->Owner->Name, Window->Name);
             AXLibRemoveObserverNotification(&Window->Owner->Observer, Window->Ref, kAXUIElementDestroyedNotification);
 
 win_dupe:
@@ -317,9 +318,7 @@ macos_application *ConstructAndAddApplication(ProcessSerialNumber PSN, pid_t PID
 
     if(Success)
     {
-#ifdef CHUNKWM_DEBUG
-        printf("%d:%s registered window notifications\n", Application->PID, Application->Name);
-#endif
+        DEBUG_PRINT("%d:%s registered window notifications\n", Application->PID, Application->Name);
     }
     else
     {

@@ -4,6 +4,8 @@
 #include <string.h>
 #include <unordered_map>
 
+#include "../../common/misc/debug.h"
+
 #define internal static
 
 struct psn_hash {
@@ -51,13 +53,13 @@ SearchCarbonApplicationDetailsCache(ProcessSerialNumber PSN)
 internal inline void
 PrintCarbonApplicationDetails(carbon_application_details *Info)
 {
-    printf("carbon process spawned\nName: %s\nPID: %d\nPSN: %d %d\nPolicy: %d\nBackground: %d\n",
-            Info->ProcessName,
-            Info->PID,
-            Info->PSN.lowLongOfPSN,
-            Info->PSN.highLongOfPSN,
-            Info->ProcessPolicy,
-            Info->ProcessBackground);
+    DEBUG_PRINT("carbon process spawned\nName: %s\nPID: %d\nPSN: %d %d\nPolicy: %d\nBackground: %d\n",
+                 Info->ProcessName,
+                 Info->PID,
+                 Info->PSN.lowLongOfPSN,
+                 Info->PSN.highLongOfPSN,
+                 Info->ProcessPolicy,
+                 Info->ProcessBackground);
 }
 
 /*
@@ -72,9 +74,7 @@ CacheRunningProcesses()
     while(GetNextProcess(&PSN) == noErr)
     {
         carbon_application_details *Info = BeginCarbonApplicationDetails(PSN);
-#ifdef CHUNKWM_DEBUG
         PrintCarbonApplicationDetails(Info);
-#endif
         CarbonApplicationCache[PSN] = Info;
     }
 }
@@ -102,9 +102,7 @@ CarbonApplicationEventHandler(EventHandlerCallRef HandlerCallRef, EventRef Event
         {
             carbon_application_details *Info = BeginCarbonApplicationDetails(PSN);
             CarbonApplicationCache[PSN] = Info;
-#ifdef CHUNKWM_DEBUG
             PrintCarbonApplicationDetails(Info);
-#endif
             ConstructEvent(ChunkWM_ApplicationLaunched, Info);
         } break;
         case kEventAppTerminated:

@@ -7,6 +7,8 @@
 #include "dispatch/event.h"
 
 #include "../common/accessibility/window.h"
+#include "../common/misc/assert.h"
+#include "../common/misc/debug.h"
 
 #include <stdio.h>
 #include <pthread.h>
@@ -88,10 +90,7 @@ void ChunkwmBroadcast(const char *PluginName, const char *EventName,
         Context[1] = NULL;
     }
 
-#ifdef CHUNKWM_DEBUG
-    printf("chunkwm:%s:%s\n", PluginName, EventName);
-#endif
-
+    DEBUG_PRINT("chunkwm:%s:%s\n", PluginName, EventName);
     ConstructEvent(ChunkWM_PluginBroadcast, Context);
 }
 
@@ -170,9 +169,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_ApplicationLaunched)
 
     if(IsProcessInteractive(Info))
     {
-#ifdef CHUNKWM_DEBUG
-        printf("%d:%s launched\n", Info->PID, Info->ProcessName);
-#endif
+        DEBUG_PRINT("%d:%s launched\n", Info->PID, Info->ProcessName);
         macos_application *Application = ConstructAndAddApplication(Info->PSN, Info->PID, Info->ProcessName);
 #if 0
         ProcessPluginList(chunkwm_export_application_launched, Application);
@@ -190,10 +187,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_ApplicationTerminated)
     macos_application *Application = GetApplicationFromPID(Info->PID);
     if(Application)
     {
-#ifdef CHUNKWM_DEBUG
-        printf("%d:%s terminated\n", Info->PID, Info->ProcessName);
-#endif
-
+        DEBUG_PRINT("%d:%s terminated\n", Info->PID, Info->ProcessName);
 #if 0
         ProcessPluginList(chunkwm_export_application_terminated, Application);
 #else
@@ -213,10 +207,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_ApplicationActivated)
     macos_application *Application = GetApplicationFromPID(Info->PID);
     if(Application)
     {
-#ifdef CHUNKWM_DEBUG
-        printf("%d:%s activated\n", Info->PID, Info->ProcessName);
-#endif
-
+        DEBUG_PRINT("%d:%s activated\n", Info->PID, Info->ProcessName);
 #if 0
         ProcessPluginList(chunkwm_export_application_activated, Application);
 #else
@@ -235,10 +226,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_ApplicationDeactivated)
     macos_application *Application = GetApplicationFromPID(Info->PID);
     if(Application)
     {
-#ifdef CHUNKWM_DEBUG
-        printf("%d:%s deactivated\n", Info->PID, Info->ProcessName);
-#endif
-
+        DEBUG_PRINT("%d:%s deactivated\n", Info->PID, Info->ProcessName);
 #if 0
         ProcessPluginList(chunkwm_export_application_deactivated, Application);
 #else
@@ -257,10 +245,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_ApplicationVisible)
     macos_application *Application = GetApplicationFromPID(Info->PID);
     if(Application)
     {
-#ifdef CHUNKWM_DEBUG
-        printf("%d:%s visible\n", Info->PID, Info->ProcessName);
-#endif
-
+        DEBUG_PRINT("%d:%s visible\n", Info->PID, Info->ProcessName);
 #if 0
         ProcessPluginList(chunkwm_export_application_unhidden, Application);
 #else
@@ -279,10 +264,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_ApplicationHidden)
     macos_application *Application = GetApplicationFromPID(Info->PID);
     if(Application)
     {
-#ifdef CHUNKWM_DEBUG
-        printf("%d:%s hidden\n", Info->PID, Info->ProcessName);
-#endif
-
+        DEBUG_PRINT("%d:%s hidden\n", Info->PID, Info->ProcessName);
 #if 0
         ProcessPluginList(chunkwm_export_application_hidden, Application);
 #else
@@ -316,10 +298,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_DisplayAdded)
     CGDirectDisplayID *DisplayId = (CGDirectDisplayID *) Event->Context;
     ASSERT(DisplayId);
 
-#ifdef CHUNKWM_DEBUG
-    printf("%d: display added\n", *DisplayId);
-#endif
-
+    DEBUG_PRINT("%d: display added\n", *DisplayId);
 #if 0
     ProcessPluginList(chunkwm_export_display_added, DisplayId);
 #else
@@ -334,10 +313,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_DisplayRemoved)
     CGDirectDisplayID *DisplayId = (CGDirectDisplayID *) Event->Context;
     ASSERT(DisplayId);
 
-#ifdef CHUNKWM_DEBUG
-    printf("%d: display removed\n", *DisplayId);
-#endif
-
+    DEBUG_PRINT("%d: display removed\n", *DisplayId);
 #if 0
     ProcessPluginList(chunkwm_export_display_removed, DisplayId);
 #else
@@ -352,10 +328,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_DisplayMoved)
     CGDirectDisplayID *DisplayId = (CGDirectDisplayID *) Event->Context;
     ASSERT(DisplayId);
 
-#ifdef CHUNKWM_DEBUG
-    printf("%d: display moved\n", *DisplayId);
-#endif
-
+    DEBUG_PRINT("%d: display moved\n", *DisplayId);
 #if 0
     ProcessPluginList(chunkwm_export_display_moved, DisplayId);
 #else
@@ -370,10 +343,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_DisplayResized)
     CGDirectDisplayID *DisplayId = (CGDirectDisplayID *) Event->Context;
     ASSERT(DisplayId);
 
-#ifdef CHUNKWM_DEBUG
-    printf("%d: display resolution changed\n", *DisplayId);
-#endif
-
+    DEBUG_PRINT("%d: display resolution changed\n", *DisplayId);
 #if 0
     ProcessPluginList(chunkwm_export_display_resized, DisplayId);
 #else
@@ -408,10 +378,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_WindowCreated)
 
     if(AddWindowToCollection(Window))
     {
-#ifdef CHUNKWM_DEBUG
-        printf("%s:%s window created\n", Window->Owner->Name, Window->Name);
-#endif
-
+        DEBUG_PRINT("%s:%s window created\n", Window->Owner->Name, Window->Name);
 #if 0
         ProcessPluginList(chunkwm_export_window_created, Window);
 #else
@@ -424,9 +391,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_WindowCreated)
     }
     else
     {
-#ifdef CHUNKWM_DEBUG
-        printf("%s:%s window is not destructible, ignore!\n", Window->Owner->Name, Window->Name);
-#endif
+        DEBUG_PRINT("%s:%s window is not destructible, ignore!\n", Window->Owner->Name, Window->Name);
         AXLibRemoveObserverNotification(&Window->Owner->Observer, Window->Ref, kAXUIElementDestroyedNotification);
         AXLibDestroyWindow(Window);
     }
@@ -437,10 +402,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_WindowDestroyed)
     macos_window *Window = (macos_window *) Event->Context;
     ASSERT(Window);
 
-#ifdef CHUNKWM_DEBUG
-    printf("%s:%s window destroyed\n", Window->Owner->Name, Window->Name);
-#endif
-
+    DEBUG_PRINT("%s:%s window destroyed\n", Window->Owner->Name, Window->Name);
 #if 0
     ProcessPluginList(chunkwm_export_window_destroyed, Window);
 #else
@@ -463,10 +425,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_WindowFocused)
          * post it after a 'ChunkWM_WindowDeminimized' event has been processed. */
         if(!AXLibHasFlags(Window, Window_Minimized))
         {
-#ifdef CHUNKWM_DEBUG
-            printf("%s:%s window focused\n", Window->Owner->Name, Window->Name);
-#endif
-
+            DEBUG_PRINT("%s:%s window focused\n", Window->Owner->Name, Window->Name);
 #if 0
             ProcessPluginList(chunkwm_export_window_focused, Window);
 #else
@@ -491,10 +450,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_WindowMoved)
     {
         Window->Position = AXLibGetWindowPosition(Window->Ref);
 
-#ifdef CHUNKWM_DEBUG
-        printf("%s:%s window moved\n", Window->Owner->Name, Window->Name);
-#endif
-
+        DEBUG_PRINT("%s:%s window moved\n", Window->Owner->Name, Window->Name);
 #if 0
         ProcessPluginList(chunkwm_export_window_moved, Window);
 #else
@@ -519,10 +475,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_WindowResized)
         Window->Position = AXLibGetWindowPosition(Window->Ref);
         Window->Size = AXLibGetWindowSize(Window->Ref);
 
-#ifdef CHUNKWM_DEBUG
-        printf("%s:%s window resized\n", Window->Owner->Name, Window->Name);
-#endif
-
+        DEBUG_PRINT("%s:%s window resized\n", Window->Owner->Name, Window->Name);
 #if 0
         ProcessPluginList(chunkwm_export_window_resized, Window);
 #else
@@ -544,9 +497,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_WindowMinimized)
     bool Result = __sync_bool_compare_and_swap(&Window->Flags, Flags, Flags);
     if(Result && !AXLibHasFlags(Window, Window_Invalid))
     {
-#ifdef CHUNKWM_DEBUG
-        printf("%s:%s window minimized\n", Window->Owner->Name, Window->Name);
-#endif
+        DEBUG_PRINT("%s:%s window minimized\n", Window->Owner->Name, Window->Name);
 
         AXLibAddFlags(Window, Window_Minimized);
 #if 0
@@ -570,9 +521,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_WindowDeminimized)
     bool Result = __sync_bool_compare_and_swap(&Window->Flags, Flags, Flags);
     if(Result && !AXLibHasFlags(Window, Window_Invalid))
     {
-#ifdef CHUNKWM_DEBUG
-        printf("%s:%s window deminimized\n", Window->Owner->Name, Window->Name);
-#endif
+        DEBUG_PRINT("%s:%s window deminimized\n", Window->Owner->Name, Window->Name);
 
         AXLibClearFlags(Window, Window_Minimized);
 #if 0
@@ -605,10 +554,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_WindowTitleChanged)
     if(Result && !AXLibHasFlags(Window, Window_Invalid))
     {
         UpdateWindowTitle(Window);
-
-#ifdef CHUNKWM_DEBUG
-        printf("%s:%s window title changed\n", Window->Owner->Name, Window->Name);
-#endif
+        DEBUG_PRINT("%s:%s window title changed\n", Window->Owner->Name, Window->Name);
     }
     else
     {

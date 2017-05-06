@@ -6,6 +6,8 @@
 #include <string.h>
 #include <vector>
 
+#include "../common/misc/debug.h"
+
 #define internal static
 
 #define HOTLOADER_CALLBACK(name) void name(ConstFSEventStreamRef Stream,\
@@ -56,9 +58,7 @@ HOTLOADER_CALLBACK(HotloadPluginCallback)
             if((Extension) && (strcmp(Extension, ".so") == 0))
             {
                 char *Filename = LastSlash + 1;
-#ifdef CHUNKWM_DEBUG
-                printf("hotloader: plugin '%s' changed!\n", Filename);
-#endif
+                DEBUG_PRINT("hotloader: plugin '%s' changed!\n", Filename);
 
                 UnloadPlugin(Fullpath, Filename);
 
