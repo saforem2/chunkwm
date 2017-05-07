@@ -1,6 +1,6 @@
 ## Description [![Build Status](https://travis-ci.org/koekeishiya/chunkwm.svg?branch=master)](https://travis-ci.org/koekeishiya/chunkwm)
 
-**chunkwm** is a tiling window manager for MacOS that uses a plugin architecture, successor to **[kwm]**(https://github.com/koekeishiya/kwm)
+**chunkwm** is a tiling window manager for MacOS that uses a plugin architecture, successor to [**kwm**](https://github.com/koekeishiya/kwm)
 
 [click here to view current project status](https://github.com/koekeishiya/chunkwm/issues/16)
 
