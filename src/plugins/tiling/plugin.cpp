@@ -15,6 +15,7 @@
 #include "../../common/ipc/daemon.h"
 #include "../../common/misc/carbon.h"
 #include "../../common/misc/assert.h"
+#include "../../common/misc/debug.h"
 #include "../../common/config/cvar.h"
 
 #include "config.h"
@@ -426,6 +427,13 @@ std::vector<uint32_t> GetAllVisibleWindowsForSpace(macos_space *Space)
         Error = CGSGetOnScreenWindowList(CGSDefaultConnection, 0, WindowCount, WindowList, &WindowCount);
         if(Error == kCGErrorSuccess)
         {
+#ifdef CHUNKWM_DEBUG
+            unsigned DesktopId;
+            bool Success = AXLibCGSSpaceIDToDesktopID(Space->Id, NULL, &DesktopId);
+            ASSERT(Success);
+            printf("%d:desktop has these windows:\n", DesktopId);
+#endif
+
             for(int Index = 0;
                 Index < WindowCount;
                 ++Index)
@@ -440,7 +448,15 @@ std::vector<uint32_t> GetAllVisibleWindowsForSpace(macos_space *Space)
                    (!AXLibHasFlags(Window, Window_Float)) &&
                    (AXLibSpaceHasWindow(Space->Id, WindowId)))
                 {
-                    Windows.push_back(WindowList[Index]);
+                    if(IsWindowValid(Window))
+                    {
+                        DEBUG_PRINT("   %d:%s:%s\n", Window->Id, Window->Owner->Name, Window->Name);
+                        Windows.push_back(WindowList[Index]);
+                    }
+                    else
+                    {
+                        DEBUG_PRINT("   %d:%s:%s:invalid window\n", Window->Id, Window->Owner->Name, Window->Name);
+                    }
                 }
             }
         }

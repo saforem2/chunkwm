@@ -9,6 +9,7 @@
 #include "../../common/config/cvar.h"
 #include "../../common/config/tokenize.h"
 #include "../../common/misc/assert.h"
+#include "../../common/misc/debug.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -30,12 +31,12 @@ BuildArguments(const char *Message, int *Count)
         Args[(*Count)++] = Arg;
     }
 
-#if 0
+#if 1
     for(int Index = 1;
         Index < *Count;
         ++Index)
     {
-        printf("%d arg '%s'\n", Index, Args[Index]);
+        DEBUG_PRINT("%d arg '%s'\n", Index, Args[Index]);
     }
 #endif
 
@@ -501,12 +502,12 @@ ParseConfigCommand(const char **Message)
     if(TokenEquals(Command, CVAR_SPACE_MODE))
     {
         char *Variable = TokenToString(Command);
-        printf("        command: '%s'\n", Variable);
+        DEBUG_PRINT("        command: '%s'\n", Variable);
 
         token Value = GetToken(Message);
         if(Value.Length > 0)
         {
-            printf("        value: '%.*s'\n", Value.Length, Value.Text);
+            DEBUG_PRINT("        value: '%.*s'\n", Value.Length, Value.Text);
             if(TokenEquals(Value, "bsp"))
             {
                 UpdateCVar(Variable, Virtual_Space_Bsp);
@@ -536,13 +537,13 @@ ParseConfigCommand(const char **Message)
             (TokenEquals(Command, CVAR_GAP_STEP_SIZE)))
     {
         char *Variable = TokenToString(Command);
-        printf("        command: '%s'\n", Variable);
+        DEBUG_PRINT("        command: '%s'\n", Variable);
 
         token Value = GetToken(Message);
         if(Value.Length > 0)
         {
             float FloatValue = TokenToFloat(Value);
-            printf("        value: '%f'\n", FloatValue);
+            DEBUG_PRINT("        value: '%f'\n", FloatValue);
             UpdateCVar(Variable, FloatValue);
         }
         else
@@ -555,13 +556,13 @@ ParseConfigCommand(const char **Message)
     else if(TokenEquals(Command, CVAR_BSP_SPAWN_LEFT))
     {
         char *Variable = TokenToString(Command);
-        printf("        command: '%s'\n", Variable);
+        DEBUG_PRINT("        command: '%s'\n", Variable);
 
         token Value = GetToken(Message);
         if(Value.Length > 0)
         {
             int IntValue = TokenToInt(Value);
-            printf("        value: '%d'\n", IntValue);
+            DEBUG_PRINT("        value: '%d'\n", IntValue);
             UpdateCVar(Variable, IntValue);
         }
         else
@@ -575,13 +576,13 @@ ParseConfigCommand(const char **Message)
             (TokenEquals(Command, CVAR_BSP_SPLIT_RATIO)))
     {
         char *Variable = TokenToString(Command);
-        printf("        command: '%s'\n", Variable);
+        DEBUG_PRINT("        command: '%s'\n", Variable);
 
         token Value = GetToken(Message);
         if(Value.Length > 0)
         {
             float FloatValue = TokenToFloat(Value);
-            printf("        value: '%f'\n", FloatValue);
+            DEBUG_PRINT("        value: '%f'\n", FloatValue);
             UpdateCVar(Variable, FloatValue);
         }
         else
@@ -594,12 +595,12 @@ ParseConfigCommand(const char **Message)
     else if(TokenEquals(Command, CVAR_BSP_SPLIT_MODE))
     {
         char *Variable = TokenToString(Command);
-        printf("        command: '%s'\n", Variable);
+        DEBUG_PRINT("        command: '%s'\n", Variable);
 
         token Value = GetToken(Message);
         if(Value.Length > 0)
         {
-            printf("        value: '%.*s'\n", Value.Length, Value.Text);
+            DEBUG_PRINT("        value: '%.*s'\n", Value.Length, Value.Text);
             if(TokenEquals(Value, "optimal"))
             {
                 UpdateCVar(Variable, Split_Optimal);
@@ -626,13 +627,13 @@ ParseConfigCommand(const char **Message)
             (TokenEquals(Command, CVAR_MOUSE_FOLLOWS_FOCUS)))
     {
         char *Variable = TokenToString(Command);
-        printf("        command: '%s'\n", Variable);
+        DEBUG_PRINT("        command: '%s'\n", Variable);
 
         token Value = GetToken(Message);
         if(Value.Length > 0)
         {
             int IntValue = TokenToInt(Value);
-            printf("        value: '%d'\n", IntValue);
+            DEBUG_PRINT("        value: '%d'\n", IntValue);
             UpdateCVar(Variable, IntValue);
         }
         else
@@ -645,13 +646,13 @@ ParseConfigCommand(const char **Message)
     else if(TokenEquals(Command, CVAR_WINDOW_FOCUS_CYCLE))
     {
         char *Variable = TokenToString(Command);
-        printf("        command: '%s'\n", Variable);
+        DEBUG_PRINT("        command: '%s'\n", Variable);
 
         token Value = GetToken(Message);
         if(Value.Length > 0)
         {
             char *StringValue = TokenToString(Value);
-            printf("        value: '%s'\n", StringValue);
+            DEBUG_PRINT("        value: '%s'\n", StringValue);
             UpdateCVar(Variable, StringValue);
             free(StringValue);
         }
@@ -668,7 +669,7 @@ ParseConfigCommand(const char **Message)
         // we do allow custom options used for space-specific settings, etc...
 
         char *Variable = TokenToString(Command);
-        printf("        command: '%s'\n", Variable);
+        DEBUG_PRINT("        command: '%s'\n", Variable);
 
         char Buffer[BUFFER_SIZE];
         int First;
@@ -685,7 +686,7 @@ ParseConfigCommand(const char **Message)
                 if(Value.Length > 0)
                 {
                     float FloatValue = TokenToFloat(Value);
-                    printf("        value: '%f'\n", FloatValue);
+                    DEBUG_PRINT("        value: '%f'\n", FloatValue);
                     UpdateCVar(Variable, FloatValue);
                 }
                 else
@@ -698,7 +699,7 @@ ParseConfigCommand(const char **Message)
                 token Value = GetToken(Message);
                 if(Value.Length > 0)
                 {
-                    printf("        value: '%.*s'\n", Value.Length, Value.Text);
+                    DEBUG_PRINT("        value: '%.*s'\n", Value.Length, Value.Text);
                     if(TokenEquals(Value, "bsp"))
                     {
                         UpdateCVar(Variable, Virtual_Space_Bsp);
@@ -768,7 +769,7 @@ ParseQueryCommand(const char **Message, int SockFD)
     if(TokenEquals(Command, CVAR_SPACE_MODE))
     {
         char *Variable = TokenToString(Command);
-        printf("        command: '%s'\n", Variable);
+        DEBUG_PRINT("        command: '%s'\n", Variable);
 
         char Response[32];
         Response[0] = '\0';
@@ -802,7 +803,7 @@ ParseQueryCommand(const char **Message, int SockFD)
             (TokenEquals(Command, CVAR_GAP_STEP_SIZE)))
     {
         char *Variable = TokenToString(Command);
-        printf("        command: '%s'\n", Variable);
+        DEBUG_PRINT("        command: '%s'\n", Variable);
 
         FetchAndSendFloatingPointCVar(Variable, SockFD);
 
@@ -811,7 +812,7 @@ ParseQueryCommand(const char **Message, int SockFD)
     else if(TokenEquals(Command, CVAR_BSP_SPAWN_LEFT))
     {
         char *Variable = TokenToString(Command);
-        printf("        command: '%s'\n", Variable);
+        DEBUG_PRINT("        command: '%s'\n", Variable);
 
         FetchAndSendIntegerCVar(Variable, SockFD);
 
@@ -821,7 +822,7 @@ ParseQueryCommand(const char **Message, int SockFD)
             (TokenEquals(Command, CVAR_BSP_SPLIT_RATIO)))
     {
         char *Variable = TokenToString(Command);
-        printf("        command: '%s'\n", Variable);
+        DEBUG_PRINT("        command: '%s'\n", Variable);
 
         FetchAndSendFloatingPointCVar(Variable, SockFD);
 
@@ -830,7 +831,7 @@ ParseQueryCommand(const char **Message, int SockFD)
     else if(TokenEquals(Command, CVAR_BSP_SPLIT_MODE))
     {
         char *Variable = TokenToString(Command);
-        printf("        command: '%s'\n", Variable);
+        DEBUG_PRINT("        command: '%s'\n", Variable);
 
         char Response[32];
         Response[0] = '\0';
@@ -861,7 +862,7 @@ ParseQueryCommand(const char **Message, int SockFD)
             (TokenEquals(Command, CVAR_MOUSE_FOLLOWS_FOCUS)))
     {
         char *Variable = TokenToString(Command);
-        printf("        command: '%s'\n", Variable);
+        DEBUG_PRINT("        command: '%s'\n", Variable);
 
         FetchAndSendIntegerCVar(Variable, SockFD);
 
@@ -873,7 +874,7 @@ ParseQueryCommand(const char **Message, int SockFD)
             (TokenEquals(Command, CVAR_LAST_ACTIVE_DESKTOP)))
     {
         char *Variable = TokenToString(Command);
-        printf("        command: '%s'\n", Variable);
+        DEBUG_PRINT("        command: '%s'\n", Variable);
 
         FetchAndSendIntegerCVar(Variable, SockFD);
 
@@ -882,7 +883,7 @@ ParseQueryCommand(const char **Message, int SockFD)
     else if(TokenEquals(Command, CVAR_WINDOW_FOCUS_CYCLE))
     {
         char *Variable = TokenToString(Command);
-        printf("        command: '%s'\n", Variable);
+        DEBUG_PRINT("        command: '%s'\n", Variable);
 
         FetchAndSendStringCVar(Variable, SockFD);
 
@@ -894,7 +895,7 @@ ParseQueryCommand(const char **Message, int SockFD)
         // we do allow custom options used for space-specific settings, etc...
 
         char *Variable = TokenToString(Command);
-        printf("        command: '%s'\n", Variable);
+        DEBUG_PRINT("        command: '%s'\n", Variable);
 
         char Buffer[BUFFER_SIZE];
         int First;
@@ -954,7 +955,7 @@ ParseQueryCommand(const char **Message, int SockFD)
  * */
 DAEMON_CALLBACK(DaemonCallback)
 {
-    printf(" msg: '%s'\n", Message);
+    DEBUG_PRINT(" msg: '%s'\n", Message);
     token Type = GetToken(&Message);
 
     if(TokenEquals(Type, "config"))
@@ -975,7 +976,7 @@ DAEMON_CALLBACK(DaemonCallback)
             command *Command = &Chain;
             while((Command = Command->Next))
             {
-                printf("    command: '%c', arg: '%s'\n", Command->Flag, Command->Arg);
+                DEBUG_PRINT("    command: '%c', arg: '%s'\n", Command->Flag, Command->Arg);
                 (*WindowCommandDispatch(Command->Flag))(Command->Arg);
             }
 
@@ -996,7 +997,7 @@ DAEMON_CALLBACK(DaemonCallback)
             command *Command = &Chain;
             while((Command = Command->Next))
             {
-                printf("    command: '%c', arg: '%s'\n", Command->Flag, Command->Arg);
+                DEBUG_PRINT("    command: '%c', arg: '%s'\n", Command->Flag, Command->Arg);
                 (*SpaceCommandDispatch(Command->Flag))(Command->Arg);
             }
 
@@ -1012,7 +1013,7 @@ DAEMON_CALLBACK(DaemonCallback)
             command *Command = &Chain;
             while((Command = Command->Next))
             {
-                printf("    command: '%c', arg: '%s'\n", Command->Flag, Command->Arg);
+                DEBUG_PRINT("    command: '%c', arg: '%s'\n", Command->Flag, Command->Arg);
                 (*MonitorCommandDispatch(Command->Flag))(Command->Arg);
             }
 

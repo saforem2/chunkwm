@@ -6,6 +6,7 @@
 #include "../../common/accessibility/element.h"
 #include "../../common/ipc/daemon.h"
 #include "../../common/misc/assert.h"
+#include "../../common/misc/debug.h"
 #include "../../common/config/cvar.h"
 
 #include "region.h"
@@ -556,9 +557,7 @@ void FloatWindow(macos_window *Window)
       (Window->Level != Window_Level_Notification) &&
       (Window->Level != Window_Level_ToolTipWindow))
     {
-#ifdef CHUNKWM_DEBUG
-        printf("FloatWindow -> CenterWindow -> window level '%d'\n", Window->Level);
-#endif
+        DEBUG_PRINT("FloatWindow -> CenterWindow -> window level '%d'\n", Window->Level);
         CenterWindow(Window);
     }
 }
