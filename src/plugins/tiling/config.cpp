@@ -203,6 +203,7 @@ ParseWindowCommand(const char *Message, command *Chain)
                 if((StringEquals(optarg, "float")) ||
                    (StringEquals(optarg, "split")) ||
                    (StringEquals(optarg, "fullscreen")) ||
+                   (StringEquals(optarg, "native-fullscreen")) ||
                    (StringEquals(optarg, "parent")))
                 {
                     command *Entry = ConstructCommand(Option, optarg);

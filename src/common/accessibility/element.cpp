@@ -212,6 +212,19 @@ bool AXLibSetWindowSize(AXUIElementRef WindowRef, float Width, float Height)
     return Result;
 }
 
+/* NOTE(koekeishiya): Set native fullscreen state. */
+bool AXLibSetWindowFullscreen(AXUIElementRef WindowRef, bool Fullscreen)
+{
+    ASSERT(WindowRef);
+
+    CFBooleanRef Value = Fullscreen ? kCFBooleanTrue : kCFBooleanFalse;
+    AXError Error = AXLibSetWindowProperty(WindowRef, kAXFullscreenAttribute, Value);
+    bool Result = (Error == kAXErrorSuccess);
+    CFRelease(Value);
+
+    return Result;
+}
+
 /* NOTE(koekeishiya): Caller is responsible for passing a valid AXUIElementRef.
  * kCGNullWindowID (0) may be returned if the window is minimized. */
 uint32_t AXLibGetWindowID(AXUIElementRef WindowRef)

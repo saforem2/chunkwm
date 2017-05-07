@@ -595,6 +595,32 @@ void ToggleWindow(char *Type)
             }
         }
     }
+    else if(StringEquals(Type, "native-fullscreen"))
+    {
+        uint32_t WindowId = CVarIntegerValue(CVAR_FOCUSED_WINDOW);
+        macos_window *Window = GetWindowByID(WindowId);
+        if(Window)
+        {
+            bool Fullscreen = AXLibIsWindowFullscreen(Window->Ref);
+            if(Fullscreen)
+            {
+                AXLibSetWindowFullscreen(Window->Ref, !Fullscreen);
+
+                if(AXLibIsWindowMovable(Window->Ref))
+                    AXLibAddFlags(Window, Window_Movable);
+
+                if(AXLibIsWindowResizable(Window->Ref))
+                    AXLibAddFlags(Window, Window_Resizable);
+
+                TileWindow(Window);
+            }
+            else
+            {
+                UntileWindow(Window);
+                AXLibSetWindowFullscreen(Window->Ref, !Fullscreen);
+            }
+        }
+    }
     else if(StringEquals(Type, "fullscreen"))
     {
         macos_space *Space;
@@ -1465,7 +1491,7 @@ void WarpFloatingWindow(char *Op)
     }
 }
 
-void EqualizeWindowTree(char *Op)
+void EqualizeWindowTree(char *Unused)
 {
     macos_space *Space;
     bool Success = AXLibActiveSpace(&Space);
