@@ -444,18 +444,19 @@ std::vector<uint32_t> GetAllVisibleWindowsForSpace(macos_space *Space)
                  * that we do not care about. Check that the window in question is
                  * in our cache and on the correct monitor. */
                 macos_window *Window = GetWindowByID(WindowId);
-                if((Window) &&
-                   (!AXLibHasFlags(Window, Window_Float)) &&
-                   (AXLibSpaceHasWindow(Space->Id, WindowId)))
+                if(Window && AXLibSpaceHasWindow(Space->Id, WindowId))
                 {
                     if(IsWindowValid(Window))
                     {
                         DEBUG_PRINT("   %d:%s:%s\n", Window->Id, Window->Owner->Name, Window->Name);
-                        Windows.push_back(WindowList[Index]);
+                        if(!AXLibHasFlags(Window, Window_Float))
+                        {
+                            Windows.push_back(WindowList[Index]);
+                        }
                     }
                     else
                     {
-                        DEBUG_PRINT("   %d:%s:%s:invalid window\n", Window->Id, Window->Owner->Name, Window->Name);
+                        DEBUG_PRINT("   %d:invalid window:%s:%s\n", Window->Id, Window->Owner->Name, Window->Name);
                     }
                 }
             }
