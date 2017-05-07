@@ -1,6 +1,9 @@
 # reload config
 cmd + alt + ctrl - r : khd -e "reload"
 
+# open terminal, blazingly fast compared to iTerm/Hyper
+cmd - return : open -na /Applications/Kitty.app
+
 # focus window
 alt - h : chunkc window --focus west
 alt - j : chunkc window --focus south
