@@ -999,9 +999,8 @@ PLUGIN_MAIN_FUNC(PluginMain)
             }
 
             CreateWindowTree();
+            RebalanceWindowTree();
         }
-
-        RebalanceWindowTree();
 
         // NOTE(koekeishiya): Update _focused_window to the active window of the new space.
         // This is necessary because the focused notification sometimes fail in these cases.
