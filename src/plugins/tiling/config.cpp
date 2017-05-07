@@ -766,7 +766,35 @@ inline void
 ParseQueryCommand(const char **Message, int SockFD)
 {
     token Command = GetToken(Message);
-    if(TokenEquals(Command, CVAR_SPACE_MODE))
+    if(TokenEquals(Command, "window"))
+    {
+        token Selector = GetToken(Message);
+        if(TokenEquals(Selector, "details"))
+        {
+            token ValueToken = GetToken(Message);
+            if(ValueToken.Length > 0)
+            {
+                uint32_t WindowId;
+                if(sscanf(ValueToken.Text, "%d", &WindowId) == 1)
+                {
+                    char *Response = QueryWindowDetails(WindowId);
+                    if(Response)
+                    {
+                        WriteToSocket(Response, SockFD);
+                        free(Response);
+                        goto win_success;
+                    }
+                }
+            }
+
+            char Response[32];
+            Response[0] = '\0';
+            snprintf(Response, sizeof(Response), "%s", "invalid windowid");
+            WriteToSocket(Response, SockFD);
+win_success:;
+        }
+    }
+    else if(TokenEquals(Command, CVAR_SPACE_MODE))
     {
         char *Variable = TokenToString(Command);
         DEBUG_PRINT("        command: '%s'\n", Variable);

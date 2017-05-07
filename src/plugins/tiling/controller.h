@@ -1,6 +1,8 @@
 #ifndef PLUGIN_CONTROLLER_H
 #define PLUGIN_CONTROLLER_H
 
+#include <stdint.h>
+
 void FocusWindow(char *Direction);
 void SwapWindow(char *Direction);
 void WarpWindow(char *Direction);
@@ -28,5 +30,7 @@ void FloatWindow(macos_window *Window);
 void UnfloatWindow(macos_window *Window);
 
 void FocusMonitor(char *Op);
+
+char *QueryWindowDetails(uint32_t WindowId);
 
 #endif

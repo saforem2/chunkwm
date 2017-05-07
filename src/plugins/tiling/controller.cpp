@@ -1510,3 +1510,44 @@ void EqualizeWindowTree(char *Unused)
 
     AXLibDestroySpace(Space);
 }
+
+// NOTE(koekeishiya): Caller is responsible for memory.
+char *QueryWindowDetails(uint32_t WindowId)
+{
+    char *Result = NULL;
+
+    macos_window *Window = GetWindowByID(WindowId);
+    if(Window)
+    {
+        char Details[256];
+        char *Mainrole = Window->Mainrole ? CopyCFStringToC(Window->Mainrole) : NULL;
+        char *Subrole = Window->Subrole ? CopyCFStringToC(Window->Subrole) : NULL;
+        char *Name = AXLibGetWindowTitle(Window->Ref);
+
+        snprintf(Details, sizeof(Details),
+                "id: %d\n"
+                "level: %d\n"
+                "name: %s\n"
+                "owner: %s\n"
+                "role: %s\n"
+                "subrole: %s\n"
+                "movable: %d\n"
+                "resizable: %d\n",
+                Window->Id,
+                Window->Level,
+                Name ? Name : "<unknown>",
+                Window->Owner->Name,
+                Mainrole ? Mainrole : "<unknown>",
+                Subrole ? Subrole : "<unknown>",
+                AXLibHasFlags(Window, Window_Movable),
+                AXLibHasFlags(Window, Window_Resizable));
+
+        if(Name) { free(Name); }
+        if(Subrole) { free(Subrole); }
+        if(Mainrole) { free(Mainrole); }
+
+        Result = strdup(Details);
+    }
+
+    return Result;
+}
