@@ -452,7 +452,7 @@ std::vector<uint32_t> GetAllVisibleWindowsForSpace(macos_space *Space)
                         {
                             DEBUG_PRINT("   %d:%d:%s:%s\n",
                                          Window->Id,
-                                         Window->Layer,
+                                         Window->Level,
                                          Window->Owner->Name,
                                          Window->Name);
                             if(!AXLibHasFlags(Window, Window_Float))
@@ -464,7 +464,7 @@ std::vector<uint32_t> GetAllVisibleWindowsForSpace(macos_space *Space)
                         {
                             DEBUG_PRINT("   %d:%d:invalid window:%s:%s\n",
                                          Window->Id,
-                                         Window->Layer,
+                                         Window->Level,
                                          Window->Owner->Name,
                                          Window->Name);
                         }
