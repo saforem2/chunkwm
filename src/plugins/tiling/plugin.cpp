@@ -450,7 +450,11 @@ std::vector<uint32_t> GetAllVisibleWindowsForSpace(macos_space *Space)
                     {
                         if(IsWindowValid(Window))
                         {
-                            DEBUG_PRINT("   %d:%s:%s\n", Window->Id, Window->Owner->Name, Window->Name);
+                            DEBUG_PRINT("   %d:%d:%s:%s\n",
+                                         Window->Id,
+                                         Window->Layer,
+                                         Window->Owner->Name,
+                                         Window->Name);
                             if(!AXLibHasFlags(Window, Window_Float))
                             {
                                 Windows.push_back(WindowList[Index]);
@@ -458,12 +462,18 @@ std::vector<uint32_t> GetAllVisibleWindowsForSpace(macos_space *Space)
                         }
                         else
                         {
-                            DEBUG_PRINT("   %d:invalid window:%s:%s\n", Window->Id, Window->Owner->Name, Window->Name);
+                            DEBUG_PRINT("   %d:%d:invalid window:%s:%s\n",
+                                         Window->Id,
+                                         Window->Layer,
+                                         Window->Owner->Name,
+                                         Window->Name);
                         }
                     }
                     else
                     {
-                        DEBUG_PRINT("   %d:window not cached !?\n", WindowId);
+                        // NOTE(koekeishiya): The chunkwm core does not report these windows to
+                        // plugins, and they are therefore never cached, we simply ignore them.
+                        // DEBUG_PRINT("   %d:window not cached\n", WindowId);
                     }
                 }
             }
