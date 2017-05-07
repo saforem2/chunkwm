@@ -28,8 +28,8 @@ struct macos_application;
 struct macos_window
 {
     AXUIElementRef Ref;
-    CFTypeRef Mainrole;
-    CFTypeRef Subrole;
+    CFStringRef Mainrole;
+    CFStringRef Subrole;
 
     // NOTE(koekeishiya): Store Owner->PID instead ?
     macos_application *Owner;

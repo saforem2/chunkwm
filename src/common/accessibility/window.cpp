@@ -58,10 +58,10 @@ macos_window *AXLibCopyWindow(macos_window *Window)
     Result->Ref = (AXUIElementRef) CFRetain(Window->Ref);
 
     if(Window->Mainrole)
-        Result->Mainrole = (AXUIElementRef) CFRetain(Window->Mainrole);
+        Result->Mainrole = (CFStringRef) CFRetain(Window->Mainrole);
 
     if(Window->Subrole)
-        Result->Subrole = (AXUIElementRef) CFRetain(Window->Subrole);
+        Result->Subrole = (CFStringRef) CFRetain(Window->Subrole);
 
     Result->Owner = Window->Owner;
     Result->Id = Window->Id;

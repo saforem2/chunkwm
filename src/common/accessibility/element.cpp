@@ -300,22 +300,22 @@ CGSize AXLibGetWindowSize(AXUIElementRef WindowRef)
 
 /* NOTE(koekeishiya): Caller is responsible for passing valid arguments.
  * Caller is responsible for calling 'CFRelease()'. */
-bool AXLibGetWindowRole(AXUIElementRef WindowRef, CFTypeRef *Role)
+bool AXLibGetWindowRole(AXUIElementRef WindowRef, CFStringRef *Role)
 {
     ASSERT(WindowRef);
     ASSERT(Role);
 
-    *Role = AXLibGetWindowProperty(WindowRef, kAXRoleAttribute);
+    *Role = (CFStringRef) AXLibGetWindowProperty(WindowRef, kAXRoleAttribute);
     return *Role != NULL;
 }
 
 /* NOTE(koekeishiya): Caller is responsible for passing valid arguments.
  * Caller is responsible for calling 'CFRelease()'. */
-bool AXLibGetWindowSubrole(AXUIElementRef WindowRef, CFTypeRef *Subrole)
+bool AXLibGetWindowSubrole(AXUIElementRef WindowRef, CFStringRef *Subrole)
 {
     ASSERT(WindowRef);
     ASSERT(Subrole);
 
-    *Subrole = AXLibGetWindowProperty(WindowRef, kAXSubroleAttribute);
+    *Subrole = (CFStringRef) AXLibGetWindowProperty(WindowRef, kAXSubroleAttribute);
     return *Subrole != NULL;
 }
