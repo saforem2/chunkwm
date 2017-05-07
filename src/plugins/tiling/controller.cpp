@@ -23,6 +23,7 @@
 extern macos_window *GetWindowByID(uint32_t Id);
 extern std::vector<uint32_t> GetAllVisibleWindows();
 extern std::vector<uint32_t> GetAllVisibleWindowsForSpace(macos_space *Space);
+extern std::vector<uint32_t> GetAllVisibleWindowsForSpace(macos_space *Space, bool IncludeInvalidWindows);
 extern void CreateWindowTree();
 extern void TileWindow(macos_window *Window);
 extern void TileWindowOnSpace(macos_window *Window, macos_space *Space, virtual_space *VirtualSpace);
@@ -1547,6 +1548,36 @@ char *QueryWindowDetails(uint32_t WindowId)
         if(Mainrole) { free(Mainrole); }
 
         Result = strdup(Details);
+    }
+
+    return Result;
+}
+
+// NOTE(koekeishiya): Caller is responsible for memory.
+char *QueryWindowsForActiveSpace()
+{
+    macos_space *Space;
+    bool Success = AXLibActiveSpace(&Space);
+    ASSERT(Success);
+
+
+    char *Result = NULL;
+    char Buffer[256] = {};
+    char Temp[32] = {};
+
+    std::vector<uint32_t> Windows = GetAllVisibleWindowsForSpace(Space, true);
+    for(int Index = 0; Index < Windows.size(); ++Index)
+    {
+        macos_window *Window = GetWindowByID(Windows[Index]);
+        ASSERT(Window);
+
+        snprintf(Temp, sizeof(Temp), "%d, %s\n", Window->Id, Window->Owner->Name);
+        strcat(Buffer, Temp);
+    }
+
+    if(!Windows.empty())
+    {
+        Result = strdup(Buffer);
     }
 
     return Result;

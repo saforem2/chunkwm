@@ -415,7 +415,7 @@ void UntileWindow(macos_window *Window, macos_space *Space, virtual_space *Virtu
 }
 
 /* NOTE(koekeishiya): Returns a vector of CGWindowIDs. */
-std::vector<uint32_t> GetAllVisibleWindowsForSpace(macos_space *Space)
+std::vector<uint32_t> GetAllVisibleWindowsForSpace(macos_space *Space, bool IncludeInvalidWindows)
 {
     std::vector<uint32_t> Windows;
 
@@ -448,7 +448,7 @@ std::vector<uint32_t> GetAllVisibleWindowsForSpace(macos_space *Space)
                     macos_window *Window = GetWindowByID(WindowId);
                     if(Window)
                     {
-                        if(IsWindowValid(Window))
+                        if(IsWindowValid(Window) || IncludeInvalidWindows)
                         {
                             DEBUG_PRINT("   %d:%d:%s:%s\n",
                                          Window->Id,
@@ -481,6 +481,11 @@ std::vector<uint32_t> GetAllVisibleWindowsForSpace(macos_space *Space)
     }
 
     return Windows;
+}
+
+std::vector<uint32_t> GetAllVisibleWindowsForSpace(macos_space *Space)
+{
+    return GetAllVisibleWindowsForSpace(Space, false);
 }
 
 /* NOTE(koekeishiya): Returns a vector of CGWindowIDs. */

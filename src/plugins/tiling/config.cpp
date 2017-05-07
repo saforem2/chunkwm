@@ -793,6 +793,15 @@ ParseQueryCommand(const char **Message, int SockFD)
             WriteToSocket(Response, SockFD);
 win_success:;
         }
+        else if(TokenEquals(Selector, "list"))
+        {
+            char *Response = QueryWindowsForActiveSpace();
+            if(Response)
+            {
+                WriteToSocket(Response, SockFD);
+                free(Response);
+            }
+        }
     }
     else if(TokenEquals(Command, CVAR_SPACE_MODE))
     {
