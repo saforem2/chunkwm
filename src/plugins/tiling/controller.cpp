@@ -1137,118 +1137,136 @@ NormalizeWindowRect(AXUIElementRef WindowRef, CFStringRef SourceMonitor, CFStrin
 
 void SendWindowToDesktop(char *Op)
 {
-    macos_window *Window = GetWindowByID(CVarIntegerValue(CVAR_FOCUSED_WINDOW));
-    if(Window)
+    macos_window *Window;
+    CGRect NormalizedWindow;
+    bool Success, ValidWindow;
+    CGSSpaceID DestinationSpaceId;
+    std::vector<uint32_t> WindowIds;
+    unsigned SourceMonitor, DestinationMonitor;
+    unsigned SourceDesktopId, DestinationDesktopId;
+    macos_space *Space, *DestinationMonitorActiveSpace;
+    CFStringRef SourceMonitorRef, DestinationMonitorRef;
+
+    Window = GetWindowByID(CVarIntegerValue(CVAR_FOCUSED_WINDOW));
+    if(!Window)
     {
-        macos_space *Space;
-        bool Success = AXLibActiveSpace(&Space);
-        ASSERT(Success);
-
-        if(Space->Type == kCGSSpaceUser)
-        {
-            unsigned SourceMonitor;
-            unsigned SourceDesktopId;
-            bool Success = AXLibCGSSpaceIDToDesktopID(Space->Id, &SourceMonitor, &SourceDesktopId);
-            ASSERT(Success);
-
-            unsigned DestinationDesktopId = 0;
-            if(StringEquals(Op, "prev"))
-            {
-                DestinationDesktopId = SourceDesktopId - 1;
-            }
-            else if(StringEquals(Op, "next"))
-            {
-                DestinationDesktopId = SourceDesktopId + 1;
-            }
-            else
-            {
-                sscanf(Op, "%d", &DestinationDesktopId);
-            }
-
-            unsigned DestinationMonitor;
-            CGSSpaceID DestinationSpaceId;
-            Success = AXLibCGSSpaceIDFromDesktopID(DestinationDesktopId, &DestinationMonitor, &DestinationSpaceId);
-            if(Success)
-            {
-                bool ValidWindow = ((!AXLibHasFlags(Window, Window_Float)) && (IsWindowValid(Window)));
-                if(ValidWindow)
-                {
-                    virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
-                    UntileWindowFromSpace(Window, Space, VirtualSpace);
-                    ReleaseVirtualSpace(VirtualSpace);
-                }
-
-                AXLibSpaceAddWindow(DestinationSpaceId, Window->Id);
-                AXLibSpaceRemoveWindow(Space->Id, Window->Id);
-
-                // NOTE(koekeishiya): MacOS does not update focus when we send the window
-                // to a different desktop using this method. This results in a desync causing
-                // a bad user-experience.
-                //
-                // We retain focus on this space by giving focus to the window with the highest
-                // priority as reported by MacOS. If there are no windows left on the source space,
-                // we still experience desync. Not exactly sure what can be done about that.
-                uint32_t FocusedWindowId = CVarIntegerValue(CVAR_FOCUSED_WINDOW);
-                if(FocusedWindowId == Window->Id)
-                {
-                    std::vector<uint32_t> WindowIds = GetAllVisibleWindowsForSpace(Space);
-                    if(!WindowIds.empty())
-                    {
-                        uint32_t WindowId = WindowIds[0];
-                        macos_window *Window = GetWindowByID(WindowId);
-                        AXLibSetFocusedWindow(Window->Ref);
-                        AXLibSetFocusedApplication(Window->Owner->PSN);
-                    }
-                }
-
-                /* NOTE(koekeishiya): If the destination space is on a different monitor,
-                 * we need to normalize the window x and y position, or it will be out of bounds. */
-                if(DestinationMonitor != SourceMonitor)
-                {
-                    CFStringRef SourceMonitorRef = AXLibGetDisplayIdentifierFromSpace(Space->Id);
-                    ASSERT(SourceMonitorRef);
-
-                    CFStringRef DestinationMonitorRef = AXLibGetDisplayIdentifierFromSpace(DestinationSpaceId);
-                    ASSERT(DestinationMonitorRef);
-
-                    CGRect Normalized = NormalizeWindowRect(Window->Ref, SourceMonitorRef, DestinationMonitorRef);
-                    AXLibSetWindowPosition(Window->Ref, Normalized.origin.x, Normalized.origin.y);
-                    AXLibSetWindowSize(Window->Ref, Normalized.size.width, Normalized.size.height);
-
-                    // NOTE(koekeishiya): We need to update our cached window dimensions, as they are
-                    // used when we attempt to tile the window on the new monitor. If we don't update
-                    // these values, we will tile the window on the old monitor. This only happens
-                    // when the window is being created as the root window, using 'Region_Full'.
-                    Window->Position = Normalized.origin;
-                    Window->Size = Normalized.size;
-
-                    if(ValidWindow)
-                    {
-                        macos_space *DestinationMonitorActiveSpace = AXLibActiveSpace(DestinationMonitorRef);
-                        if(DestinationMonitorActiveSpace->Id == DestinationSpaceId)
-                        {
-                            virtual_space *DestinationMonitorVirtualSpace = AcquireVirtualSpace(DestinationMonitorActiveSpace);
-                            TileWindowOnSpace(Window, DestinationMonitorActiveSpace, DestinationMonitorVirtualSpace);
-                            ReleaseVirtualSpace(DestinationMonitorVirtualSpace);
-                        }
-
-                        AXLibDestroySpace(DestinationMonitorActiveSpace);
-                    }
-
-                    CFRelease(DestinationMonitorRef);
-                    CFRelease(SourceMonitorRef);
-                }
-            }
-            else
-            {
-                fprintf(stderr,
-                        "invalid destination desktop specified, desktop '%d' does not exist!\n",
-                        DestinationDesktopId);
-            }
-        }
-
-        AXLibDestroySpace(Space);
+        goto out;
     }
+
+    Success = AXLibActiveSpace(&Space);
+    ASSERT(Success);
+
+    if(Space->Type != kCGSSpaceUser)
+    {
+        goto space_free;
+    }
+
+    Success = AXLibCGSSpaceIDToDesktopID(Space->Id, &SourceMonitor, &SourceDesktopId);
+    ASSERT(Success);
+
+    if(StringEquals(Op, "prev"))
+    {
+        DestinationDesktopId = SourceDesktopId - 1;
+    }
+    else if(StringEquals(Op, "next"))
+    {
+        DestinationDesktopId = SourceDesktopId + 1;
+    }
+    else if(sscanf(Op, "%d", &DestinationDesktopId) != 1)
+    {
+        fprintf(stderr, "invalid destination desktop specified '%s'!\n", Op);
+        goto space_free;
+    }
+
+    if(SourceDesktopId == DestinationDesktopId)
+    {
+        fprintf(stderr,
+                "invalid destination desktop specified, source desktop and destination '%d' are the same!\n",
+                DestinationDesktopId);
+        goto space_free;
+    }
+
+    Success = AXLibCGSSpaceIDFromDesktopID(DestinationDesktopId, &DestinationMonitor, &DestinationSpaceId);
+    if(!Success)
+    {
+        fprintf(stderr,
+                "invalid destination desktop specified, desktop '%d' does not exist!\n",
+                DestinationDesktopId);
+        goto space_free;
+    }
+
+    ValidWindow = ((!AXLibHasFlags(Window, Window_Float)) && (IsWindowValid(Window)));
+    if(ValidWindow)
+    {
+        virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
+        UntileWindowFromSpace(Window, Space, VirtualSpace);
+        ReleaseVirtualSpace(VirtualSpace);
+    }
+
+    AXLibSpaceAddWindow(DestinationSpaceId, Window->Id);
+    AXLibSpaceRemoveWindow(Space->Id, Window->Id);
+
+    // NOTE(koekeishiya): MacOS does not update focus when we send the window
+    // to a different desktop using this method. This results in a desync causing
+    // a bad user-experience.
+    //
+    // We retain focus on this space by giving focus to the window with the highest
+    // priority as reported by MacOS. If there are no windows left on the source space,
+    // we still experience desync. Not exactly sure what can be done about that.
+    WindowIds = GetAllVisibleWindowsForSpace(Space);
+    if(!WindowIds.empty())
+    {
+        macos_window *Window = GetWindowByID(WindowIds[0]);
+        AXLibSetFocusedWindow(Window->Ref);
+        AXLibSetFocusedApplication(Window->Owner->PSN);
+    }
+
+    if(DestinationMonitor == SourceMonitor)
+    {
+        goto space_free;
+    }
+
+    /* NOTE(koekeishiya): If the destination space is on a different monitor,
+     * we need to normalize the window x and y position, or it will be out of bounds. */
+    SourceMonitorRef = AXLibGetDisplayIdentifierFromSpace(Space->Id);
+    ASSERT(SourceMonitorRef);
+
+    DestinationMonitorRef = AXLibGetDisplayIdentifierFromSpace(DestinationSpaceId);
+    ASSERT(DestinationMonitorRef);
+
+    NormalizedWindow = NormalizeWindowRect(Window->Ref, SourceMonitorRef, DestinationMonitorRef);
+    AXLibSetWindowPosition(Window->Ref, NormalizedWindow.origin.x, NormalizedWindow.origin.y);
+    AXLibSetWindowSize(Window->Ref, NormalizedWindow.size.width, NormalizedWindow.size.height);
+
+    // NOTE(koekeishiya): We need to update our cached window dimensions, as they are
+    // used when we attempt to tile the window on the new monitor. If we don't update
+    // these values, we will tile the window on the old monitor. This only happens
+    // when the window is being created as the root window, using 'Region_Full'.
+    Window->Position = NormalizedWindow.origin;
+    Window->Size = NormalizedWindow.size;
+
+    if(!ValidWindow)
+    {
+        goto monitor_free;
+    }
+
+    DestinationMonitorActiveSpace = AXLibActiveSpace(DestinationMonitorRef);
+    if(DestinationMonitorActiveSpace->Id == DestinationSpaceId)
+    {
+        virtual_space *DestinationMonitorVirtualSpace = AcquireVirtualSpace(DestinationMonitorActiveSpace);
+        TileWindowOnSpace(Window, DestinationMonitorActiveSpace, DestinationMonitorVirtualSpace);
+        ReleaseVirtualSpace(DestinationMonitorVirtualSpace);
+    }
+
+    AXLibDestroySpace(DestinationMonitorActiveSpace);
+
+monitor_free:
+    CFRelease(DestinationMonitorRef);
+    CFRelease(SourceMonitorRef);
+
+space_free:
+    AXLibDestroySpace(Space);
+out:;
 }
 
 void SendWindowToMonitor(char *Op)
