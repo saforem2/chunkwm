@@ -24,7 +24,7 @@ extern macos_window *GetWindowByID(uint32_t Id);
 extern std::vector<uint32_t> GetAllVisibleWindows();
 extern std::vector<uint32_t> GetAllVisibleWindowsForSpace(macos_space *Space);
 extern std::vector<uint32_t> GetAllVisibleWindowsForSpace(macos_space *Space, bool IncludeInvalidWindows);
-extern void CreateWindowTree();
+extern void CreateWindowTreeForSpace(macos_space *Space, virtual_space *VirtualSpace);
 extern void TileWindow(macos_window *Window);
 extern void TileWindowOnSpace(macos_window *Window, macos_space *Space, virtual_space *VirtualSpace);
 extern void UntileWindow(macos_window *Window);
@@ -349,148 +349,178 @@ void FocusWindow(char *Direction)
 
 void SwapWindow(char *Direction)
 {
-    macos_window *Window = GetWindowByID(CVarIntegerValue(CVAR_BSP_INSERTION_POINT));
+    bool Success;
+    macos_space *Space;
+    virtual_space *VirtualSpace;
+    node *WindowNode, *ClosestNode;
+    macos_window *Window, *ClosestWindow;
+
+    Window = GetWindowByID(CVarIntegerValue(CVAR_BSP_INSERTION_POINT));
     if(!Window)
     {
-        return; // TODO(koekeishiya): Focus first or last leaf ?
+        goto out;
     }
 
-    macos_space *Space;
-    bool Success = AXLibActiveSpace(&Space);
+    Success = AXLibActiveSpace(&Space);
     ASSERT(Success);
 
-    if(Space->Type == kCGSSpaceUser)
+    if(Space->Type != kCGSSpaceUser)
     {
-        virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
-        if(VirtualSpace->Tree && VirtualSpace->Mode != Virtual_Space_Float)
-        {
-            if(VirtualSpace->Mode == Virtual_Space_Bsp)
-            {
-                node *WindowNode = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
-                if(WindowNode)
-                {
-                    macos_window *ClosestWindow;
-                    if(FindClosestWindow(Space, VirtualSpace, Window, &ClosestWindow, Direction, false))
-                    {
-                        node *ClosestNode = GetNodeWithId(VirtualSpace->Tree, ClosestWindow->Id, VirtualSpace->Mode);
-                        ASSERT(ClosestNode);
-
-                        SwapNodeIds(WindowNode, ClosestNode);
-                        ResizeWindowToRegionSize(WindowNode);
-                        ResizeWindowToRegionSize(ClosestNode);
-
-                        if((CVarIntegerValue(CVAR_MOUSE_FOLLOWS_FOCUS)) &&
-                           (!IsCursorInRegion(ClosestNode->Region)))
-                        {
-                            CGPoint Center = CGPointMake(ClosestNode->Region.X + ClosestNode->Region.Width / 2,
-                                                         ClosestNode->Region.Y + ClosestNode->Region.Height / 2);
-                            CGWarpMouseCursorPosition(Center);
-                        }
-                    }
-                }
-            }
-            else if(VirtualSpace->Mode == Virtual_Space_Monocle)
-            {
-                node *WindowNode = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
-                if(WindowNode)
-                {
-                    node *ClosestNode = NULL;
-                    if(StringEquals(Direction, "west"))
-                    {
-                        if(WindowNode->Left)
-                        {
-                            ClosestNode = WindowNode->Left;
-                        }
-                        else
-                        {
-                            ClosestNode = GetLastLeafNode(VirtualSpace->Tree);
-                        }
-                    }
-                    else if(StringEquals(Direction, "east"))
-                    {
-                        if(WindowNode->Right)
-                        {
-                            ClosestNode = WindowNode->Right;
-                        }
-                        else
-                        {
-                            ClosestNode = GetFirstLeafNode(VirtualSpace->Tree);
-                        }
-                    }
-
-                    if(ClosestNode && ClosestNode != WindowNode)
-                    {
-                        // NOTE(koekeishiya): Swapping windows in monocle mode
-                        // should not trigger mouse_follows_focus.
-                        SwapNodeIds(WindowNode, ClosestNode);
-                    }
-                }
-            }
-        }
-        ReleaseVirtualSpace(VirtualSpace);
+        goto space_free;
     }
 
+    VirtualSpace = AcquireVirtualSpace(Space);
+    if((!VirtualSpace->Tree) ||
+       (VirtualSpace->Mode == Virtual_Space_Float))
+    {
+        goto vspace_release;
+    }
+
+    if(VirtualSpace->Mode == Virtual_Space_Bsp)
+    {
+        WindowNode = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
+        if(!WindowNode)
+        {
+            goto vspace_release;
+        }
+
+        if(!FindClosestWindow(Space, VirtualSpace, Window, &ClosestWindow, Direction, false))
+        {
+            goto vspace_release;
+        }
+
+        ClosestNode = GetNodeWithId(VirtualSpace->Tree, ClosestWindow->Id, VirtualSpace->Mode);
+        ASSERT(ClosestNode);
+
+        SwapNodeIds(WindowNode, ClosestNode);
+        ResizeWindowToRegionSize(WindowNode);
+        ResizeWindowToRegionSize(ClosestNode);
+
+        if((CVarIntegerValue(CVAR_MOUSE_FOLLOWS_FOCUS)) &&
+           (!IsCursorInRegion(ClosestNode->Region)))
+        {
+            CGPoint Center = CGPointMake(ClosestNode->Region.X + ClosestNode->Region.Width / 2,
+                                         ClosestNode->Region.Y + ClosestNode->Region.Height / 2);
+            CGWarpMouseCursorPosition(Center);
+        }
+    }
+    else if(VirtualSpace->Mode == Virtual_Space_Monocle)
+    {
+        WindowNode = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
+        if(!WindowNode)
+        {
+            goto vspace_release;
+        }
+
+        if(StringEquals(Direction, "west"))
+        {
+            ClosestNode = WindowNode->Left
+                        ? WindowNode->Left
+                        : GetLastLeafNode(VirtualSpace->Tree);
+        }
+        else if(StringEquals(Direction, "east"))
+        {
+            ClosestNode = WindowNode->Right
+                        ? WindowNode->Right
+                        : GetFirstLeafNode(VirtualSpace->Tree);
+        }
+        else
+        {
+            // NOTE(koekeishiya): This is not really necessary, because we
+            // perform input argument validation before this function is called
+            ClosestNode = NULL;
+        }
+
+        if(ClosestNode && ClosestNode != WindowNode)
+        {
+            // NOTE(koekeishiya): Swapping windows in monocle mode
+            // should not trigger mouse_follows_focus.
+            SwapNodeIds(WindowNode, ClosestNode);
+        }
+    }
+
+vspace_release:
+    ReleaseVirtualSpace(VirtualSpace);
+
+space_free:
     AXLibDestroySpace(Space);
+out:;
 }
 
 void WarpWindow(char *Direction)
 {
-    macos_window *Window = GetWindowByID(CVarIntegerValue(CVAR_BSP_INSERTION_POINT));
-    if(Window)
+    bool Success;
+    macos_space *Space;
+    virtual_space *VirtualSpace;
+    macos_window *Window, *ClosestWindow;
+    node *WindowNode, *ClosestNode, *FocusedNode;
+
+    Window = GetWindowByID(CVarIntegerValue(CVAR_BSP_INSERTION_POINT));
+    if(!Window)
     {
-        macos_space *Space;
-        bool Success = AXLibActiveSpace(&Space);
-        ASSERT(Success);
-
-        if(Space->Type == kCGSSpaceUser)
-        {
-            virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
-            if(VirtualSpace->Tree && VirtualSpace->Mode == Virtual_Space_Bsp)
-            {
-                macos_window *ClosestWindow;
-                if(FindClosestWindow(Space, VirtualSpace, Window, &ClosestWindow, Direction, true))
-                {
-                    node *WindowNode = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
-                    ASSERT(WindowNode);
-                    node *ClosestNode = GetNodeWithId(VirtualSpace->Tree, ClosestWindow->Id, VirtualSpace->Mode);
-                    ASSERT(ClosestNode);
-                    node *FocusedNode;
-
-                    if(WindowNode->Parent == ClosestNode->Parent)
-                    {
-                        // NOTE(koekeishiya): Windows have the same parent, perform a regular swap.
-                        SwapNodeIds(WindowNode, ClosestNode);
-                        ResizeWindowToRegionSize(WindowNode);
-                        ResizeWindowToRegionSize(ClosestNode);
-                        FocusedNode = ClosestNode;
-                    }
-                    else
-                    {
-                        // NOTE(koekeishiya): Modify tree layout.
-                        UntileWindowFromSpace(Window, Space, VirtualSpace);
-                        UpdateCVar(CVAR_BSP_INSERTION_POINT, (int)ClosestWindow->Id);
-                        TileWindowOnSpace(Window, Space, VirtualSpace);
-                        UpdateCVar(CVAR_BSP_INSERTION_POINT, (int)Window->Id);
-
-                        FocusedNode = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
-                    }
-
-                    ASSERT(FocusedNode);
-
-                    if((CVarIntegerValue(CVAR_MOUSE_FOLLOWS_FOCUS)) &&
-                       (!IsCursorInRegion(FocusedNode->Region)))
-                    {
-                        CGPoint Center = CGPointMake(FocusedNode->Region.X + FocusedNode->Region.Width / 2,
-                                                     FocusedNode->Region.Y + FocusedNode->Region.Height / 2);
-                        CGWarpMouseCursorPosition(Center);
-                    }
-                }
-            }
-            ReleaseVirtualSpace(VirtualSpace);
-        }
-
-        AXLibDestroySpace(Space);
+        goto out;
     }
+
+    Success = AXLibActiveSpace(&Space);
+    ASSERT(Success);
+
+    if(Space->Type != kCGSSpaceUser)
+    {
+        goto space_free;
+    }
+
+    VirtualSpace = AcquireVirtualSpace(Space);
+    if((!VirtualSpace->Tree) ||
+       (VirtualSpace->Mode != Virtual_Space_Bsp))
+    {
+        goto vspace_release;
+    }
+
+    if(!FindClosestWindow(Space, VirtualSpace, Window, &ClosestWindow, Direction, true))
+    {
+        goto vspace_release;
+    }
+
+    WindowNode = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
+    ASSERT(WindowNode);
+    ClosestNode = GetNodeWithId(VirtualSpace->Tree, ClosestWindow->Id, VirtualSpace->Mode);
+    ASSERT(ClosestNode);
+
+    if(WindowNode->Parent == ClosestNode->Parent)
+    {
+        // NOTE(koekeishiya): Windows have the same parent, perform a regular swap.
+        SwapNodeIds(WindowNode, ClosestNode);
+        ResizeWindowToRegionSize(WindowNode);
+        ResizeWindowToRegionSize(ClosestNode);
+        FocusedNode = ClosestNode;
+    }
+    else
+    {
+        // NOTE(koekeishiya): Modify tree layout.
+        UntileWindowFromSpace(Window, Space, VirtualSpace);
+        UpdateCVar(CVAR_BSP_INSERTION_POINT, (int)ClosestWindow->Id);
+        TileWindowOnSpace(Window, Space, VirtualSpace);
+        UpdateCVar(CVAR_BSP_INSERTION_POINT, (int)Window->Id);
+
+        FocusedNode = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
+    }
+
+    ASSERT(FocusedNode);
+
+    if((CVarIntegerValue(CVAR_MOUSE_FOLLOWS_FOCUS)) &&
+       (!IsCursorInRegion(FocusedNode->Region)))
+    {
+        CGPoint Center = CGPointMake(FocusedNode->Region.X + FocusedNode->Region.Width / 2,
+                                     FocusedNode->Region.Y + FocusedNode->Region.Height / 2);
+        CGWarpMouseCursorPosition(Center);
+    }
+
+vspace_release:
+    ReleaseVirtualSpace(VirtualSpace);
+
+space_free:
+    AXLibDestroySpace(Space);
+out:;
 }
 
 void TemporaryRatio(char *Ratio)
@@ -572,6 +602,234 @@ void UnfloatWindow(macos_window *Window)
     }
 }
 
+internal void
+ToggleWindowFloat()
+{
+    uint32_t WindowId = CVarIntegerValue(CVAR_FOCUSED_WINDOW);
+    macos_window *Window = GetWindowByID(WindowId);
+    if(!Window)
+    {
+        return;
+    }
+
+    if(AXLibHasFlags(Window, Window_Float))
+    {
+        UnfloatWindow(Window);
+        TileWindow(Window);
+    }
+    else
+    {
+        UntileWindow(Window);
+        FloatWindow(Window);
+    }
+}
+
+internal void
+ToggleWindowNativeFullscreen()
+{
+    uint32_t WindowId = CVarIntegerValue(CVAR_FOCUSED_WINDOW);
+    macos_window *Window = GetWindowByID(WindowId);
+    if(!Window)
+    {
+        return;
+    }
+
+    bool Fullscreen = AXLibIsWindowFullscreen(Window->Ref);
+    if(Fullscreen)
+    {
+        AXLibSetWindowFullscreen(Window->Ref, !Fullscreen);
+
+        if(AXLibIsWindowMovable(Window->Ref))
+            AXLibAddFlags(Window, Window_Movable);
+
+        if(AXLibIsWindowResizable(Window->Ref))
+            AXLibAddFlags(Window, Window_Resizable);
+
+        TileWindow(Window);
+    }
+    else
+    {
+        UntileWindow(Window);
+        AXLibSetWindowFullscreen(Window->Ref, !Fullscreen);
+    }
+}
+
+internal void
+ToggleWindowFullscreenZoom()
+{
+    node *Node;
+    bool Success;
+    uint32_t WindowId;
+    macos_space *Space;
+    virtual_space *VirtualSpace;
+
+    Success = AXLibActiveSpace(&Space);
+    ASSERT(Success);
+
+    if(Space->Type != kCGSSpaceUser)
+    {
+        goto space_free;
+    }
+
+    VirtualSpace = AcquireVirtualSpace(Space);
+    if((!VirtualSpace->Tree) ||
+       (VirtualSpace->Mode != Virtual_Space_Bsp))
+    {
+        goto vspace_release;
+    }
+
+    WindowId = CVarIntegerValue(CVAR_FOCUSED_WINDOW);
+    Node = GetNodeWithId(VirtualSpace->Tree, WindowId, VirtualSpace->Mode);
+    if(!Node)
+    {
+        goto vspace_release;
+    }
+
+    // NOTE(koekeishiya): Window is already in fullscreen-zoom, unzoom it..
+    if(VirtualSpace->Tree->Zoom == Node)
+    {
+        ResizeWindowToRegionSize(Node);
+        VirtualSpace->Tree->Zoom = NULL;
+    }
+    else
+    {
+        // NOTE(koekeishiya): Window is in parent-zoom, reset state.
+        if(Node->Parent && Node->Parent->Zoom == Node)
+        {
+            Node->Parent->Zoom = NULL;
+        }
+
+        /* NOTE(koekeishiya): Some other window is in
+         * fullscreen zoom, unzoom the existing window. */
+        if(VirtualSpace->Tree->Zoom)
+        {
+            ResizeWindowToRegionSize(VirtualSpace->Tree->Zoom);
+        }
+
+        VirtualSpace->Tree->Zoom = Node;
+        ResizeWindowToExternalRegionSize(Node, VirtualSpace->Tree->Region);
+    }
+
+vspace_release:
+    ReleaseVirtualSpace(VirtualSpace);
+
+space_free:
+    AXLibDestroySpace(Space);
+}
+
+internal void
+ToggleWindowParentZoom()
+{
+    node *Node;
+    bool Success;
+    uint32_t WindowId;
+    macos_space *Space;
+    virtual_space *VirtualSpace;
+
+    Success = AXLibActiveSpace(&Space);
+    ASSERT(Success);
+
+    if(Space->Type != kCGSSpaceUser)
+    {
+        goto space_free;
+    }
+
+    VirtualSpace = AcquireVirtualSpace(Space);
+    if((!VirtualSpace->Tree) ||
+       (VirtualSpace->Mode != Virtual_Space_Bsp))
+    {
+        goto vspace_release;
+    }
+
+    WindowId = CVarIntegerValue(CVAR_FOCUSED_WINDOW);
+    Node = GetNodeWithId(VirtualSpace->Tree, WindowId, VirtualSpace->Mode);
+    if(!Node || !Node->Parent)
+    {
+        goto vspace_release;
+    }
+
+    // NOTE(koekeishiya): Window is already in parent-zoom, unzoom it..
+    if(Node->Parent->Zoom == Node)
+    {
+        ResizeWindowToRegionSize(Node);
+        Node->Parent->Zoom = NULL;
+    }
+    else
+    {
+        // NOTE(koekeishiya): Window is in fullscreen zoom, reset state.
+        if(VirtualSpace->Tree->Zoom == Node)
+        {
+            VirtualSpace->Tree->Zoom = NULL;
+        }
+
+        /* NOTE(koekeishiya): Some other window is in
+         * parent zoom, unzoom the existing window. */
+        if(Node->Parent->Zoom)
+        {
+            ResizeWindowToRegionSize(Node->Parent->Zoom);
+        }
+
+        Node->Parent->Zoom = Node;
+        ResizeWindowToExternalRegionSize(Node, Node->Parent->Region);
+    }
+
+vspace_release:
+    ReleaseVirtualSpace(VirtualSpace);
+
+space_free:
+    AXLibDestroySpace(Space);
+}
+
+internal void
+ToggleWindowSplitMode()
+{
+    node *Node;
+    bool Success;
+    uint32_t WindowId;
+    macos_space *Space;
+    virtual_space *VirtualSpace;
+
+    Success = AXLibActiveSpace(&Space);
+    ASSERT(Success);
+
+    if(Space->Type != kCGSSpaceUser)
+    {
+        goto space_free;
+    }
+
+    VirtualSpace = AcquireVirtualSpace(Space);
+    if((!VirtualSpace->Tree) ||
+       (VirtualSpace->Mode != Virtual_Space_Bsp))
+    {
+        goto vspace_release;
+    }
+
+    WindowId = CVarIntegerValue(CVAR_BSP_INSERTION_POINT);
+    Node = GetNodeWithId(VirtualSpace->Tree, WindowId, VirtualSpace->Mode);
+    if(!Node && !Node->Parent)
+    {
+        goto vspace_release;
+    }
+
+    if(Node->Parent->Split == Split_Horizontal)
+    {
+        Node->Parent->Split = Split_Vertical;
+    }
+    else if(Node->Parent->Split == Split_Vertical)
+    {
+        Node->Parent->Split = Split_Horizontal;
+    }
+
+    CreateNodeRegionRecursive(Node->Parent, false, Space, VirtualSpace);
+    ApplyNodeRegion(Node->Parent, VirtualSpace->Mode);
+
+vspace_release:
+    ReleaseVirtualSpace(VirtualSpace);
+
+space_free:
+    AXLibDestroySpace(Space);
+}
+
 void ToggleWindow(char *Type)
 {
     // NOTE(koekeishiya): We cannot use our CVAR_BSP_INSERTION_POINT here
@@ -579,207 +837,69 @@ void ToggleWindow(char *Type)
     // and we will not be able to perform an operation in that case.
     if(StringEquals(Type, "float"))
     {
-        uint32_t WindowId = CVarIntegerValue(CVAR_FOCUSED_WINDOW);
-        macos_window *Window = GetWindowByID(WindowId);
-        if(Window)
-        {
-            if(AXLibHasFlags(Window, Window_Float))
-            {
-                UnfloatWindow(Window);
-                TileWindow(Window);
-            }
-            else
-            {
-                UntileWindow(Window);
-                FloatWindow(Window);
-            }
-        }
+        ToggleWindowFloat();
     }
     else if(StringEquals(Type, "native-fullscreen"))
     {
-        uint32_t WindowId = CVarIntegerValue(CVAR_FOCUSED_WINDOW);
-        macos_window *Window = GetWindowByID(WindowId);
-        if(Window)
-        {
-            bool Fullscreen = AXLibIsWindowFullscreen(Window->Ref);
-            if(Fullscreen)
-            {
-                AXLibSetWindowFullscreen(Window->Ref, !Fullscreen);
-
-                if(AXLibIsWindowMovable(Window->Ref))
-                    AXLibAddFlags(Window, Window_Movable);
-
-                if(AXLibIsWindowResizable(Window->Ref))
-                    AXLibAddFlags(Window, Window_Resizable);
-
-                TileWindow(Window);
-            }
-            else
-            {
-                UntileWindow(Window);
-                AXLibSetWindowFullscreen(Window->Ref, !Fullscreen);
-            }
-        }
+        ToggleWindowNativeFullscreen();
     }
     else if(StringEquals(Type, "fullscreen"))
     {
-        macos_space *Space;
-        bool Success = AXLibActiveSpace(&Space);
-        ASSERT(Success);
-
-        if(Space->Type == kCGSSpaceUser)
-        {
-            virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
-            if(VirtualSpace->Tree && VirtualSpace->Mode == Virtual_Space_Bsp)
-            {
-                uint32_t WindowId = CVarIntegerValue(CVAR_FOCUSED_WINDOW);
-                node *Node = GetNodeWithId(VirtualSpace->Tree, WindowId, VirtualSpace->Mode);
-                if(Node)
-                {
-                    // NOTE(koekeishiya): Window is already in fullscreen-zoom, unzoom it..
-                    if(VirtualSpace->Tree->Zoom == Node)
-                    {
-                        ResizeWindowToRegionSize(Node);
-                        VirtualSpace->Tree->Zoom = NULL;
-                    }
-                    else
-                    {
-                        // NOTE(koekeishiya): Window is in parent-zoom, reset state.
-                        if(Node->Parent && Node->Parent->Zoom == Node)
-                        {
-                            Node->Parent->Zoom = NULL;
-                        }
-
-                        /* NOTE(koekeishiya): Some other window is in
-                         * fullscreen zoom, unzoom the existing window. */
-                        if(VirtualSpace->Tree->Zoom)
-                        {
-                            ResizeWindowToRegionSize(VirtualSpace->Tree->Zoom);
-                        }
-
-                        VirtualSpace->Tree->Zoom = Node;
-                        ResizeWindowToExternalRegionSize(Node, VirtualSpace->Tree->Region);
-                    }
-                }
-            }
-            ReleaseVirtualSpace(VirtualSpace);
-        }
-
-        AXLibDestroySpace(Space);
+        ToggleWindowFullscreenZoom();
     }
     else if(StringEquals(Type, "parent"))
     {
-        macos_space *Space;
-        bool Success = AXLibActiveSpace(&Space);
-        ASSERT(Success);
-
-        if(Space->Type == kCGSSpaceUser)
-        {
-            virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
-            if(VirtualSpace->Tree && VirtualSpace->Mode == Virtual_Space_Bsp)
-            {
-                uint32_t WindowId = CVarIntegerValue(CVAR_FOCUSED_WINDOW);
-                node *Node = GetNodeWithId(VirtualSpace->Tree, WindowId, VirtualSpace->Mode);
-                if(Node && Node->Parent)
-                {
-                    // NOTE(koekeishiya): Window is already in parent-zoom, unzoom it..
-                    if(Node->Parent->Zoom == Node)
-                    {
-                        ResizeWindowToRegionSize(Node);
-                        Node->Parent->Zoom = NULL;
-                    }
-                    else
-                    {
-                        // NOTE(koekeishiya): Window is in fullscreen zoom, reset state.
-                        if(VirtualSpace->Tree->Zoom == Node)
-                        {
-                            VirtualSpace->Tree->Zoom = NULL;
-                        }
-
-                        /* NOTE(koekeishiya): Some other window is in
-                         * parent zoom, unzoom the existing window. */
-                        if(Node->Parent->Zoom)
-                        {
-                            ResizeWindowToRegionSize(Node->Parent->Zoom);
-                        }
-
-                        Node->Parent->Zoom = Node;
-                        ResizeWindowToExternalRegionSize(Node, Node->Parent->Region);
-                    }
-                }
-            }
-            ReleaseVirtualSpace(VirtualSpace);
-        }
-
-        AXLibDestroySpace(Space);
+        ToggleWindowParentZoom();
     }
     else if(StringEquals(Type, "split"))
     {
-        macos_space *Space;
-        bool Success = AXLibActiveSpace(&Space);
-        ASSERT(Success);
-
-        if(Space->Type == kCGSSpaceUser)
-        {
-            virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
-            if(VirtualSpace->Tree && VirtualSpace->Mode == Virtual_Space_Bsp)
-            {
-                uint32_t WindowId = CVarIntegerValue(CVAR_BSP_INSERTION_POINT);
-                node *Node = GetNodeWithId(VirtualSpace->Tree, WindowId, VirtualSpace->Mode);
-                if(Node && Node->Parent)
-                {
-                    if(Node->Parent->Split == Split_Horizontal)
-                    {
-                        Node->Parent->Split = Split_Vertical;
-                    }
-                    else if(Node->Parent->Split == Split_Vertical)
-                    {
-                        Node->Parent->Split = Split_Horizontal;
-                    }
-
-                    CreateNodeRegionRecursive(Node->Parent, false, Space, VirtualSpace);
-                    ApplyNodeRegion(Node->Parent, VirtualSpace->Mode);
-                }
-            }
-            ReleaseVirtualSpace(VirtualSpace);
-        }
-
-        AXLibDestroySpace(Space);
+        ToggleWindowSplitMode();
     }
 }
 
 void UseInsertionPoint(char *Direction)
 {
-    macos_window *Window = GetWindowByID(CVarIntegerValue(CVAR_BSP_INSERTION_POINT));
-    if(Window)
+    bool Success;
+    macos_space *Space;
+    virtual_space *VirtualSpace;
+    macos_window *Window, *ClosestWindow;
+
+    Window = GetWindowByID(CVarIntegerValue(CVAR_BSP_INSERTION_POINT));
+    if(!Window)
     {
-        macos_space *Space;
-        bool Success = AXLibActiveSpace(&Space);
-        ASSERT(Success);
-
-        if(Space->Type == kCGSSpaceUser)
-        {
-            virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
-            if(VirtualSpace->Tree && VirtualSpace->Mode == Virtual_Space_Bsp)
-            {
-                if(StringEquals(Direction, "focus"))
-                {
-                    UpdateCVar(CVAR_BSP_INSERTION_POINT, CVarIntegerValue(CVAR_FOCUSED_WINDOW));
-                }
-                else
-                {
-                    macos_window *ClosestWindow;
-                    if(FindClosestWindow(Space, VirtualSpace, Window, &ClosestWindow, Direction, true))
-                    {
-                        UpdateCVar(CVAR_BSP_INSERTION_POINT, (int)ClosestWindow->Id);
-                    }
-                }
-            }
-            ReleaseVirtualSpace(VirtualSpace);
-        }
-
-        AXLibDestroySpace(Space);
+        goto out;
     }
+
+    Success = AXLibActiveSpace(&Space);
+    ASSERT(Success);
+
+    if(Space->Type != kCGSSpaceUser)
+    {
+        goto space_free;
+    }
+
+    VirtualSpace = AcquireVirtualSpace(Space);
+    if((!VirtualSpace->Tree) ||
+       (VirtualSpace->Mode != Virtual_Space_Bsp))
+    {
+        goto vspace_release;
+    }
+
+    if(StringEquals(Direction, "focus"))
+    {
+        UpdateCVar(CVAR_BSP_INSERTION_POINT, CVarIntegerValue(CVAR_FOCUSED_WINDOW));
+    }
+    else if(FindClosestWindow(Space, VirtualSpace, Window, &ClosestWindow, Direction, true))
+    {
+        UpdateCVar(CVAR_BSP_INSERTION_POINT, (int)ClosestWindow->Id);
+    }
+
+vspace_release:
+    ReleaseVirtualSpace(VirtualSpace);
+
+space_free:
+    AXLibDestroySpace(Space);
+out:;
 }
 
 internal void
@@ -816,22 +936,33 @@ RotateBSPTree(node *Node, char *Degrees)
 
 void RotateWindowTree(char *Degrees)
 {
+    bool Success;
     macos_space *Space;
-    bool Success = AXLibActiveSpace(&Space);
+    virtual_space *VirtualSpace;
+
+    Success = AXLibActiveSpace(&Space);
     ASSERT(Success);
 
-    if(Space->Type == kCGSSpaceUser)
+    if(Space->Type != kCGSSpaceUser)
     {
-        virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
-        if(VirtualSpace->Tree && VirtualSpace->Mode == Virtual_Space_Bsp)
-        {
-            RotateBSPTree(VirtualSpace->Tree, Degrees);
-            CreateNodeRegionRecursive(VirtualSpace->Tree, false, Space, VirtualSpace);
-            ApplyNodeRegion(VirtualSpace->Tree, VirtualSpace->Mode);
-        }
-        ReleaseVirtualSpace(VirtualSpace);
+        goto space_free;
     }
 
+    VirtualSpace = AcquireVirtualSpace(Space);
+    if((!VirtualSpace->Tree) ||
+       (VirtualSpace->Mode != Virtual_Space_Bsp))
+    {
+        goto vspace_release;
+    }
+
+    RotateBSPTree(VirtualSpace->Tree, Degrees);
+    CreateNodeRegionRecursive(VirtualSpace->Tree, false, Space, VirtualSpace);
+    ApplyNodeRegion(VirtualSpace->Tree, VirtualSpace->Mode);
+
+vspace_release:
+    ReleaseVirtualSpace(VirtualSpace);
+
+space_free:
     AXLibDestroySpace(Space);
 }
 
@@ -855,252 +986,314 @@ MirrorBSPTree(node *Tree, node_split Axis)
 
 void MirrorWindowTree(char *Direction)
 {
+    bool Success;
     macos_space *Space;
-    bool Success = AXLibActiveSpace(&Space);
+    virtual_space *VirtualSpace;
+
+    Success = AXLibActiveSpace(&Space);
     ASSERT(Success);
 
-    if(Space->Type == kCGSSpaceUser)
+    if(Space->Type != kCGSSpaceUser)
     {
-        virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
-        if(VirtualSpace->Tree && VirtualSpace->Mode == Virtual_Space_Bsp)
-        {
-            if(StringEquals(Direction, "vertical"))
-            {
-                VirtualSpace->Tree = MirrorBSPTree(VirtualSpace->Tree, Split_Vertical);
-            }
-            else if(StringEquals(Direction, "horizontal"))
-            {
-                VirtualSpace->Tree = MirrorBSPTree(VirtualSpace->Tree, Split_Horizontal);
-            }
-
-            CreateNodeRegionRecursive(VirtualSpace->Tree, false, Space, VirtualSpace);
-            ApplyNodeRegion(VirtualSpace->Tree, VirtualSpace->Mode);
-        }
-        ReleaseVirtualSpace(VirtualSpace);
+        goto space_free;
     }
 
+    VirtualSpace = AcquireVirtualSpace(Space);
+    if((!VirtualSpace->Tree) ||
+       (VirtualSpace->Mode != Virtual_Space_Bsp))
+    {
+        goto vspace_release;
+    }
+
+    if(StringEquals(Direction, "vertical"))
+    {
+        VirtualSpace->Tree = MirrorBSPTree(VirtualSpace->Tree, Split_Vertical);
+    }
+    else if(StringEquals(Direction, "horizontal"))
+    {
+        VirtualSpace->Tree = MirrorBSPTree(VirtualSpace->Tree, Split_Horizontal);
+    }
+
+    CreateNodeRegionRecursive(VirtualSpace->Tree, false, Space, VirtualSpace);
+    ApplyNodeRegion(VirtualSpace->Tree, VirtualSpace->Mode);
+
+vspace_release:
+    ReleaseVirtualSpace(VirtualSpace);
+
+space_free:
     AXLibDestroySpace(Space);
 }
 
 void AdjustWindowRatio(char *Direction)
 {
-    macos_window *Window = GetWindowByID(CVarIntegerValue(CVAR_BSP_INSERTION_POINT));
-    if(Window)
+    bool Success;
+    macos_space *Space;
+    float Offset, Ratio;
+    virtual_space *VirtualSpace;
+    macos_window *Window, *ClosestWindow;
+    node *WindowNode, *ClosestNode, *Ancestor;
+
+    Window = GetWindowByID(CVarIntegerValue(CVAR_BSP_INSERTION_POINT));
+    if(!Window)
     {
-        macos_space *Space;
-        bool Success = AXLibActiveSpace(&Space);
-        ASSERT(Success);
-
-        if(Space->Type == kCGSSpaceUser)
-        {
-            virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
-            if((VirtualSpace->Tree && VirtualSpace->Mode == Virtual_Space_Bsp) &&
-               (!IsLeafNode(VirtualSpace->Tree) && VirtualSpace->Tree->WindowId == 0))
-            {
-                node *WindowNode = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
-                if(WindowNode)
-                {
-                    macos_window *ClosestWindow;
-                    if(FindClosestWindow(Space, VirtualSpace, Window, &ClosestWindow, Direction, false))
-                    {
-                        node *ClosestNode = GetNodeWithId(VirtualSpace->Tree, ClosestWindow->Id, VirtualSpace->Mode);
-                        ASSERT(ClosestNode);
-
-                        node *Ancestor = GetLowestCommonAncestor(WindowNode, ClosestNode);
-                        if(Ancestor)
-                        {
-                            float Offset = CVarFloatingPointValue(CVAR_BSP_SPLIT_RATIO);
-                            if((IsRightChild(WindowNode)) ||
-                               (IsNodeInTree(Ancestor->Right, WindowNode)))
-                            {
-                                Offset = -Offset;
-                            }
-
-                            float Ratio = Ancestor->Ratio + Offset;
-                            if(Ratio >= 0.1 && Ratio <= 0.9)
-                            {
-                                Ancestor->Ratio = Ratio;
-                                ResizeNodeRegion(Ancestor, Space, VirtualSpace);
-                                ApplyNodeRegion(Ancestor, VirtualSpace->Mode);
-                            }
-                        }
-                    }
-                }
-            }
-            ReleaseVirtualSpace(VirtualSpace);
-        }
-
-        AXLibDestroySpace(Space);
+        goto out;
     }
+
+    Success = AXLibActiveSpace(&Space);
+    ASSERT(Success);
+
+    if(Space->Type != kCGSSpaceUser)
+    {
+        goto space_free;
+    }
+
+    VirtualSpace = AcquireVirtualSpace(Space);
+    if((!VirtualSpace->Tree) ||
+       (VirtualSpace->Mode != Virtual_Space_Bsp) ||
+       (IsLeafNode(VirtualSpace->Tree)))
+    {
+        goto vspace_release;
+    }
+
+    WindowNode = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
+    if(!WindowNode)
+    {
+        goto vspace_release;
+    }
+
+    if(!FindClosestWindow(Space, VirtualSpace, Window, &ClosestWindow, Direction, false))
+    {
+        goto vspace_release;
+    }
+
+    ClosestNode = GetNodeWithId(VirtualSpace->Tree, ClosestWindow->Id, VirtualSpace->Mode);
+    ASSERT(ClosestNode);
+
+    Ancestor = GetLowestCommonAncestor(WindowNode, ClosestNode);
+    if(!Ancestor)
+    {
+        goto vspace_release;
+    }
+
+    Offset = CVarFloatingPointValue(CVAR_BSP_SPLIT_RATIO);
+    if((IsRightChild(WindowNode)) ||
+       (IsNodeInTree(Ancestor->Right, WindowNode)))
+    {
+        Offset = -Offset;
+    }
+
+    Ratio = Ancestor->Ratio + Offset;
+    if(Ratio >= 0.1 && Ratio <= 0.9)
+    {
+        Ancestor->Ratio = Ratio;
+        ResizeNodeRegion(Ancestor, Space, VirtualSpace);
+        ApplyNodeRegion(Ancestor, VirtualSpace->Mode);
+    }
+
+vspace_release:
+    ReleaseVirtualSpace(VirtualSpace);
+
+space_free:
+    AXLibDestroySpace(Space);
+out:;
 }
 
 void ActivateSpaceLayout(char *Layout)
 {
+    bool Success;
     macos_space *Space;
-    bool Success = AXLibActiveSpace(&Space);
+    virtual_space *VirtualSpace;
+    virtual_space_mode NewLayout;
+
+    Success = AXLibActiveSpace(&Space);
     ASSERT(Success);
 
-    if(Space->Type == kCGSSpaceUser)
+    if(Space->Type != kCGSSpaceUser)
     {
-        virtual_space_mode NewLayout;
-        if(StringEquals(Layout, "bsp"))
-        {
-            NewLayout = Virtual_Space_Bsp;
-        }
-        else if(StringEquals(Layout, "monocle"))
-        {
-            NewLayout = Virtual_Space_Monocle;
-        }
-        else if(StringEquals(Layout, "float"))
-        {
-            NewLayout = Virtual_Space_Float;
-        }
-        else
-        {
-            // NOTE(koekeishiya): This can never happen, silence stupid compiler warning..
-            return;
-        }
-
-        bool LayoutChanged = false;
-
-        virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
-        if(VirtualSpace->Mode != NewLayout)
-        {
-            if(VirtualSpace->Tree)
-            {
-                FreeNodeTree(VirtualSpace->Tree, VirtualSpace->Mode);
-                VirtualSpace->Tree = NULL;
-            }
-
-            VirtualSpace->Mode = NewLayout;
-            LayoutChanged = true;
-        }
-        ReleaseVirtualSpace(VirtualSpace);
-
-        if(LayoutChanged)
-        {
-            CreateWindowTree();
-        }
+        goto space_free;
     }
 
+    if(StringEquals(Layout, "bsp"))
+    {
+        NewLayout = Virtual_Space_Bsp;
+    }
+    else if(StringEquals(Layout, "monocle"))
+    {
+        NewLayout = Virtual_Space_Monocle;
+    }
+    else if(StringEquals(Layout, "float"))
+    {
+        NewLayout = Virtual_Space_Float;
+    }
+    else
+    {
+        goto space_free;
+    }
+
+    VirtualSpace = AcquireVirtualSpace(Space);
+    if(VirtualSpace->Mode == NewLayout)
+    {
+        goto vspace_release;
+    }
+
+    if(VirtualSpace->Tree)
+    {
+        FreeNodeTree(VirtualSpace->Tree, VirtualSpace->Mode);
+        VirtualSpace->Tree = NULL;
+    }
+
+    VirtualSpace->Mode = NewLayout;
+    CreateWindowTreeForSpace(Space, VirtualSpace);
+
+vspace_release:
+    ReleaseVirtualSpace(VirtualSpace);
+
+space_free:
     AXLibDestroySpace(Space);
 }
 
 void ToggleSpace(char *Op)
 {
+    bool Success;
     macos_space *Space;
-    bool Success = AXLibActiveSpace(&Space);
+    virtual_space *VirtualSpace;
+
+    Success = AXLibActiveSpace(&Space);
     ASSERT(Success);
 
-    if(Space->Type == kCGSSpaceUser)
+    if(Space->Type != kCGSSpaceUser)
     {
-        virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
-        if(VirtualSpace->Mode != Virtual_Space_Float)
-        {
-            if(StringEquals(Op, "offset"))
-            {
-                if(VirtualSpace->Offset)
-                {
-                    VirtualSpace->Offset = NULL;
-                }
-                else
-                {
-                    VirtualSpace->Offset = &VirtualSpace->_Offset;
-                }
-
-                if(VirtualSpace->Tree)
-                {
-                    CreateNodeRegion(VirtualSpace->Tree, Region_Full, Space, VirtualSpace);
-                    CreateNodeRegionRecursive(VirtualSpace->Tree, false, Space, VirtualSpace);
-                    ApplyNodeRegion(VirtualSpace->Tree, VirtualSpace->Mode, false);
-                }
-            }
-        }
-        ReleaseVirtualSpace(VirtualSpace);
+        goto space_free;
     }
 
+    VirtualSpace = AcquireVirtualSpace(Space);
+    if(VirtualSpace->Mode == Virtual_Space_Float)
+    {
+        goto vspace_release;
+    }
+
+    if(StringEquals(Op, "offset"))
+    {
+        VirtualSpace->Offset = VirtualSpace->Offset
+                             ? NULL
+                             : &VirtualSpace->_Offset;
+
+        if(VirtualSpace->Tree)
+        {
+            CreateNodeRegion(VirtualSpace->Tree, Region_Full, Space, VirtualSpace);
+            CreateNodeRegionRecursive(VirtualSpace->Tree, false, Space, VirtualSpace);
+            ApplyNodeRegion(VirtualSpace->Tree, VirtualSpace->Mode, false);
+        }
+    }
+
+vspace_release:
+    ReleaseVirtualSpace(VirtualSpace);
+
+space_free:
     AXLibDestroySpace(Space);
 }
 
 void AdjustSpacePadding(char *Op)
 {
+    bool Success;
     macos_space *Space;
-    bool Success = AXLibActiveSpace(&Space);
+    virtual_space *VirtualSpace;
+    float Delta, NewTop, NewBottom, NewLeft, NewRight;
+
+    Success = AXLibActiveSpace(&Space);
     ASSERT(Success);
 
-    if(Space->Type == kCGSSpaceUser)
+    if(Space->Type != kCGSSpaceUser)
     {
-        virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
-        if(VirtualSpace->Mode != Virtual_Space_Float)
-        {
-            float Delta = CVarFloatingPointValue(CVAR_PADDING_STEP_SIZE);
-            if(StringEquals(Op, "dec"))
-            {
-                Delta = -Delta;
-            }
-
-            float NewTop = VirtualSpace->_Offset.Top + Delta;
-            float NewBottom = VirtualSpace->_Offset.Bottom + Delta;
-            float NewLeft = VirtualSpace->_Offset.Left + Delta;
-            float NewRight = VirtualSpace->_Offset.Right + Delta;
-
-            if((NewTop >= 0) &&
-               (NewBottom >= 0) &&
-               (NewLeft >= 0) &&
-               (NewRight >= 0))
-            {
-                VirtualSpace->_Offset.Top = NewTop;
-                VirtualSpace->_Offset.Bottom = NewBottom;
-                VirtualSpace->_Offset.Left = NewLeft;
-                VirtualSpace->_Offset.Right = NewRight;
-            }
-
-            if(VirtualSpace->Tree)
-            {
-                CreateNodeRegion(VirtualSpace->Tree, Region_Full, Space, VirtualSpace);
-                CreateNodeRegionRecursive(VirtualSpace->Tree, false, Space, VirtualSpace);
-                ApplyNodeRegion(VirtualSpace->Tree, VirtualSpace->Mode, false);
-            }
-        }
-        ReleaseVirtualSpace(VirtualSpace);
+        goto space_free;
     }
 
+    VirtualSpace = AcquireVirtualSpace(Space);
+    if(VirtualSpace->Mode == Virtual_Space_Float)
+    {
+        goto vspace_release;
+    }
+
+    Delta = CVarFloatingPointValue(CVAR_PADDING_STEP_SIZE);
+    if(StringEquals(Op, "dec"))
+    {
+        Delta = -Delta;
+    }
+
+    NewTop = VirtualSpace->_Offset.Top + Delta;
+    NewBottom = VirtualSpace->_Offset.Bottom + Delta;
+    NewLeft = VirtualSpace->_Offset.Left + Delta;
+    NewRight = VirtualSpace->_Offset.Right + Delta;
+
+    if((NewTop >= 0) &&
+       (NewBottom >= 0) &&
+       (NewLeft >= 0) &&
+       (NewRight >= 0))
+    {
+        VirtualSpace->_Offset.Top = NewTop;
+        VirtualSpace->_Offset.Bottom = NewBottom;
+        VirtualSpace->_Offset.Left = NewLeft;
+        VirtualSpace->_Offset.Right = NewRight;
+    }
+
+    if(VirtualSpace->Tree)
+    {
+        CreateNodeRegion(VirtualSpace->Tree, Region_Full, Space, VirtualSpace);
+        CreateNodeRegionRecursive(VirtualSpace->Tree, false, Space, VirtualSpace);
+        ApplyNodeRegion(VirtualSpace->Tree, VirtualSpace->Mode, false);
+    }
+
+vspace_release:
+    ReleaseVirtualSpace(VirtualSpace);
+
+space_free:
     AXLibDestroySpace(Space);
 }
 
 void AdjustSpaceGap(char *Op)
 {
+    bool Success;
     macos_space *Space;
-    bool Success = AXLibActiveSpace(&Space);
+    float Delta, NewGap;
+    virtual_space *VirtualSpace;
+
+    Success = AXLibActiveSpace(&Space);
     ASSERT(Success);
 
-    if(Space->Type == kCGSSpaceUser)
+    if(Space->Type != kCGSSpaceUser)
     {
-        virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
-        if(VirtualSpace->Mode != Virtual_Space_Float)
-        {
-            float Delta = CVarFloatingPointValue(CVAR_GAP_STEP_SIZE);
-            if(StringEquals(Op, "dec"))
-            {
-                Delta = -Delta;
-            }
-
-            float NewGap = VirtualSpace->_Offset.Gap + Delta;
-            if(NewGap >= 0)
-            {
-                VirtualSpace->_Offset.Gap = NewGap;
-            }
-
-            if(VirtualSpace->Tree)
-            {
-                CreateNodeRegion(VirtualSpace->Tree, Region_Full, Space, VirtualSpace);
-                CreateNodeRegionRecursive(VirtualSpace->Tree, false, Space, VirtualSpace);
-                ApplyNodeRegion(VirtualSpace->Tree, VirtualSpace->Mode, false);
-            }
-        }
-        ReleaseVirtualSpace(VirtualSpace);
+        goto space_free;
     }
 
+    VirtualSpace = AcquireVirtualSpace(Space);
+    if(VirtualSpace->Mode == Virtual_Space_Float)
+    {
+        goto vspace_release;
+    }
+
+    Delta = CVarFloatingPointValue(CVAR_GAP_STEP_SIZE);
+    if(StringEquals(Op, "dec"))
+    {
+        Delta = -Delta;
+    }
+
+    NewGap = VirtualSpace->_Offset.Gap + Delta;
+    if(NewGap >= 0)
+    {
+        VirtualSpace->_Offset.Gap = NewGap;
+    }
+
+    if(VirtualSpace->Tree)
+    {
+        CreateNodeRegion(VirtualSpace->Tree, Region_Full, Space, VirtualSpace);
+        CreateNodeRegionRecursive(VirtualSpace->Tree, false, Space, VirtualSpace);
+        ApplyNodeRegion(VirtualSpace->Tree, VirtualSpace->Mode, false);
+    }
+
+vspace_release:
+    ReleaseVirtualSpace(VirtualSpace);
+
+space_free:
     AXLibDestroySpace(Space);
 }
 
@@ -1404,6 +1597,7 @@ out:;
 void FocusMonitor(char *Op)
 {
     bool Success;
+    macos_window *Window;
     std::vector<uint32_t> WindowIds;
     CFStringRef DestinationMonitorRef;
     macos_space *Space, *DestinationSpace;
@@ -1460,20 +1654,22 @@ void FocusMonitor(char *Op)
     }
 
     WindowIds = GetAllVisibleWindowsForSpace(DestinationSpace);
-    if(!WindowIds.empty())
+    if(WindowIds.empty())
     {
-        macos_window *Window = GetWindowByID(WindowIds[0]);
-        AXLibSetFocusedWindow(Window->Ref);
-        AXLibSetFocusedApplication(Window->Owner->PSN);
+        goto dest_space_free;
+    }
 
-        if(CVarIntegerValue(CVAR_MOUSE_FOLLOWS_FOCUS))
-        {
-            CGPoint Position = AXLibGetWindowPosition(Window->Ref);
-            CGSize Size = AXLibGetWindowSize(Window->Ref);
-            CGPoint Center = CGPointMake(Position.x + Size.width / 2,
-                                         Position.y + Size.height / 2);
-            CGWarpMouseCursorPosition(Center);
-        }
+    Window = GetWindowByID(WindowIds[0]);
+    AXLibSetFocusedWindow(Window->Ref);
+    AXLibSetFocusedApplication(Window->Owner->PSN);
+
+    if(CVarIntegerValue(CVAR_MOUSE_FOLLOWS_FOCUS))
+    {
+        CGPoint Position = AXLibGetWindowPosition(Window->Ref);
+        CGSize Size = AXLibGetWindowSize(Window->Ref);
+        CGPoint Center = CGPointMake(Position.x + Size.width / 2,
+                                     Position.y + Size.height / 2);
+        CGWarpMouseCursorPosition(Center);
     }
 
 dest_space_free:
@@ -1486,84 +1682,107 @@ space_free:
 
 void WarpFloatingWindow(char *Op)
 {
-    macos_window *Window = GetWindowByID(CVarIntegerValue(CVAR_FOCUSED_WINDOW));
-    if(Window)
+    region Region;
+    macos_space *Space;
+    macos_window *Window;
+    CFStringRef DisplayRef;
+    virtual_space *VirtualSpace;
+
+    Window = GetWindowByID(CVarIntegerValue(CVAR_FOCUSED_WINDOW));
+    if(!Window)
     {
-        CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromWindowRect(Window->Position, Window->Size);
-        ASSERT(DisplayRef);
-
-        macos_space *Space = AXLibActiveSpace(DisplayRef);
-        ASSERT(Space);
-
-        virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
-
-        if((AXLibHasFlags(Window, Window_Float)) ||
-           (VirtualSpace->Mode == Virtual_Space_Float))
-        {
-            region Region = CGRectToRegion(AXLibGetDisplayBounds(DisplayRef));
-            ConstrainRegion(DisplayRef, &Region);
-
-            if(StringEquals(Op, "fullscreen"))
-            {
-                AXLibSetWindowPosition(Window->Ref, Region.X, Region.Y);
-                AXLibSetWindowSize(Window->Ref, Region.Width, Region.Height);
-            }
-            else if(StringEquals(Op, "left"))
-            {
-                AXLibSetWindowPosition(Window->Ref, Region.X, Region.Y);
-                AXLibSetWindowSize(Window->Ref, Region.Width / 2, Region.Height);
-            }
-            else if(StringEquals(Op, "right"))
-            {
-                AXLibSetWindowPosition(Window->Ref, Region.X + Region.Width / 2, Region.Y);
-                AXLibSetWindowSize(Window->Ref, Region.Width / 2, Region.Height);
-            }
-            else if(StringEquals(Op, "top-left"))
-            {
-                AXLibSetWindowPosition(Window->Ref, Region.X, Region.Y);
-                AXLibSetWindowSize(Window->Ref, Region.Width / 2, Region.Height / 2);
-            }
-            else if(StringEquals(Op, "top-right"))
-            {
-                AXLibSetWindowPosition(Window->Ref, Region.X + Region.Width / 2, Region.Y);
-                AXLibSetWindowSize(Window->Ref, Region.Width / 2, Region.Height / 2);
-            }
-            else if(StringEquals(Op, "bottom-left"))
-            {
-                AXLibSetWindowPosition(Window->Ref, Region.X, Region.Y + Region.Height / 2);
-                AXLibSetWindowSize(Window->Ref, Region.Width / 2, Region.Height / 2);
-            }
-            else if(StringEquals(Op, "bottom-right"))
-            {
-                AXLibSetWindowPosition(Window->Ref, Region.X + Region.Width / 2, Region.Y + Region.Height / 2);
-                AXLibSetWindowSize(Window->Ref, Region.Width / 2, Region.Height / 2);
-            }
-        }
-
-        ReleaseVirtualSpace(VirtualSpace);
-        AXLibDestroySpace(Space);
-        CFRelease(DisplayRef);
+        goto out;
     }
+
+    DisplayRef = AXLibGetDisplayIdentifierFromWindowRect(Window->Position, Window->Size);
+    ASSERT(DisplayRef);
+
+    Space = AXLibActiveSpace(DisplayRef);
+    ASSERT(Space);
+
+    VirtualSpace = AcquireVirtualSpace(Space);
+
+    if((!AXLibHasFlags(Window, Window_Float)) &&
+       (VirtualSpace->Mode != Virtual_Space_Float))
+    {
+        goto space_free;
+    }
+
+    Region = CGRectToRegion(AXLibGetDisplayBounds(DisplayRef));
+    ConstrainRegion(DisplayRef, &Region);
+
+    if(StringEquals(Op, "fullscreen"))
+    {
+        AXLibSetWindowPosition(Window->Ref, Region.X, Region.Y);
+        AXLibSetWindowSize(Window->Ref, Region.Width, Region.Height);
+    }
+    else if(StringEquals(Op, "left"))
+    {
+        AXLibSetWindowPosition(Window->Ref, Region.X, Region.Y);
+        AXLibSetWindowSize(Window->Ref, Region.Width / 2, Region.Height);
+    }
+    else if(StringEquals(Op, "right"))
+    {
+        AXLibSetWindowPosition(Window->Ref, Region.X + Region.Width / 2, Region.Y);
+        AXLibSetWindowSize(Window->Ref, Region.Width / 2, Region.Height);
+    }
+    else if(StringEquals(Op, "top-left"))
+    {
+        AXLibSetWindowPosition(Window->Ref, Region.X, Region.Y);
+        AXLibSetWindowSize(Window->Ref, Region.Width / 2, Region.Height / 2);
+    }
+    else if(StringEquals(Op, "top-right"))
+    {
+        AXLibSetWindowPosition(Window->Ref, Region.X + Region.Width / 2, Region.Y);
+        AXLibSetWindowSize(Window->Ref, Region.Width / 2, Region.Height / 2);
+    }
+    else if(StringEquals(Op, "bottom-left"))
+    {
+        AXLibSetWindowPosition(Window->Ref, Region.X, Region.Y + Region.Height / 2);
+        AXLibSetWindowSize(Window->Ref, Region.Width / 2, Region.Height / 2);
+    }
+    else if(StringEquals(Op, "bottom-right"))
+    {
+        AXLibSetWindowPosition(Window->Ref, Region.X + Region.Width / 2, Region.Y + Region.Height / 2);
+        AXLibSetWindowSize(Window->Ref, Region.Width / 2, Region.Height / 2);
+    }
+
+space_free:
+    ReleaseVirtualSpace(VirtualSpace);
+    AXLibDestroySpace(Space);
+    CFRelease(DisplayRef);
+out:;
 }
 
 void EqualizeWindowTree(char *Unused)
 {
+    bool Success;
     macos_space *Space;
-    bool Success = AXLibActiveSpace(&Space);
+    virtual_space *VirtualSpace;
+
+    Success = AXLibActiveSpace(&Space);
     ASSERT(Success);
 
-    if(Space->Type == kCGSSpaceUser)
+    if(Space->Type != kCGSSpaceUser)
     {
-        virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
-        if(VirtualSpace->Tree && VirtualSpace->Mode == Virtual_Space_Bsp)
-        {
-            EqualizeNodeTree(VirtualSpace->Tree);
-            ResizeNodeRegion(VirtualSpace->Tree, Space, VirtualSpace);
-            ApplyNodeRegion(VirtualSpace->Tree, VirtualSpace->Mode);
-        }
-        ReleaseVirtualSpace(VirtualSpace);
+        goto space_free;
     }
 
+    VirtualSpace = AcquireVirtualSpace(Space);
+    if((!VirtualSpace->Tree) ||
+       (VirtualSpace->Mode != Virtual_Space_Bsp))
+    {
+        goto vspace_release;
+    }
+
+    EqualizeNodeTree(VirtualSpace->Tree);
+    ResizeNodeRegion(VirtualSpace->Tree, Space, VirtualSpace);
+    ApplyNodeRegion(VirtualSpace->Tree, VirtualSpace->Mode);
+
+vspace_release:
+    ReleaseVirtualSpace(VirtualSpace);
+
+space_free:
     AXLibDestroySpace(Space);
 }
 
@@ -1614,7 +1833,6 @@ char *QueryWindowsForActiveSpace()
     macos_space *Space;
     bool Success = AXLibActiveSpace(&Space);
     ASSERT(Success);
-
 
     char *Result = NULL;
     char Buffer[256] = {};

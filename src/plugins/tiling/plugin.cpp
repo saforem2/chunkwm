@@ -607,6 +607,61 @@ GetAllWindowsToRemoveFromTree(std::vector<uint32_t> &VisibleWindows, std::vector
     return Windows;
 }
 
+void CreateWindowTreeForSpace(macos_space *Space, virtual_space *VirtualSpace)
+{
+    std::vector<uint32_t> Windows;
+    node *Root, *New;
+
+    if((VirtualSpace->Tree) ||
+       (VirtualSpace->Mode == Virtual_Space_Float))
+    {
+        goto out;
+    }
+
+    Windows = GetAllVisibleWindowsForSpace(Space);
+    if(Windows.empty())
+    {
+        goto out;
+    }
+
+    Root = CreateRootNode(Windows[0], Space, VirtualSpace);
+    VirtualSpace->Tree = Root;
+
+    if(VirtualSpace->Mode == Virtual_Space_Bsp)
+    {
+        for(size_t Index = 1;
+            Index < Windows.size();
+            ++Index)
+        {
+            New = GetFirstMinDepthLeafNode(Root);
+            ASSERT(New != NULL);
+
+            node_split Split = (node_split) CVarIntegerValue(CVAR_BSP_SPLIT_MODE);
+            if(Split == Split_Optimal)
+            {
+                Split = OptimalSplitMode(New);
+            }
+
+            CreateLeafNodePair(New, New->WindowId, Windows[Index], Split, Space, VirtualSpace);
+        }
+    }
+    else if(VirtualSpace->Mode == Virtual_Space_Monocle)
+    {
+        for(size_t Index = 1;
+            Index < Windows.size();
+            ++Index)
+        {
+            New = CreateRootNode(Windows[Index], Space, VirtualSpace);
+            Root->Right = New;
+            New->Left = Root;
+            Root = New;
+        }
+    }
+
+    ApplyNodeRegion(VirtualSpace->Tree, VirtualSpace->Mode);
+out:;
+}
+
 void CreateWindowTree()
 {
     macos_space *Space;
@@ -629,48 +684,7 @@ void CreateWindowTree()
     if(Space->Type == kCGSSpaceUser)
     {
         virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
-        if(!VirtualSpace->Tree && VirtualSpace->Mode != Virtual_Space_Float)
-        {
-            std::vector<uint32_t> Windows = GetAllVisibleWindowsForSpace(Space);
-            if(!Windows.empty())
-            {
-                node *Root = CreateRootNode(Windows[0], Space, VirtualSpace);
-                VirtualSpace->Tree = Root;
-
-                if(VirtualSpace->Mode == Virtual_Space_Bsp)
-                {
-                    for(size_t Index = 1;
-                        Index < Windows.size();
-                        ++Index)
-                    {
-                        node *Node = GetFirstMinDepthLeafNode(Root);
-                        ASSERT(Node != NULL);
-
-                        node_split Split = (node_split) CVarIntegerValue(CVAR_BSP_SPLIT_MODE);
-                        if(Split == Split_Optimal)
-                        {
-                            Split = OptimalSplitMode(Node);
-                        }
-
-                        CreateLeafNodePair(Node, Node->WindowId, Windows[Index], Split, Space, VirtualSpace);
-                    }
-                }
-                else if(VirtualSpace->Mode == Virtual_Space_Monocle)
-                {
-                    for(size_t Index = 1;
-                        Index < Windows.size();
-                        ++Index)
-                    {
-                        node *Next = CreateRootNode(Windows[Index], Space, VirtualSpace);
-                        Root->Right = Next;
-                        Next->Left = Root;
-                        Root = Next;
-                    }
-                }
-
-                ApplyNodeRegion(VirtualSpace->Tree, VirtualSpace->Mode);
-            }
-        }
+        CreateWindowTreeForSpace(Space, VirtualSpace);
         ReleaseVirtualSpace(VirtualSpace);
     }
 
@@ -770,7 +784,7 @@ void ApplicationTerminatedHandler(void *Data)
 
 void ApplicationHiddenHandler(void *Data)
 {
-    macos_application *Application = (macos_application *) Data;
+    // macos_application *Application = (macos_application *) Data;
     RebalanceWindowTree();
 }
 
