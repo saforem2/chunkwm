@@ -79,8 +79,6 @@ void CreateBorder(int X, int Y, int W, int H)
     [BorderWindow makeKeyAndOrderFront:nil];
     [BorderWindow setReleasedWhenClosed:YES];
 
-    BorderCreated = true;
-
     [Pool release];
 }
 
@@ -98,6 +96,7 @@ void UpdateBorder(int X, int Y, int W, int H)
     }
     else
     {
+        BorderCreated = true;
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void)
         {
             dispatch_async(dispatch_get_main_queue(), ^(void)
