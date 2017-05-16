@@ -147,9 +147,8 @@ GetWindowDistance(macos_space *Space, virtual_space *VirtualSpace,
 }
 
 internal bool
-WindowIsInDirection(virtual_space *VirtualSpace,
-                    macos_window *WindowA, macos_window *WindowB,
-                    char *Direction)
+WindowIsInDirection(virtual_space *VirtualSpace, char *Op,
+                    macos_window *WindowA, macos_window *WindowB)
 {
     bool Result = false;
 
@@ -161,17 +160,21 @@ WindowIsInDirection(virtual_space *VirtualSpace,
         region *A = &NodeA->Region;
         region *B = &NodeB->Region;
 
-        if((StringEquals(Direction, "north")) ||
-           (StringEquals(Direction, "south")))
+        directions Direction = DirectionFromString(Op);
+        switch(Direction)
         {
-            Result = (A->Y != B->Y) &&
-                     (fmax(A->X, B->X) < fmin(B->X + B->Width, A->X + A->Width));
-        }
-        if((StringEquals(Direction, "east")) ||
-           (StringEquals(Direction, "west")))
-        {
-            Result = (A->X != B->X) &&
-                     (fmax(A->Y, B->Y) < fmin(B->Y + B->Height, A->Y + A->Height));
+            case Dir_North:
+            case Dir_South:
+            {
+                Result = (A->Y != B->Y) &&
+                         (fmax(A->X, B->X) < fmin(B->X + B->Width, A->X + A->Width));
+            } break;
+            case Dir_East:
+            case Dir_West:
+            {
+                Result = (A->X != B->X) &&
+                         (fmax(A->Y, B->Y) < fmin(B->Y + B->Height, A->Y + A->Height));
+            } break;
         }
     }
 
@@ -193,7 +196,7 @@ FindClosestWindow(macos_space *Space, virtual_space *VirtualSpace,
         macos_window *Window = GetWindowByID(Windows[Index]);
         if(Window &&
            Match->Id != Window->Id &&
-           WindowIsInDirection(VirtualSpace, Match, Window, Direction))
+           WindowIsInDirection(VirtualSpace, Direction, Match, Window))
         {
             float Dist = GetWindowDistance(Space, VirtualSpace,
                                            Match, Window,
