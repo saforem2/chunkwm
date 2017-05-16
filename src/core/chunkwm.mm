@@ -175,7 +175,7 @@ int main(int Count, char **Args)
         Warn("chunkwm: could not register for display notifications..\n");
     }
 
-    if(!BeginCallbackThreads(4))
+    if(!BeginCallbackThreads(CHUNKWM_THREAD_COUNT))
     {
         Warn("chunkwm: could not get semaphore, callback multi-threading disabled..\n");
     }

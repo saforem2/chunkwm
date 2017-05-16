@@ -7,6 +7,8 @@
 #define CHUNKWM_MINOR           0
 #define CHUNKWM_PATCH           27
 
+#define CHUNKWM_THREAD_COUNT    4
+
 #define CHUNKWM_CONFIG          ".chunkwmrc"
 #define CHUNKWM_PORT            3920
 
