@@ -62,73 +62,85 @@ GetCenterOfWindow(virtual_space *VirtualSpace, macos_window *Window, float *X, f
     }
 }
 
+enum directions
+{
+    Dir_Unknown,
+    Dir_North,
+    Dir_East,
+    Dir_South,
+    Dir_West,
+};
+
+internal directions
+DirectionFromString(char *Direction)
+{
+    if(StringEquals(Direction, "north"))        return Dir_North;
+    else if(StringEquals(Direction, "east"))    return Dir_East;
+    else if(StringEquals(Direction, "south"))   return Dir_South;
+    else if(StringEquals(Direction, "west"))    return Dir_West;
+    return Dir_Unknown;
+}
+
+internal void
+WrapMonitorEdge(macos_space *Space, int Direction,
+                float *X1, float *X2, float *Y1, float *Y2)
+{
+    CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromSpace(Space->Id);
+    CGRect Display = AXLibGetDisplayBounds(DisplayRef);
+    CFRelease(DisplayRef);
+
+    switch(Direction)
+    {
+        case Dir_North: { if(*Y1 < *Y2) *Y2 -= Display.size.height; } break;
+        case Dir_East:  { if(*X1 > *X2) *X2 += Display.size.width;  } break;
+        case Dir_South: { if(*Y1 > *Y2) *Y2 += Display.size.height; } break;
+        case Dir_West:  { if(*X1 < *X2) *X2 -= Display.size.width;  } break;
+    }
+}
+
 internal float
 GetWindowDistance(macos_space *Space, virtual_space *VirtualSpace,
                   macos_window *A, macos_window *B,
-                  char *Direction, bool Wrap)
+                  char *Op, bool Wrap)
 {
     float X1, Y1, X2, Y2;
     GetCenterOfWindow(VirtualSpace, A, &X1, &Y1);
     GetCenterOfWindow(VirtualSpace, B, &X2, &Y2);
 
-    bool West = StringEquals(Direction, "west");
-    bool East = StringEquals(Direction, "east");
-    bool North = StringEquals(Direction, "north");
-    bool South = StringEquals(Direction, "south");
-
+    directions Direction = DirectionFromString(Op);
     if(Wrap)
     {
-        CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromSpace(Space->Id);
-        CGRect Display = AXLibGetDisplayBounds(DisplayRef);
-        CFRelease(DisplayRef);
-
-        if(West && X1 < X2)
-        {
-            X2 -= Display.size.width;
-        }
-        else if(East && X1 > X2)
-        {
-            X2 += Display.size.width;
-        }
-        if(North && Y1 < Y2)
-        {
-            Y2 -= Display.size.height;
-        }
-        else if(South && Y1 > Y2)
-        {
-            Y2 += Display.size.height;
-        }
+        WrapMonitorEdge(Space, Direction, &X1, &X2, &Y1, &Y2);
     }
 
-    float DeltaX = X2 - X1;
-    float DeltaY = Y2 - Y1;
-    float Angle = atan2(DeltaY, DeltaX);
-    float Distance = hypot(DeltaX, DeltaY);
-    float DeltaA = 0;
+    float DeltaX    = X2 - X1;
+    float DeltaY    = Y2 - Y1;
+    float Angle     = atan2(DeltaY, DeltaX);
+    float Distance  = hypot(DeltaX, DeltaY);
+    float DeltaA    = 0;
 
-    if((North && DeltaY >= 0) ||
-       (East && DeltaX <= 0) ||
-       (South && DeltaY <= 0) ||
-       (West && DeltaX >= 0))
+    switch(Direction)
     {
-        return 0xFFFFFFFF;
-    }
-
-    if(North)
-    {
-        DeltaA = -M_PI_2 - Angle;
-    }
-    else if(South)
-    {
-        DeltaA = M_PI_2 - Angle;
-    }
-    else if(East)
-    {
-        DeltaA = 0.0 - Angle;
-    }
-    else if(West)
-    {
-        DeltaA = M_PI - fabs(Angle);
+        case Dir_North:
+        {
+            if(DeltaY >= 0) return 0xFFFFFFFF;
+            DeltaA = -M_PI_2 - Angle;
+        } break;
+        case Dir_East:
+        {
+            if(DeltaX <= 0) return 0xFFFFFFFF;
+            DeltaA = 0.0 - Angle;
+        } break;
+        case Dir_South:
+        {
+            if(DeltaY <= 0) return 0xFFFFFFFF;
+            DeltaA = M_PI_2 - Angle;
+        } break;
+        case Dir_West:
+        {
+            if(DeltaX >= 0) return 0xFFFFFFFF;
+            DeltaA = M_PI - fabs(Angle);
+        } break;
     }
 
     return (Distance / cos(DeltaA / 2.0));
