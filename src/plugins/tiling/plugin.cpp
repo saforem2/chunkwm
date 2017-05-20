@@ -1188,7 +1188,8 @@ Init(plugin_broadcast *ChunkwmBroadcast)
         AddApplicationWindowList(Application);
     }
 
-    /* NOTE(koekeishiya): Tile windows visible on the current space using binary space partitioning. */
+    /* NOTE(koekeishiya): Tile windows visible on the current space using configured mode,
+     * defaults to binary space partitioning. */
     CreateWindowTree();
 
     /* NOTE(koekeishiya): Set our initial insertion-point on launch. */
