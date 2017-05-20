@@ -5,9 +5,7 @@
 #include "../common/accessibility/application.h"
 #include "../common/accessibility/window.h"
 #include "../common/accessibility/element.h"
-
 #include "../common/misc/assert.h"
-#include "../common/misc/debug.h"
 
 #include <pthread.h>
 
@@ -127,7 +125,7 @@ AddApplicationWindowsToCollection(macos_application *Application)
             goto success;
 
 win_invalid:
-            DEBUG_PRINT("%s:%s is not destructible, ignore!\n", Window->Owner->Name, Window->Name);
+            printf("%s:%s is not destructible, ignore!\n", Window->Owner->Name, Window->Name);
             AXLibRemoveObserverNotification(&Window->Owner->Observer, Window->Ref, kAXUIElementDestroyedNotification);
 
 win_dupe:
@@ -318,15 +316,14 @@ macos_application *ConstructAndAddApplication(ProcessSerialNumber PSN, pid_t PID
 
     if(Success)
     {
-        DEBUG_PRINT("%d:%s registered window notifications\n", Application->PID, Application->Name);
+        printf("%d:%s successfully registered window notifications\n", Application->PID, Application->Name);
     }
     else
     {
         fprintf(stderr, "%d:%s could not register window notifications!!!\n", Application->PID, Application->Name);
     }
 
-    // NOTE(koekeishiya): An application can have multiple windows when it spawns.
-    // We need to track all of these.
+    // NOTE(koekeishiya): An application can have multiple windows when it spawns. We need to track all of these.
     AddApplicationWindowsToCollection(Application);
 
     return Application;
