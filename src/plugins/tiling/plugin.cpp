@@ -404,8 +404,8 @@ void UntileWindow(macos_window *Window)
         ReleaseVirtualSpace(VirtualSpace);
     }
 
-    CFRelease(DisplayRef);
     AXLibDestroySpace(Space);
+    CFRelease(DisplayRef);
 }
 
 void UntileWindow(macos_window *Window, macos_space *Space, virtual_space *VirtualSpace)
@@ -685,9 +685,7 @@ void CreateWindowTree()
 
     if(AXLibIsDisplayChangingSpaces(DisplayRef))
     {
-        AXLibDestroySpace(Space);
-        CFRelease(DisplayRef);
-        return;
+        goto space_free;
     }
 
     if(Space->Type == kCGSSpaceUser)
@@ -697,7 +695,9 @@ void CreateWindowTree()
         ReleaseVirtualSpace(VirtualSpace);
     }
 
+space_free:
     AXLibDestroySpace(Space);
+    CFRelease(DisplayRef);
 }
 
 internal void
