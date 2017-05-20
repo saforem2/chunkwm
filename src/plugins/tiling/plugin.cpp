@@ -712,49 +712,62 @@ RebalanceWindowTree()
     CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromSpace(Space->Id);
     ASSERT(DisplayRef);
 
+    virtual_space *VirtualSpace;
+    std::vector<uint32_t> Windows;
+    std::vector<uint32_t> WindowsInTree;
+    std::vector<uint32_t> WindowsToAdd;
+    std::vector<uint32_t> WindowsToRemove;
+
     if(AXLibIsDisplayChangingSpaces(DisplayRef))
     {
-        AXLibDestroySpace(Space);
-        CFRelease(DisplayRef);
-        return;
+        goto space_free;
     }
 
-    if(Space->Type == kCGSSpaceUser)
+    if(Space->Type != kCGSSpaceUser)
     {
-        virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
-        if(VirtualSpace->Tree && VirtualSpace->Mode != Virtual_Space_Float)
-        {
-            std::vector<uint32_t> Windows = GetAllVisibleWindowsForSpace(Space);
-            std::vector<uint32_t> WindowsInTree = GetAllWindowsInTree(VirtualSpace->Tree, VirtualSpace->Mode);
-            std::vector<uint32_t> WindowsToAdd = GetAllWindowsToAddToTree(Windows, WindowsInTree);
-            std::vector<uint32_t> WindowsToRemove = GetAllWindowsToRemoveFromTree(Windows, WindowsInTree);
-
-            for(size_t Index = 0;
-                Index < WindowsToRemove.size();
-                ++Index)
-            {
-                macos_window *Window = GetWindowByID(WindowsToRemove[Index]);
-                if(Window)
-                {
-                    UntileWindow(Window, Space, VirtualSpace);
-                }
-            }
-
-            for(size_t Index = 0;
-                Index < WindowsToAdd.size();
-                ++Index)
-            {
-                macos_window *Window = GetWindowByID(WindowsToAdd[Index]);
-                if(Window)
-                {
-                    TileWindow(Window, Space, VirtualSpace);
-                }
-            }
-        }
-        ReleaseVirtualSpace(VirtualSpace);
+        goto space_free;
     }
 
+    VirtualSpace = AcquireVirtualSpace(Space);
+    if((!VirtualSpace->Tree) ||
+       (VirtualSpace->Mode == Virtual_Space_Float))
+    {
+        goto vspace_release;
+    }
+
+    Windows = GetAllVisibleWindowsForSpace(Space);
+    WindowsInTree = GetAllWindowsInTree(VirtualSpace->Tree, VirtualSpace->Mode);
+    WindowsToAdd = GetAllWindowsToAddToTree(Windows, WindowsInTree);
+    WindowsToRemove = GetAllWindowsToRemoveFromTree(Windows, WindowsInTree);
+
+    for(size_t Index = 0;
+        Index < WindowsToRemove.size();
+        ++Index)
+    {
+        macos_window *Window = GetWindowByID(WindowsToRemove[Index]);
+        if(Window)
+        {
+            UntileWindow(Window, Space, VirtualSpace);
+        }
+    }
+
+    for(size_t Index = 0;
+        Index < WindowsToAdd.size();
+        ++Index)
+    {
+        macos_window *Window = GetWindowByID(WindowsToAdd[Index]);
+        if(Window)
+        {
+            TileWindow(Window, Space, VirtualSpace);
+        }
+    }
+
+vspace_release:
+    ReleaseVirtualSpace(VirtualSpace);
+
+space_free:
     AXLibDestroySpace(Space);
+    CFRelease(DisplayRef);
 }
 
 void ApplicationLaunchedHandler(void *Data)
