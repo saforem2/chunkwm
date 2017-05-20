@@ -1,7 +1,5 @@
 #include "plugin.h"
 
-#include "../common/misc/debug.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -30,15 +28,15 @@ VerifyPluginABI(plugin_details *Info)
 internal void
 PrintPluginDetails(plugin_details *Info)
 {
-    DEBUG_PRINT("Plugin Details\n"
-                "API Version %d\n"
-                "FileName '%s'\n"
-                "PluginName '%s'\n"
-                "PluginVersion '%s'\n",
-                 Info->ApiVersion,
-                 Info->FileName,
-                 Info->PluginName,
-                 Info->PluginVersion);
+    printf("Plugin Details\n"
+           "API Version %d\n"
+           "FileName '%s'\n"
+           "PluginName '%s'\n"
+           "PluginVersion '%s'\n",
+            Info->ApiVersion,
+            Info->FileName,
+            Info->PluginName,
+            Info->PluginVersion);
 }
 
 plugin_list *BeginPluginList(chunkwm_plugin_export Export)
