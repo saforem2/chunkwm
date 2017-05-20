@@ -214,151 +214,163 @@ FindClosestWindow(macos_space *Space, virtual_space *VirtualSpace,
 
 void FocusWindow(char *Direction)
 {
-    macos_window *Window = GetWindowByID(CVarIntegerValue(CVAR_BSP_INSERTION_POINT));
+    bool Success;
+    macos_space *Space;
+    macos_window *Window;
+    virtual_space *VirtualSpace;
+
+    Window = GetWindowByID(CVarIntegerValue(CVAR_BSP_INSERTION_POINT));
     if(!Window)
     {
         return; // TODO(koekeishiya): Focus first or last leaf ?
     }
 
-    macos_space *Space;
-    bool Success = AXLibActiveSpace(&Space);
+    Success = AXLibActiveSpace(&Space);
     ASSERT(Success);
 
-    if(Space->Type == kCGSSpaceUser)
+    if(Space->Type != kCGSSpaceUser)
     {
-        virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
-        if(VirtualSpace->Tree && VirtualSpace->Mode != Virtual_Space_Float)
+        goto space_free;
+    }
+
+    VirtualSpace = AcquireVirtualSpace(Space);
+    if((!VirtualSpace->Tree) ||
+       (VirtualSpace->Mode == Virtual_Space_Float))
+    {
+        goto vspace_release;
+    }
+
+    if(VirtualSpace->Mode == Virtual_Space_Bsp)
+    {
+        char *FocusCycleMode = CVarStringValue(CVAR_WINDOW_FOCUS_CYCLE);
+        ASSERT(FocusCycleMode);
+
+        if(StringEquals(FocusCycleMode, Window_Focus_Cycle_All))
         {
-            if(VirtualSpace->Mode == Virtual_Space_Bsp)
+            macos_window *ClosestWindow;
+            if(FindClosestWindow(Space, VirtualSpace, Window, &ClosestWindow, Direction, false))
             {
-                char *FocusCycleMode = CVarStringValue(CVAR_WINDOW_FOCUS_CYCLE);
-                ASSERT(FocusCycleMode);
+                AXLibSetFocusedWindow(ClosestWindow->Ref);
+                AXLibSetFocusedApplication(ClosestWindow->Owner->PSN);
 
-                if(StringEquals(FocusCycleMode, Window_Focus_Cycle_All))
+                if(CVarIntegerValue(CVAR_MOUSE_FOLLOWS_FOCUS))
                 {
-                    macos_window *ClosestWindow;
-                    if(FindClosestWindow(Space, VirtualSpace, Window, &ClosestWindow, Direction, false))
+                    node *Node = GetNodeWithId(VirtualSpace->Tree, ClosestWindow->Id, VirtualSpace->Mode);
+                    ASSERT(Node);
+
+                    if(!IsCursorInRegion(Node->Region))
                     {
-                        AXLibSetFocusedWindow(ClosestWindow->Ref);
-                        AXLibSetFocusedApplication(ClosestWindow->Owner->PSN);
-
-                        if(CVarIntegerValue(CVAR_MOUSE_FOLLOWS_FOCUS))
-                        {
-                            node *Node = GetNodeWithId(VirtualSpace->Tree, ClosestWindow->Id, VirtualSpace->Mode);
-                            ASSERT(Node);
-
-                            if(!IsCursorInRegion(Node->Region))
-                            {
-                                CGPoint Center = CGPointMake(Node->Region.X + Node->Region.Width / 2,
-                                                             Node->Region.Y + Node->Region.Height / 2);
-                                CGWarpMouseCursorPosition(Center);
-                            }
-                        }
-                    }
-                    else
-                    {
-                        if(StringEquals(Direction, "east"))
-                        {
-                            FocusMonitor("next");
-                        }
-                        else if(StringEquals(Direction, "west"))
-                        {
-                            FocusMonitor("prev");
-                        }
-                    }
-                }
-                else
-                {
-                    bool WrapMonitor = StringEquals(FocusCycleMode, Window_Focus_Cycle_Monitor);
-                    macos_window *ClosestWindow;
-                    if(FindClosestWindow(Space, VirtualSpace, Window, &ClosestWindow, Direction, WrapMonitor))
-                    {
-                        AXLibSetFocusedWindow(ClosestWindow->Ref);
-                        AXLibSetFocusedApplication(ClosestWindow->Owner->PSN);
-
-                        if(CVarIntegerValue(CVAR_MOUSE_FOLLOWS_FOCUS))
-                        {
-                            node *Node = GetNodeWithId(VirtualSpace->Tree, ClosestWindow->Id, VirtualSpace->Mode);
-                            ASSERT(Node);
-
-                            if(!IsCursorInRegion(Node->Region))
-                            {
-                                CGPoint Center = CGPointMake(Node->Region.X + Node->Region.Width / 2,
-                                                             Node->Region.Y + Node->Region.Height / 2);
-                                CGWarpMouseCursorPosition(Center);
-                            }
-                        }
+                        CGPoint Center = CGPointMake(Node->Region.X + Node->Region.Width / 2,
+                                                     Node->Region.Y + Node->Region.Height / 2);
+                        CGWarpMouseCursorPosition(Center);
                     }
                 }
             }
-            else if(VirtualSpace->Mode == Virtual_Space_Monocle)
+            else
             {
-                char *FocusCycleMode = CVarStringValue(CVAR_WINDOW_FOCUS_CYCLE);
-                ASSERT(FocusCycleMode);
-
-                node *WindowNode = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
-                if(WindowNode)
+                if(StringEquals(Direction, "east"))
                 {
-                    node *Node = NULL;
-                    if(StringEquals(Direction, "west"))
-                    {
-                        if(WindowNode->Left)
-                        {
-                            Node = WindowNode->Left;
-                        }
-                        else
-                        {
-                            if(StringEquals(FocusCycleMode, Window_Focus_Cycle_All))
-                            {
-                                FocusMonitor("prev");
-                            }
-                            else if(StringEquals(FocusCycleMode, Window_Focus_Cycle_Monitor))
-                            {
-                                Node = GetLastLeafNode(VirtualSpace->Tree);
-                            }
-                        }
-                    }
-                    else if(StringEquals(Direction, "east"))
-                    {
-                        if(WindowNode->Right)
-                        {
-                            Node = WindowNode->Right;
-                        }
-                        else
-                        {
-                            if(StringEquals(FocusCycleMode, Window_Focus_Cycle_All))
-                            {
-                                FocusMonitor("next");
-                            }
-                            else if(StringEquals(FocusCycleMode, Window_Focus_Cycle_Monitor))
-                            {
-                                Node = GetFirstLeafNode(VirtualSpace->Tree);
-                            }
-                        }
-                    }
+                    FocusMonitor("next");
+                }
+                else if(StringEquals(Direction, "west"))
+                {
+                    FocusMonitor("prev");
+                }
+            }
+        }
+        else
+        {
+            bool WrapMonitor = StringEquals(FocusCycleMode, Window_Focus_Cycle_Monitor);
+            macos_window *ClosestWindow;
+            if(FindClosestWindow(Space, VirtualSpace, Window, &ClosestWindow, Direction, WrapMonitor))
+            {
+                AXLibSetFocusedWindow(ClosestWindow->Ref);
+                AXLibSetFocusedApplication(ClosestWindow->Owner->PSN);
 
-                    if(Node)
+                if(CVarIntegerValue(CVAR_MOUSE_FOLLOWS_FOCUS))
+                {
+                    node *Node = GetNodeWithId(VirtualSpace->Tree, ClosestWindow->Id, VirtualSpace->Mode);
+                    ASSERT(Node);
+
+                    if(!IsCursorInRegion(Node->Region))
                     {
-                        macos_window *FocusWindow = GetWindowByID(Node->WindowId);
-                        ASSERT(FocusWindow);
-
-                        AXLibSetFocusedWindow(FocusWindow->Ref);
-                        AXLibSetFocusedApplication(FocusWindow->Owner->PSN);
-
-                        if((CVarIntegerValue(CVAR_MOUSE_FOLLOWS_FOCUS)) &&
-                           (!IsCursorInRegion(Node->Region)))
-                        {
-                            CGPoint Center = CGPointMake(Node->Region.X + Node->Region.Width / 2,
-                                                         Node->Region.Y + Node->Region.Height / 2);
-                            CGWarpMouseCursorPosition(Center);
-                        }
+                        CGPoint Center = CGPointMake(Node->Region.X + Node->Region.Width / 2,
+                                                     Node->Region.Y + Node->Region.Height / 2);
+                        CGWarpMouseCursorPosition(Center);
                     }
                 }
             }
         }
-        ReleaseVirtualSpace(VirtualSpace);
+    }
+    else if(VirtualSpace->Mode == Virtual_Space_Monocle)
+    {
+        char *FocusCycleMode = CVarStringValue(CVAR_WINDOW_FOCUS_CYCLE);
+        ASSERT(FocusCycleMode);
+
+        node *WindowNode = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
+        if(WindowNode)
+        {
+            node *Node = NULL;
+            if(StringEquals(Direction, "west"))
+            {
+                if(WindowNode->Left)
+                {
+                    Node = WindowNode->Left;
+                }
+                else
+                {
+                    if(StringEquals(FocusCycleMode, Window_Focus_Cycle_All))
+                    {
+                        FocusMonitor("prev");
+                    }
+                    else if(StringEquals(FocusCycleMode, Window_Focus_Cycle_Monitor))
+                    {
+                        Node = GetLastLeafNode(VirtualSpace->Tree);
+                    }
+                }
+            }
+            else if(StringEquals(Direction, "east"))
+            {
+                if(WindowNode->Right)
+                {
+                    Node = WindowNode->Right;
+                }
+                else
+                {
+                    if(StringEquals(FocusCycleMode, Window_Focus_Cycle_All))
+                    {
+                        FocusMonitor("next");
+                    }
+                    else if(StringEquals(FocusCycleMode, Window_Focus_Cycle_Monitor))
+                    {
+                        Node = GetFirstLeafNode(VirtualSpace->Tree);
+                    }
+                }
+            }
+
+            if(Node)
+            {
+                macos_window *FocusWindow = GetWindowByID(Node->WindowId);
+                ASSERT(FocusWindow);
+
+                AXLibSetFocusedWindow(FocusWindow->Ref);
+                AXLibSetFocusedApplication(FocusWindow->Owner->PSN);
+
+                if((CVarIntegerValue(CVAR_MOUSE_FOLLOWS_FOCUS)) &&
+                   (!IsCursorInRegion(Node->Region)))
+                {
+                    CGPoint Center = CGPointMake(Node->Region.X + Node->Region.Width / 2,
+                                                 Node->Region.Y + Node->Region.Height / 2);
+                    CGWarpMouseCursorPosition(Center);
+                }
+            }
+        }
     }
 
+vspace_release:
+    ReleaseVirtualSpace(VirtualSpace);
+
+space_free:
     AXLibDestroySpace(Space);
 }
 
