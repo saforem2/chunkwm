@@ -4,8 +4,6 @@
 #include <string.h>
 #include <unordered_map>
 
-#include "../../common/misc/debug.h"
-
 #define internal static
 
 struct psn_hash {
@@ -53,13 +51,13 @@ SearchCarbonApplicationDetailsCache(ProcessSerialNumber PSN)
 internal inline void
 PrintCarbonApplicationDetails(carbon_application_details *Info)
 {
-    DEBUG_PRINT("carbon process spawned\nName: %s\nPID: %d\nPSN: %d %d\nPolicy: %d\nBackground: %d\n",
-                 Info->ProcessName,
-                 Info->PID,
-                 Info->PSN.lowLongOfPSN,
-                 Info->PSN.highLongOfPSN,
-                 Info->ProcessPolicy,
-                 Info->ProcessBackground);
+    printf("carbon: process details\nName: %s\nPID: %d\nPSN: %d %d\nPolicy: %d\nBackground: %d\n",
+            Info->ProcessName,
+            Info->PID,
+            Info->PSN.lowLongOfPSN,
+            Info->PSN.highLongOfPSN,
+            Info->ProcessPolicy,
+            Info->ProcessBackground);
 }
 
 /*
@@ -91,7 +89,7 @@ CarbonApplicationEventHandler(EventHandlerCallRef HandlerCallRef, EventRef Event
                          NULL,
                          &PSN) != noErr)
     {
-        printf("Carbon: Could not get event parameter.\n");
+        fprintf(stderr, "carbon: could not get serialnumber of process\n");
         return -1;
     }
 
