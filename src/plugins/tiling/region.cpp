@@ -76,17 +76,15 @@ void ConstrainRegion(CFStringRef DisplayRef, region *Region)
             } break;
         }
     }
-
 }
 
 internal region
 FullscreenRegion(CFStringRef DisplayRef, virtual_space *VirtualSpace)
 {
-    region_offset *Offset = VirtualSpace->Offset;
-
     region Result = CGRectToRegion(AXLibGetDisplayBounds(DisplayRef));
     ConstrainRegion(DisplayRef, &Result);
 
+    region_offset *Offset = VirtualSpace->Offset;
     if(Offset)
     {
         Result.X += Offset->Left;
@@ -103,15 +101,15 @@ LeftVerticalRegion(node *Node, virtual_space *VirtualSpace)
 {
     ASSERT(Node);
 
-    region_offset *Offset = VirtualSpace->Offset;
     region *Region = &Node->Region;
-
     region Result;
+
     Result.X = Region->X;
     Result.Y = Region->Y;
     Result.Width = Region->Width * Node->Ratio;
     Result.Height = Region->Height;
 
+    region_offset *Offset = VirtualSpace->Offset;
     if(Offset)
     {
         Result.Width -= (Offset->Gap / 2);
@@ -125,15 +123,15 @@ RightVerticalRegion(node *Node, virtual_space *VirtualSpace)
 {
     ASSERT(Node);
 
-    region_offset *Offset = VirtualSpace->Offset;
     region *Region = &Node->Region;
-
     region Result;
+
     Result.X = Region->X + (Region->Width * Node->Ratio);
     Result.Y = Region->Y;
     Result.Width = Region->Width * (1 - Node->Ratio);
     Result.Height = Region->Height;
 
+    region_offset *Offset = VirtualSpace->Offset;
     if(Offset)
     {
         Result.X += (Offset->Gap / 2);
@@ -148,15 +146,15 @@ UpperHorizontalRegion(node *Node, virtual_space *VirtualSpace)
 {
     ASSERT(Node);
 
-    region_offset *Offset = VirtualSpace->Offset;
     region *Region = &Node->Region;
-
     region Result;
+
     Result.X = Region->X;
     Result.Y = Region->Y;
     Result.Width = Region->Width;
     Result.Height = Region->Height * Node->Ratio;
 
+    region_offset *Offset = VirtualSpace->Offset;
     if(Offset)
     {
         Result.Height -= (Offset->Gap / 2);
@@ -170,15 +168,15 @@ LowerHorizontalRegion(node *Node, virtual_space *VirtualSpace)
 {
     ASSERT(Node);
 
-    region_offset *Offset = VirtualSpace->Offset;
     region *Region = &Node->Region;
-
     region Result;
+
     Result.X = Region->X;
     Result.Y = Region->Y + (Region->Height * Node->Ratio);
     Result.Width = Region->Width;
     Result.Height = Region->Height * (1 - Node->Ratio);
 
+    region_offset *Offset = VirtualSpace->Offset;
     if(Offset)
     {
         Result.Y += (Offset->Gap / 2);
@@ -197,27 +195,12 @@ void CreateNodeRegion(node *Node, region_type Type, macos_space *Space, virtual_
 
     switch(Type)
     {
-        case Region_Full:
-        {
-            Node->Region = FullscreenRegion(DisplayRef, VirtualSpace);
-        } break;
-        case Region_Left:
-        {
-            Node->Region = LeftVerticalRegion(Node->Parent, VirtualSpace);
-        } break;
-        case Region_Right:
-        {
-            Node->Region = RightVerticalRegion(Node->Parent, VirtualSpace);
-        } break;
-        case Region_Upper:
-        {
-            Node->Region = UpperHorizontalRegion(Node->Parent, VirtualSpace);
-        } break;
-        case Region_Lower:
-        {
-            Node->Region = LowerHorizontalRegion(Node->Parent, VirtualSpace);
-        } break;
-        default: { /* NOTE(koekeishiya): Invalid region specified. */} break;
+        case Region_Full:   { Node->Region = FullscreenRegion(DisplayRef, VirtualSpace);        } break;
+        case Region_Left:   { Node->Region = LeftVerticalRegion(Node->Parent, VirtualSpace);    } break;
+        case Region_Right:  { Node->Region = RightVerticalRegion(Node->Parent, VirtualSpace);   } break;
+        case Region_Upper:  { Node->Region = UpperHorizontalRegion(Node->Parent, VirtualSpace); } break;
+        case Region_Lower:  { Node->Region = LowerHorizontalRegion(Node->Parent, VirtualSpace); } break;
+        default:            { /* NOTE(koekeishiya): Invalid region specified. */                } break;
     }
 
     Node->Region.Type = Type;
@@ -242,19 +225,13 @@ CreateNodeRegionPair(node *Left, node *Right, node_split Split, macos_space *Spa
 
 void ResizeNodeRegion(node *Node, macos_space *Space, virtual_space *VirtualSpace)
 {
-    if(Node)
+    if(Node && Node->Left && Node->Right)
     {
-        if(Node->Left)
-        {
-            CreateNodeRegion(Node->Left, Node->Left->Region.Type, Space, VirtualSpace);
-            ResizeNodeRegion(Node->Left, Space, VirtualSpace);
-        }
+        CreateNodeRegion(Node->Left, Node->Left->Region.Type, Space, VirtualSpace);
+        ResizeNodeRegion(Node->Left, Space, VirtualSpace);
 
-        if(Node->Right)
-        {
-            CreateNodeRegion(Node->Right, Node->Right->Region.Type, Space, VirtualSpace);
-            ResizeNodeRegion(Node->Right, Space, VirtualSpace);
-        }
+        CreateNodeRegion(Node->Right, Node->Right->Region.Type, Space, VirtualSpace);
+        ResizeNodeRegion(Node->Right, Space, VirtualSpace);
     }
 }
 
