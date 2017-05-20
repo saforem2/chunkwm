@@ -435,7 +435,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_WindowFocused)
     }
     else
     {
-        printf("chunkwm:%s: __sync_bool_compare_and_swap failed\n", __FUNCTION__);
+        DEBUG_PRINT("chunkwm:%s: __sync_bool_compare_and_swap failed\n", __FUNCTION__);
     }
 }
 
@@ -459,7 +459,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_WindowMoved)
     }
     else
     {
-        printf("chunkwm:%s: __sync_bool_compare_and_swap failed\n", __FUNCTION__);
+        DEBUG_PRINT("chunkwm:%s: __sync_bool_compare_and_swap failed\n", __FUNCTION__);
     }
 }
 
@@ -484,7 +484,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_WindowResized)
     }
     else
     {
-        printf("chunkwm:%s: __sync_bool_compare_and_swap failed\n", __FUNCTION__);
+        DEBUG_PRINT("chunkwm:%s: __sync_bool_compare_and_swap failed\n", __FUNCTION__);
     }
 }
 
@@ -508,7 +508,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_WindowMinimized)
     }
     else
     {
-        printf("chunkwm:%s: __sync_bool_compare_and_swap failed\n", __FUNCTION__);
+        DEBUG_PRINT("chunkwm:%s: __sync_bool_compare_and_swap failed\n", __FUNCTION__);
     }
 }
 
@@ -537,7 +537,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_WindowDeminimized)
     }
     else
     {
-        printf("chunkwm:%s: __sync_bool_compare_and_swap failed\n", __FUNCTION__);
+        DEBUG_PRINT("chunkwm:%s: __sync_bool_compare_and_swap failed\n", __FUNCTION__);
     }
 }
 
@@ -558,6 +558,6 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_WindowTitleChanged)
     }
     else
     {
-        printf("chunkwm:%s: __sync_bool_compare_and_swap failed\n", __FUNCTION__);
+        DEBUG_PRINT("chunkwm:%s: __sync_bool_compare_and_swap failed\n", __FUNCTION__);
     }
 }
