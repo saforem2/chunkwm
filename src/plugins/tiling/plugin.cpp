@@ -960,6 +960,45 @@ void WindowResizedHandler(void *Data)
     }
 }
 
+void SpaceAndDisplayChangedHandler(void *Data)
+{
+    UpdateWindowCollection();
+
+    macos_space *Space;
+    bool Success = AXLibActiveSpace(&Space);
+    ASSERT(Success);
+
+    if(Space->Type == kCGSSpaceUser)
+    {
+        unsigned DesktopId;
+        Success = AXLibCGSSpaceIDToDesktopID(Space->Id, NULL, &DesktopId);
+        ASSERT(Success);
+
+
+        int CachedDesktopId = CVarIntegerValue(CVAR_ACTIVE_DESKTOP);
+        if(CachedDesktopId != DesktopId)
+        {
+            UpdateCVar(CVAR_LAST_ACTIVE_DESKTOP, CachedDesktopId);
+            UpdateCVar(CVAR_ACTIVE_DESKTOP, (int)DesktopId);
+        }
+
+        CreateWindowTree();
+        RebalanceWindowTree();
+    }
+
+    // NOTE(koekeishiya): Update _focused_window to the active window of the new space.
+    // This is necessary because the focused notification sometimes fail in these cases.
+    // In addition to this, we do not receive the focus notification if this new space
+    // is a native fullscreen space.
+    std::vector<uint32_t> Windows = GetAllVisibleWindowsForSpace(Space);
+    if(!Windows.empty())
+    {
+        UpdateCVar(CVAR_FOCUSED_WINDOW, (int)Windows[0]);
+    }
+
+    AXLibDestroySpace(Space);
+}
+
 /*
  * NOTE(koekeishiya):
  * parameter: const char *Node
@@ -1031,41 +1070,7 @@ PLUGIN_MAIN_FUNC(PluginMain)
     else if((StringEquals(Node, "chunkwm_export_space_changed")) ||
             (StringEquals(Node, "chunkwm_export_display_changed")))
     {
-        UpdateWindowCollection();
-
-        macos_space *Space;
-        bool Success = AXLibActiveSpace(&Space);
-        ASSERT(Success);
-
-        if(Space->Type == kCGSSpaceUser)
-        {
-            unsigned DesktopId;
-            Success = AXLibCGSSpaceIDToDesktopID(Space->Id, NULL, &DesktopId);
-            ASSERT(Success);
-
-
-            int CachedDesktopId = CVarIntegerValue(CVAR_ACTIVE_DESKTOP);
-            if(CachedDesktopId != DesktopId)
-            {
-                UpdateCVar(CVAR_LAST_ACTIVE_DESKTOP, CachedDesktopId);
-                UpdateCVar(CVAR_ACTIVE_DESKTOP, (int)DesktopId);
-            }
-
-            CreateWindowTree();
-            RebalanceWindowTree();
-        }
-
-        // NOTE(koekeishiya): Update _focused_window to the active window of the new space.
-        // This is necessary because the focused notification sometimes fail in these cases.
-        // In addition to this, we do not receive the focus notification if this new space
-        // is a native fullscreen space.
-        std::vector<uint32_t> Windows = GetAllVisibleWindowsForSpace(Space);
-        if(!Windows.empty())
-        {
-            UpdateCVar(CVAR_FOCUSED_WINDOW, (int)Windows[0]);
-        }
-
-        AXLibDestroySpace(Space);
+        SpaceAndDisplayChangedHandler(Data);
         return true;
     }
 
