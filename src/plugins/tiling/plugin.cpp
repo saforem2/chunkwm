@@ -145,84 +145,93 @@ bool IsWindowValid(macos_window *Window)
 
 void TileWindowOnSpace(macos_window *Window, macos_space *Space, virtual_space *VirtualSpace)
 {
+    CFStringRef DisplayRef;
+
+    if(VirtualSpace->Mode == Virtual_Space_Float)
+    {
+        goto out;
+    }
+
     /* NOTE(koekeishiya): This function appears to always return a valid identifier!
      * Could this potentially return NULL if an invalid CGSSpaceID is passed ? */
-    CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromSpace(Space->Id);
+    DisplayRef = AXLibGetDisplayIdentifierFromSpace(Space->Id);
     ASSERT(DisplayRef);
 
     if(AXLibIsDisplayChangingSpaces(DisplayRef))
     {
-        CFRelease(DisplayRef);
-        return;
+        goto display_free;
     }
 
-    if(VirtualSpace->Mode != Virtual_Space_Float)
+    if(VirtualSpace->Tree)
     {
-        if(VirtualSpace->Tree)
+        node *Exists = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
+        if(Exists)
         {
-            node *Exists = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
-            if(!Exists)
+            goto display_free;
+        }
+
+        node *Node = NULL;
+        uint32_t InsertionPoint = CVarIntegerValue(CVAR_BSP_INSERTION_POINT);
+        if(InsertionPoint)
+        {
+            Node = GetNodeWithId(VirtualSpace->Tree, InsertionPoint, VirtualSpace->Mode);
+        }
+
+        if(VirtualSpace->Mode == Virtual_Space_Bsp)
+        {
+            if(!Node)
             {
-                node *Node = NULL;
-                uint32_t InsertionPoint = CVarIntegerValue(CVAR_BSP_INSERTION_POINT);
-                if(InsertionPoint)
-                {
-                    Node = GetNodeWithId(VirtualSpace->Tree, InsertionPoint, VirtualSpace->Mode);
-                }
+                Node = GetFirstMinDepthLeafNode(VirtualSpace->Tree);
+                ASSERT(Node != NULL);
+            }
 
-                if(VirtualSpace->Mode == Virtual_Space_Bsp)
-                {
-                    if(!Node)
-                    {
-                        Node = GetFirstMinDepthLeafNode(VirtualSpace->Tree);
-                        ASSERT(Node != NULL);
-                    }
+            node_split Split = (node_split) CVarIntegerValue(CVAR_BSP_SPLIT_MODE);
+            if(Split == Split_Optimal)
+            {
+                Split = OptimalSplitMode(Node);
+            }
 
-                    node_split Split = (node_split) CVarIntegerValue(CVAR_BSP_SPLIT_MODE);
-                    if(Split == Split_Optimal)
-                    {
-                        Split = OptimalSplitMode(Node);
-                    }
+            CreateLeafNodePair(Node, Node->WindowId, Window->Id, Split, Space, VirtualSpace);
+            ApplyNodeRegion(Node, VirtualSpace->Mode);
 
-                    CreateLeafNodePair(Node, Node->WindowId, Window->Id, Split, Space, VirtualSpace);
-                    ApplyNodeRegion(Node, VirtualSpace->Mode);
-
-                    // NOTE(koekeishiya): Reset fullscreen-zoom state.
-                    if(VirtualSpace->Tree->Zoom)
-                    {
-                        VirtualSpace->Tree->Zoom = NULL;
-                    }
-                }
-                else if(VirtualSpace->Mode == Virtual_Space_Monocle)
-                {
-                    if(!Node)
-                    {
-                        Node = GetLastLeafNode(VirtualSpace->Tree);
-                        ASSERT(Node != NULL);
-                    }
-
-                    node *NewNode = CreateRootNode(Window->Id, Space, VirtualSpace);
-
-                    if(Node->Right)
-                    {
-                        node *Next = Node->Right;
-                        Next->Left = NewNode;
-                        NewNode->Right = Next;
-                    }
-
-                    NewNode->Left = Node;
-                    Node->Right = NewNode;
-                    ResizeWindowToRegionSize(NewNode);
-                }
+            // NOTE(koekeishiya): Reset fullscreen-zoom state.
+            if(VirtualSpace->Tree->Zoom)
+            {
+                VirtualSpace->Tree->Zoom = NULL;
             }
         }
-        else
+        else if(VirtualSpace->Mode == Virtual_Space_Monocle)
         {
-            // NOTE(koekeishiya): This path is equal for both bsp and monocle spaces!
-            VirtualSpace->Tree = CreateRootNode(Window->Id, Space, VirtualSpace);
-            ResizeWindowToRegionSize(VirtualSpace->Tree);
+            if(!Node)
+            {
+                Node = GetLastLeafNode(VirtualSpace->Tree);
+                ASSERT(Node != NULL);
+            }
+
+            node *NewNode = CreateRootNode(Window->Id, Space, VirtualSpace);
+
+            if(Node->Right)
+            {
+                node *Next = Node->Right;
+                Next->Left = NewNode;
+                NewNode->Right = Next;
+            }
+
+            NewNode->Left = Node;
+            Node->Right = NewNode;
+            ResizeWindowToRegionSize(NewNode);
         }
     }
+    else
+    {
+        // NOTE(koekeishiya): This path is equal for both bsp and monocle spaces!
+        VirtualSpace->Tree = CreateRootNode(Window->Id, Space, VirtualSpace);
+        ResizeWindowToRegionSize(VirtualSpace->Tree);
+    }
+
+display_free:
+    CFRelease(DisplayRef);
+out:;
 }
 
 void TileWindow(macos_window *Window)
