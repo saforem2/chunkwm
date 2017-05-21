@@ -153,7 +153,8 @@ void TileWindowOnSpace(macos_window *Window, macos_space *Space, virtual_space *
     }
 
     /* NOTE(koekeishiya): This function appears to always return a valid identifier!
-     * Could this potentially return NULL if an invalid CGSSpaceID is passed ? */
+     * Could this potentially return NULL if an invalid CGSSpaceID is passed ?
+     * The function returns NULL if "Displays have separate spaces" is disabled !!! */
     DisplayRef = AXLibGetDisplayIdentifierFromSpace(Space->Id);
     ASSERT(DisplayRef);
 
@@ -616,24 +617,14 @@ GetAllWindowsToRemoveFromTree(std::vector<uint32_t> &VisibleWindows, std::vector
     return Windows;
 }
 
-void CreateWindowTreeForSpace(macos_space *Space, virtual_space *VirtualSpace)
+/* NOTE(koekeishiya): The caller is responsible for making sure that the space
+ * passed to this function is of type kCGSSpaceUser, and that the virtual space
+ * is set to a tiling mode, and that an existing tree is not present. The window
+ * list must also be non-empty !!! */
+internal void
+CreateWindowTreeForSpaceWithWindows(macos_space *Space, virtual_space *VirtualSpace, std::vector<uint32_t> Windows)
 {
-    std::vector<uint32_t> Windows;
-    node *Root, *New;
-
-    if((VirtualSpace->Tree) ||
-       (VirtualSpace->Mode == Virtual_Space_Float))
-    {
-        goto out;
-    }
-
-    Windows = GetAllVisibleWindowsForSpace(Space);
-    if(Windows.empty())
-    {
-        goto out;
-    }
-
-    Root = CreateRootNode(Windows[0], Space, VirtualSpace);
+    node *New, *Root = CreateRootNode(Windows[0], Space, VirtualSpace);
     VirtualSpace->Tree = Root;
 
     if(VirtualSpace->Mode == Virtual_Space_Bsp)
@@ -668,6 +659,25 @@ void CreateWindowTreeForSpace(macos_space *Space, virtual_space *VirtualSpace)
     }
 
     ApplyNodeRegion(VirtualSpace->Tree, VirtualSpace->Mode);
+}
+
+void CreateWindowTreeForSpace(macos_space *Space, virtual_space *VirtualSpace)
+{
+    std::vector<uint32_t> Windows;
+
+    if((VirtualSpace->Tree) ||
+       (VirtualSpace->Mode == Virtual_Space_Float))
+    {
+        goto out;
+    }
+
+    Windows = GetAllVisibleWindowsForSpace(Space);
+    if(Windows.empty())
+    {
+        goto out;
+    }
+
+    CreateWindowTreeForSpaceWithWindows(Space, VirtualSpace, Windows);
 out:;
 }
 
@@ -677,9 +687,9 @@ void CreateWindowTree()
     bool Success = AXLibActiveSpace(&Space);
     ASSERT(Success);
 
-    /* NOTE(koekeishiya): This function appears to always return a valid identifier,
-     * as long as 'Displays have separate spaces' is enabled. Otherwise it returns NULL.
-     * Probably returns NULL if an invalid CGSSpaceID is passed as well. */
+    /* NOTE(koekeishiya): This function appears to always return a valid identifier!
+     * Could this potentially return NULL if an invalid CGSSpaceID is passed ?
+     * The function returns NULL if "Displays have separate spaces" is disabled !!! */
     CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromSpace(Space->Id);
     ASSERT(DisplayRef);
 
@@ -700,45 +710,16 @@ space_free:
     CFRelease(DisplayRef);
 }
 
+/* NOTE(koekeishiya): The caller is responsible for making sure that the space
+ * passed to this function is of type kCGSSpaceUser, and that the virtual space
+ * is set to a tiling mode, and that an existing tree is present. The window list
+ * must also be non-empty !!! */
 internal void
-RebalanceWindowTree()
+RebalanceWindowTreeForSpaceWithWindows(macos_space *Space, virtual_space *VirtualSpace, std::vector<uint32_t> Windows)
 {
-    macos_space *Space;
-    bool Success = AXLibActiveSpace(&Space);
-    ASSERT(Success);
-
-    /* NOTE(koekeishiya): This function appears to always return a valid identifier!
-     * Could this potentially return NULL if an invalid CGSSpaceID is passed ? */
-    CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromSpace(Space->Id);
-    ASSERT(DisplayRef);
-
-    virtual_space *VirtualSpace;
-    std::vector<uint32_t> Windows;
-    std::vector<uint32_t> WindowsInTree;
-    std::vector<uint32_t> WindowsToAdd;
-    std::vector<uint32_t> WindowsToRemove;
-
-    if(AXLibIsDisplayChangingSpaces(DisplayRef))
-    {
-        goto space_free;
-    }
-
-    if(Space->Type != kCGSSpaceUser)
-    {
-        goto space_free;
-    }
-
-    VirtualSpace = AcquireVirtualSpace(Space);
-    if((!VirtualSpace->Tree) ||
-       (VirtualSpace->Mode == Virtual_Space_Float))
-    {
-        goto vspace_release;
-    }
-
-    Windows = GetAllVisibleWindowsForSpace(Space);
-    WindowsInTree = GetAllWindowsInTree(VirtualSpace->Tree, VirtualSpace->Mode);
-    WindowsToAdd = GetAllWindowsToAddToTree(Windows, WindowsInTree);
-    WindowsToRemove = GetAllWindowsToRemoveFromTree(Windows, WindowsInTree);
+    std::vector<uint32_t> WindowsInTree = GetAllWindowsInTree(VirtualSpace->Tree, VirtualSpace->Mode);
+    std::vector<uint32_t> WindowsToAdd = GetAllWindowsToAddToTree(Windows, WindowsInTree);
+    std::vector<uint32_t> WindowsToRemove = GetAllWindowsToRemoveFromTree(Windows, WindowsInTree);
 
     for(size_t Index = 0;
         Index < WindowsToRemove.size();
@@ -761,9 +742,53 @@ RebalanceWindowTree()
             TileWindow(Window, Space, VirtualSpace);
         }
     }
+}
 
-vspace_release:
-    ReleaseVirtualSpace(VirtualSpace);
+internal void
+RebalanceWindowTreeForSpace(macos_space *Space, virtual_space *VirtualSpace)
+{
+    std::vector<uint32_t> Windows;
+
+    if((!VirtualSpace->Tree) ||
+       (VirtualSpace->Mode == Virtual_Space_Float))
+    {
+        goto out;
+    }
+
+    Windows = GetAllVisibleWindowsForSpace(Space);
+    if(Windows.empty())
+    {
+        goto out;
+    }
+
+    RebalanceWindowTreeForSpaceWithWindows(Space, VirtualSpace, Windows);
+out:;
+}
+
+internal void
+RebalanceWindowTree()
+{
+    macos_space *Space;
+    bool Success = AXLibActiveSpace(&Space);
+    ASSERT(Success);
+
+    /* NOTE(koekeishiya): This function appears to always return a valid identifier!
+     * Could this potentially return NULL if an invalid CGSSpaceID is passed ?
+     * The function returns NULL if "Displays have separate spaces" is disabled !!! */
+    CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromSpace(Space->Id);
+    ASSERT(DisplayRef);
+
+    if(AXLibIsDisplayChangingSpaces(DisplayRef))
+    {
+        goto space_free;
+    }
+
+    if(Space->Type == kCGSSpaceUser)
+    {
+        virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
+        RebalanceWindowTreeForSpace(Space, VirtualSpace);
+        ReleaseVirtualSpace(VirtualSpace);
+    }
 
 space_free:
     AXLibDestroySpace(Space);
@@ -990,34 +1015,54 @@ void SpaceAndDisplayChangedHandler(void *Data)
     bool Success = AXLibActiveSpace(&Space);
     ASSERT(Success);
 
-    if(Space->Type == kCGSSpaceUser)
+    std::vector<uint32_t> Windows = GetAllVisibleWindowsForSpace(Space);
+    if(Space->Type != kCGSSpaceUser)
     {
-        unsigned DesktopId;
-        Success = AXLibCGSSpaceIDToDesktopID(Space->Id, NULL, &DesktopId);
-        ASSERT(Success);
-
-
-        int CachedDesktopId = CVarIntegerValue(CVAR_ACTIVE_DESKTOP);
-        if(CachedDesktopId != DesktopId)
-        {
-            UpdateCVar(CVAR_LAST_ACTIVE_DESKTOP, CachedDesktopId);
-            UpdateCVar(CVAR_ACTIVE_DESKTOP, (int)DesktopId);
-        }
-
-        CreateWindowTree();
-        RebalanceWindowTree();
+        goto win_focus;
     }
 
+    unsigned DesktopId, CachedDesktopId;
+    Success = AXLibCGSSpaceIDToDesktopID(Space->Id, NULL, &DesktopId);
+    ASSERT(Success);
+
+    CachedDesktopId = CVarIntegerValue(CVAR_ACTIVE_DESKTOP);
+    if(CachedDesktopId != DesktopId)
+    {
+        UpdateCVar(CVAR_LAST_ACTIVE_DESKTOP, (int)CachedDesktopId);
+        UpdateCVar(CVAR_ACTIVE_DESKTOP, (int)DesktopId);
+    }
+
+    if(Windows.empty())
+    {
+        goto space_free;
+    }
+
+    virtual_space *VirtualSpace;
+    VirtualSpace = AcquireVirtualSpace(Space);
+    if(VirtualSpace->Mode != Virtual_Space_Float)
+    {
+        if(VirtualSpace->Tree)
+        {
+            RebalanceWindowTreeForSpaceWithWindows(Space, VirtualSpace, Windows);
+        }
+        else
+        {
+            CreateWindowTreeForSpaceWithWindows(Space, VirtualSpace, Windows);
+        }
+    }
+    ReleaseVirtualSpace(VirtualSpace);
+
+win_focus:
     // NOTE(koekeishiya): Update _focused_window to the active window of the new space.
     // This is necessary because the focused notification sometimes fail in these cases.
     // In addition to this, we do not receive the focus notification if this new space
     // is a native fullscreen space.
-    std::vector<uint32_t> Windows = GetAllVisibleWindowsForSpace(Space);
     if(!Windows.empty())
     {
         UpdateCVar(CVAR_FOCUSED_WINDOW, (int)Windows[0]);
     }
 
+space_free:
     AXLibDestroySpace(Space);
 }
 
