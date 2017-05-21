@@ -426,8 +426,6 @@ void SwapWindow(char *Direction)
         }
         else
         {
-            // NOTE(koekeishiya): This is not really necessary, because we
-            // perform input argument validation before this function is called
             ClosestNode = NULL;
         }
 
