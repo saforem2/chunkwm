@@ -374,14 +374,21 @@ bool AXLibCGSSpaceIDToDesktopID(CGSSpaceID SpaceId, unsigned *OutArrangement, un
         NSArray *SpaceDictionaries = ScreenDictionary[@"Spaces"];
         for(NSDictionary *SpaceDictionary in (__bridge NSArray *) SpaceDictionaries)
         {
-            if(SpaceId == [SpaceDictionary[@"id64"] intValue])
+            CGSSpaceID CurrentSpaceId = [SpaceDictionary[@"id64"] intValue];
+            CGSSpaceType CurrentSpaceType = CGSSpaceGetType(CGSDefaultConnection, CurrentSpaceId);
+            bool UserCreatedSpace = (CurrentSpaceType == kCGSSpaceUser);
+
+            if(SpaceId == CurrentSpaceId)
             {
-                DesktopId = SpaceIndex;
+                DesktopId = UserCreatedSpace ? SpaceIndex : 0;
                 Result = true;
                 goto End;
             }
 
-            ++SpaceIndex;
+            if(UserCreatedSpace)
+            {
+                ++SpaceIndex;
+            }
         }
 
         ++Arrangement;
@@ -422,12 +429,21 @@ bool AXLibCGSSpaceIDFromDesktopID(unsigned DesktopId, unsigned *OutArrangement, 
         NSArray *SpaceDictionaries = ScreenDictionary[@"Spaces"];
         for(NSDictionary *SpaceDictionary in (__bridge NSArray *) SpaceDictionaries)
         {
+            CGSSpaceID CurrentSpaceId = [SpaceDictionary[@"id64"] intValue];
+            CGSSpaceType CurrentSpaceType = CGSSpaceGetType(CGSDefaultConnection, CurrentSpaceId);
+
+            if(CurrentSpaceType != kCGSSpaceUser)
+            {
+                continue;
+            }
+
             if(SpaceIndex == DesktopId)
             {
-                SpaceId = [SpaceDictionary[@"id64"] intValue];
+                SpaceId = CurrentSpaceId;
                 Result = true;
                 goto End;
             }
+
             ++SpaceIndex;
         }
 
