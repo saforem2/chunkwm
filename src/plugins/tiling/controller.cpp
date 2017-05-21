@@ -74,11 +74,11 @@ enum directions
 internal directions
 DirectionFromString(char *Direction)
 {
-    if(StringEquals(Direction, "north"))        return Dir_North;
+    if     (StringEquals(Direction, "north"))   return Dir_North;
     else if(StringEquals(Direction, "east"))    return Dir_East;
     else if(StringEquals(Direction, "south"))   return Dir_South;
     else if(StringEquals(Direction, "west"))    return Dir_West;
-    return Dir_Unknown;
+    else                                        return Dir_Unknown;
 }
 
 internal void
@@ -266,16 +266,13 @@ void FocusWindow(char *Direction)
                     }
                 }
             }
-            else
+            else if(StringEquals(Direction, "east"))
             {
-                if(StringEquals(Direction, "east"))
-                {
-                    FocusMonitor("next");
-                }
-                else if(StringEquals(Direction, "west"))
-                {
-                    FocusMonitor("prev");
-                }
+                FocusMonitor("next");
+            }
+            else if(StringEquals(Direction, "west"))
+            {
+                FocusMonitor("prev");
             }
         }
         else
@@ -313,39 +310,15 @@ void FocusWindow(char *Direction)
             node *Node = NULL;
             if(StringEquals(Direction, "west"))
             {
-                if(WindowNode->Left)
-                {
-                    Node = WindowNode->Left;
-                }
-                else
-                {
-                    if(StringEquals(FocusCycleMode, Window_Focus_Cycle_All))
-                    {
-                        FocusMonitor("prev");
-                    }
-                    else if(StringEquals(FocusCycleMode, Window_Focus_Cycle_Monitor))
-                    {
-                        Node = GetLastLeafNode(VirtualSpace->Tree);
-                    }
-                }
+                if     (WindowNode->Left)                                           Node = WindowNode->Left;
+                else if(StringEquals(FocusCycleMode, Window_Focus_Cycle_All))       FocusMonitor("prev");
+                else if(StringEquals(FocusCycleMode, Window_Focus_Cycle_Monitor))   Node = GetLastLeafNode(VirtualSpace->Tree);
             }
             else if(StringEquals(Direction, "east"))
             {
-                if(WindowNode->Right)
-                {
-                    Node = WindowNode->Right;
-                }
-                else
-                {
-                    if(StringEquals(FocusCycleMode, Window_Focus_Cycle_All))
-                    {
-                        FocusMonitor("next");
-                    }
-                    else if(StringEquals(FocusCycleMode, Window_Focus_Cycle_Monitor))
-                    {
-                        Node = GetFirstLeafNode(VirtualSpace->Tree);
-                    }
-                }
+                if     (WindowNode->Right)                                          Node = WindowNode->Right;
+                else if(StringEquals(FocusCycleMode, Window_Focus_Cycle_All))       FocusMonitor("next");
+                else if(StringEquals(FocusCycleMode, Window_Focus_Cycle_Monitor))   Node = GetFirstLeafNode(VirtualSpace->Tree);
             }
 
             if(Node)
@@ -666,11 +639,8 @@ ToggleWindowNativeFullscreen()
     {
         AXLibSetWindowFullscreen(Window->Ref, !Fullscreen);
 
-        if(AXLibIsWindowMovable(Window->Ref))
-            AXLibAddFlags(Window, Window_Movable);
-
-        if(AXLibIsWindowResizable(Window->Ref))
-            AXLibAddFlags(Window, Window_Resizable);
+        if(AXLibIsWindowMovable(Window->Ref))   AXLibAddFlags(Window, Window_Movable);
+        if(AXLibIsWindowResizable(Window->Ref)) AXLibAddFlags(Window, Window_Resizable);
 
         TileWindow(Window);
     }
@@ -862,26 +832,11 @@ void ToggleWindow(char *Type)
     // NOTE(koekeishiya): We cannot use our CVAR_BSP_INSERTION_POINT here
     // because the window that we toggle options for may not be in a tree,
     // and we will not be able to perform an operation in that case.
-    if(StringEquals(Type, "float"))
-    {
-        ToggleWindowFloat();
-    }
-    else if(StringEquals(Type, "native-fullscreen"))
-    {
-        ToggleWindowNativeFullscreen();
-    }
-    else if(StringEquals(Type, "fullscreen"))
-    {
-        ToggleWindowFullscreenZoom();
-    }
-    else if(StringEquals(Type, "parent"))
-    {
-        ToggleWindowParentZoom();
-    }
-    else if(StringEquals(Type, "split"))
-    {
-        ToggleWindowSplitMode();
-    }
+    if     (StringEquals(Type, "float"))               ToggleWindowFloat();
+    else if(StringEquals(Type, "native-fullscreen"))   ToggleWindowNativeFullscreen();
+    else if(StringEquals(Type, "fullscreen"))          ToggleWindowFullscreenZoom();
+    else if(StringEquals(Type, "parent"))              ToggleWindowParentZoom();
+    else if(StringEquals(Type, "split"))               ToggleWindowSplitMode();
 }
 
 void UseInsertionPoint(char *Direction)
@@ -944,14 +899,8 @@ RotateBSPTree(node *Node, char *Degrees)
 
     if(!StringEquals(Degrees, "180"))
     {
-        if(Node->Split == Split_Horizontal)
-        {
-            Node->Split = Split_Vertical;
-        }
-        else if(Node->Split == Split_Vertical)
-        {
-            Node->Split = Split_Horizontal;
-        }
+        if     (Node->Split == Split_Horizontal)   Node->Split = Split_Vertical;
+        else if(Node->Split == Split_Vertical)     Node->Split = Split_Horizontal;
     }
 
     if(!IsLeafNode(Node))
@@ -1140,22 +1089,10 @@ void ActivateSpaceLayout(char *Layout)
         goto space_free;
     }
 
-    if(StringEquals(Layout, "bsp"))
-    {
-        NewLayout = Virtual_Space_Bsp;
-    }
-    else if(StringEquals(Layout, "monocle"))
-    {
-        NewLayout = Virtual_Space_Monocle;
-    }
-    else if(StringEquals(Layout, "float"))
-    {
-        NewLayout = Virtual_Space_Float;
-    }
-    else
-    {
-        goto space_free;
-    }
+    if     (StringEquals(Layout, "bsp"))       NewLayout = Virtual_Space_Bsp;
+    else if(StringEquals(Layout, "monocle"))   NewLayout = Virtual_Space_Monocle;
+    else if(StringEquals(Layout, "float"))     NewLayout = Virtual_Space_Float;
+    else                                       goto space_free;
 
     VirtualSpace = AcquireVirtualSpace(Space);
     if(VirtualSpace->Mode == NewLayout)
