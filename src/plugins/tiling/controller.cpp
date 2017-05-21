@@ -23,7 +23,7 @@
 extern macos_window *GetWindowByID(uint32_t Id);
 extern std::vector<uint32_t> GetAllVisibleWindows();
 extern std::vector<uint32_t> GetAllVisibleWindowsForSpace(macos_space *Space);
-extern std::vector<uint32_t> GetAllVisibleWindowsForSpace(macos_space *Space, bool IncludeInvalidWindows);
+extern std::vector<uint32_t> GetAllVisibleWindowsForSpace(macos_space *Space, bool IncludeInvalidWindows, bool IncludeFloatingWindows);
 extern void CreateWindowTreeForSpace(macos_space *Space, virtual_space *VirtualSpace);
 extern void TileWindow(macos_window *Window);
 extern void TileWindowOnSpace(macos_window *Window, macos_space *Space, virtual_space *VirtualSpace);
@@ -1756,7 +1756,7 @@ char *QueryWindowDetails(uint32_t WindowId)
     macos_window *Window = GetWindowByID(WindowId);
     if(Window)
     {
-        char Details[256];
+        char Details[1024];
         char *Mainrole = Window->Mainrole ? CopyCFStringToC(Window->Mainrole) : NULL;
         char *Subrole = Window->Subrole ? CopyCFStringToC(Window->Subrole) : NULL;
         char *Name = AXLibGetWindowTitle(Window->Ref);
@@ -1797,16 +1797,23 @@ char *QueryWindowsForActiveSpace()
     ASSERT(Success);
 
     char *Result = NULL;
-    char Buffer[256] = {};
-    char Temp[32] = {};
+    char Buffer[1024] = {};
+    char Temp[64] = {};
 
-    std::vector<uint32_t> Windows = GetAllVisibleWindowsForSpace(Space, true);
+    std::vector<uint32_t> Windows = GetAllVisibleWindowsForSpace(Space, true, true);
     for(int Index = 0; Index < Windows.size(); ++Index)
     {
         macos_window *Window = GetWindowByID(Windows[Index]);
         ASSERT(Window);
 
-        snprintf(Temp, sizeof(Temp), "%d, %s\n", Window->Id, Window->Owner->Name);
+        if(IsWindowValid(Window))
+        {
+            snprintf(Temp, sizeof(Temp), "%d, %s\n", Window->Id, Window->Owner->Name);
+        }
+        else
+        {
+            snprintf(Temp, sizeof(Temp), "%d, %s (invalid)\n", Window->Id, Window->Owner->Name);
+        }
         strcat(Buffer, Temp);
     }
 

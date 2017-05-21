@@ -425,7 +425,7 @@ void UntileWindow(macos_window *Window, macos_space *Space, virtual_space *Virtu
 }
 
 /* NOTE(koekeishiya): Returns a vector of CGWindowIDs. */
-std::vector<uint32_t> GetAllVisibleWindowsForSpace(macos_space *Space, bool IncludeInvalidWindows)
+std::vector<uint32_t> GetAllVisibleWindowsForSpace(macos_space *Space, bool IncludeInvalidWindows, bool IncludeFloatingWindows)
 {
     std::vector<uint32_t> Windows;
 
@@ -465,7 +465,8 @@ std::vector<uint32_t> GetAllVisibleWindowsForSpace(macos_space *Space, bool Incl
                                          Window->Level,
                                          Window->Owner->Name,
                                          Window->Name);
-                            if(!AXLibHasFlags(Window, Window_Float))
+                            if((!AXLibHasFlags(Window, Window_Float)) ||
+                               (IncludeFloatingWindows))
                             {
                                 Windows.push_back(WindowList[Index]);
                             }
@@ -495,7 +496,7 @@ std::vector<uint32_t> GetAllVisibleWindowsForSpace(macos_space *Space, bool Incl
 
 std::vector<uint32_t> GetAllVisibleWindowsForSpace(macos_space *Space)
 {
-    return GetAllVisibleWindowsForSpace(Space, false);
+    return GetAllVisibleWindowsForSpace(Space, false, false);
 }
 
 /* NOTE(koekeishiya): Returns a vector of CGWindowIDs. */
