@@ -21,7 +21,6 @@
 #define internal static
 
 extern macos_window *GetWindowByID(uint32_t Id);
-extern std::vector<uint32_t> GetAllVisibleWindows();
 extern std::vector<uint32_t> GetAllVisibleWindowsForSpace(macos_space *Space);
 extern std::vector<uint32_t> GetAllVisibleWindowsForSpace(macos_space *Space, bool IncludeInvalidWindows, bool IncludeFloatingWindows);
 extern void CreateWindowTreeForSpace(macos_space *Space, virtual_space *VirtualSpace);
@@ -186,17 +185,15 @@ FindClosestWindow(macos_space *Space, virtual_space *VirtualSpace,
                   macos_window *Match, macos_window **ClosestWindow,
                   char *Direction, bool Wrap)
 {
-    std::vector<uint32_t> Windows = GetAllVisibleWindows();
     float MinDist = 0xFFFFFFFF;
+    std::vector<uint32_t> Windows = GetAllVisibleWindowsForSpace(Space);
 
-    for(int Index = 0;
-        Index < Windows.size();
-        ++Index)
+    for(int Index = 0; Index < Windows.size(); ++Index)
     {
         macos_window *Window = GetWindowByID(Windows[Index]);
-        if(Window &&
-           Match->Id != Window->Id &&
-           WindowIsInDirection(VirtualSpace, Direction, Match, Window))
+        if((Window) &&
+           (Match->Id != Window->Id) &&
+           (WindowIsInDirection(VirtualSpace, Direction, Match, Window)))
         {
             float Dist = GetWindowDistance(Space, VirtualSpace,
                                            Match, Window,
