@@ -86,6 +86,19 @@ RemoveWindowFromCollection(macos_window *Window)
 }
 
 internal void
+ClearWindowCache()
+{
+    for(macos_window_map_it It = Windows.begin();
+        It != Windows.end();
+        ++It)
+    {
+        macos_window *Window = It->second;
+        AXLibDestroyWindow(Window);
+    }
+    Windows.clear();
+}
+
+internal void
 AddApplicationWindowList(macos_application *Application)
 {
     macos_window **WindowList = AXLibWindowListForApplication(Application);
@@ -140,6 +153,19 @@ RemoveApplication(macos_application *Application)
 
         Applications.erase(Application->PID);
     }
+}
+
+internal void
+ClearApplicationCache()
+{
+    for(macos_application_map_it It = Applications.begin();
+        It != Applications.end();
+        ++It)
+    {
+        macos_application *Application = It->second;
+        AXLibDestroyApplication(Application);
+    }
+    Applications.clear();
 }
 
 bool IsWindowValid(macos_window *Window)
@@ -1126,9 +1152,21 @@ PLUGIN_MAIN_FUNC(PluginMain)
 internal bool
 Init(plugin_broadcast *ChunkwmBroadcast)
 {
+    int Port = 4131;
     ChunkWMBroadcastEvent = ChunkwmBroadcast;
+    uint32_t ProcessPolicy = Process_Policy_Regular;
 
-    BeginCVars();
+    bool Success;
+    char *HomeEnv;
+    AXUIElementRef ApplicationRef;
+    std::vector<macos_application *> Applications;
+
+    Success = BeginCVars();
+    if(!Success)
+    {
+        fprintf(stderr, "   tiling: failed to initialize cvar system!\n");
+        goto out;
+    }
 
     CreateCVar(CVAR_SPACE_MODE, Virtual_Space_Bsp);
 
@@ -1166,10 +1204,14 @@ Init(plugin_broadcast *ChunkwmBroadcast)
 
     /*   ---------------------------------------------------------   */
 
-    int Port = 4131;
-    StartDaemon(Port, DaemonCallback);
+    Success = StartDaemon(Port, DaemonCallback);
+    if(!Success)
+    {
+        fprintf(stderr, "   tiling: could not listen on port %d, abort..\n", Port);
+        goto cvar_release;
+    }
 
-    const char *HomeEnv = getenv("HOME");
+    HomeEnv = getenv("HOME");
     if(HomeEnv)
     {
         unsigned HomeEnvLength = strlen(HomeEnv);
@@ -1202,9 +1244,7 @@ Init(plugin_broadcast *ChunkwmBroadcast)
         fprintf(stderr,"    tiling: 'env HOME' not set!\n");
     }
 
-    uint32_t ProcessPolicy = Process_Policy_Regular;
-    std::vector<macos_application *> Applications = AXLibRunningProcesses(ProcessPolicy);
-
+    Applications = AXLibRunningProcesses(ProcessPolicy);
     for(size_t Index = 0; Index < Applications.size(); ++Index)
     {
         macos_application *Application = Applications[Index];
@@ -1212,12 +1252,11 @@ Init(plugin_broadcast *ChunkwmBroadcast)
         AddApplicationWindowList(Application);
     }
 
-    /* NOTE(koekeishiya): Tile windows visible on the current space using configured mode,
-     * defaults to binary space partitioning. */
+    /* NOTE(koekeishiya): Tile windows visible on the current space using configured mode */
     CreateWindowTree();
 
     /* NOTE(koekeishiya): Set our initial insertion-point on launch. */
-    AXUIElementRef ApplicationRef = AXLibGetFocusedApplication();
+    ApplicationRef = AXLibGetFocusedApplication();
     if(ApplicationRef)
     {
         AXUIElementRef WindowRef = AXLibGetFocusedWindow(ApplicationRef);
@@ -1243,10 +1282,10 @@ Init(plugin_broadcast *ChunkwmBroadcast)
     }
 
     macos_space *Space;
-    bool Success = AXLibActiveSpace(&Space);
+    Success = AXLibActiveSpace(&Space);
     ASSERT(Success);
 
-    unsigned DesktopId = 1;
+    unsigned DesktopId;
     Success = AXLibCGSSpaceIDToDesktopID(Space->Id, NULL, &DesktopId);
     ASSERT(Success);
 
@@ -1255,10 +1294,23 @@ Init(plugin_broadcast *ChunkwmBroadcast)
     UpdateCVar(CVAR_ACTIVE_DESKTOP, (int)DesktopId);
     UpdateCVar(CVAR_LAST_ACTIVE_DESKTOP, (int)DesktopId);
 
-    BeginVirtualSpaces();
+    Success = BeginVirtualSpaces();
+    if(Success)
+    {
+        goto out;
+    }
 
-    bool Result = true;
-    return Result;
+    fprintf(stderr, "   tiling: failed to initialize virtual space system!\n");
+
+    StopDaemon();
+    ClearApplicationCache();
+    ClearWindowCache();
+
+cvar_release:
+    EndCVars();
+
+out:
+    return Success;
 }
 
 internal void
@@ -1266,26 +1318,10 @@ Deinit()
 {
     StopDaemon();
 
-    for(macos_application_map_it It = Applications.begin();
-        It != Applications.end();
-        ++It)
-    {
-        macos_application *Application = It->second;
-        AXLibDestroyApplication(Application);
-    }
-
-    for(macos_window_map_it It = Windows.begin();
-        It != Windows.end();
-        ++It)
-    {
-        macos_window *Window = It->second;
-        AXLibDestroyWindow(Window);
-    }
+    ClearApplicationCache();
+    ClearWindowCache();
 
     EndVirtualSpaces();
-    Applications.clear();
-    Windows.clear();
-
     EndCVars();
 }
 
