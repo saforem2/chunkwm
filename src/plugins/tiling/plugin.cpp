@@ -649,17 +649,16 @@ void CreateWindowTreeForSpace(macos_space *Space, virtual_space *VirtualSpace)
     if((VirtualSpace->Tree) ||
        (VirtualSpace->Mode == Virtual_Space_Float))
     {
-        goto out;
+        return;
     }
 
     Windows = GetAllVisibleWindowsForSpace(Space);
     if(Windows.empty())
     {
-        goto out;
+        return;
     }
 
     CreateWindowTreeForSpaceWithWindows(Space, VirtualSpace, Windows);
-out:;
 }
 
 void CreateWindowTree()
@@ -733,17 +732,16 @@ RebalanceWindowTreeForSpace(macos_space *Space, virtual_space *VirtualSpace)
     if((!VirtualSpace->Tree) ||
        (VirtualSpace->Mode == Virtual_Space_Float))
     {
-        goto out;
+        return;
     }
 
     Windows = GetAllVisibleWindowsForSpace(Space);
     if(Windows.empty())
     {
-        goto out;
+        return;
     }
 
     RebalanceWindowTreeForSpaceWithWindows(Space, VirtualSpace, Windows);
-out:;
 }
 
 internal void
