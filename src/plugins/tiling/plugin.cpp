@@ -89,24 +89,26 @@ internal void
 AddApplicationWindowList(macos_application *Application)
 {
     macos_window **WindowList = AXLibWindowListForApplication(Application);
-    if(WindowList)
+    if(!WindowList)
     {
-        macos_window **List = WindowList;
-        macos_window *Window;
-        while((Window = *List++))
-        {
-            if(GetWindowByID(Window->Id))
-            {
-                AXLibDestroyWindow(Window);
-            }
-            else
-            {
-                AddWindowToCollection(Window);
-            }
-        }
-
-        free(WindowList);
+        return;
     }
+
+    macos_window **List = WindowList;
+    macos_window *Window;
+    while((Window = *List++))
+    {
+        if(GetWindowByID(Window->Id))
+        {
+            AXLibDestroyWindow(Window);
+        }
+        else
+        {
+            AddWindowToCollection(Window);
+        }
+    }
+
+    free(WindowList);
 }
 
 internal void
@@ -308,89 +310,94 @@ UntileWindowPreValidation(macos_window *Window)
 // meaning that it is a space we can legally interact with.
 void UntileWindowFromSpace(macos_window *Window, macos_space *Space, virtual_space *VirtualSpace)
 {
-    if(VirtualSpace->Tree && VirtualSpace->Mode != Virtual_Space_Float)
+    if((!VirtualSpace->Tree) ||
+       (VirtualSpace->Mode == Virtual_Space_Float))
     {
-        node *Node = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
-        if(Node)
+        return;
+    }
+
+    node *Node = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
+    if(!Node)
+    {
+        return;
+    }
+
+    if(VirtualSpace->Mode == Virtual_Space_Bsp)
+    {
+        /* NOTE(koekeishiya): The window was in fullscreen-zoom.
+         * We need to null the pointer to prevent a potential bug. */
+        if(VirtualSpace->Tree->Zoom == Node)
         {
-            if(VirtualSpace->Mode == Virtual_Space_Bsp)
-            {
-                /* NOTE(koekeishiya): The window was in fullscreen-zoom.
-                 * We need to null the pointer to prevent a potential bug. */
-                if(VirtualSpace->Tree->Zoom == Node)
-                {
-                    VirtualSpace->Tree->Zoom = NULL;
-                }
-
-                if(Node->Parent && Node->Parent->Left && Node->Parent->Right)
-                {
-                    /* NOTE(koekeishiya): The window was in parent-zoom.
-                     * We need to null the pointer to prevent a potential bug. */
-                    if(Node->Parent->Zoom == Node)
-                    {
-                        Node->Parent->Zoom = NULL;
-                    }
-
-                    node *NewLeaf = Node->Parent;
-                    node *RemainingLeaf = IsRightChild(Node) ? Node->Parent->Left
-                                                             : Node->Parent->Right;
-                    NewLeaf->Left = NULL;
-                    NewLeaf->Right = NULL;
-                    NewLeaf->Zoom = NULL;
-
-                    NewLeaf->WindowId = RemainingLeaf->WindowId;
-                    if(RemainingLeaf->Left && RemainingLeaf->Right)
-                    {
-                        NewLeaf->Left = RemainingLeaf->Left;
-                        NewLeaf->Left->Parent = NewLeaf;
-
-                        NewLeaf->Right = RemainingLeaf->Right;
-                        NewLeaf->Right->Parent = NewLeaf;
-
-                        CreateNodeRegionRecursive(NewLeaf, true, Space, VirtualSpace);
-                    }
-
-                    /* NOTE(koekeishiya): Re-zoom window after spawned window closes.
-                     * see reference: https://github.com/koekeishiya/chunkwm/issues/20 */
-                    ApplyNodeRegion(NewLeaf, VirtualSpace->Mode);
-                    if(NewLeaf->Parent && NewLeaf->Parent->Zoom)
-                    {
-                        ResizeWindowToExternalRegionSize(NewLeaf->Parent->Zoom,
-                                                         NewLeaf->Parent->Region);
-                    }
-
-                    free(RemainingLeaf);
-                    free(Node);
-                }
-                else if(!Node->Parent)
-                {
-                    free(VirtualSpace->Tree);
-                    VirtualSpace->Tree = NULL;
-                }
-            }
-            else if(VirtualSpace->Mode == Virtual_Space_Monocle)
-            {
-                node *Prev = Node->Left;
-                node *Next = Node->Right;
-
-                if(Prev)
-                {
-                    Prev->Right = Next;
-                }
-
-                if(Next)
-                {
-                    Next->Left = Prev;
-                }
-
-                if(Node == VirtualSpace->Tree)
-                {
-                    VirtualSpace->Tree = Next;
-                }
-
-                free(Node);
-            }
+            VirtualSpace->Tree->Zoom = NULL;
         }
+
+        if(Node->Parent && Node->Parent->Left && Node->Parent->Right)
+        {
+            /* NOTE(koekeishiya): The window was in parent-zoom.
+             * We need to null the pointer to prevent a potential bug. */
+            if(Node->Parent->Zoom == Node)
+            {
+                Node->Parent->Zoom = NULL;
+            }
+
+            node *NewLeaf = Node->Parent;
+            node *RemainingLeaf = IsRightChild(Node) ? Node->Parent->Left
+                                                     : Node->Parent->Right;
+            NewLeaf->Left = NULL;
+            NewLeaf->Right = NULL;
+            NewLeaf->Zoom = NULL;
+
+            NewLeaf->WindowId = RemainingLeaf->WindowId;
+            if(RemainingLeaf->Left && RemainingLeaf->Right)
+            {
+                NewLeaf->Left = RemainingLeaf->Left;
+                NewLeaf->Left->Parent = NewLeaf;
+
+                NewLeaf->Right = RemainingLeaf->Right;
+                NewLeaf->Right->Parent = NewLeaf;
+
+                CreateNodeRegionRecursive(NewLeaf, true, Space, VirtualSpace);
+            }
+
+            /* NOTE(koekeishiya): Re-zoom window after spawned window closes.
+             * see reference: https://github.com/koekeishiya/chunkwm/issues/20 */
+            ApplyNodeRegion(NewLeaf, VirtualSpace->Mode);
+            if(NewLeaf->Parent && NewLeaf->Parent->Zoom)
+            {
+                ResizeWindowToExternalRegionSize(NewLeaf->Parent->Zoom,
+                                                 NewLeaf->Parent->Region);
+            }
+
+            free(RemainingLeaf);
+            free(Node);
+        }
+        else if(!Node->Parent)
+        {
+            free(VirtualSpace->Tree);
+            VirtualSpace->Tree = NULL;
+        }
+    }
+    else if(VirtualSpace->Mode == Virtual_Space_Monocle)
+    {
+        node *Prev = Node->Left;
+        node *Next = Node->Right;
+
+        if(Prev)
+        {
+            Prev->Right = Next;
+        }
+
+        if(Next)
+        {
+            Next->Left = Prev;
+        }
+
+        if(Node == VirtualSpace->Tree)
+        {
+            VirtualSpace->Tree = Next;
+        }
+
+        free(Node);
     }
 }
 
@@ -501,37 +508,6 @@ out:
 std::vector<uint32_t> GetAllVisibleWindowsForSpace(macos_space *Space)
 {
     return GetAllVisibleWindowsForSpace(Space, false, false);
-}
-
-/* NOTE(koekeishiya): Returns a vector of CGWindowIDs. */
-std::vector<uint32_t> GetAllVisibleWindows()
-{
-    std::vector<uint32_t> Windows;
-
-    int WindowCount = 0;
-    CGError Error = CGSGetOnScreenWindowCount(CGSDefaultConnection, 0, &WindowCount);
-    if(Error == kCGErrorSuccess)
-    {
-        int WindowList[WindowCount];
-        Error = CGSGetOnScreenWindowList(CGSDefaultConnection, 0, WindowCount, WindowList, &WindowCount);
-        if(Error == kCGErrorSuccess)
-        {
-            for(int Index = 0;
-                Index < WindowCount;
-                ++Index)
-            {
-                /* NOTE(koekeishiya): The onscreenwindowlist can contain windowids
-                 * that we do not care about. Check that the window in question is
-                 * in our cache. */
-                if(GetWindowByID(WindowList[Index]))
-                {
-                    Windows.push_back(WindowList[Index]);
-                }
-            }
-        }
-    }
-
-    return Windows;
 }
 
 internal std::vector<uint32_t>
