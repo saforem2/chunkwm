@@ -477,7 +477,7 @@ std::vector<uint32_t> GetAllVisibleWindowsForSpace(macos_space *Space, bool Incl
             if((!AXLibHasFlags(Window, Window_Float)) ||
                (IncludeFloatingWindows))
             {
-                Result.push_back(WindowList[Index]);
+                Result.push_back(Window->Id);
             }
         }
         else
