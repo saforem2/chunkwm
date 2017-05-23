@@ -48,6 +48,12 @@ internal const char *PluginName = "Tiling";
 internal const char *PluginVersion = "0.0.2";
 
 internal macos_application_map Applications;
+
+/* TODO(koekeishiya): All functions operating on this structure must be made thread-safe:
+ * macos_window *GetWindowByID(uint32_t Id)
+ * AddWindowToCollection(macos_window *Window)
+ * RemoveWindowFromCollection(macos_window *Window)
+ * */
 internal macos_window_map Windows;
 
 plugin_broadcast *ChunkWMBroadcastEvent;
