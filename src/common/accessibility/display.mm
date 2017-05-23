@@ -470,8 +470,6 @@ void AXLibSpaceAddWindow(CGSSpaceID SpaceId, uint32_t WindowId)
     NSArray *NSArrayWindow = @[ @(WindowId) ];
     NSArray *NSArrayDestinationSpace = @[ @(SpaceId) ];
     CGSAddWindowsToSpaces(CGSDefaultConnection, (__bridge CFArrayRef)NSArrayWindow, (__bridge CFArrayRef)NSArrayDestinationSpace);
-    [NSArrayWindow release];
-    [NSArrayDestinationSpace release];
 }
 
 void AXLibSpaceRemoveWindow(CGSSpaceID SpaceId, uint32_t WindowId)
@@ -479,8 +477,6 @@ void AXLibSpaceRemoveWindow(CGSSpaceID SpaceId, uint32_t WindowId)
     NSArray *NSArrayWindow = @[ @(WindowId) ];
     NSArray *NSArraySourceSpace = @[ @(SpaceId) ];
     CGSRemoveWindowsFromSpaces(CGSDefaultConnection, (__bridge CFArrayRef)NSArrayWindow, (__bridge CFArrayRef)NSArraySourceSpace);
-    [NSArrayWindow release];
-    [NSArraySourceSpace release];
 }
 
 bool AXLibSpaceHasWindow(CGSSpaceID SpaceId, uint32_t WindowId)
@@ -504,8 +500,6 @@ bool AXLibSpaceHasWindow(CGSSpaceID SpaceId, uint32_t WindowId)
     }
 
     CFRelease(Spaces);
-    [NSArrayWindow release];
-
     return Result;
 }
 
@@ -520,8 +514,6 @@ bool AXLibStickyWindow(uint32_t WindowId)
     Result = NumberOfSpaces > 1;
 
     CFRelease(Spaces);
-    [NSArrayWindow release];
-
     return Result;
 }
 
