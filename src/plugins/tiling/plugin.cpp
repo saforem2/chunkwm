@@ -149,6 +149,33 @@ bool IsWindowValid(macos_window *Window)
     return Result;
 }
 
+internal bool
+TileWindowPreValidation(macos_window *Window)
+{
+    if(AXLibHasFlags(Window, Window_Float))
+    {
+        return false;
+    }
+
+    if(!IsWindowValid(Window))
+    {
+        FloatWindow(Window);
+        return false;
+    }
+
+    if(CVarIntegerValue(CVAR_WINDOW_FLOAT_NEXT))
+    {
+        FloatWindow(Window);
+        UpdateCVar(CVAR_WINDOW_FLOAT_NEXT, 0);
+        return false;
+    }
+
+    return true;
+}
+
+// NOTE(koekeishiya): Caller is responsible for making sure that the window is a valid window
+// that we can properly manage. The given macos_space must also be of type kCGSSpaceUser,
+// meaning that it is a space we can legally interact with.
 void TileWindowOnSpace(macos_window *Window, macos_space *Space, virtual_space *VirtualSpace)
 {
     CFStringRef DisplayRef;
@@ -243,61 +270,42 @@ out:;
 
 void TileWindow(macos_window *Window)
 {
-    if(AXLibHasFlags(Window, Window_Float))
+    if(TileWindowPreValidation(Window))
     {
-        return;
+        macos_space *Space;
+        bool Success = AXLibActiveSpace(&Space);
+        ASSERT(Success);
+
+        if(Space->Type == kCGSSpaceUser)
+        {
+            virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
+            TileWindowOnSpace(Window, Space, VirtualSpace);
+            ReleaseVirtualSpace(VirtualSpace);
+        }
+
+        AXLibDestroySpace(Space);
     }
-
-    if(!IsWindowValid(Window))
-    {
-        FloatWindow(Window);
-        return;
-    }
-
-    if(CVarIntegerValue(CVAR_WINDOW_FLOAT_NEXT))
-    {
-        FloatWindow(Window);
-        UpdateCVar(CVAR_WINDOW_FLOAT_NEXT, 0);
-        return;
-    }
-
-    macos_space *Space;
-    bool Success = AXLibActiveSpace(&Space);
-    ASSERT(Success);
-
-    if(Space->Type == kCGSSpaceUser)
-    {
-        virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
-        TileWindowOnSpace(Window, Space, VirtualSpace);
-        ReleaseVirtualSpace(VirtualSpace);
-    }
-
-    AXLibDestroySpace(Space);
 }
 
-void TileWindow(macos_window *Window, macos_space *Space, virtual_space *VirtualSpace)
+internal bool
+UntileWindowPreValidation(macos_window *Window)
 {
     if(AXLibHasFlags(Window, Window_Float))
     {
-        return;
+        return false;
     }
 
     if(!IsWindowValid(Window))
     {
-        FloatWindow(Window);
-        return;
+        return false;
     }
 
-    if(CVarIntegerValue(CVAR_WINDOW_FLOAT_NEXT))
-    {
-        FloatWindow(Window);
-        UpdateCVar(CVAR_WINDOW_FLOAT_NEXT, 0);
-        return;
-    }
-
-    TileWindowOnSpace(Window, Space, VirtualSpace);
+    return true;
 }
 
+// NOTE(koekeishiya): Caller is responsible for making sure that the window is a valid window
+// that we can properly manage. The given macos_space must also be of type kCGSSpaceUser,
+// meaning that it is a space we can legally interact with.
 void UntileWindowFromSpace(macos_window *Window, macos_space *Space, virtual_space *VirtualSpace)
 {
     if(VirtualSpace->Tree && VirtualSpace->Mode != Virtual_Space_Float)
@@ -388,116 +396,106 @@ void UntileWindowFromSpace(macos_window *Window, macos_space *Space, virtual_spa
 
 void UntileWindow(macos_window *Window)
 {
-    if(AXLibHasFlags(Window, Window_Float))
+    if(UntileWindowPreValidation(Window))
     {
-        return;
+        CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromWindowRect(Window->Position, Window->Size);
+        ASSERT(DisplayRef);
+
+        macos_space *Space = AXLibActiveSpace(DisplayRef);
+        ASSERT(Space);
+
+        if(Space->Type == kCGSSpaceUser)
+        {
+            virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
+            UntileWindowFromSpace(Window, Space, VirtualSpace);
+            ReleaseVirtualSpace(VirtualSpace);
+        }
+
+        AXLibDestroySpace(Space);
+        CFRelease(DisplayRef);
     }
-
-    if(!IsWindowValid(Window))
-    {
-        return;
-    }
-
-    CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromWindowRect(Window->Position, Window->Size);
-    ASSERT(DisplayRef);
-
-    macos_space *Space = AXLibActiveSpace(DisplayRef);
-    ASSERT(Space);
-
-    if(Space->Type == kCGSSpaceUser)
-    {
-        virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
-        UntileWindowFromSpace(Window, Space, VirtualSpace);
-        ReleaseVirtualSpace(VirtualSpace);
-    }
-
-    AXLibDestroySpace(Space);
-    CFRelease(DisplayRef);
-}
-
-void UntileWindow(macos_window *Window, macos_space *Space, virtual_space *VirtualSpace)
-{
-    if(AXLibHasFlags(Window, Window_Float))
-    {
-        return;
-    }
-
-    if(!IsWindowValid(Window))
-    {
-        return;
-    }
-
-    UntileWindowFromSpace(Window, Space, VirtualSpace);
 }
 
 /* NOTE(koekeishiya): Returns a vector of CGWindowIDs. */
 std::vector<uint32_t> GetAllVisibleWindowsForSpace(macos_space *Space, bool IncludeInvalidWindows, bool IncludeFloatingWindows)
 {
-    std::vector<uint32_t> Windows;
+    bool Success;
+    CGError Error;
+    int WindowCount, *WindowList;
+    std::vector<uint32_t> Result;
 
-    int WindowCount = 0;
-    CGError Error = CGSGetOnScreenWindowCount(CGSDefaultConnection, 0, &WindowCount);
-    if(Error == kCGErrorSuccess)
+    Error = CGSGetOnScreenWindowCount(CGSDefaultConnection, 0, &WindowCount);
+    if(Error != kCGErrorSuccess)
     {
-        int WindowList[WindowCount];
-        Error = CGSGetOnScreenWindowList(CGSDefaultConnection, 0, WindowCount, WindowList, &WindowCount);
-        if(Error == kCGErrorSuccess)
+        fprintf(stderr, "CGSGetOnScreenWindowCount failed..\n");
+        goto out;
+    }
+
+    WindowList = (int *) malloc(sizeof(int) * WindowCount);
+    ASSERT(WindowList);
+
+    Error = CGSGetOnScreenWindowList(CGSDefaultConnection, 0, WindowCount, WindowList, &WindowCount);
+    if(Error != kCGErrorSuccess)
+    {
+        fprintf(stderr, "CGSGetOnScreenWindowList failed..\n");
+        goto windowlist_free;
+    }
+
+    unsigned DesktopId;
+    Success = AXLibCGSSpaceIDToDesktopID(Space->Id, NULL, &DesktopId);
+    ASSERT(Success);
+
+    for(int Index = 0; Index < WindowCount; ++Index)
+    {
+        uint32_t WindowId = WindowList[Index];
+
+        if(!AXLibSpaceHasWindow(Space->Id, WindowId))
         {
-#ifdef CHUNKWM_DEBUG
-            unsigned DesktopId;
-            bool Success = AXLibCGSSpaceIDToDesktopID(Space->Id, NULL, &DesktopId);
-            ASSERT(Success);
-            printf("%d:desktop has these windows:\n", DesktopId);
-#endif
+            /* NOTE(koekeishiya): The onscreenwindowlist can contain windowids
+             * that we do not care about. Check that the window in question is
+             * in our cache and on the correct monitor. */
+            continue;
+        }
 
-            for(int Index = 0;
-                Index < WindowCount;
-                ++Index)
+        macos_window *Window = GetWindowByID(WindowId);
+        if(!Window)
+        {
+            // NOTE(koekeishiya): The chunkwm core does not report these windows to
+            // plugins, and they are therefore never cached, we simply ignore them.
+            // DEBUG_PRINT("   %d:window not cached\n", WindowId);
+            continue;
+        }
+
+        if(IsWindowValid(Window) || IncludeInvalidWindows)
+        {
+            printf("%d:desktop   %d:%d:%s:%s\n",
+                    DesktopId,
+                    Window->Id,
+                    Window->Level,
+                    Window->Owner->Name,
+                    Window->Name);
+            if((!AXLibHasFlags(Window, Window_Float)) ||
+               (IncludeFloatingWindows))
             {
-                uint32_t WindowId = WindowList[Index];
-
-                /* NOTE(koekeishiya): The onscreenwindowlist can contain windowids
-                 * that we do not care about. Check that the window in question is
-                 * in our cache and on the correct monitor. */
-                if(AXLibSpaceHasWindow(Space->Id, WindowId))
-                {
-                    macos_window *Window = GetWindowByID(WindowId);
-                    if(Window)
-                    {
-                        if(IsWindowValid(Window) || IncludeInvalidWindows)
-                        {
-                            DEBUG_PRINT("   %d:%d:%s:%s\n",
-                                         Window->Id,
-                                         Window->Level,
-                                         Window->Owner->Name,
-                                         Window->Name);
-                            if((!AXLibHasFlags(Window, Window_Float)) ||
-                               (IncludeFloatingWindows))
-                            {
-                                Windows.push_back(WindowList[Index]);
-                            }
-                        }
-                        else
-                        {
-                            DEBUG_PRINT("   %d:%d:invalid window:%s:%s\n",
-                                         Window->Id,
-                                         Window->Level,
-                                         Window->Owner->Name,
-                                         Window->Name);
-                        }
-                    }
-                    else
-                    {
-                        // NOTE(koekeishiya): The chunkwm core does not report these windows to
-                        // plugins, and they are therefore never cached, we simply ignore them.
-                        // DEBUG_PRINT("   %d:window not cached\n", WindowId);
-                    }
-                }
+                Result.push_back(WindowList[Index]);
             }
+        }
+        else
+        {
+            printf("%d:desktop   %d:%d:invalid window:%s:%s\n",
+                    DesktopId,
+                    Window->Id,
+                    Window->Level,
+                    Window->Owner->Name,
+                    Window->Name);
         }
     }
 
-    return Windows;
+windowlist_free:
+    free(WindowList);
+
+out:
+    return Result;
 }
 
 std::vector<uint32_t> GetAllVisibleWindowsForSpace(macos_space *Space)
@@ -733,9 +731,9 @@ RebalanceWindowTreeForSpaceWithWindows(macos_space *Space, virtual_space *Virtua
         ++Index)
     {
         macos_window *Window = GetWindowByID(WindowsToRemove[Index]);
-        if(Window)
+        if((Window) && (UntileWindowPreValidation(Window)))
         {
-            UntileWindow(Window, Space, VirtualSpace);
+            UntileWindowFromSpace(Window, Space, VirtualSpace);
         }
     }
 
@@ -744,9 +742,9 @@ RebalanceWindowTreeForSpaceWithWindows(macos_space *Space, virtual_space *Virtua
         ++Index)
     {
         macos_window *Window = GetWindowByID(WindowsToAdd[Index]);
-        if(Window)
+        if((Window) && (TileWindowPreValidation(Window)))
         {
-            TileWindow(Window, Space, VirtualSpace);
+            TileWindowOnSpace(Window, Space, VirtualSpace);
         }
     }
 }
