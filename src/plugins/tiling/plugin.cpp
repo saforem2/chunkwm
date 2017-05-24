@@ -845,33 +845,36 @@ void ApplicationUnhiddenHandler(void *Data)
     macos_application *Application = (macos_application *) Data;
 
     macos_space *Space;
+    macos_window *Window, **List, **WindowList;
+
     bool Success = AXLibActiveSpace(&Space);
     ASSERT(Success);
 
-    if(Space->Type == kCGSSpaceUser)
+    if(Space->Type != kCGSSpaceUser)
     {
-        macos_window **WindowList = AXLibWindowListForApplication(Application);
-        if(WindowList)
-        {
-            macos_window **List = WindowList;
-            macos_window *Window;
-            while((Window = *List++))
-            {
-                if(GetWindowByID(Window->Id))
-                {
-                    if(AXLibSpaceHasWindow(Space->Id, Window->Id))
-                    {
-                        TileWindow(Window);
-                    }
-                }
-
-                AXLibDestroyWindow(Window);
-            }
-
-            free(WindowList);
-        }
+        goto space_free;
     }
 
+    List = WindowList = AXLibWindowListForApplication(Application);
+    if(!WindowList)
+    {
+        goto space_free;
+    }
+
+    while((Window = *List++))
+    {
+        if((GetWindowByID(Window->Id)) &&
+           (AXLibSpaceHasWindow(Space->Id, Window->Id)))
+        {
+            TileWindow(Window);
+        }
+
+        AXLibDestroyWindow(Window);
+    }
+
+    free(WindowList);
+
+space_free:
     AXLibDestroySpace(Space);
 }
 
