@@ -109,6 +109,7 @@ DAEMON_CALLBACK(DaemonCallback)
         token Token = GetToken(&Message);
         char *Directory = TokenToString(Token);
         UpdateCVar(CVAR_PLUGIN_DIR, Directory);
+        free(Directory);
     }
     else if(TokenEquals(Type, CVAR_PLUGIN_HOTLOAD))
     {
