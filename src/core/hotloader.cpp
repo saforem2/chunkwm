@@ -61,7 +61,7 @@ WatchedIODirectory(char *Absolutepath, char **Filename)
         *LastSlash = '/';
     }
 
-    return Sucess;
+    return Success;
 }
 
 internal char *
