@@ -1,11 +1,13 @@
 #include "hotloader.h"
 
 #include "plugin.h"
+#include "constants.h"
 
 #include <sys/stat.h>
 #include <string.h>
 #include <vector>
 
+#include "../common/ipc/daemon.h"
 #include "../common/misc/debug.h"
 
 #define internal static
@@ -20,54 +22,85 @@
 internal hotloader Hotloader;
 internal std::vector<const char *> Directories;
 
+internal void
+PerformIOOperation(const char *Op, char *Filename)
+{
+    int SockFD;
+    if(ConnectToDaemon(&SockFD, CHUNKWM_PORT))
+    {
+        char Message[256];
+        Message[0] = '\0';
+        snprintf(Message, sizeof(Message), "%s %s", Op, Filename);
+        WriteToSocket(Message, SockFD);
+        CloseSocket(SockFD);
+    }
+}
+
+internal bool
+WatchedIODirectory(char *Absolutepath, char **Filename)
+{
+    char *LastSlash = strrchr(Absolutepath, '/');
+    if(LastSlash)
+    {
+        // NOTE(koekeisihya): Null terminate '/' to cut off filename
+        *LastSlash = '\0';
+
+        // NOTE(koekeishiya): We receive notifications for subdirectories, skip these.
+        for(size_t Index = 0; Index < Directories.size(); ++Index)
+        {
+            if(strcmp(Absolutepath, Directories[Index]) == 0)
+            {
+                *Filename = LastSlash + 1;
+                break;
+            }
+        }
+
+        // NOTE(koekeisihya): Revert '/' to restore filename
+        *LastSlash = '/';
+        return true;
+    }
+
+    return false;
+}
+
+internal char *
+WatchedIOFileChange(char *Absolutepath)
+{
+    char *Filename;
+    if(WatchedIODirectory(Absolutepath, &Filename))
+    {
+        char *Extension = strrchr(Filename, '.');
+        if((Extension) && (strcmp(Extension, ".so") == 0))
+        {
+            return Filename;
+        }
+    }
+
+    return NULL;
+}
+
 internal
 HOTLOADER_CALLBACK(HotloadPluginCallback)
 {
     char **Files = (char **) Paths;
 
-    for(size_t Index = 0;
-        Index < Count;
-        ++Index)
+    for(size_t Index = 0; Index < Count; ++Index)
     {
-        char *Fullpath = Files[Index];
-        bool ValidDirectory = false;
+        char *Absolutepath = Files[Index];
+        char *Filename;
 
-        char *LastSlash = strrchr(Fullpath, '/');
-        if(LastSlash)
+        if((Filename = WatchedIOFileChange(Absolutepath)))
         {
-            *LastSlash = '\0';
+            printf("hotloader: plugin '%s' changed!\n", Filename);
 
-            // NOTE(koekeishiya): We receive notifications for subdirectories, skip these.
-            for(size_t Index = 0;
-                Index < Directories.size();
-                ++Index)
+            DEBUG_PRINT("hotloader: unloading plugin '%s'\n", Filename);
+            PerformIOOperation("unload", Filename);
+
+            struct stat Buffer;
+            if(stat(Absolutepath, &Buffer) == 0)
             {
-                if(strcmp(Fullpath, Directories[Index]) == 0)
-                {
-                    ValidDirectory = true;
-                    break;
-                }
-            }
-
-            *LastSlash = '/';
-        }
-
-        if(ValidDirectory)
-        {
-            char *Extension = strrchr(Fullpath, '.');
-            if((Extension) && (strcmp(Extension, ".so") == 0))
-            {
-                char *Filename = LastSlash + 1;
-                DEBUG_PRINT("hotloader: plugin '%s' changed!\n", Filename);
-
-                UnloadPlugin(Fullpath, Filename);
-
-                // NOTE(koekeishiya): Try to load plugin if file exists)
-                struct stat Buffer;
-                if(stat(Fullpath, &Buffer) == 0)
-                {
-                    LoadPlugin(Fullpath, Filename);
-                }
+                DEBUG_PRINT("hotloader: loading plugin '%s'\n", Filename);
+                PerformIOOperation("load", Filename);
             }
         }
     }
