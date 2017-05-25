@@ -144,6 +144,16 @@ RemoveLoadedPlugin(const char *Filename)
     return Result;
 }
 
+internal bool
+IsPluginLoaded(const char *Filename)
+{
+    BeginLoadedPluginList();
+    bool Result = LoadedPlugins.find(Filename) != LoadedPlugins.end();
+    EndLoadedPluginList();
+    return Result;
+}
+
+
 loaded_plugin_list *BeginLoadedPluginList()
 {
     pthread_mutex_lock(&LoadedPluginLock);
@@ -163,6 +173,12 @@ bool LoadPlugin(const char *Absolutepath, const char *Filename)
     plugin_details *Info;
     plugin *Plugin;
     loaded_plugin *LoadedPlugin;
+
+    if(IsPluginLoaded(Filename))
+    {
+        fprintf(stderr, "chunkwm: plugin '%s' is already running!\n", Absolutepath);
+        goto already_loaded;
+    }
 
     Handle = dlopen(Absolutepath, RTLD_LAZY);
     if(!Handle)
@@ -213,6 +229,7 @@ info_err:
     dlclose(Handle);
 
 handle_err:
+already_loaded:
     Result = false;
 
 out:
