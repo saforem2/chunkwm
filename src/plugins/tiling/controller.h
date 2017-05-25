@@ -31,6 +31,9 @@ void UnfloatWindow(macos_window *Window);
 
 void FocusMonitor(char *Op);
 
+void SerializeDesktop(char *Op);
+void DeserializeDesktop(char *Op);
+
 char *QueryWindowDetails(uint32_t WindowId);
 char *QueryWindowsForActiveSpace();
 

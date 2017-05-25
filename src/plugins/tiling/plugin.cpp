@@ -234,13 +234,53 @@ void TileWindowOnSpace(macos_window *Window, macos_space *Space, virtual_space *
 
         node *Node = NULL;
         uint32_t InsertionPoint = CVarIntegerValue(CVAR_BSP_INSERTION_POINT);
-        if(InsertionPoint)
-        {
-            Node = GetNodeWithId(VirtualSpace->Tree, InsertionPoint, VirtualSpace->Mode);
-        }
 
         if(VirtualSpace->Mode == Virtual_Space_Bsp)
         {
+            Node = GetFirstMinDepthPseudoLeafNode(VirtualSpace->Tree);
+            if(Node)
+            {
+                if(Node->Left == NULL)
+                {
+                    Node->WindowId = Node->Parent->WindowId;
+                    Node->Parent->WindowId = 0;
+                    Node = GetFirstMinDepthPseudoLeafNode(VirtualSpace->Tree);
+                    if(Node)
+                    {
+                        Node->WindowId = Window->Id;
+                    }
+
+                    CreateNodeRegionRecursive(Node->Parent, false, Space, VirtualSpace);
+                    ApplyNodeRegion(Node->Parent, VirtualSpace->Mode);
+                }
+                else
+                {
+                    uint32_t LeftWindowId, RightWindowId;
+                    if(CVarIntegerValue(CVAR_BSP_SPAWN_LEFT))
+                    {
+                        LeftWindowId = Window->Id;
+                        RightWindowId = Node->Parent->WindowId;
+                    }
+                    else
+                    {
+                        LeftWindowId = Node->Parent->WindowId;
+                        RightWindowId = Window->Id;
+                    }
+
+                    Node->Parent->WindowId = 0;
+                    Node->Parent->Left->WindowId = LeftWindowId;
+                    Node->Parent->Right->WindowId = RightWindowId;
+                    CreateNodeRegionRecursive(Node->Parent, false, Space, VirtualSpace);
+                    ApplyNodeRegion(Node->Parent, VirtualSpace->Mode);
+                }
+                goto display_free;
+            }
+
+            if(InsertionPoint)
+            {
+                Node = GetNodeWithId(VirtualSpace->Tree, InsertionPoint, VirtualSpace->Mode);
+            }
+
             if(!Node)
             {
                 Node = GetFirstMinDepthLeafNode(VirtualSpace->Tree);
@@ -264,6 +304,11 @@ void TileWindowOnSpace(macos_window *Window, macos_space *Space, virtual_space *
         }
         else if(VirtualSpace->Mode == Virtual_Space_Monocle)
         {
+            if(InsertionPoint)
+            {
+                Node = GetNodeWithId(VirtualSpace->Tree, InsertionPoint, VirtualSpace->Mode);
+            }
+
             if(!Node)
             {
                 Node = GetLastLeafNode(VirtualSpace->Tree);
@@ -666,6 +711,66 @@ CreateWindowTreeForSpaceWithWindows(macos_space *Space, virtual_space *VirtualSp
     }
 
     ApplyNodeRegion(VirtualSpace->Tree, VirtualSpace->Mode);
+}
+
+void CreateDeserializedWindowTreeForSpace(macos_space *Space, virtual_space *VirtualSpace)
+{
+    std::vector<uint32_t> Windows;
+
+    if(VirtualSpace->Mode == Virtual_Space_Float)
+    {
+        return;
+    }
+
+    Windows = GetAllVisibleWindowsForSpace(Space);
+    if(Windows.empty())
+    {
+        return;
+    }
+
+    node *Root = VirtualSpace->Tree;
+
+    for(size_t Index = 0; Index < Windows.size(); ++Index)
+    {
+        node *New = GetFirstMinDepthPseudoLeafNode(Root);
+        ASSERT(New != NULL);
+
+        if(New->Parent)
+        {
+            if(New->Left == NULL)
+            {
+                New->WindowId = New->Parent->WindowId;
+                New->Parent->WindowId = 0;
+                New = GetFirstMinDepthPseudoLeafNode(Root);
+                if(New)
+                {
+                    New->WindowId = Windows[Index];
+                }
+            }
+            else
+            {
+                uint32_t LeftWindowId, RightWindowId;
+                if(CVarIntegerValue(CVAR_BSP_SPAWN_LEFT))
+                {
+                    LeftWindowId = Windows[Index];
+                    RightWindowId = New->Parent->WindowId;
+                }
+                else
+                {
+                    LeftWindowId = New->Parent->WindowId;
+                    RightWindowId = Windows[Index];
+                }
+
+                New->Parent->WindowId = 0;
+                New->Parent->Left->WindowId = LeftWindowId;
+                New->Parent->Right->WindowId = RightWindowId;
+            }
+        }
+        else
+        {
+            New->WindowId = Windows[Index];
+        }
+    }
 }
 
 void CreateWindowTreeForSpace(macos_space *Space, virtual_space *VirtualSpace)

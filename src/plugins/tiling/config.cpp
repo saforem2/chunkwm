@@ -289,6 +289,8 @@ command_func SpaceCommandDispatch(char Flag)
         case 'p': return AdjustSpacePadding;     break;
         case 'g': return AdjustSpaceGap;         break;
         case 'e': return EqualizeWindowTree;     break;
+        case 's': return SerializeDesktop;       break;
+        case 'd': return DeserializeDesktop;     break;
 
         // NOTE(koekeishiya): silence compiler warning.
         default: return 0; break;
@@ -314,6 +316,8 @@ ParseSpaceCommand(const char *Message, command *Chain)
         { "padding", required_argument, NULL, 'p' },
         { "gap", required_argument, NULL, 'g' },
         { "equalize", no_argument, NULL, 'e' },
+        { "serialize", required_argument, NULL, 's' },
+        { "deserialize", required_argument, NULL, 'd' },
         { NULL, 0, NULL, 0 }
     };
 
@@ -415,6 +419,24 @@ ParseSpaceCommand(const char *Message, command *Chain)
                 command *Entry = ConstructCommand(Option, NULL);
                 Command->Next = Entry;
                 Command = Entry;
+            } break;
+            case 's':
+            case 'd':
+            {
+                // NOTE(koekeishiya): This option takes a filepath as argument
+                if(optarg)
+                {
+                    command *Entry = ConstructCommand(Option, optarg);
+                    Command->Next = Entry;
+                    Command = Entry;
+                }
+                else
+                {
+                    fprintf(stderr, "    missing selector for desktop flag '%c'\n", Option);
+                    Success = false;
+                    FreeCommandChain(Chain);
+                    goto End;
+                }
             } break;
             case '?':
             {

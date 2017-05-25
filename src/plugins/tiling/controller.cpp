@@ -24,6 +24,7 @@ extern macos_window *GetWindowByID(uint32_t Id);
 extern std::vector<uint32_t> GetAllVisibleWindowsForSpace(macos_space *Space);
 extern std::vector<uint32_t> GetAllVisibleWindowsForSpace(macos_space *Space, bool IncludeInvalidWindows, bool IncludeFloatingWindows);
 extern void CreateWindowTreeForSpace(macos_space *Space, virtual_space *VirtualSpace);
+extern void CreateDeserializedWindowTreeForSpace(macos_space *Space, virtual_space *VirtualSpace);
 extern void TileWindow(macos_window *Window);
 extern void TileWindowOnSpace(macos_window *Window, macos_space *Space, virtual_space *VirtualSpace);
 extern void UntileWindow(macos_window *Window);
@@ -1737,6 +1738,106 @@ void EqualizeWindowTree(char *Unused)
     EqualizeNodeTree(VirtualSpace->Tree);
     ResizeNodeRegion(VirtualSpace->Tree, Space, VirtualSpace);
     ApplyNodeRegion(VirtualSpace->Tree, VirtualSpace->Mode);
+
+vspace_release:
+    ReleaseVirtualSpace(VirtualSpace);
+
+space_free:
+    AXLibDestroySpace(Space);
+}
+
+void SerializeDesktop(char *Op)
+{
+    bool Success;
+    char *Buffer;
+    FILE *Handle;
+    macos_space *Space;
+    virtual_space *VirtualSpace;
+    serialized_node SerializedNode = {};
+
+    Success = AXLibActiveSpace(&Space);
+    ASSERT(Success);
+
+    if(Space->Type != kCGSSpaceUser)
+    {
+        goto space_free;
+    }
+
+    VirtualSpace = AcquireVirtualSpace(Space);
+    if((!VirtualSpace->Tree) ||
+       (VirtualSpace->Mode != Virtual_Space_Bsp))
+    {
+        goto vspace_release;
+    }
+
+    SerializeRootNode(VirtualSpace->Tree, "root", &SerializedNode);
+    Buffer = SerializeNodeToBuffer(&SerializedNode);
+
+    Handle = fopen(Op, "w");
+    if(Handle)
+    {
+        size_t Length = strlen(Buffer);
+        fwrite(Buffer, sizeof(char), Length, Handle);
+        fclose(Handle);
+    }
+    else
+    {
+        fprintf(stderr, "failed to open '%s' for writing!\n", Op);
+    }
+
+    free(Buffer);
+    DestroySeralizedNode(SerializedNode.Next);
+
+vspace_release:
+    ReleaseVirtualSpace(VirtualSpace);
+
+space_free:
+    AXLibDestroySpace(Space);
+}
+
+void DeserializeDesktop(char *Op)
+{
+    bool Success;
+    char *Buffer;
+    macos_space *Space;
+    virtual_space *VirtualSpace;
+
+    Success = AXLibActiveSpace(&Space);
+    ASSERT(Success);
+
+    if(Space->Type != kCGSSpaceUser)
+    {
+        goto space_free;
+    }
+
+    VirtualSpace = AcquireVirtualSpace(Space);
+    if(VirtualSpace->Mode != Virtual_Space_Bsp)
+    {
+        goto vspace_release;
+    }
+
+    Buffer = ReadFile(Op);
+    if(Buffer)
+    {
+        if(VirtualSpace->Tree)
+        {
+            FreeNodeTree(VirtualSpace->Tree, VirtualSpace->Mode);
+        }
+
+        VirtualSpace->Tree = DeserializeNodeFromBuffer(Buffer);
+        PrintNode(VirtualSpace->Tree);
+
+        CreateDeserializedWindowTreeForSpace(Space, VirtualSpace);
+        CreateNodeRegion(VirtualSpace->Tree, Region_Full, Space, VirtualSpace);
+        CreateNodeRegionRecursive(VirtualSpace->Tree, false, Space, VirtualSpace);
+        ApplyNodeRegion(VirtualSpace->Tree, VirtualSpace->Mode, false);
+        PrintNode(VirtualSpace->Tree);
+        free(Buffer);
+    }
+    else
+    {
+        fprintf(stderr, "failed to open '%s' for reading!\n", Op);
+    }
 
 vspace_release:
     ReleaseVirtualSpace(VirtualSpace);

@@ -28,6 +28,15 @@ struct node
     region Region;
 };
 
+struct serialized_node
+{
+    int TypeId;
+    char *Type;
+    int Split;
+    float Ratio;
+    serialized_node *Next;
+};
+
 struct equalize_node
 {
     int VerticalCount;
@@ -64,11 +73,19 @@ bool IsNodeInTree(node *Tree, node *Node);
 node *GetFirstLeafNode(node *Tree);
 node *GetLastLeafNode(node *Tree);
 node *GetFirstMinDepthLeafNode(node *Root);
+node *GetFirstMinDepthPseudoLeafNode(node *Root);
 node *GetLowestCommonAncestor(node *A, node *B);
 
 node *GetNearestNodeToTheRight(node *Node);
 node *GetNodeWithId(node *Tree, uint32_t WindowId, virtual_space_mode VirtualSpaceMode);
 
 void SwapNodeIds(node *A, node *B);
+
+serialized_node *SerializeRootNode(node *Node, const char *NodeType, serialized_node *SerializedNode);
+void DestroySeralizedNode(serialized_node *Node);
+char *SerializeNodeToBuffer(serialized_node *SerializedNode);
+node *DeserializeNodeFromBuffer(char *Buffer);
+
+void PrintNode(node *Node);
 
 #endif

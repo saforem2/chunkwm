@@ -3,6 +3,7 @@
 #include "constants.h"
 
 #include "../../common/config/cvar.h"
+#include "../../common/config/tokenize.h"
 #include "../../common/misc/assert.h"
 #include "../../common/accessibility/window.h"
 #include "../../common/accessibility/element.h"
@@ -155,7 +156,7 @@ void ResizeWindowToExternalRegionSize(node *Node, region Region)
 
 void ApplyNodeRegion(node *Node, virtual_space_mode VirtualSpaceMode, bool Center)
 {
-    if(Node->WindowId)
+    if(Node->WindowId && Node->WindowId != -1)
     {
         ResizeWindowToRegionSize(Node, Center);
     }
@@ -214,7 +215,8 @@ bool IsNodeInTree(node *Tree, node *Node)
 
 bool IsLeafNode(node *Node)
 {
-    bool Result = Node->Left == NULL && Node->Right == NULL;
+    bool Result = ((Node->Left == NULL && Node->Right == NULL) ||
+                    Node->WindowId == -1);
     return Result;
 }
 
@@ -257,6 +259,33 @@ node *GetFirstMinDepthLeafNode(node *Tree)
 
         Queue.push(Node->Left);
         Queue.push(Node->Right);
+    }
+
+    /* NOTE(koekeishiya): Unreachable return;
+     * the binary-tree is always proper.
+     * Silence compiler warning.. */
+    return NULL;
+}
+
+node *GetFirstMinDepthPseudoLeafNode(node *Tree)
+{
+    std::queue<node *> Queue;
+    Queue.push(Tree);
+
+    while(!Queue.empty())
+    {
+        node *Node = Queue.front();
+        Queue.pop();
+
+        if(IsLeafNode(Node) && Node->WindowId == -1)
+        {
+            return Node;
+        }
+
+        if(Node->Left)
+            Queue.push(Node->Left);
+        if(Node->Right)
+            Queue.push(Node->Right);
     }
 
     /* NOTE(koekeishiya): Unreachable return;
@@ -374,4 +403,205 @@ void SwapNodeIds(node *A, node *B)
     uint32_t TempId = A->WindowId;
     A->WindowId = B->WindowId;
     B->WindowId = TempId;
+}
+
+internal serialized_node *
+ChainSerializedNode(serialized_node *Root, const char *NodeType, node *Node)
+{
+    serialized_node *SerializedNode = (serialized_node *) malloc(sizeof(serialized_node));
+    memset(SerializedNode, 0, sizeof(serialized_node));
+
+    SerializedNode->TypeId = 1;
+    SerializedNode->Type = strdup(NodeType);
+    SerializedNode->Split = Node->Split;
+    SerializedNode->Ratio = Node->Ratio;
+
+    Root->Next = SerializedNode;
+    return SerializedNode;
+}
+
+internal serialized_node *
+ChainSerializedNode(serialized_node *Root, const char *NodeType)
+{
+    serialized_node *SerializedNode = (serialized_node *) malloc(sizeof(serialized_node));
+    memset(SerializedNode, 0, sizeof(serialized_node));
+
+    SerializedNode->TypeId = 2;
+    SerializedNode->Type = strdup(NodeType);
+
+    Root->Next = SerializedNode;
+    return SerializedNode;
+}
+
+void DestroySeralizedNode(serialized_node *Node)
+{
+    serialized_node *Next = Node->Next;
+
+    free(Node->Type);
+    free(Node);
+
+    if(Next) DestroySeralizedNode(Next);
+}
+
+serialized_node *SerializeRootNode(node *Node, const char *NodeType, serialized_node *SerializedNode)
+{
+    SerializedNode = ChainSerializedNode(SerializedNode, NodeType, Node);
+
+    if(IsLeafNode(Node->Left))
+    {
+        SerializedNode = ChainSerializedNode(SerializedNode, "left_leaf");
+    }
+    else
+    {
+        SerializedNode = SerializeRootNode(Node->Left, "left_root", SerializedNode);
+    }
+
+    if(IsLeafNode(Node->Right))
+    {
+        SerializedNode = ChainSerializedNode(SerializedNode, "right_leaf");
+    }
+    else
+    {
+        SerializedNode = SerializeRootNode(Node->Right, "right_root", SerializedNode);
+    }
+
+    return SerializedNode;
+}
+
+// NOTE(koekeishiya): Caller is responsible for memory
+char *SerializeNodeToBuffer(serialized_node *SerializedNode)
+{
+    serialized_node *Current = SerializedNode->Next;
+
+    char *Cursor, *Buffer, *EndOfBuffer;
+    size_t BufferSize = sizeof(char) * 2048;
+
+    Cursor = Buffer = (char *) malloc(BufferSize);
+    EndOfBuffer = Buffer + BufferSize;
+
+    size_t BytesWritten = 0;
+
+    while(Current)
+    {
+        if(Current->TypeId == 1)
+        {
+            ASSERT(Cursor < EndOfBuffer);
+            BytesWritten = snprintf(Cursor, BufferSize,
+                                    "%s %d %.2f\n",
+                                    Current->Type,
+                                    Current->Split,
+                                    Current->Ratio);
+            ASSERT(BytesWritten >= 0);
+            Cursor += BytesWritten;
+        }
+        else if(Current->TypeId == 2)
+        {
+            ASSERT(Cursor < EndOfBuffer);
+            BytesWritten = snprintf(Cursor, BufferSize,
+                                    "%s\n", Current->Type);
+            ASSERT(BytesWritten >= 0);
+            Cursor += BytesWritten;
+        }
+
+        Current = Current->Next;
+    }
+
+    return Buffer;
+}
+
+node *DeserializeNodeFromBuffer(char *Buffer)
+{
+    node *Tree, *Current;
+    Current = Tree = (node *) malloc(sizeof(node));
+    memset(Tree, 0, sizeof(node));
+
+    const char *Cursor = Buffer;
+
+    token Token = GetToken(&Cursor);
+    ASSERT(TokenEquals(Token, "root"));
+
+    token Split = GetToken(&Cursor);
+    token Ratio = GetToken(&Cursor);
+
+    Tree->WindowId = -1;
+    Tree->Split = (node_split) TokenToInt(Split);
+    Tree->Ratio = TokenToFloat(Ratio);
+
+    Token = GetToken(&Cursor);
+    while(Token.Length > 0)
+    {
+        printf("token: %.*s\n", Token.Length, Token.Text);
+        if(TokenEquals(Token, "left_root"))
+        {
+            node *Left = (node *) malloc(sizeof(node));
+            memset(Left, 0, sizeof(node));
+
+            token Split = GetToken(&Cursor);
+            token Ratio = GetToken(&Cursor);
+
+            Left->WindowId = -1;
+            Left->Parent = Current;
+            Left->Split = (node_split) TokenToInt(Split);
+            Left->Ratio = TokenToFloat(Ratio);
+
+            Current->Left = Left;
+            Current = Left;
+        }
+        else if(TokenEquals(Token, "right_root"))
+        {
+            node *Right = (node *) malloc(sizeof(node));
+            memset(Right, 0, sizeof(node));
+
+            token Split = GetToken(&Cursor);
+            token Ratio = GetToken(&Cursor);
+
+            Right->WindowId = -1;
+            Right->Parent = Current;
+            Right->Split = (node_split) TokenToInt(Split);
+            Right->Ratio = TokenToFloat(Ratio);
+
+            Current->Right = Right;
+            Current = Right;
+        }
+        else if(TokenEquals(Token, "left_leaf"))
+        {
+            node *Leaf = (node *) malloc(sizeof(node));
+            memset(Leaf, 0, sizeof(node));
+
+            Leaf->WindowId = -1;
+            Leaf->Parent = Current;
+            Current->Left = Leaf;
+        }
+        else if(TokenEquals(Token, "right_leaf"))
+        {
+            node *Leaf = (node *) malloc(sizeof(node));
+            memset(Leaf, 0, sizeof(node));
+
+            Leaf->WindowId = -1;
+            Leaf->Parent = Current;
+            Current->Right = Leaf;
+
+            // NOTE(koekeishiya): After parsing a right-leaf, we are done with this node
+            Current = Current->Parent;
+        }
+
+        Token = GetToken(&Cursor);
+    }
+
+    return Tree;
+}
+
+void PrintNode(node *Node)
+{
+    printf("id: %d\nsplit: %d\nratio: %.2f\n",
+            Node->WindowId, Node->Split, Node->Ratio);
+
+    if(Node->Left)
+    {
+        PrintNode(Node->Left);
+    }
+    if(Node->Right)
+    {
+        PrintNode(Node->Right);
+    }
 }
