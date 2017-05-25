@@ -6,6 +6,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#define internal static
+
 bool TokenEquals(token Token, const char *Match)
 {
     const char *At = Match;
@@ -49,21 +51,30 @@ int TokenToInt(token Token)
     return Result;
 }
 
+internal inline bool
+IsWhiteSpace(char C)
+{
+    bool Result = ((C == ' ') ||
+                   (C == '\t') ||
+                   (C == '\n'));
+    return Result;
+}
+
 // NOTE(koekeishiya): simple 'whitespace' tokenizer
 token GetToken(const char **Data)
 {
     token Token;
 
     Token.Text = *Data;
-    while(**Data && **Data != ' ')
+    while(**Data && !IsWhiteSpace(**Data))
     {
         ++(*Data);
     }
 
     Token.Length = *Data - Token.Text;
-    ASSERT(**Data == ' ' || **Data == '\0');
+    ASSERT(IsWhiteSpace(**Data) || **Data == '\0');
 
-    if(**Data == ' ')
+    if(IsWhiteSpace(**Data))
     {
         ++(*Data);
     }
