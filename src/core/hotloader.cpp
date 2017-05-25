@@ -39,6 +39,7 @@ PerformIOOperation(const char *Op, char *Filename)
 internal bool
 WatchedIODirectory(char *Absolutepath, char **Filename)
 {
+    bool Success = false;
     char *LastSlash = strrchr(Absolutepath, '/');
     if(LastSlash)
     {
@@ -51,16 +52,16 @@ WatchedIODirectory(char *Absolutepath, char **Filename)
             if(strcmp(Absolutepath, Directories[Index]) == 0)
             {
                 *Filename = LastSlash + 1;
+                Success = true;
                 break;
             }
         }
 
         // NOTE(koekeisihya): Revert '/' to restore filename
         *LastSlash = '/';
-        return true;
     }
 
-    return false;
+    return Sucess;
 }
 
 internal char *
