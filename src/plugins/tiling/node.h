@@ -23,6 +23,12 @@ enum node_split
     Split_Horizontal = 2
 };
 
+struct node_ids
+{
+    uint32_t Left;
+    uint32_t Right;
+};
+
 struct node
 {
     uint32_t WindowId;
@@ -57,6 +63,7 @@ inline equalize_node operator+(const equalize_node A, const equalize_node B)
              A.HorizontalCount + B.HorizontalCount };
 }
 
+node_ids AssignNodeIds(uint32_t ExistingId, uint32_t NewId);
 node_split OptimalSplitMode(node *Node);
 
 node *CreateRootNode(uint32_t WindowId, macos_space *Space, virtual_space *VirtualSpace);

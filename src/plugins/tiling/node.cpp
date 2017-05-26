@@ -15,6 +15,22 @@
 
 extern macos_window *GetWindowByID(uint32_t Id);
 
+node_ids AssignNodeIds(uint32_t ExistingId, uint32_t NewId)
+{
+    node_ids NodeIds;
+    if(CVarIntegerValue(CVAR_BSP_SPAWN_LEFT))
+    {
+        NodeIds.Left = NewId;
+        NodeIds.Right = ExistingId;
+    }
+    else
+    {
+        NodeIds.Left = ExistingId;
+        NodeIds.Right = NewId;
+    }
+    return NodeIds;
+}
+
 node_split OptimalSplitMode(node *Node)
 {
     float OptimalRatio = CVarFloatingPointValue(CVAR_BSP_OPTIMAL_RATIO);
@@ -56,28 +72,18 @@ void CreateLeafNodePair(node *Parent, uint32_t ExistingWindowId, uint32_t Spawne
     Parent->Split = Split;
     Parent->Ratio = CVarFloatingPointValue(CVAR_BSP_SPLIT_RATIO);
 
-    uint32_t LeftWindowId, RightWindowId;
-    if(CVarIntegerValue(CVAR_BSP_SPAWN_LEFT))
-    {
-        LeftWindowId = SpawnedWindowId;
-        RightWindowId = ExistingWindowId;
-    }
-    else
-    {
-        LeftWindowId = ExistingWindowId;
-        RightWindowId = SpawnedWindowId;
-    }
+    node_ids NodeIds = AssignNodeIds(ExistingWindowId, SpawnedWindowId);
 
     ASSERT(Split == Split_Vertical || Split == Split_Horizontal);
     if(Split == Split_Vertical)
     {
-        Parent->Left = CreateLeafNode(Parent, LeftWindowId, Region_Left, Space, VirtualSpace);
-        Parent->Right = CreateLeafNode(Parent, RightWindowId, Region_Right, Space, VirtualSpace);
+        Parent->Left = CreateLeafNode(Parent, NodeIds.Left, Region_Left, Space, VirtualSpace);
+        Parent->Right = CreateLeafNode(Parent, NodeIds.Right, Region_Right, Space, VirtualSpace);
     }
     else if(Split == Split_Horizontal)
     {
-        Parent->Left = CreateLeafNode(Parent, LeftWindowId, Region_Upper, Space, VirtualSpace);
-        Parent->Right = CreateLeafNode(Parent, RightWindowId, Region_Lower, Space, VirtualSpace);
+        Parent->Left = CreateLeafNode(Parent, NodeIds.Left, Region_Upper, Space, VirtualSpace);
+        Parent->Right = CreateLeafNode(Parent, NodeIds.Right, Region_Lower, Space, VirtualSpace);
     }
 }
 
