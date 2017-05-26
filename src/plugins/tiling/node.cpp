@@ -444,23 +444,13 @@ serialized_node *SerializeRootNode(node *Node, const char *NodeType, serialized_
 {
     SerializedNode = ChainSerializedNode(SerializedNode, NodeType, Node);
 
-    if(IsLeafNode(Node->Left))
-    {
-        SerializedNode = ChainSerializedNode(SerializedNode, "left_leaf");
-    }
-    else
-    {
-        SerializedNode = SerializeRootNode(Node->Left, "left_root", SerializedNode);
-    }
+    SerializedNode = IsLeafNode(Node->Left)
+                   ? ChainSerializedNode(SerializedNode, "left_leaf")
+                   : SerializeRootNode(Node->Left, "left_root", SerializedNode);
 
-    if(IsLeafNode(Node->Right))
-    {
-        SerializedNode = ChainSerializedNode(SerializedNode, "right_leaf");
-    }
-    else
-    {
-        SerializedNode = SerializeRootNode(Node->Right, "right_root", SerializedNode);
-    }
+    SerializedNode = IsLeafNode(Node->Right)
+                   ? ChainSerializedNode(SerializedNode, "right_leaf")
+                   : SerializeRootNode(Node->Right, "right_root", SerializedNode);
 
     return SerializedNode;
 }
@@ -472,11 +462,10 @@ char *SerializeNodeToBuffer(serialized_node *SerializedNode)
 
     char *Cursor, *Buffer, *EndOfBuffer;
     size_t BufferSize = sizeof(char) * 2048;
+    size_t BytesWritten = 0;
 
     Cursor = Buffer = (char *) malloc(BufferSize);
     EndOfBuffer = Buffer + BufferSize;
-
-    size_t BytesWritten = 0;
 
     while(Current)
     {
@@ -529,7 +518,6 @@ node *DeserializeNodeFromBuffer(char *Buffer)
     Token = GetToken(&Cursor);
     while(Token.Length > 0)
     {
-        printf("token: %.*s\n", Token.Length, Token.Text);
         if(TokenEquals(Token, "left_root"))
         {
             node *Left = (node *) malloc(sizeof(node));
