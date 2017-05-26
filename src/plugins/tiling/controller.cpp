@@ -1786,7 +1786,7 @@ void SerializeDesktop(char *Op)
     }
 
     free(Buffer);
-    DestroySeralizedNode(SerializedNode.Next);
+    DestroySerializedNode(SerializedNode.Next);
 
 vspace_release:
     ReleaseVirtualSpace(VirtualSpace);

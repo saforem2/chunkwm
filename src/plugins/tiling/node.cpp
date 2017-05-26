@@ -52,7 +52,7 @@ node *CreateLeafNode(node *Parent, uint32_t WindowId, region_type Type, macos_sp
 
 void CreateLeafNodePair(node *Parent, uint32_t ExistingWindowId, uint32_t SpawnedWindowId, node_split Split, macos_space *Space, virtual_space *VirtualSpace)
 {
-    Parent->WindowId = 0;
+    Parent->WindowId = Node_Root;
     Parent->Split = Split;
     Parent->Ratio = CVarFloatingPointValue(CVAR_BSP_SPLIT_RATIO);
 
@@ -156,7 +156,7 @@ void ResizeWindowToExternalRegionSize(node *Node, region Region)
 
 void ApplyNodeRegion(node *Node, virtual_space_mode VirtualSpaceMode, bool Center)
 {
-    if(Node->WindowId && Node->WindowId != -1)
+    if(Node->WindowId && Node->WindowId != Node_PseudoLeaf)
     {
         ResizeWindowToRegionSize(Node, Center);
     }
@@ -215,15 +215,15 @@ bool IsNodeInTree(node *Tree, node *Node)
 
 bool IsLeafNode(node *Node)
 {
-    bool Result = ((Node->Left == NULL && Node->Right == NULL) ||
-                    Node->WindowId == -1);
+    bool Result = Node->WindowId != Node_Root;
     return Result;
 }
 
 node *GetFirstLeafNode(node *Tree)
 {
     node *Node = Tree;
-    while(Node->Left)
+    while((!IsLeafNode(Node)) &&
+          (Node->Left))
     {
         Node = Node->Left;
     }
@@ -234,7 +234,8 @@ node *GetFirstLeafNode(node *Tree)
 node *GetLastLeafNode(node *Tree)
 {
     node *Node = Tree;
-    while(Node->Right)
+    while((!IsLeafNode(Node)) &&
+          (Node->Right))
     {
         Node = Node->Right;
     }
@@ -277,20 +278,16 @@ node *GetFirstMinDepthPseudoLeafNode(node *Tree)
         node *Node = Queue.front();
         Queue.pop();
 
-        if(IsLeafNode(Node) && Node->WindowId == -1)
+        if((IsLeafNode(Node)) &&
+           (Node->WindowId == Node_PseudoLeaf))
         {
             return Node;
         }
 
-        if(Node->Left)
-            Queue.push(Node->Left);
-        if(Node->Right)
-            Queue.push(Node->Right);
+        if(Node->Left)  Queue.push(Node->Left);
+        if(Node->Right) Queue.push(Node->Right);
     }
 
-    /* NOTE(koekeishiya): Unreachable return;
-     * the binary-tree is always proper.
-     * Silence compiler warning.. */
     return NULL;
 }
 
@@ -411,7 +408,7 @@ ChainSerializedNode(serialized_node *Root, const char *NodeType, node *Node)
     serialized_node *SerializedNode = (serialized_node *) malloc(sizeof(serialized_node));
     memset(SerializedNode, 0, sizeof(serialized_node));
 
-    SerializedNode->TypeId = 1;
+    SerializedNode->TypeId = Node_Serialized_Root;
     SerializedNode->Type = strdup(NodeType);
     SerializedNode->Split = Node->Split;
     SerializedNode->Ratio = Node->Ratio;
@@ -426,21 +423,21 @@ ChainSerializedNode(serialized_node *Root, const char *NodeType)
     serialized_node *SerializedNode = (serialized_node *) malloc(sizeof(serialized_node));
     memset(SerializedNode, 0, sizeof(serialized_node));
 
-    SerializedNode->TypeId = 2;
+    SerializedNode->TypeId = Node_Serialized_Leaf;
     SerializedNode->Type = strdup(NodeType);
 
     Root->Next = SerializedNode;
     return SerializedNode;
 }
 
-void DestroySeralizedNode(serialized_node *Node)
+void DestroySerializedNode(serialized_node *Node)
 {
     serialized_node *Next = Node->Next;
 
     free(Node->Type);
     free(Node);
 
-    if(Next) DestroySeralizedNode(Next);
+    if(Next) DestroySerializedNode(Next);
 }
 
 serialized_node *SerializeRootNode(node *Node, const char *NodeType, serialized_node *SerializedNode)
@@ -483,7 +480,7 @@ char *SerializeNodeToBuffer(serialized_node *SerializedNode)
 
     while(Current)
     {
-        if(Current->TypeId == 1)
+        if(Current->TypeId == Node_Serialized_Root)
         {
             ASSERT(Cursor < EndOfBuffer);
             BytesWritten = snprintf(Cursor, BufferSize,
@@ -493,14 +490,16 @@ char *SerializeNodeToBuffer(serialized_node *SerializedNode)
                                     Current->Ratio);
             ASSERT(BytesWritten >= 0);
             Cursor += BytesWritten;
+            BufferSize -= BytesWritten;
         }
-        else if(Current->TypeId == 2)
+        else if(Current->TypeId == Node_Serialized_Leaf)
         {
             ASSERT(Cursor < EndOfBuffer);
             BytesWritten = snprintf(Cursor, BufferSize,
                                     "%s\n", Current->Type);
             ASSERT(BytesWritten >= 0);
             Cursor += BytesWritten;
+            BufferSize -= BytesWritten;
         }
 
         Current = Current->Next;
@@ -523,7 +522,7 @@ node *DeserializeNodeFromBuffer(char *Buffer)
     token Split = GetToken(&Cursor);
     token Ratio = GetToken(&Cursor);
 
-    Tree->WindowId = -1;
+    Tree->WindowId = Node_PseudoLeaf;
     Tree->Split = (node_split) TokenToInt(Split);
     Tree->Ratio = TokenToFloat(Ratio);
 
@@ -539,7 +538,7 @@ node *DeserializeNodeFromBuffer(char *Buffer)
             token Split = GetToken(&Cursor);
             token Ratio = GetToken(&Cursor);
 
-            Left->WindowId = -1;
+            Left->WindowId = Node_PseudoLeaf;
             Left->Parent = Current;
             Left->Split = (node_split) TokenToInt(Split);
             Left->Ratio = TokenToFloat(Ratio);
@@ -555,7 +554,7 @@ node *DeserializeNodeFromBuffer(char *Buffer)
             token Split = GetToken(&Cursor);
             token Ratio = GetToken(&Cursor);
 
-            Right->WindowId = -1;
+            Right->WindowId = Node_PseudoLeaf;
             Right->Parent = Current;
             Right->Split = (node_split) TokenToInt(Split);
             Right->Ratio = TokenToFloat(Ratio);
@@ -568,7 +567,7 @@ node *DeserializeNodeFromBuffer(char *Buffer)
             node *Leaf = (node *) malloc(sizeof(node));
             memset(Leaf, 0, sizeof(node));
 
-            Leaf->WindowId = -1;
+            Leaf->WindowId = Node_PseudoLeaf;
             Leaf->Parent = Current;
             Current->Left = Leaf;
         }
@@ -577,7 +576,7 @@ node *DeserializeNodeFromBuffer(char *Buffer)
             node *Leaf = (node *) malloc(sizeof(node));
             memset(Leaf, 0, sizeof(node));
 
-            Leaf->WindowId = -1;
+            Leaf->WindowId = Node_PseudoLeaf;
             Leaf->Parent = Current;
             Current->Right = Leaf;
 

@@ -6,6 +6,15 @@
 #include "region.h"
 #include "vspace.h"
 
+enum node_type
+{
+    Node_PseudoLeaf = -1,
+    Node_Root = 0,
+
+    Node_Serialized_Root = 1,
+    Node_Serialized_Leaf = 2
+};
+
 enum node_split
 {
     Split_None = 0,
@@ -82,7 +91,7 @@ node *GetNodeWithId(node *Tree, uint32_t WindowId, virtual_space_mode VirtualSpa
 void SwapNodeIds(node *A, node *B);
 
 serialized_node *SerializeRootNode(node *Node, const char *NodeType, serialized_node *SerializedNode);
-void DestroySeralizedNode(serialized_node *Node);
+void DestroySerializedNode(serialized_node *Node);
 char *SerializeNodeToBuffer(serialized_node *SerializedNode);
 node *DeserializeNodeFromBuffer(char *Buffer);
 
