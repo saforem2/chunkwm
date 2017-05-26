@@ -127,6 +127,8 @@ ctrl + alt - a : chunkc desktop --layout bsp
 ctrl + alt - s : chunkc desktop --layout monocle
 ctrl + alt - d : chunkc desktop --layout float
 
+ctrl + alt - w : chunkc desktop --deserialize ~/.chunkwm_layouts/dev_1
+
 # remap caps-lock to escape for this config only !!!
 # macos sierra can also perform this remap for a given keyboard
 - capslock : khd -p "- escape"
