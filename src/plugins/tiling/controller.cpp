@@ -1753,7 +1753,6 @@ void SerializeDesktop(char *Op)
     FILE *Handle;
     macos_space *Space;
     virtual_space *VirtualSpace;
-    serialized_node SerializedNode = {};
 
     Success = AXLibActiveSpace(&Space);
     ASSERT(Success);
@@ -1770,8 +1769,7 @@ void SerializeDesktop(char *Op)
         goto vspace_release;
     }
 
-    SerializeRootNode(VirtualSpace->Tree, "root", &SerializedNode);
-    Buffer = SerializeNodeToBuffer(&SerializedNode);
+    Buffer = SerializeNodeToBuffer(VirtualSpace->Tree);
 
     Handle = fopen(Op, "w");
     if(Handle)
@@ -1786,7 +1784,6 @@ void SerializeDesktop(char *Op)
     }
 
     free(Buffer);
-    DestroySerializedNode(SerializedNode.Next);
 
 vspace_release:
     ReleaseVirtualSpace(VirtualSpace);

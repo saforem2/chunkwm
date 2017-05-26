@@ -43,15 +43,6 @@ struct node
     region Region;
 };
 
-struct serialized_node
-{
-    int TypeId;
-    char *Type;
-    int Split;
-    float Ratio;
-    serialized_node *Next;
-};
-
 struct equalize_node
 {
     int VerticalCount;
@@ -97,9 +88,7 @@ node *GetNodeWithId(node *Tree, uint32_t WindowId, virtual_space_mode VirtualSpa
 
 void SwapNodeIds(node *A, node *B);
 
-serialized_node *SerializeRootNode(node *Node, const char *NodeType, serialized_node *SerializedNode);
-void DestroySerializedNode(serialized_node *Node);
-char *SerializeNodeToBuffer(serialized_node *SerializedNode);
+char *SerializeNodeToBuffer(node *Node);
 node *DeserializeNodeFromBuffer(char *Buffer);
 
 #endif

@@ -408,6 +408,16 @@ void SwapNodeIds(node *A, node *B)
     B->WindowId = TempId;
 }
 
+// NOTE(koekeishiya): This type is only used internally
+struct serialized_node
+{
+    int TypeId;
+    char *Type;
+    int Split;
+    float Ratio;
+    serialized_node *Next;
+};
+
 internal serialized_node *
 ChainSerializedNode(serialized_node *Root, const char *NodeType, node *Node)
 {
@@ -436,7 +446,8 @@ ChainSerializedNode(serialized_node *Root, const char *NodeType)
     return SerializedNode;
 }
 
-void DestroySerializedNode(serialized_node *Node)
+internal void
+DestroySerializedNode(serialized_node *Node)
 {
     serialized_node *Next = Node->Next;
 
@@ -446,7 +457,8 @@ void DestroySerializedNode(serialized_node *Node)
     if(Next) DestroySerializedNode(Next);
 }
 
-serialized_node *SerializeRootNode(node *Node, const char *NodeType, serialized_node *SerializedNode)
+internal serialized_node *
+SerializeRootNode(node *Node, const char *NodeType, serialized_node *SerializedNode)
 {
     SerializedNode = ChainSerializedNode(SerializedNode, NodeType, Node);
 
@@ -462,9 +474,12 @@ serialized_node *SerializeRootNode(node *Node, const char *NodeType, serialized_
 }
 
 // NOTE(koekeishiya): Caller is responsible for memory
-char *SerializeNodeToBuffer(serialized_node *SerializedNode)
+char *SerializeNodeToBuffer(node *Node)
 {
-    serialized_node *Current = SerializedNode->Next;
+    serialized_node SerializedNode = {};
+    SerializeRootNode(Node, "root", &SerializedNode);
+
+    serialized_node *Current = SerializedNode.Next;
 
     char *Cursor, *Buffer, *EndOfBuffer;
     size_t BufferSize = sizeof(char) * 2048;
@@ -500,6 +515,7 @@ char *SerializeNodeToBuffer(serialized_node *SerializedNode)
         Current = Current->Next;
     }
 
+    DestroySerializedNode(SerializedNode.Next);
     return Buffer;
 }
 
