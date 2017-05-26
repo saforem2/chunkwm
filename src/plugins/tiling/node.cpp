@@ -589,18 +589,3 @@ node *DeserializeNodeFromBuffer(char *Buffer)
 
     return Tree;
 }
-
-void PrintNode(node *Node)
-{
-    printf("id: %d\nsplit: %d\nratio: %.2f\n",
-            Node->WindowId, Node->Split, Node->Ratio);
-
-    if(Node->Left)
-    {
-        PrintNode(Node->Left);
-    }
-    if(Node->Right)
-    {
-        PrintNode(Node->Right);
-    }
-}

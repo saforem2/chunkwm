@@ -1825,13 +1825,10 @@ void DeserializeDesktop(char *Op)
         }
 
         VirtualSpace->Tree = DeserializeNodeFromBuffer(Buffer);
-        PrintNode(VirtualSpace->Tree);
-
         CreateDeserializedWindowTreeForSpace(Space, VirtualSpace);
         CreateNodeRegion(VirtualSpace->Tree, Region_Full, Space, VirtualSpace);
         CreateNodeRegionRecursive(VirtualSpace->Tree, false, Space, VirtualSpace);
         ApplyNodeRegion(VirtualSpace->Tree, VirtualSpace->Mode, false);
-        PrintNode(VirtualSpace->Tree);
         free(Buffer);
     }
     else

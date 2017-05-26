@@ -95,6 +95,4 @@ void DestroySerializedNode(serialized_node *Node);
 char *SerializeNodeToBuffer(serialized_node *SerializedNode);
 node *DeserializeNodeFromBuffer(char *Buffer);
 
-void PrintNode(node *Node);
-
 #endif
