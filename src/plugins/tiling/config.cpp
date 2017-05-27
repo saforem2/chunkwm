@@ -699,10 +699,10 @@ ParseConfigCommand(const char **Message)
         if(sscanf(Variable, "%d_%s", &First, Buffer) == 2)
         {
             if((StringEquals(Buffer, _CVAR_SPACE_OFFSET_TOP)) ||
-                    (StringEquals(Buffer, _CVAR_SPACE_OFFSET_BOTTOM)) ||
-                    (StringEquals(Buffer, _CVAR_SPACE_OFFSET_LEFT)) ||
-                    (StringEquals(Buffer, _CVAR_SPACE_OFFSET_RIGHT)) ||
-                    (StringEquals(Buffer, _CVAR_SPACE_OFFSET_GAP)))
+               (StringEquals(Buffer, _CVAR_SPACE_OFFSET_BOTTOM)) ||
+               (StringEquals(Buffer, _CVAR_SPACE_OFFSET_LEFT)) ||
+               (StringEquals(Buffer, _CVAR_SPACE_OFFSET_RIGHT)) ||
+               (StringEquals(Buffer, _CVAR_SPACE_OFFSET_GAP)))
             {
                 token Value = GetToken(Message);
                 if(Value.Length > 0)
@@ -710,6 +710,21 @@ ParseConfigCommand(const char **Message)
                     float FloatValue = TokenToFloat(Value);
                     DEBUG_PRINT("        value: '%f'\n", FloatValue);
                     UpdateCVar(Variable, FloatValue);
+                }
+                else
+                {
+                    fprintf(stderr, "        value: MISSING!!!\n");
+                }
+            }
+            else if(StringEquals(Buffer, _CVAR_SPACE_TREE))
+            {
+                token Value = GetToken(Message);
+                if(Value.Length > 0)
+                {
+                    DEBUG_PRINT("        value: '%.*s'\n", Value.Length, Value.Text);
+                    char *StringValue = TokenToString(Value);
+                    UpdateCVar(Variable, StringValue);
+                    free(StringValue);
                 }
                 else
                 {
@@ -968,6 +983,10 @@ win_success:;
                (StringEquals(Buffer, _CVAR_SPACE_OFFSET_GAP)))
             {
                 FetchAndSendFloatingPointCVar(Variable, SockFD);
+            }
+            else if(StringEquals(Buffer, _CVAR_SPACE_TREE))
+            {
+                FetchAndSendStringCVar(Variable, SockFD);
             }
             else if(StringEquals(Buffer, _CVAR_SPACE_MODE))
             {

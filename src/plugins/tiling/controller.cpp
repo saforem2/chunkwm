@@ -1103,7 +1103,14 @@ void ActivateSpaceLayout(char *Layout)
     }
 
     VirtualSpace->Mode = NewLayout;
-    CreateWindowTreeForSpace(Space, VirtualSpace);
+    if(ShouldDeserializeVirtualSpace(VirtualSpace))
+    {
+        CreateDeserializedWindowTreeForSpace(Space, VirtualSpace);
+    }
+    else
+    {
+        CreateWindowTreeForSpace(Space, VirtualSpace);
+    }
 
 vspace_release:
     ReleaseVirtualSpace(VirtualSpace);
@@ -1823,9 +1830,6 @@ void DeserializeDesktop(char *Op)
 
         VirtualSpace->Tree = DeserializeNodeFromBuffer(Buffer);
         CreateDeserializedWindowTreeForSpace(Space, VirtualSpace);
-        CreateNodeRegion(VirtualSpace->Tree, Region_Full, Space, VirtualSpace);
-        CreateNodeRegionRecursive(VirtualSpace->Tree, false, Space, VirtualSpace);
-        ApplyNodeRegion(VirtualSpace->Tree, VirtualSpace->Mode, false);
         free(Buffer);
     }
     else

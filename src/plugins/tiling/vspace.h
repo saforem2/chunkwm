@@ -19,6 +19,7 @@ struct virtual_space_config
 {
     virtual_space_mode Mode;
     region_offset Offset;
+    char *TreeLayout;
 };
 
 struct virtual_space
@@ -27,6 +28,7 @@ struct virtual_space
     region_offset _Offset;
 
     region_offset *Offset;
+    char *TreeLayout;
     node *Tree;
 
     pthread_mutex_t Lock;
@@ -36,6 +38,7 @@ typedef std::map<const char *, virtual_space *, string_comparator> virtual_space
 typedef virtual_space_map::iterator virtual_space_map_it;
 
 struct macos_space;
+bool ShouldDeserializeVirtualSpace(virtual_space *VirtualSpace);
 virtual_space *AcquireVirtualSpace(macos_space *Space);
 void ReleaseVirtualSpace(virtual_space *VirtualSpace);
 

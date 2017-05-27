@@ -1,7 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <pthread.h>
-#include <sys/stat.h>
 
 #include <map>
 #include <vector>
@@ -240,12 +239,21 @@ void TileWindowOnSpace(macos_window *Window, macos_space *Space, virtual_space *
             Node = GetFirstMinDepthPseudoLeafNode(VirtualSpace->Tree);
             if(Node)
             {
-                node_ids NodeIds = AssignNodeIds(Node->Parent->WindowId, Window->Id);
-                Node->Parent->WindowId = Node_Root;
-                Node->Parent->Left->WindowId = NodeIds.Left;
-                Node->Parent->Right->WindowId = NodeIds.Right;
-                CreateNodeRegionRecursive(Node->Parent, false, Space, VirtualSpace);
-                ApplyNodeRegion(Node->Parent, VirtualSpace->Mode);
+                if(Node->Parent)
+                {
+                    node_ids NodeIds = AssignNodeIds(Node->Parent->WindowId, Window->Id);
+                    Node->Parent->WindowId = Node_Root;
+                    Node->Parent->Left->WindowId = NodeIds.Left;
+                    Node->Parent->Right->WindowId = NodeIds.Right;
+                    CreateNodeRegionRecursive(Node->Parent, false, Space, VirtualSpace);
+                    ApplyNodeRegion(Node->Parent, VirtualSpace->Mode);
+                }
+                else
+                {
+                    Node->WindowId = Window->Id;
+                    CreateNodeRegion(Node, Region_Full, Space, VirtualSpace);
+                    ApplyNodeRegion(Node, VirtualSpace->Mode);
+                }
                 goto display_free;
             }
 
@@ -304,9 +312,23 @@ void TileWindowOnSpace(macos_window *Window, macos_space *Space, virtual_space *
     }
     else
     {
-        // NOTE(koekeishiya): This path is equal for both bsp and monocle spaces!
-        VirtualSpace->Tree = CreateRootNode(Window->Id, Space, VirtualSpace);
-        ResizeWindowToRegionSize(VirtualSpace->Tree);
+        char *Buffer;
+        if((ShouldDeserializeVirtualSpace(VirtualSpace)) &&
+           ((Buffer = ReadFile(VirtualSpace->TreeLayout))))
+        {
+            VirtualSpace->Tree = DeserializeNodeFromBuffer(Buffer);
+            VirtualSpace->Tree->WindowId = Window->Id;
+            CreateNodeRegion(VirtualSpace->Tree, Region_Full, Space, VirtualSpace);
+            CreateNodeRegionRecursive(VirtualSpace->Tree, false, Space, VirtualSpace);
+            ResizeWindowToRegionSize(VirtualSpace->Tree);
+            free(Buffer);
+        }
+        else
+        {
+            // NOTE(koekeishiya): This path is equal for both bsp and monocle spaces!
+            VirtualSpace->Tree = CreateRootNode(Window->Id, Space, VirtualSpace);
+            ResizeWindowToRegionSize(VirtualSpace->Tree);
+        }
     }
 
 display_free:
@@ -686,17 +708,26 @@ CreateWindowTreeForSpaceWithWindows(macos_space *Space, virtual_space *VirtualSp
     ApplyNodeRegion(VirtualSpace->Tree, VirtualSpace->Mode);
 }
 
-void CreateDeserializedWindowTreeForSpace(macos_space *Space, virtual_space *VirtualSpace)
+/* NOTE(koekeishiya): The caller is responsible for making sure that the space
+ * passed to this function is of type kCGSSpaceUser, and that the virtual space
+ * is set to bsp tiling mode. The window list must also be non-empty !!! */
+internal void
+CreateDeserializedWindowTreeForSpaceWithWindows(macos_space *Space, virtual_space *VirtualSpace, std::vector<uint32_t> Windows)
 {
-    if(VirtualSpace->Mode != Virtual_Space_Bsp)
+    if(!VirtualSpace->Tree)
     {
-        return;
-    }
-
-    std::vector<uint32_t> Windows = GetAllVisibleWindowsForSpace(Space);
-    if(Windows.empty())
-    {
-        return;
+        char *Buffer = ReadFile(VirtualSpace->TreeLayout);
+        if(Buffer)
+        {
+            VirtualSpace->Tree = DeserializeNodeFromBuffer(Buffer);
+            free(Buffer);
+        }
+        else
+        {
+            fprintf(stderr, "failed to open '%s' for reading!\n", VirtualSpace->TreeLayout);
+            CreateWindowTreeForSpaceWithWindows(Space, VirtualSpace, Windows);
+            return;
+        }
     }
 
     node *Root = VirtualSpace->Tree;
@@ -738,6 +769,10 @@ void CreateDeserializedWindowTreeForSpace(macos_space *Space, virtual_space *Vir
             CreateLeafNodePair(Node, Node->WindowId, Windows[Index], Split, Space, VirtualSpace);
         }
     }
+
+    CreateNodeRegion(VirtualSpace->Tree, Region_Full, Space, VirtualSpace);
+    CreateNodeRegionRecursive(VirtualSpace->Tree, false, Space, VirtualSpace);
+    ApplyNodeRegion(VirtualSpace->Tree, VirtualSpace->Mode, false);
 }
 
 void CreateWindowTreeForSpace(macos_space *Space, virtual_space *VirtualSpace)
@@ -759,6 +794,22 @@ void CreateWindowTreeForSpace(macos_space *Space, virtual_space *VirtualSpace)
     CreateWindowTreeForSpaceWithWindows(Space, VirtualSpace, Windows);
 }
 
+void CreateDeserializedWindowTreeForSpace(macos_space *Space, virtual_space *VirtualSpace)
+{
+    if(VirtualSpace->Mode != Virtual_Space_Bsp)
+    {
+        return;
+    }
+
+    std::vector<uint32_t> Windows = GetAllVisibleWindowsForSpace(Space);
+    if(Windows.empty())
+    {
+        return;
+    }
+
+    CreateDeserializedWindowTreeForSpaceWithWindows(Space, VirtualSpace, Windows);
+}
+
 void CreateWindowTree()
 {
     macos_space *Space;
@@ -778,9 +829,15 @@ void CreateWindowTree()
 
     if(Space->Type == kCGSSpaceUser)
     {
-        // TODO(koekeishiya): The virtualspace might have a predefined bsp-tree, patch this call
         virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
-        CreateWindowTreeForSpace(Space, VirtualSpace);
+        if(ShouldDeserializeVirtualSpace(VirtualSpace))
+        {
+            CreateDeserializedWindowTreeForSpace(Space, VirtualSpace);
+        }
+        else
+        {
+            CreateWindowTreeForSpace(Space, VirtualSpace);
+        }
         ReleaseVirtualSpace(VirtualSpace);
     }
 
@@ -1126,6 +1183,10 @@ void SpaceAndDisplayChangedHandler(void *Data)
         {
             RebalanceWindowTreeForSpaceWithWindows(Space, VirtualSpace, Windows);
         }
+        else if(ShouldDeserializeVirtualSpace(VirtualSpace))
+        {
+            CreateDeserializedWindowTreeForSpaceWithWindows(Space, VirtualSpace, Windows);
+        }
         else
         {
             CreateWindowTreeForSpaceWithWindows(Space, VirtualSpace, Windows);
@@ -1303,9 +1364,7 @@ Init(plugin_broadcast *ChunkwmBroadcast)
         memcpy(PathToConfigFile, HomeEnv, HomeEnvLength);
         memcpy(PathToConfigFile + HomeEnvLength, CONFIG_FILE, ConfigFileLength);
 
-        // NOTE(koekeishiya): Only try to execute the config file if it actually exists.
-        struct stat Buffer;
-        if(stat(PathToConfigFile, &Buffer) == 0)
+        if(FileExists(PathToConfigFile))
         {
             // NOTE(koekeishiya): The config file is just an executable bash script!
             system(PathToConfigFile);

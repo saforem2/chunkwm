@@ -9,6 +9,7 @@
 #define _CVAR_SPACE_OFFSET_LEFT     "desktop_offset_left"
 #define _CVAR_SPACE_OFFSET_RIGHT    "desktop_offset_right"
 #define _CVAR_SPACE_OFFSET_GAP      "desktop_offset_gap"
+#define _CVAR_SPACE_TREE            "desktop_tree"
 
 #define CVAR_SPACE_MODE             "global_" _CVAR_SPACE_MODE
 #define CVAR_SPACE_OFFSET_TOP       "global_" _CVAR_SPACE_OFFSET_TOP

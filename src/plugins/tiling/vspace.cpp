@@ -1,6 +1,7 @@
 #include "vspace.h"
 #include "node.h"
 #include "constants.h"
+#include "misc.h"
 
 #include "../../common/config/cvar.h"
 #include "../../common/accessibility/element.h"
@@ -45,6 +46,10 @@ GetVirtualSpaceConfig(unsigned SpaceIndex)
     snprintf(KeyGap, BUFFER_SIZE, "%d_%s", SpaceIndex, _CVAR_SPACE_OFFSET_GAP);
     Config.Offset.Gap = CVarExists(KeyGap) ? CVarFloatingPointValue(KeyGap)
                                            : CVarFloatingPointValue(CVAR_SPACE_OFFSET_GAP);
+    char KeyTree[BUFFER_SIZE];
+    snprintf(KeyTree, BUFFER_SIZE, "%d_%s", SpaceIndex, _CVAR_SPACE_TREE);
+    Config.TreeLayout = CVarExists(KeyTree) ? CVarStringValue(KeyTree)
+                                            : NULL;
     return Config;
 }
 
@@ -66,10 +71,19 @@ CreateAndInitVirtualSpace(macos_space *Space)
 
     virtual_space_config Config = GetVirtualSpaceConfig(DesktopId);
     VirtualSpace->Mode = Config.Mode;
+    VirtualSpace->TreeLayout = Config.TreeLayout;
     VirtualSpace->_Offset = Config.Offset;
     VirtualSpace->Offset = &VirtualSpace->_Offset;
 
     return VirtualSpace;
+}
+
+bool ShouldDeserializeVirtualSpace(virtual_space *VirtualSpace)
+{
+    bool Result = ((VirtualSpace->Mode == Virtual_Space_Bsp) &&
+                   (VirtualSpace->TreeLayout) &&
+                   (FileExists(VirtualSpace->TreeLayout)));
+    return Result;
 }
 
 // NOTE(koekeishiya): If the requested space does not exist, we create it.
