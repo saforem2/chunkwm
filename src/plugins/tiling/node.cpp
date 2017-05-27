@@ -494,7 +494,7 @@ char *SerializeNodeToBuffer(node *Node)
         {
             ASSERT(Cursor < EndOfBuffer);
             BytesWritten = snprintf(Cursor, BufferSize,
-                                    "%s %d %.2f\n",
+                                    "%s %d %.3f\n",
                                     Current->Type,
                                     Current->Split,
                                     Current->Ratio);
