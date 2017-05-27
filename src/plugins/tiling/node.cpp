@@ -160,6 +160,21 @@ void ResizeWindowToExternalRegionSize(node *Node, region Region)
     ResizeWindowToExternalRegionSize(Node, Region, true);
 }
 
+// NOTE(choco): The caller must provide a valid node with a valid WindowID,
+// stored inside the VirtualSpace passed in. The VirtualSpace itself must be valid
+void ApplyNodeRegionOnce(node *Node, virtual_space *VirtualSpace, bool Center)
+{
+    if(Node == VirtualSpace->Tree->Zoom) {
+        ResizeWindowToExternalRegionSize(Node, VirtualSpace->Tree->Region);
+    }
+    else if(Node->Parent && Node == Node->Parent->Zoom) {
+        ResizeWindowToExternalRegionSize(Node, Node->Parent->Region);
+    }
+    else {
+        ResizeWindowToRegionSize(Node, Center);
+    }
+}
+
 void ApplyNodeRegion(node *Node, virtual_space_mode VirtualSpaceMode, bool Center)
 {
     if(Node->WindowId && Node->WindowId != Node_PseudoLeaf)

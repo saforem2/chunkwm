@@ -65,6 +65,7 @@ equalize_node EqualizeNodeTree(node *Tree);
 
 void ApplyNodeRegion(node *Node, virtual_space_mode VirtualSpaceMode);
 void ApplyNodeRegion(node *Node, virtual_space_mode VirtualSpaceMode, bool Center);
+void ApplyNodeRegionOnce(node *Node, virtual_space *VirtualSpace, bool Center);
 
 void ResizeWindowToRegionSize(node *Node);
 void ResizeWindowToRegionSize(node *Node, bool Center);

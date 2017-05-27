@@ -646,7 +646,8 @@ ParseConfigCommand(const char **Message)
     else if((TokenEquals(Command, CVAR_WINDOW_FLOAT_TOPMOST)) ||
             (TokenEquals(Command, CVAR_WINDOW_FLOAT_NEXT)) ||
             (TokenEquals(Command, CVAR_WINDOW_FLOAT_CENTER)) ||
-            (TokenEquals(Command, CVAR_MOUSE_FOLLOWS_FOCUS)))
+            (TokenEquals(Command, CVAR_MOUSE_FOLLOWS_FOCUS)) ||
+            (TokenEquals(Command, CVAR_LOCK_TO_CONTAINER)))
     {
         char *Variable = TokenToString(Command);
         DEBUG_PRINT("        command: '%s'\n", Variable);

@@ -36,6 +36,8 @@
 #define CVAR_WINDOW_FLOAT_NEXT      "window_float_next"
 #define CVAR_WINDOW_FLOAT_CENTER    "window_float_center"
 
+#define CVAR_LOCK_TO_CONTAINER      "lock_to_container"
+
 /* NOTE(koekeishiya): The following cvars requires extended dock
  * functionality provided by chwm-sa to work. */
 
