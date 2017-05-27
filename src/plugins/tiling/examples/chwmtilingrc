@@ -4,39 +4,41 @@
 export CHUNKC_SOCKET=4131
 
 chunkc config global_desktop_mode           bsp
-chunkc config 2_desktop_mode            monocle
-chunkc config 5_desktop_mode              float
+chunkc config 2_desktop_mode                monocle
+chunkc config 5_desktop_mode                float
 
-chunkc config global_desktop_offset_top      20
-chunkc config global_desktop_offset_bottom   20
-chunkc config global_desktop_offset_left     20
-chunkc config global_desktop_offset_right    20
-chunkc config global_desktop_offset_gap      15
+chunkc config 1_desktop_tree                ~/.chunkwm_layouts/dev_1
+
+chunkc config global_desktop_offset_top     20
+chunkc config global_desktop_offset_bottom  20
+chunkc config global_desktop_offset_left    20
+chunkc config global_desktop_offset_right   20
+chunkc config global_desktop_offset_gap     15
 
 chunkc config 1_desktop_offset_top          190
 chunkc config 1_desktop_offset_bottom       190
 chunkc config 1_desktop_offset_left         190
 chunkc config 1_desktop_offset_right        190
-chunkc config 1_desktop_offset_gap           15
+chunkc config 1_desktop_offset_gap          15
 
 chunkc config 3_desktop_offset_top          190
 chunkc config 3_desktop_offset_bottom       190
 chunkc config 3_desktop_offset_left         190
 chunkc config 3_desktop_offset_right        190
 
-chunkc config desktop_padding_step_size    10.0
+chunkc config desktop_padding_step_size     10.0
 chunkc config desktop_gap_step_size         5.0
 
-chunkc config bsp_spawn_left                  1
-chunkc config bsp_optimal_ratio           1.618
-chunkc config bsp_split_mode            optimal
+chunkc config bsp_spawn_left                1
+chunkc config bsp_optimal_ratio             1.618
+chunkc config bsp_split_mode                optimal
 chunkc config bsp_split_ratio               0.5
 
 chunkc config window_focus_cycle            all
-chunkc config mouse_follows_focus             1
-chunkc config window_float_next               0
-chunkc config window_float_center             0
+chunkc config mouse_follows_focus           1
+chunkc config window_float_next             0
+chunkc config window_float_center           0
 
 # signal dock to make windows topmost when floated
 # requires chwm-sa (https://github.com/koekeishiya/chwm-sa)
-chunkc config window_float_topmost            1
+chunkc config window_float_topmost          1
