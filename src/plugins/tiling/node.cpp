@@ -7,6 +7,7 @@
 #include "../../common/misc/assert.h"
 #include "../../common/accessibility/window.h"
 #include "../../common/accessibility/element.h"
+#include "../../common/accessibility/display.h"
 
 #include <queue>
 #include <map>
@@ -160,21 +161,6 @@ void ResizeWindowToExternalRegionSize(node *Node, region Region)
     ResizeWindowToExternalRegionSize(Node, Region, true);
 }
 
-// NOTE(choco): The caller must provide a valid node with a valid WindowID,
-// stored inside the VirtualSpace passed in. The VirtualSpace itself must be valid
-void ApplyNodeRegionOnce(node *Node, virtual_space *VirtualSpace, bool Center)
-{
-    if(Node == VirtualSpace->Tree->Zoom) {
-        ResizeWindowToExternalRegionSize(Node, VirtualSpace->Tree->Region);
-    }
-    else if(Node->Parent && Node == Node->Parent->Zoom) {
-        ResizeWindowToExternalRegionSize(Node, Node->Parent->Region);
-    }
-    else {
-        ResizeWindowToRegionSize(Node, Center);
-    }
-}
-
 void ApplyNodeRegion(node *Node, virtual_space_mode VirtualSpaceMode, bool Center)
 {
     if(Node->WindowId && Node->WindowId != Node_PseudoLeaf)
@@ -197,6 +183,63 @@ void ApplyNodeRegion(node *Node, virtual_space_mode VirtualSpaceMode, bool Cente
 void ApplyNodeRegion(node *Node, virtual_space_mode VirtualSpaceMode)
 {
     ApplyNodeRegion(Node, VirtualSpaceMode, true);
+}
+
+void ConstrainWindowToRegion(macos_window *Window)
+{
+    if(AXLibHasFlags(Window, Window_Float) ||
+       AXLibIsWindowFullscreen(Window->Ref))
+    {
+        return;
+    }
+
+    CFStringRef DisplayRef;
+    DisplayRef = AXLibGetDisplayIdentifierFromWindowRect(Window->Position,
+                                                         Window->Size);
+    ASSERT(DisplayRef);
+    macos_space *Space = AXLibActiveSpace(DisplayRef);
+    ASSERT(Space);
+
+    // NOTE(choco): we already checked for fullscreen flag but we also need to
+    // check for the space type
+    // 1- when an app enters native fullscreen, space type may not be already
+    //    updated, fullscreen flag will be already set
+    // 2- when an app exits native fullscreen, fullscreen flag is removed
+    //    immediatly, but we may still be in a fullscreen space
+    if(Space->Type == kCGSSpaceUser)
+    {
+        virtual_space *VirtualSpace;
+        VirtualSpace = AcquireVirtualSpace(Space);
+        if(VirtualSpace->Mode != Virtual_Space_Float)
+        {
+            node *WindowNode = GetNodeWithId(VirtualSpace->Tree,
+                                             Window->Id,
+                                             VirtualSpace->Mode);
+            if(WindowNode)
+            {
+                // window is fullscreen zoomed
+                if(WindowNode == VirtualSpace->Tree->Zoom)
+                {
+                    ResizeWindowToExternalRegionSize(WindowNode,
+                                                     VirtualSpace->Tree->Region);
+                }
+                // window is parent zoomed
+                else if(WindowNode->Parent &&
+                        WindowNode == WindowNode->Parent->Zoom)
+                {
+                    ResizeWindowToExternalRegionSize(WindowNode,
+                                                     WindowNode->Parent->Region);
+                }
+                else
+                {
+                    ResizeWindowToRegionSize(WindowNode, true);
+                }
+            }
+        }
+        ReleaseVirtualSpace(VirtualSpace);
+    }
+    AXLibDestroySpace(Space);
+    CFRelease(DisplayRef);
 }
 
 void FreeNodeTree(node *Node, virtual_space_mode VirtualSpaceMode)

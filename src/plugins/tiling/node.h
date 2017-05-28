@@ -65,13 +65,15 @@ equalize_node EqualizeNodeTree(node *Tree);
 
 void ApplyNodeRegion(node *Node, virtual_space_mode VirtualSpaceMode);
 void ApplyNodeRegion(node *Node, virtual_space_mode VirtualSpaceMode, bool Center);
-void ApplyNodeRegionOnce(node *Node, virtual_space *VirtualSpace, bool Center);
 
 void ResizeWindowToRegionSize(node *Node);
 void ResizeWindowToRegionSize(node *Node, bool Center);
 
 void ResizeWindowToExternalRegionSize(node *Node, region Region);
 void ResizeWindowToExternalRegionSize(node *Node, region Region, bool Center);
+
+struct macos_window;
+void ConstrainWindowToRegion(macos_window *Window);
 
 bool IsLeafNode(node *Node);
 bool IsLeftChild(node *Node);

@@ -1133,40 +1133,9 @@ void WindowMovedHandler(void *Data)
         {
             Copy->Position = Window->Position;
 
-            if(CVarIntegerValue(CVAR_LOCK_TO_CONTAINER))
+            if(CVarIntegerValue(CVAR_WINDOW_REGION_LOCKED))
             {
-                CFStringRef DisplayRef;
-                DisplayRef = AXLibGetDisplayIdentifierFromWindowRect(Window->Position,
-                                                                     Window->Size);
-                ASSERT(DisplayRef);
-                macos_space *Space = AXLibActiveSpace(DisplayRef);
-                ASSERT(Space);
-
-                // NOTE(choco): we need to check both the space type and the
-                // fullscreen flag.
-                // 1- when an app enters native fullscreen, space type may not
-                //    be already updated, fullscreen flag will be already set
-                // 2- when an app exits native fullscreen, fullscreen flag is
-                //    removed immediatly, but we may still be in a fullscreen
-                //    space
-                if(Space->Type == kCGSSpaceUser &&
-                   !AXLibHasFlags(Copy, Window_Float) &&
-                   !AXLibIsWindowFullscreen(Copy->Ref))
-                {
-                    virtual_space *VirtualSpace;
-                    VirtualSpace = AcquireVirtualSpace(Space);
-                    if(VirtualSpace->Mode != Virtual_Space_Float) {
-                        node *WindowNode = GetNodeWithId(VirtualSpace->Tree,
-                                                         Copy->Id,
-                                                         VirtualSpace->Mode);
-                        if(WindowNode) {
-                            ApplyNodeRegionOnce(WindowNode, VirtualSpace, true);
-                        }
-                    }
-                    ReleaseVirtualSpace(VirtualSpace);
-                }
-                AXLibDestroySpace(Space);
-                CFRelease(DisplayRef);
+                ConstrainWindowToRegion(Copy);
             }
         }
     }
@@ -1185,40 +1154,9 @@ void WindowResizedHandler(void *Data)
             Copy->Position = Window->Position;
             Copy->Size = Window->Size;
 
-            if(CVarIntegerValue(CVAR_LOCK_TO_CONTAINER))
+            if(CVarIntegerValue(CVAR_WINDOW_REGION_LOCKED))
             {
-                CFStringRef DisplayRef;
-                DisplayRef = AXLibGetDisplayIdentifierFromWindowRect(Window->Position,
-                                                                     Window->Size);
-                ASSERT(DisplayRef);
-                macos_space *Space = AXLibActiveSpace(DisplayRef);
-                ASSERT(Space);
-
-                // NOTE(choco): we need to check both the space type and the
-                // fullscreen flag.
-                // 1- when an app enters native fullscreen, space type may not
-                //    be already updated, fullscreen flag will be already set
-                // 2- when an app exits native fullscreen, fullscreen flag is
-                //    removed immediatly, but we may still be in a fullscreen
-                //    space
-                if(Space->Type == kCGSSpaceUser &&
-                   !AXLibHasFlags(Copy, Window_Float) &&
-                   !AXLibIsWindowFullscreen(Copy->Ref))
-                {
-                    virtual_space *VirtualSpace;
-                    VirtualSpace = AcquireVirtualSpace(Space);
-                    if(VirtualSpace->Mode != Virtual_Space_Float) {
-                        node *WindowNode = GetNodeWithId(VirtualSpace->Tree,
-                                                         Copy->Id,
-                                                         VirtualSpace->Mode);
-                        if(WindowNode) {
-                            ApplyNodeRegionOnce(WindowNode, VirtualSpace, true);
-                        }
-                    }
-                    ReleaseVirtualSpace(VirtualSpace);
-                }
-                AXLibDestroySpace(Space);
-                CFRelease(DisplayRef);
+                ConstrainWindowToRegion(Copy);
             }
         }
     }
@@ -1413,7 +1351,7 @@ Init(plugin_broadcast *ChunkwmBroadcast)
     CreateCVar(CVAR_WINDOW_FLOAT_NEXT, 0);
     CreateCVar(CVAR_WINDOW_FLOAT_CENTER, 0);
 
-    CreateCVar(CVAR_LOCK_TO_CONTAINER, 0);
+    CreateCVar(CVAR_WINDOW_REGION_LOCKED, 0);
 
     /* NOTE(koekeishiya): The following cvars requires extended dock
      * functionality provided by chwm-sa to work. */
