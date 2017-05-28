@@ -53,7 +53,8 @@ node *CreateRootNode(uint32_t WindowId, macos_space *Space, virtual_space *Virtu
     return Node;
 }
 
-node *CreateLeafNode(node *Parent, uint32_t WindowId, region_type Type, macos_space *Space, virtual_space *VirtualSpace)
+node *CreateLeafNode(node *Parent, uint32_t WindowId, region_type Type,
+                     macos_space *Space, virtual_space *VirtualSpace)
 {
     node *Node = (node *) malloc(sizeof(node));
     memset(Node, 0, sizeof(node));
@@ -67,7 +68,8 @@ node *CreateLeafNode(node *Parent, uint32_t WindowId, region_type Type, macos_sp
     return Node;
 }
 
-void CreateLeafNodePair(node *Parent, uint32_t ExistingWindowId, uint32_t SpawnedWindowId, node_split Split, macos_space *Space, virtual_space *VirtualSpace)
+void CreateLeafNodePair(node *Parent, uint32_t ExistingWindowId, uint32_t SpawnedWindowId,
+                        node_split Split, macos_space *Space, virtual_space *VirtualSpace)
 {
     Parent->WindowId = Node_Root;
     Parent->Split = Split;
@@ -193,10 +195,9 @@ void ConstrainWindowToRegion(macos_window *Window)
         return;
     }
 
-    CFStringRef DisplayRef;
-    DisplayRef = AXLibGetDisplayIdentifierFromWindowRect(Window->Position,
-                                                         Window->Size);
+    CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromWindowRect(Window->Position, Window->Size);
     ASSERT(DisplayRef);
+
     macos_space *Space = AXLibActiveSpace(DisplayRef);
     ASSERT(Space);
 
@@ -208,9 +209,9 @@ void ConstrainWindowToRegion(macos_window *Window)
     //    immediatly, but we may still be in a fullscreen space
     if(Space->Type == kCGSSpaceUser)
     {
-        virtual_space *VirtualSpace;
-        VirtualSpace = AcquireVirtualSpace(Space);
-        if(VirtualSpace->Mode != Virtual_Space_Float)
+        virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
+        if((VirtualSpace->Tree) &&
+           (VirtualSpace->Mode != Virtual_Space_Float))
         {
             node *WindowNode = GetNodeWithId(VirtualSpace->Tree,
                                              Window->Id,
