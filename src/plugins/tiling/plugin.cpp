@@ -474,6 +474,17 @@ void UntileWindow(macos_window *Window)
         CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromWindowRect(Window->Position, Window->Size);
         ASSERT(DisplayRef);
 
+        // TODO(koekeishiya): We do not want to request the active space here,
+        // but we need to get the space that has this window. I doubt this
+        // information is available through the API after the window has been
+        // marked as destroyed by the WindowServer. We could cache this information,
+        // but that is not an ideal solution, because a window may frequently be moved
+        // between spaces, and could even belong to multiple spaces.
+        //
+        // We probably want to delegate this responsibility to
+        //  RebalanceWindowTree()
+        // as this function will trigger upon next space entrance.
+
         macos_space *Space = AXLibActiveSpace(DisplayRef);
         ASSERT(Space);
 
