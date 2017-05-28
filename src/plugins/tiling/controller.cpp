@@ -799,7 +799,7 @@ ToggleWindowSplitMode()
 
     WindowId = CVarIntegerValue(CVAR_BSP_INSERTION_POINT);
     Node = GetNodeWithId(VirtualSpace->Tree, WindowId, VirtualSpace->Mode);
-    if(!Node && !Node->Parent)
+    if(!Node || !Node->Parent)
     {
         goto vspace_release;
     }
