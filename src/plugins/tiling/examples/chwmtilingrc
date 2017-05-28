@@ -38,6 +38,7 @@ chunkc config window_focus_cycle            all
 chunkc config mouse_follows_focus           1
 chunkc config window_float_next             0
 chunkc config window_float_center           0
+chunkc config window_region_locked          1
 
 # signal dock to make windows topmost when floated
 # requires chwm-sa (https://github.com/koekeishiya/chwm-sa)
