@@ -1129,7 +1129,15 @@ void WindowMovedHandler(void *Data)
     macos_window *Copy = GetWindowByID(Window->Id);
     if(Copy)
     {
-        Copy->Position = Window->Position;
+        if(Copy->Position != Window->Position)
+        {
+            Copy->Position = Window->Position;
+
+            if(CVarIntegerValue(CVAR_WINDOW_REGION_LOCKED))
+            {
+                ConstrainWindowToRegion(Copy);
+            }
+        }
     }
 }
 
@@ -1140,8 +1148,17 @@ void WindowResizedHandler(void *Data)
     macos_window *Copy = GetWindowByID(Window->Id);
     if(Copy)
     {
-        Copy->Position = Window->Position;
-        Copy->Size = Window->Size;
+        if((Copy->Position != Window->Position) ||
+           (Copy->Size != Window->Size))
+        {
+            Copy->Position = Window->Position;
+            Copy->Size = Window->Size;
+
+            if(CVarIntegerValue(CVAR_WINDOW_REGION_LOCKED))
+            {
+                ConstrainWindowToRegion(Copy);
+            }
+        }
     }
 }
 
@@ -1333,6 +1350,8 @@ Init(plugin_broadcast *ChunkwmBroadcast)
 
     CreateCVar(CVAR_WINDOW_FLOAT_NEXT, 0);
     CreateCVar(CVAR_WINDOW_FLOAT_CENTER, 0);
+
+    CreateCVar(CVAR_WINDOW_REGION_LOCKED, 0);
 
     /* NOTE(koekeishiya): The following cvars requires extended dock
      * functionality provided by chwm-sa to work. */

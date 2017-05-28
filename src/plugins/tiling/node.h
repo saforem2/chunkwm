@@ -72,6 +72,9 @@ void ResizeWindowToRegionSize(node *Node, bool Center);
 void ResizeWindowToExternalRegionSize(node *Node, region Region);
 void ResizeWindowToExternalRegionSize(node *Node, region Region, bool Center);
 
+struct macos_window;
+void ConstrainWindowToRegion(macos_window *Window);
+
 bool IsLeafNode(node *Node);
 bool IsLeftChild(node *Node);
 bool IsRightChild(node *Node);
