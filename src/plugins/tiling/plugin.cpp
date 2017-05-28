@@ -371,10 +371,11 @@ UntileWindowPreValidation(macos_window *Window)
     return true;
 }
 
-// NOTE(koekeishiya): Caller is responsible for making sure that the window is a valid window
-// that we can properly manage. The given macos_space must also be of type kCGSSpaceUser,
-// meaning that it is a space we can legally interact with.
-void UntileWindowFromSpace(macos_window *Window, macos_space *Space, virtual_space *VirtualSpace)
+// NOTE(koekeishiya): We need a way to identify a node in our virtualspaces by window id only.
+// This is required to make sure that RebalanceWindowTree works properly.
+// See https://github.com/koekeishiya/chunkwm/issues/66 for history.
+internal void
+UntileWindowFromSpace(uint32_t WindowId, macos_space *Space, virtual_space *VirtualSpace)
 {
     if((!VirtualSpace->Tree) ||
        (VirtualSpace->Mode == Virtual_Space_Float))
@@ -382,7 +383,7 @@ void UntileWindowFromSpace(macos_window *Window, macos_space *Space, virtual_spa
         return;
     }
 
-    node *Node = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
+    node *Node = GetNodeWithId(VirtualSpace->Tree, WindowId, VirtualSpace->Mode);
     if(!Node)
     {
         return;
@@ -467,23 +468,20 @@ void UntileWindowFromSpace(macos_window *Window, macos_space *Space, virtual_spa
     }
 }
 
+// NOTE(koekeishiya): Caller is responsible for making sure that the window is a valid window
+// that we can properly manage. The given macos_space must also be of type kCGSSpaceUser,
+// meaning that it is a space we can legally interact with.
+void UntileWindowFromSpace(macos_window *Window, macos_space *Space, virtual_space *VirtualSpace)
+{
+    UntileWindowFromSpace(Window->Id, Space, VirtualSpace);
+}
+
 void UntileWindow(macos_window *Window)
 {
     if(UntileWindowPreValidation(Window))
     {
         CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromWindowRect(Window->Position, Window->Size);
         ASSERT(DisplayRef);
-
-        // TODO(koekeishiya): We do not want to request the active space here,
-        // but we need to get the space that has this window. I doubt this
-        // information is available through the API after the window has been
-        // marked as destroyed by the WindowServer. We could cache this information,
-        // but that is not an ideal solution, because a window may frequently be moved
-        // between spaces, and could even belong to multiple spaces.
-        //
-        // We probably want to delegate this responsibility to
-        //  RebalanceWindowTree()
-        // as this function will trigger upon next space entrance.
 
         macos_space *Space = AXLibActiveSpace(DisplayRef);
         ASSERT(Space);
@@ -876,6 +874,10 @@ RebalanceWindowTreeForSpaceWithWindows(macos_space *Space, virtual_space *Virtua
         if((Window) && (UntileWindowPreValidation(Window)))
         {
             UntileWindowFromSpace(Window, Space, VirtualSpace);
+        }
+        else
+        {
+            UntileWindowFromSpace(WindowsToRemove[Index], Space, VirtualSpace);
         }
     }
 
