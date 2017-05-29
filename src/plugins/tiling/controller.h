@@ -26,8 +26,7 @@ void SendWindowToDesktop(char *Op);
 void SendWindowToMonitor(char *Op);
 
 struct macos_window;
-void FloatWindow(macos_window *Window);
-void UnfloatWindow(macos_window *Window);
+void FloatWindow(macos_window *Window, bool UserInitiated);
 
 void FocusMonitor(char *Op);
 

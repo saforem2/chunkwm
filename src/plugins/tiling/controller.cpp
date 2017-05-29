@@ -571,7 +571,7 @@ CenterWindow(macos_window *Window)
     CFRelease(DisplayRef);
 }
 
-void FloatWindow(macos_window *Window)
+void FloatWindow(macos_window *Window, bool UserInitiated)
 {
     AXLibAddFlags(Window, Window_Float);
     if(CVarIntegerValue(CVAR_WINDOW_FLOAT_TOPMOST))
@@ -579,17 +579,15 @@ void FloatWindow(macos_window *Window)
         ExtendedDockSetTopmost(Window);
     }
 
-    if(CVarIntegerValue(CVAR_WINDOW_FLOAT_CENTER) &&
-      (Window->Level != Window_Level_ContextMenu) &&
-      (Window->Level != Window_Level_Notification) &&
-      (Window->Level != Window_Level_ToolTipWindow))
+    if((UserInitiated) &&
+       (CVarIntegerValue(CVAR_WINDOW_FLOAT_CENTER)))
     {
-        DEBUG_PRINT("FloatWindow -> CenterWindow -> window level '%d'\n", Window->Level);
         CenterWindow(Window);
     }
 }
 
-void UnfloatWindow(macos_window *Window)
+internal void
+UnfloatWindow(macos_window *Window)
 {
     AXLibClearFlags(Window, Window_Float);
     if(CVarIntegerValue(CVAR_WINDOW_FLOAT_TOPMOST))
@@ -616,7 +614,7 @@ ToggleWindowFloat()
     else
     {
         UntileWindow(Window);
-        FloatWindow(Window);
+        FloatWindow(Window, true);
     }
 }
 

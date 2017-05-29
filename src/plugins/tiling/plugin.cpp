@@ -186,13 +186,13 @@ TileWindowPreValidation(macos_window *Window)
 
     if(!IsWindowValid(Window))
     {
-        FloatWindow(Window);
+        FloatWindow(Window, false);
         return false;
     }
 
     if(CVarIntegerValue(CVAR_WINDOW_FLOAT_NEXT))
     {
-        FloatWindow(Window);
+        FloatWindow(Window, true);
         UpdateCVar(CVAR_WINDOW_FLOAT_NEXT, 0);
         return false;
     }
