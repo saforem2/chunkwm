@@ -32,8 +32,6 @@ extern CHUNKWM_CALLBACK(Callback_ChunkWM_WindowMoved);
 extern CHUNKWM_CALLBACK(Callback_ChunkWM_WindowResized);
 extern CHUNKWM_CALLBACK(Callback_ChunkWM_WindowMinimized);
 extern CHUNKWM_CALLBACK(Callback_ChunkWM_WindowDeminimized);
-
-// NOTE(koekeishiya): This property is not exposed to plugins
 extern CHUNKWM_CALLBACK(Callback_ChunkWM_WindowTitleChanged);
 
 // NOTE(koekeishiya): This property is not exposed to plugins
