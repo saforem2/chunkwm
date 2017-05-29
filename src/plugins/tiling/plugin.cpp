@@ -905,10 +905,15 @@ RebalanceWindowTreeForSpace(macos_space *Space, virtual_space *VirtualSpace)
     }
 
     Windows = GetAllVisibleWindowsForSpace(Space);
-    if(Windows.empty())
-    {
-        return;
-    }
+
+    /* NOTE(koekeishiya): We need to rebalacne our window-tree even though
+     * there are no visible windows left on this desktop.
+     *
+     * In short; When we quit the last application we trigger an Application_Terminated
+     * event, and this event relies on RebalanceWindowTree to properly restore the window.
+     *
+     * See https://github.com/koekeishiya/chunkwm/issues/69 for history.
+     * */
 
     RebalanceWindowTreeForSpaceWithWindows(Space, VirtualSpace, Windows);
 }
