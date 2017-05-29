@@ -541,10 +541,6 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_WindowDeminimized)
     }
 }
 
-// TODO(koekeishiya): We probably want to allow plugins to subscribe to this event.
-// Having the ability to track window names could be a powerful tool, and we should
-// not force anyone wanting to do so to constantly poll through the AX API !!!
-
 /* NOTE(koekeishiya): If a plugin has stored a pointer to our macos_window structs
  * and tries to access the 'name' member outside of 'PLUGIN_MAIN_FUNC', there will
  * be a race condition. Doing so is considered an error.. */
@@ -558,7 +554,13 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_WindowTitleChanged)
     if(Result && !AXLibHasFlags(Window, Window_Invalid))
     {
         UpdateWindowTitle(Window);
+
         DEBUG_PRINT("%s:%s window title changed\n", Window->Owner->Name, Window->Name);
+#if 0
+        ProcessPluginList(chunkwm_export_window_title_changed, Window);
+#else
+        ProcessPluginListThreaded(chunkwm_export_window_title_changed, Window);
+#endif
     }
     else
     {
