@@ -948,7 +948,8 @@ space_free:
     CFRelease(DisplayRef);
 }
 
-void ApplicationLaunchedHandler(void *Data)
+internal void
+ApplicationLaunchedHandler(void *Data)
 {
     macos_application *Application = (macos_application *) Data;
 
@@ -974,7 +975,8 @@ void ApplicationLaunchedHandler(void *Data)
     }
 }
 
-void ApplicationTerminatedHandler(void *Data)
+internal void
+ApplicationTerminatedHandler(void *Data)
 {
     macos_application *Application = (macos_application *) Data;
 
@@ -982,13 +984,15 @@ void ApplicationTerminatedHandler(void *Data)
     RebalanceWindowTree();
 }
 
-void ApplicationHiddenHandler(void *Data)
+internal void
+ApplicationHiddenHandler(void *Data)
 {
     // macos_application *Application = (macos_application *) Data;
     RebalanceWindowTree();
 }
 
-void ApplicationUnhiddenHandler(void *Data)
+internal void
+ApplicationUnhiddenHandler(void *Data)
 {
     macos_application *Application = (macos_application *) Data;
 
@@ -1026,7 +1030,8 @@ space_free:
     AXLibDestroySpace(Space);
 }
 
-void ApplicationActivatedHandler(void *Data)
+internal void
+ApplicationActivatedHandler(void *Data)
 {
     macos_application *Application = (macos_application *) Data;
     AXUIElementRef WindowRef = AXLibGetFocusedWindow(Application->Ref);
@@ -1057,7 +1062,8 @@ void ApplicationActivatedHandler(void *Data)
     }
 }
 
-void WindowCreatedHandler(void *Data)
+internal void
+WindowCreatedHandler(void *Data)
 {
     macos_window *Window = (macos_window *) Data;
 
@@ -1067,7 +1073,8 @@ void WindowCreatedHandler(void *Data)
     TileWindow(Copy);
 }
 
-void WindowDestroyedHandler(void *Data)
+internal void
+WindowDestroyedHandler(void *Data)
 {
     macos_window *Window = (macos_window *) Data;
 
@@ -1086,7 +1093,8 @@ void WindowDestroyedHandler(void *Data)
     }
 }
 
-void WindowMinimizedHandler(void *Data)
+internal void
+WindowMinimizedHandler(void *Data)
 {
     macos_window *Window = (macos_window *) Data;
 
@@ -1096,7 +1104,8 @@ void WindowMinimizedHandler(void *Data)
     UntileWindow(Copy);
 }
 
-void WindowDeminimizedHandler(void *Data)
+internal void
+WindowDeminimizedHandler(void *Data)
 {
     macos_window *Window = (macos_window *) Data;
 
@@ -1116,7 +1125,8 @@ void WindowDeminimizedHandler(void *Data)
     AXLibDestroySpace(Space);
 }
 
-void WindowFocusedHandler(void *Data)
+internal void
+WindowFocusedHandler(void *Data)
 {
     macos_window *Window = (macos_window *) Data;
 
@@ -1140,7 +1150,8 @@ void WindowFocusedHandler(void *Data)
     }
 }
 
-void WindowMovedHandler(void *Data)
+internal void
+WindowMovedHandler(void *Data)
 {
     macos_window *Window = (macos_window *) Data;
 
@@ -1159,7 +1170,8 @@ void WindowMovedHandler(void *Data)
     }
 }
 
-void WindowResizedHandler(void *Data)
+internal void
+WindowResizedHandler(void *Data)
 {
     macos_window *Window = (macos_window *) Data;
 
@@ -1180,7 +1192,25 @@ void WindowResizedHandler(void *Data)
     }
 }
 
-void SpaceAndDisplayChangedHandler(void *Data)
+internal void
+WindowTitleChangedHandler(void *Data)
+{
+    macos_window *Window = (macos_window *) Data;
+
+    macos_window *Copy = GetWindowByID(Window->Id);
+    if(Copy)
+    {
+        if(Copy->Name)
+        {
+            free(Copy->Name);
+        }
+
+        Copy->Name = strdup(Window->Name);
+    }
+}
+
+internal void
+SpaceAndDisplayChangedHandler(void *Data)
 {
     UpdateWindowCollection();
 
@@ -1309,6 +1339,11 @@ PLUGIN_MAIN_FUNC(PluginMain)
     else if(StringEquals(Node, "chunkwm_export_window_resized"))
     {
         WindowResizedHandler(Data);
+        return true;
+    }
+    else if(StringEquals(Node, "chunkwm_export_window_title_changed"))
+    {
+        WindowTitleChangedHandler(Data);
         return true;
     }
     else if((StringEquals(Node, "chunkwm_export_space_changed")) ||
@@ -1538,6 +1573,7 @@ chunkwm_plugin_export Subscriptions[] =
 
     chunkwm_export_window_moved,
     chunkwm_export_window_resized,
+    chunkwm_export_window_title_changed,
 
     chunkwm_export_space_changed,
     chunkwm_export_display_changed,
