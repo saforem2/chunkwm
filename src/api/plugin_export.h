@@ -25,6 +25,7 @@ static const char *chunkwm_plugin_export_str[] =
     "chunkwm_export_window_resized",
     "chunkwm_export_window_minimized",
     "chunkwm_export_window_deminimized",
+    "chunkwm_export_window_title_changed",
 
     "chunkwm_export_count"
 };
@@ -52,6 +53,7 @@ enum chunkwm_plugin_export
     chunkwm_export_window_resized,
     chunkwm_export_window_minimized,
     chunkwm_export_window_deminimized,
+    chunkwm_export_window_title_changed,
 
     chunkwm_export_count
 };
