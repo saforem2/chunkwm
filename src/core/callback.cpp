@@ -378,7 +378,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_WindowCreated)
 
     if(AddWindowToCollection(Window))
     {
-        DEBUG_PRINT("%s:%s window created\n", Window->Owner->Name, Window->Name);
+        DEBUG_PRINT("%s:%s%d window created\n", Window->Owner->Name, Window->Name, Window->Id);
 #if 0
         ProcessPluginList(chunkwm_export_window_created, Window);
 #else
@@ -391,7 +391,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_WindowCreated)
     }
     else
     {
-        DEBUG_PRINT("%s:%s window is not destructible, ignore!\n", Window->Owner->Name, Window->Name);
+        DEBUG_PRINT("%s:%s:%d window is not destructible, ignore!\n", Window->Owner->Name, Window->Name, Window->Id);
         AXLibRemoveObserverNotification(&Window->Owner->Observer, Window->Ref, kAXUIElementDestroyedNotification);
         AXLibDestroyWindow(Window);
     }
@@ -402,7 +402,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_WindowDestroyed)
     macos_window *Window = (macos_window *) Event->Context;
     ASSERT(Window);
 
-    DEBUG_PRINT("%s:%s window destroyed\n", Window->Owner->Name, Window->Name);
+    DEBUG_PRINT("%s:%s:%d window destroyed\n", Window->Owner->Name, Window->Name, Window->Id);
 #if 0
     ProcessPluginList(chunkwm_export_window_destroyed, Window);
 #else
@@ -425,7 +425,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_WindowFocused)
          * post it after a 'ChunkWM_WindowDeminimized' event has been processed. */
         if(!AXLibHasFlags(Window, Window_Minimized))
         {
-            DEBUG_PRINT("%s:%s window focused\n", Window->Owner->Name, Window->Name);
+            DEBUG_PRINT("%s:%s:%d window focused\n", Window->Owner->Name, Window->Name, Window->Id);
 #if 0
             ProcessPluginList(chunkwm_export_window_focused, Window);
 #else
@@ -450,7 +450,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_WindowMoved)
     {
         Window->Position = AXLibGetWindowPosition(Window->Ref);
 
-        DEBUG_PRINT("%s:%s window moved\n", Window->Owner->Name, Window->Name);
+        DEBUG_PRINT("%s:%s:%d window moved\n", Window->Owner->Name, Window->Name, Window->Id);
 #if 0
         ProcessPluginList(chunkwm_export_window_moved, Window);
 #else
@@ -475,7 +475,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_WindowResized)
         Window->Position = AXLibGetWindowPosition(Window->Ref);
         Window->Size = AXLibGetWindowSize(Window->Ref);
 
-        DEBUG_PRINT("%s:%s window resized\n", Window->Owner->Name, Window->Name);
+        DEBUG_PRINT("%s:%s:%d window resized\n", Window->Owner->Name, Window->Name, Window->Id);
 #if 0
         ProcessPluginList(chunkwm_export_window_resized, Window);
 #else
@@ -497,7 +497,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_WindowMinimized)
     bool Result = __sync_bool_compare_and_swap(&Window->Flags, Flags, Flags);
     if(Result && !AXLibHasFlags(Window, Window_Invalid))
     {
-        DEBUG_PRINT("%s:%s window minimized\n", Window->Owner->Name, Window->Name);
+        DEBUG_PRINT("%s:%s:%d window minimized\n", Window->Owner->Name, Window->Name, Window->Id);
 
         AXLibAddFlags(Window, Window_Minimized);
 #if 0
@@ -521,7 +521,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_WindowDeminimized)
     bool Result = __sync_bool_compare_and_swap(&Window->Flags, Flags, Flags);
     if(Result && !AXLibHasFlags(Window, Window_Invalid))
     {
-        DEBUG_PRINT("%s:%s window deminimized\n", Window->Owner->Name, Window->Name);
+        DEBUG_PRINT("%s:%s:%d window deminimized\n", Window->Owner->Name, Window->Name, Window->Id);
 
         AXLibClearFlags(Window, Window_Minimized);
 #if 0
@@ -555,7 +555,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_WindowTitleChanged)
     {
         UpdateWindowTitle(Window);
 
-        DEBUG_PRINT("%s:%s window title changed\n", Window->Owner->Name, Window->Name);
+        DEBUG_PRINT("%s:%s:%d window title changed\n", Window->Owner->Name, Window->Name, Window->Id);
 #if 0
         ProcessPluginList(chunkwm_export_window_title_changed, Window);
 #else
