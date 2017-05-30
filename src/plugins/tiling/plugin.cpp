@@ -1081,7 +1081,14 @@ WindowDestroyedHandler(void *Data)
     macos_window *Copy = RemoveWindowFromCollection(Window);
     if(Copy)
     {
-        UntileWindow(Copy);
+        if(IsWindowValid(Copy))
+        {
+            UntileWindow(Copy);
+        }
+        else
+        {
+            RebalanceWindowTree();
+        }
         AXLibDestroyWindow(Copy);
     }
     else
