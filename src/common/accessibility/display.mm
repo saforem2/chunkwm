@@ -482,11 +482,11 @@ void AXLibSpaceRemoveWindow(CGSSpaceID SpaceId, uint32_t WindowId)
 
 /* NOTE(koekeishiya): Returns a list of macos_space * structs that show this window.
  * The list is terminated by a null-pointer and can be iterated in the following way:
-
- *     macos_space *Space, **List = AXLibSpacesForWindow(Window->Id);
- *     while((Space = *List++)) { .. }
-
- * The caller is responsible for destroying every space, and releasing the list itself.
+ *
+ *     macos_space *Space, **List, **Spaces;
+ *     List = Spaces = AXLibSpacesForWindow(Window->Id);
+ *     while((Space = *List++)) { ..; AXLibDestroySpace(Space); }
+ *     free(Spaces);
  */
 macos_space **
 AXLibSpacesForWindow(uint32_t WindowId)
