@@ -9,6 +9,7 @@ typedef int CGSConnectionID;
 
 extern "C" CGSConnectionID _CGSDefaultConnection(void);
 
+extern "C" CFDictionaryRef CGSSpaceCopyValues(CGSConnectionID Connection, CGSSpaceID SpaceId);
 extern "C" CGSSpaceType CGSSpaceGetType(CGSConnectionID Connection, CGSSpaceID SpaceId);
 extern "C" CFArrayRef CGSCopyManagedDisplaySpaces(const CGSConnectionID Connection);
 extern "C" CFArrayRef CGSCopySpacesForWindows(CGSConnectionID Connection, CGSSpaceSelector Type, CFArrayRef Windows);
@@ -477,6 +478,53 @@ void AXLibSpaceRemoveWindow(CGSSpaceID SpaceId, uint32_t WindowId)
     NSArray *NSArrayWindow = @[ @(WindowId) ];
     NSArray *NSArraySourceSpace = @[ @(SpaceId) ];
     CGSRemoveWindowsFromSpaces(CGSDefaultConnection, (__bridge CFArrayRef)NSArrayWindow, (__bridge CFArrayRef)NSArraySourceSpace);
+}
+
+/* NOTE(koekeishiya): Returns a list of macos_space * structs that show this window.
+ * The list is terminated by a null-pointer and can be iterated in the following way:
+
+ *     macos_space *Space, **List = AXLibSpacesForWindow(Window->Id);
+ *     while((Space = *List++)) { .. }
+
+ * The caller is responsible for destroying every space, and releasing the list itself.
+ */
+macos_space **
+AXLibSpacesForWindow(uint32_t WindowId)
+{
+    macos_space **Result = NULL;
+
+    NSArray *NSArrayWindow = @[ @(WindowId) ];
+    CFArrayRef Spaces = CGSCopySpacesForWindows(CGSDefaultConnection, kCGSSpaceAll, (__bridge CFArrayRef) NSArrayWindow);
+    int NumberOfSpaces = CFArrayGetCount(Spaces);
+
+    if(NumberOfSpaces)
+    {
+        Result = (macos_space **) malloc(sizeof(macos_space *) * (NumberOfSpaces + 1));
+
+        for(int Index = 0;
+            Index < NumberOfSpaces;
+            ++Index)
+        {
+            NSNumber *Id = (__bridge NSNumber *) CFArrayGetValueAtIndex(Spaces, Index);
+            CGSSpaceID SpaceId = [Id intValue];
+
+            CFDictionaryRef SpaceCFDictionary = CGSSpaceCopyValues(CGSDefaultConnection, SpaceId);
+            NSDictionary *SpaceDictionary = (__bridge NSDictionary *) SpaceCFDictionary;
+
+            CGSSpaceType SpaceType = [SpaceDictionary[@"type"] intValue];
+            CFStringRef SpaceRef = (__bridge CFStringRef) [[NSString alloc] initWithString:SpaceDictionary[@"uuid"]];
+
+            macos_space *Space = AXLibConstructSpace(SpaceRef, SpaceId, SpaceType);
+            Result[Index] = Space;
+
+            CFRelease(SpaceCFDictionary);
+        }
+
+        Result[NumberOfSpaces] = NULL;
+        CFRelease(Spaces);
+    }
+
+    return Result;
 }
 
 bool AXLibSpaceHasWindow(CGSSpaceID SpaceId, uint32_t WindowId)

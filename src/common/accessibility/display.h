@@ -73,6 +73,7 @@ bool AXLibIsDisplayChangingSpaces(CFStringRef DisplayRef);
 bool AXLibCGSSpaceIDToDesktopID(CGSSpaceID SpaceId, unsigned *OutArrangement, unsigned *OutDesktopId);
 bool AXLibCGSSpaceIDFromDesktopID(unsigned DesktopId, unsigned *OutArrangement, CGSSpaceID *OutSpaceId);
 
+macos_space **AXLibSpacesForWindow(uint32_t WindowId);
 void AXLibSpaceAddWindow(CGSSpaceID SpaceId, uint32_t WindowId);
 void AXLibSpaceRemoveWindow(CGSSpaceID SpaceId, uint32_t WindowId);
 bool AXLibSpaceHasWindow(CGSSpaceID SpaceId, uint32_t WindowId);
