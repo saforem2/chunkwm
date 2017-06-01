@@ -1058,6 +1058,11 @@ ApplicationActivatedHandler(void *Data)
                 int Status = 1;
                 ChunkWMBroadcastEvent(PluginName, "focused_window_float", (char *) &Status, sizeof(int));
             }
+
+            if(CVarIntegerValue(CVAR_MOUSE_FOLLOWS_FOCUS))
+            {
+                CenterMouseInWindow(Window);
+            }
         }
     }
 }
@@ -1153,6 +1158,11 @@ WindowFocusedHandler(void *Data)
         {
             int Status = 1;
             ChunkWMBroadcastEvent(PluginName, "focused_window_float", &Status, sizeof(int));
+        }
+
+        if(CVarIntegerValue(CVAR_MOUSE_FOLLOWS_FOCUS))
+        {
+            CenterMouseInWindow(Copy);
         }
     }
 }

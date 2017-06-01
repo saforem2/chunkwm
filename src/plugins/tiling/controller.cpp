@@ -32,18 +32,34 @@ extern void UntileWindowFromSpace(macos_window *Window, macos_space *Space, virt
 extern bool IsWindowValid(macos_window *Window);
 
 internal bool
-IsCursorInRegion(region Region)
+IsCursorInRegion(region *Region)
 {
     CGPoint Cursor = AXLibGetCursorPos();
-    if(Cursor.x >= Region.X &&
-       Cursor.x <= Region.X + Region.Width &&
-       Cursor.y >= Region.Y &&
-       Cursor.y <= Region.Y + Region.Height)
-    {
-        return true;
-    }
+    bool Result = ((Cursor.x >= Region->X) &&
+                   (Cursor.y >= Region->Y) &&
+                   (Cursor.x <= Region->X + Region->Width) &&
+                   (Cursor.y <= Region->Y + Region->Height));
+    return Result;
+}
 
-    return false;
+internal void
+CenterMouseInRegion(region *Region)
+{
+    if(!IsCursorInRegion(Region))
+    {
+        CGPoint Center = CGPointMake(Region->X + Region->Width / 2,
+                                     Region->Y + Region->Height / 2);
+        CGWarpMouseCursorPosition(Center);
+    }
+}
+
+void CenterMouseInWindow(macos_window *Window)
+{
+    region Region = { (float) Window->Position.x,
+                      (float) Window->Position.y,
+                      (float) Window->Size.width,
+                      (float) Window->Size.height };
+    CenterMouseInRegion(&Region);
 }
 
 internal void
@@ -250,19 +266,6 @@ void FocusWindow(char *Direction)
             {
                 AXLibSetFocusedWindow(ClosestWindow->Ref);
                 AXLibSetFocusedApplication(ClosestWindow->Owner->PSN);
-
-                if(CVarIntegerValue(CVAR_MOUSE_FOLLOWS_FOCUS))
-                {
-                    node *Node = GetNodeWithId(VirtualSpace->Tree, ClosestWindow->Id, VirtualSpace->Mode);
-                    ASSERT(Node);
-
-                    if(!IsCursorInRegion(Node->Region))
-                    {
-                        CGPoint Center = CGPointMake(Node->Region.X + Node->Region.Width / 2,
-                                                     Node->Region.Y + Node->Region.Height / 2);
-                        CGWarpMouseCursorPosition(Center);
-                    }
-                }
             }
             else if(StringEquals(Direction, "east"))
             {
@@ -281,19 +284,6 @@ void FocusWindow(char *Direction)
             {
                 AXLibSetFocusedWindow(ClosestWindow->Ref);
                 AXLibSetFocusedApplication(ClosestWindow->Owner->PSN);
-
-                if(CVarIntegerValue(CVAR_MOUSE_FOLLOWS_FOCUS))
-                {
-                    node *Node = GetNodeWithId(VirtualSpace->Tree, ClosestWindow->Id, VirtualSpace->Mode);
-                    ASSERT(Node);
-
-                    if(!IsCursorInRegion(Node->Region))
-                    {
-                        CGPoint Center = CGPointMake(Node->Region.X + Node->Region.Width / 2,
-                                                     Node->Region.Y + Node->Region.Height / 2);
-                        CGWarpMouseCursorPosition(Center);
-                    }
-                }
             }
         }
     }
@@ -326,14 +316,6 @@ void FocusWindow(char *Direction)
 
                 AXLibSetFocusedWindow(FocusWindow->Ref);
                 AXLibSetFocusedApplication(FocusWindow->Owner->PSN);
-
-                if((CVarIntegerValue(CVAR_MOUSE_FOLLOWS_FOCUS)) &&
-                   (!IsCursorInRegion(Node->Region)))
-                {
-                    CGPoint Center = CGPointMake(Node->Region.X + Node->Region.Width / 2,
-                                                 Node->Region.Y + Node->Region.Height / 2);
-                    CGWarpMouseCursorPosition(Center);
-                }
             }
         }
     }
@@ -394,12 +376,9 @@ void SwapWindow(char *Direction)
         ResizeWindowToRegionSize(WindowNode);
         ResizeWindowToRegionSize(ClosestNode);
 
-        if((CVarIntegerValue(CVAR_MOUSE_FOLLOWS_FOCUS)) &&
-           (!IsCursorInRegion(ClosestNode->Region)))
+        if(CVarIntegerValue(CVAR_MOUSE_FOLLOWS_FOCUS))
         {
-            CGPoint Center = CGPointMake(ClosestNode->Region.X + ClosestNode->Region.Width / 2,
-                                         ClosestNode->Region.Y + ClosestNode->Region.Height / 2);
-            CGWarpMouseCursorPosition(Center);
+            CenterMouseInRegion(&ClosestNode->Region);
         }
     }
     else if(VirtualSpace->Mode == Virtual_Space_Monocle)
@@ -503,12 +482,9 @@ void WarpWindow(char *Direction)
 
     ASSERT(FocusedNode);
 
-    if((CVarIntegerValue(CVAR_MOUSE_FOLLOWS_FOCUS)) &&
-       (!IsCursorInRegion(FocusedNode->Region)))
+    if(CVarIntegerValue(CVAR_MOUSE_FOLLOWS_FOCUS))
     {
-        CGPoint Center = CGPointMake(FocusedNode->Region.X + FocusedNode->Region.Width / 2,
-                                     FocusedNode->Region.Y + FocusedNode->Region.Height / 2);
-        CGWarpMouseCursorPosition(Center);
+        CenterMouseInRegion(&FocusedNode->Region);
     }
 
 vspace_release:
@@ -1627,15 +1603,6 @@ void FocusMonitor(char *Op)
     Window = GetWindowByID(WindowIds[0]);
     AXLibSetFocusedWindow(Window->Ref);
     AXLibSetFocusedApplication(Window->Owner->PSN);
-
-    if(CVarIntegerValue(CVAR_MOUSE_FOLLOWS_FOCUS))
-    {
-        CGPoint Position = AXLibGetWindowPosition(Window->Ref);
-        CGSize Size = AXLibGetWindowSize(Window->Ref);
-        CGPoint Center = CGPointMake(Position.x + Size.width / 2,
-                                     Position.y + Size.height / 2);
-        CGWarpMouseCursorPosition(Center);
-    }
 
 dest_space_free:
     AXLibDestroySpace(DestinationSpace);

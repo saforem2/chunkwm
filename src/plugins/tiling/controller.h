@@ -3,6 +3,10 @@
 
 #include <stdint.h>
 
+struct macos_window;
+
+void CenterMouseInWindow(macos_window *Window);
+
 void FocusWindow(char *Direction);
 void SwapWindow(char *Direction);
 void WarpWindow(char *Direction);
@@ -25,7 +29,6 @@ void AdjustSpaceGap(char *Op);
 void SendWindowToDesktop(char *Op);
 void SendWindowToMonitor(char *Op);
 
-struct macos_window;
 void FloatWindow(macos_window *Window, bool UserInitiated);
 
 void FocusMonitor(char *Op);
