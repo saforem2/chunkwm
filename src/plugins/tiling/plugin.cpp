@@ -167,11 +167,31 @@ ClearApplicationCache()
     Applications.clear();
 }
 
+internal bool
+BroadcastFocusedWindowFloating(int Status)
+{
+    ChunkWMBroadcastEvent(PluginName, "focused_window_float", (char *) &Status, sizeof(int));
+}
+
+internal bool
+BroadcastFocusedWindowFloating(macos_window *Window)
+{
+    BroadcastFocusedWindowFloating((int)AXLibHasFlags(Window, Window_Float));
+}
+
 bool IsWindowValid(macos_window *Window)
 {
     bool Result = ((AXLibIsWindowStandard(Window)) &&
                    (AXLibHasFlags(Window, Window_Movable)) &&
                    (AXLibHasFlags(Window, Window_Resizable)) &&
+                   (!AXLibHasFlags(Window, Window_Invalid)));
+    return Result;
+}
+
+internal bool
+IsWindowFocusable(macos_window *Window)
+{
+    bool Result = ((AXLibIsWindowStandard(Window)) &&
                    (!AXLibHasFlags(Window, Window_Invalid)));
     return Result;
 }
@@ -1041,25 +1061,18 @@ ApplicationActivatedHandler(void *Data)
         CFRelease(WindowRef);
 
         macos_window *Window = GetWindowByID(WindowId);
-        if(Window && IsWindowValid(Window))
+        if(Window)
         {
             UpdateCVar(CVAR_FOCUSED_WINDOW, (int)Window->Id);
+            BroadcastFocusedWindowFloating(Window);
+
             if(!AXLibHasFlags(Window, Window_Float))
             {
                 UpdateCVar(CVAR_BSP_INSERTION_POINT, (int)Window->Id);
-
-                // NOTE(koekeishiya): test global plugin broadcast system.
-                int Status = 0;
-                ChunkWMBroadcastEvent(PluginName, "focused_window_float", (char *) &Status, sizeof(int));
-            }
-            else
-            {
-                // NOTE(koekeishiya): test global plugin broadcast system.
-                int Status = 1;
-                ChunkWMBroadcastEvent(PluginName, "focused_window_float", (char *) &Status, sizeof(int));
             }
 
-            if(CVarIntegerValue(CVAR_MOUSE_FOLLOWS_FOCUS))
+            if((IsWindowFocusable(Window)) &&
+               (CVarIntegerValue(CVAR_MOUSE_FOLLOWS_FOCUS)))
             {
                 CenterMouseInWindow(Window);
             }
@@ -1095,6 +1108,12 @@ WindowDestroyedHandler(void *Data)
             RebalanceWindowTree();
         }
         AXLibDestroyWindow(Copy);
+
+        uint32_t FocusedWindowId = CVarIntegerValue(CVAR_FOCUSED_WINDOW);
+        if(FocusedWindowId == Window->Id)
+        {
+            BroadcastFocusedWindowFloating(0);
+        }
     }
     else
     {
@@ -1143,24 +1162,18 @@ WindowFocusedHandler(void *Data)
     macos_window *Window = (macos_window *) Data;
 
     macos_window *Copy = GetWindowByID(Window->Id);
-    if(Copy && IsWindowValid(Copy))
+    if(Copy)
     {
         UpdateCVar(CVAR_FOCUSED_WINDOW, (int)Copy->Id);
+        BroadcastFocusedWindowFloating(Copy);
+
         if(!AXLibHasFlags(Copy, Window_Float))
         {
             UpdateCVar(CVAR_BSP_INSERTION_POINT, (int)Copy->Id);
-
-            // NOTE(koekeishiya): test global plugin broadcast system.
-            int Status = 0;
-            ChunkWMBroadcastEvent(PluginName, "focused_window_float", &Status, sizeof(int));
-        }
-        else
-        {
-            int Status = 1;
-            ChunkWMBroadcastEvent(PluginName, "focused_window_float", &Status, sizeof(int));
         }
 
-        if(CVarIntegerValue(CVAR_MOUSE_FOLLOWS_FOCUS))
+        if((IsWindowFocusable(Copy)) &&
+           (CVarIntegerValue(CVAR_MOUSE_FOLLOWS_FOCUS)))
         {
             CenterMouseInWindow(Copy);
         }
@@ -1476,9 +1489,6 @@ Init(plugin_broadcast *ChunkwmBroadcast)
         AddApplicationWindowList(Application);
     }
 
-    /* NOTE(koekeishiya): Tile windows visible on the current space using configured mode */
-    CreateWindowTree();
-
     /* NOTE(koekeishiya): Set our initial insertion-point on launch. */
     ApplicationRef = AXLibGetFocusedApplication();
     if(ApplicationRef)
@@ -1494,13 +1504,16 @@ Init(plugin_broadcast *ChunkwmBroadcast)
             macos_window *Window = GetWindowByID(WindowId);
             ASSERT(Window);
 
-            if(IsWindowValid(Window))
+            UpdateCVar(CVAR_FOCUSED_WINDOW, (int)Window->Id);
+
+            if(!AXLibHasFlags(Window, Window_Float))
             {
-                UpdateCVar(CVAR_FOCUSED_WINDOW, (int)Window->Id);
-                if(!AXLibHasFlags(Window, Window_Float))
-                {
-                    UpdateCVar(CVAR_BSP_INSERTION_POINT, (int)Window->Id);
-                }
+                UpdateCVar(CVAR_BSP_INSERTION_POINT, (int)Window->Id);
+            }
+
+            if(IsWindowFocusable(Window))
+            {
+                BroadcastFocusedWindowFloating(Window);
             }
         }
     }
@@ -1521,6 +1534,8 @@ Init(plugin_broadcast *ChunkwmBroadcast)
     Success = BeginVirtualSpaces();
     if(Success)
     {
+        /* NOTE(koekeishiya): Tile windows visible on the current space using configured mode */
+        CreateWindowTree();
         goto out;
     }
 
