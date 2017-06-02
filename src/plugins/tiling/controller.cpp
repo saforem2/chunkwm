@@ -30,7 +30,7 @@ extern void TileWindowOnSpace(macos_window *Window, macos_space *Space, virtual_
 extern void UntileWindow(macos_window *Window);
 extern void UntileWindowFromSpace(macos_window *Window, macos_space *Space, virtual_space *VirtualSpace);
 extern bool IsWindowValid(macos_window *Window);
-extern bool BroadcastFocusedWindowFloating(int Status);
+extern void BroadcastFocusedWindowFloating(int Status);
 
 internal bool
 IsCursorInRegion(region *Region)

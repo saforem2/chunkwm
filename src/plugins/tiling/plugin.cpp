@@ -167,12 +167,12 @@ ClearApplicationCache()
     Applications.clear();
 }
 
-bool BroadcastFocusedWindowFloating(int Status)
+void BroadcastFocusedWindowFloating(int Status)
 {
     ChunkWMBroadcastEvent(PluginName, "focused_window_float", (char *) &Status, sizeof(int));
 }
 
-internal bool
+internal void
 BroadcastFocusedWindowFloating(macos_window *Window)
 {
     BroadcastFocusedWindowFloating((int)AXLibHasFlags(Window, Window_Float));
