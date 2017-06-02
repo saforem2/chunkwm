@@ -1302,6 +1302,9 @@ win_focus:
     if(!Windows.empty())
     {
         UpdateCVar(CVAR_FOCUSED_WINDOW, (int)Windows[0]);
+        macos_window *Window = GetWindowByID(Windows[0]);
+        ASSERT(Window);
+        BroadcastFocusedWindowFloating(Window);
     }
 
 space_free:
