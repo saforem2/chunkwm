@@ -1062,6 +1062,8 @@ ApplicationActivatedHandler(void *Data)
         macos_window *Window = GetWindowByID(WindowId);
         if(Window)
         {
+            uint32_t CurrentFocus = CVarIntegerValue(CVAR_FOCUSED_WINDOW);
+
             UpdateCVar(CVAR_FOCUSED_WINDOW, (int)Window->Id);
             BroadcastFocusedWindowFloating(Window);
 
@@ -1070,7 +1072,8 @@ ApplicationActivatedHandler(void *Data)
                 UpdateCVar(CVAR_BSP_INSERTION_POINT, (int)Window->Id);
             }
 
-            if((IsWindowFocusable(Window)) &&
+            if((CurrentFocus != Window->Id) &&
+               (IsWindowFocusable(Window)) &&
                (CVarIntegerValue(CVAR_MOUSE_FOLLOWS_FOCUS)))
             {
                 CenterMouseInWindow(Window);
@@ -1163,6 +1166,8 @@ WindowFocusedHandler(void *Data)
     macos_window *Copy = GetWindowByID(Window->Id);
     if(Copy)
     {
+        uint32_t CurrentFocus = CVarIntegerValue(CVAR_FOCUSED_WINDOW);
+
         UpdateCVar(CVAR_FOCUSED_WINDOW, (int)Copy->Id);
         BroadcastFocusedWindowFloating(Copy);
 
@@ -1171,7 +1176,8 @@ WindowFocusedHandler(void *Data)
             UpdateCVar(CVAR_BSP_INSERTION_POINT, (int)Copy->Id);
         }
 
-        if((IsWindowFocusable(Copy)) &&
+        if((CurrentFocus != Copy->Id) &&
+           (IsWindowFocusable(Copy)) &&
            (CVarIntegerValue(CVAR_MOUSE_FOLLOWS_FOCUS)))
         {
             CenterMouseInWindow(Copy);
