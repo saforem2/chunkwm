@@ -167,8 +167,7 @@ ClearApplicationCache()
     Applications.clear();
 }
 
-internal bool
-BroadcastFocusedWindowFloating(int Status)
+bool BroadcastFocusedWindowFloating(int Status)
 {
     ChunkWMBroadcastEvent(PluginName, "focused_window_float", (char *) &Status, sizeof(int));
 }

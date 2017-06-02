@@ -30,6 +30,7 @@ extern void TileWindowOnSpace(macos_window *Window, macos_space *Space, virtual_
 extern void UntileWindow(macos_window *Window);
 extern void UntileWindowFromSpace(macos_window *Window, macos_space *Space, virtual_space *VirtualSpace);
 extern bool IsWindowValid(macos_window *Window);
+extern bool BroadcastFocusedWindowFloating(int Status);
 
 internal bool
 IsCursorInRegion(region *Region)
@@ -550,6 +551,8 @@ CenterWindow(macos_window *Window)
 void FloatWindow(macos_window *Window, bool UserInitiated)
 {
     AXLibAddFlags(Window, Window_Float);
+    BroadcastFocusedWindowFloating(1);
+
     if(CVarIntegerValue(CVAR_WINDOW_FLOAT_TOPMOST))
     {
         ExtendedDockSetTopmost(Window);
@@ -566,6 +569,8 @@ internal void
 UnfloatWindow(macos_window *Window)
 {
     AXLibClearFlags(Window, Window_Float);
+    BroadcastFocusedWindowFloating(0);
+
     if(CVarIntegerValue(CVAR_WINDOW_FLOAT_TOPMOST))
     {
         ExtendedDockResetTopmost(Window);
