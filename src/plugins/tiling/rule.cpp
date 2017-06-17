@@ -36,11 +36,31 @@ out:;
 }
 
 internal void
+ApplyWindowRuleState(macos_window *Window, window_rule *Rule)
+{
+    if(StringEquals(Rule->State, "float"))
+    {
+        FloatWindow(Window, false);
+    }
+    else if(StringEquals(Rule->State, "tile"))
+    {
+        AXLibAddFlags(Window, Window_ForceTile);
+    }
+    else
+    {
+        fprintf(stderr, "tiling: window rule - invalid state '%s', ignored..\n", Rule->State);
+    }
+}
+
+internal void
 ApplyWindowRule(macos_window *Window, window_rule *Rule)
 {
     regex_t Regex;
-    bool MatchOwner;
-    bool MatchName;
+    bool MatchOwner, MatchName;
+    bool FilterOwner, FilterName;
+
+    FilterOwner = Rule->Owner != NULL;
+    FilterName = Rule->Name != NULL;
 
     MatchOwner = (Window->Owner->Name && Rule->Owner)
                ? RegexMatchPattern(&Regex, Window->Owner->Name, Rule->Owner)
@@ -50,20 +70,27 @@ ApplyWindowRule(macos_window *Window, window_rule *Rule)
               ? RegexMatchPattern(&Regex, Window->Name, Rule->Name)
               : false;
 
-    if((MatchOwner) ||
-       (MatchName))
+    if((FilterOwner) &&
+       (FilterName))
     {
-        if(StringEquals(Rule->State, "float"))
+        if((MatchOwner) &&
+           (MatchName))
         {
-            FloatWindow(Window, false);
+            ApplyWindowRuleState(Window, Rule);
         }
-        else if(StringEquals(Rule->State, "tile"))
+    }
+    else if(FilterOwner)
+    {
+        if(MatchOwner)
         {
-            AXLibAddFlags(Window, Window_ForceTile);
+            ApplyWindowRuleState(Window, Rule);
         }
-        else
+    }
+    else if(FilterName)
+    {
+        if(MatchName)
         {
-            fprintf(stderr, "tiling: window rule - invalid state '%s', ignored..\n", Rule->State);
+            ApplyWindowRuleState(Window, Rule);
         }
     }
 }
