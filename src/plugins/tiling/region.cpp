@@ -74,6 +74,7 @@ void ConstrainRegion(CFStringRef DisplayRef, region *Region)
 
                 CFRelease(MainDisplayRef);
             } break;
+            case Dock_Orientation_Top: { /* NOTE(koekeishiya) compiler warning.. */ } break;
         }
     }
 }

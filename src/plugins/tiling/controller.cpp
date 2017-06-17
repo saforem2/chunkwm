@@ -158,6 +158,7 @@ GetWindowDistance(macos_space *Space, virtual_space *VirtualSpace,
             if(DeltaX >= 0) return 0xFFFFFFFF;
             DeltaA = M_PI - fabs(Angle);
         } break;
+        case Dir_Unknown: { /* NOTE(koekeishiya) compiler warning.. */ } break;
     }
 
     return (Distance / cos(DeltaA / 2.0));
@@ -192,6 +193,7 @@ WindowIsInDirection(virtual_space *VirtualSpace, char *Op,
                 Result = (A->X != B->X) &&
                          (fmax(A->Y, B->Y) < fmin(B->Y + B->Height, A->Y + A->Height));
             } break;
+            case Dir_Unknown: { /* NOTE(koekeishiya) compiler warning.. */ } break;
         }
     }
 
