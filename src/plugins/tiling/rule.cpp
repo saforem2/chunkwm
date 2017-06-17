@@ -15,7 +15,12 @@
 
 #define internal static
 
-// TODO(koekeishiya): Thread-Safety !!!
+// TODO(koekeishiya): This vector is accessed from our daemon thread,
+// and also the thread selected to execute the 'plugin->main' function.
+//
+// We want this to be thread-safe to properly allow for adding rules after
+// the initial config has been ran, however, this should in most cases
+// not be an issue, as the vector is only accessed upon window creation.
 internal std::vector<window_rule *> WindowRules;
 
 internal inline bool
