@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <mach/mach_time.h>
 
 #include "../../api/plugin_api.h"
 #include "../../common/accessibility/element.h"
@@ -9,9 +10,32 @@
 #include "../../common/misc/assert.h"
 
 #define internal static
+#define local_persist static
+#define CLOCK_PRECISION 1E-9
 
 internal event_tap EventTap;
 internal bool volatile IsActive;
+internal double MouseMovedDeltaTime;
+internal double MouseMovedThrottle = 0.125;
+
+internal inline void
+ClockGetTime(long long *Time)
+{
+    local_persist mach_timebase_info_data_t Timebase;
+    if(Timebase.denom == 0)
+    {
+        mach_timebase_info(&Timebase);
+    }
+
+    uint64_t Temp = mach_absolute_time();
+    *Time = (Temp * Timebase.numer) / Timebase.denom;
+}
+
+internal inline double
+GetTimeDiff(long long A, long long B)
+{
+    return (A - B) * CLOCK_PRECISION;
+}
 
 internal bool
 IsPointInsideRect(CGPoint *Point, CGRect *Rect)
@@ -32,13 +56,11 @@ struct window_info
     uint32_t PID;
 };
 
-window_info GetWindowBelowCursor()
+window_info GetWindowBelowCursor(CGPoint Cursor)
 {
-    static CGWindowListOption WindowListOption = kCGWindowListOptionOnScreenOnly |
-                                                 kCGWindowListExcludeDesktopElements;
+    local_persist CGWindowListOption WindowListOption = kCGWindowListOptionOnScreenOnly |
+                                                        kCGWindowListExcludeDesktopElements;
     window_info Result = {};
-    CGPoint Cursor = AXLibGetCursorPos();
-
     CFArrayRef WindowList = CGWindowListCopyWindowInfo(WindowListOption, kCGNullWindowID);
     if(WindowList)
     {
@@ -86,14 +108,13 @@ window_info GetWindowBelowCursor()
                 break;
             }
         }
-
         CFRelease(WindowList);
     }
 
     return Result;
 }
 
-void FocusWindowBelowCursor()
+void FocusWindowBelowCursor(CGPoint Cursor)
 {
     AXUIElementRef ApplicationRef = AXLibGetFocusedApplication();
     AXUIElementRef WindowRef = AXLibGetFocusedWindow(ApplicationRef);
@@ -103,10 +124,17 @@ void FocusWindowBelowCursor()
     if(WindowRef)
     {
         FocusedWindowId = AXLibGetWindowID(WindowRef);
+        CGPoint Position = AXLibGetWindowPosition(WindowRef);
+        CGSize Size = AXLibGetWindowSize(WindowRef);
         CFRelease(WindowRef);
+        CGRect WindowRect = { Position, Size };
+        if(IsPointInsideRect(&Cursor, &WindowRect))
+        {
+            return;
+        }
     }
 
-    window_info Window = GetWindowBelowCursor();
+    window_info Window = GetWindowBelowCursor(Cursor);
     if(Window.ID == 0 || Window.ID == FocusedWindowId)
     {
         return;
@@ -181,23 +209,31 @@ EVENTTAP_CALLBACK(EventTapCallback)
         {
             if(IsActive)
             {
-                CGEventFlags Flags = CGEventGetFlags(Event);
-                if(!(Flags & Event_Mask_Alt))
+                long long CurrentTime;
+                ClockGetTime(&CurrentTime);
+
+                if(GetTimeDiff(CurrentTime, MouseMovedDeltaTime) > MouseMovedThrottle)
                 {
-                    macos_space *Space;
-                    bool Success = AXLibActiveSpace(&Space);
-                    ASSERT(Success);
-
-                    CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromSpace(Space->Id);
-                    ASSERT(DisplayRef);
-                    AXLibDestroySpace(Space);
-
-                    if(!AXLibIsDisplayChangingSpaces(DisplayRef))
+                    MouseMovedDeltaTime = CurrentTime;
+                    CGEventFlags Flags = CGEventGetFlags(Event);
+                    if(!(Flags & Event_Mask_Alt))
                     {
-                        FocusWindowBelowCursor();
-                    }
+                        macos_space *Space;
+                        bool Success = AXLibActiveSpace(&Space);
+                        ASSERT(Success);
 
-                    CFRelease(DisplayRef);
+                        CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromSpace(Space->Id);
+                        ASSERT(DisplayRef);
+                        AXLibDestroySpace(Space);
+
+                        if(!AXLibIsDisplayChangingSpaces(DisplayRef))
+                        {
+                            CGPoint Cursor = CGEventGetLocation(Event);
+                            FocusWindowBelowCursor(Cursor);
+                        }
+
+                        CFRelease(DisplayRef);
+                    }
                 }
             }
         } break;
