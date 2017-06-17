@@ -42,19 +42,6 @@ ApplyWindowRule(macos_window *Window, window_rule *Rule)
     bool MatchOwner;
     bool MatchName;
 
-    if((!Rule->Owner) &&
-       (!Rule->Name))
-    {
-        fprintf(stderr, "tiling: window rule - no filter specified, ignored..\n");
-        goto out;
-    }
-
-    if(!Rule->State)
-    {
-        fprintf(stderr, "tiling: window rule - missing value for state, ignored..\n");
-        goto out;
-    }
-
     MatchOwner = (Window->Owner->Name && Rule->Owner)
                ? RegexMatchPattern(&Regex, Window->Owner->Name, Rule->Owner)
                : false;
@@ -79,7 +66,6 @@ ApplyWindowRule(macos_window *Window, window_rule *Rule)
             fprintf(stderr, "tiling: window rule - invalid state '%s', ignored..\n", Rule->State);
         }
     }
-out:;
 }
 
 void ApplyRulesForWindow(macos_window *Window)

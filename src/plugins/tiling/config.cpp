@@ -1045,6 +1045,9 @@ ParseRuleCommand(const char *Message, window_rule *Rule)
         { NULL, 0, NULL, 0 }
     };
 
+    bool HasFilter = false;
+    bool HasProperty = false;
+
     while((Option = getopt_long(Count, Args, Short, Long, NULL)) != -1)
     {
         switch(Option)
@@ -1052,14 +1055,17 @@ ParseRuleCommand(const char *Message, window_rule *Rule)
             case 'o':
             {
                 Rule->Owner = strdup(optarg);
+                HasFilter = true;
             } break;
             case 'n':
             {
                 Rule->Name = strdup(optarg);
+                HasFilter = true;
             } break;
             case 's':
             {
                 Rule->State = strdup(optarg);
+                HasProperty = true;
             } break;
             case '?':
             {
@@ -1072,6 +1078,18 @@ ParseRuleCommand(const char *Message, window_rule *Rule)
 End:
     // NOTE(koekeishiya): Reset getopt.
     optind = 1;
+
+    if(!HasFilter)
+    {
+        fprintf(stderr, "tiling: window rule - no filter specified, ignored..\n");
+        Success = false;
+    }
+
+    if(!HasProperty)
+    {
+        fprintf(stderr, "tiling: window rule - missing value for state, ignored..\n");
+        Success = false;
+    }
 
     FreeArguments(Count, Args);
     return Success;
