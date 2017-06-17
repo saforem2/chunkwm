@@ -102,9 +102,10 @@ FreeWindowRule(window_rule *Rule)
 {
     ASSERT(Rule);
 
-    if(Rule->Owner) free(Rule->Owner);
-    if(Rule->Name)  free(Rule->Name);
-    if(Rule->State) free(Rule->State);
+    if(Rule->Owner)  free(Rule->Owner);
+    if(Rule->Name)   free(Rule->Name);
+    if(Rule->Except) free(Rule->Except);
+    if(Rule->State)  free(Rule->State);
     free(Rule);
 }
 
