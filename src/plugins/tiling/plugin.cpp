@@ -542,6 +542,26 @@ void UntileWindow(macos_window *Window)
     }
 }
 
+internal std::vector<uint32_t>
+RemoveFloatingWindows(std::vector<uint32_t> Windows)
+{
+    std::vector<uint32_t> Result;
+
+    for(int Index = 0;
+        Index < Windows.size();
+        ++Index)
+    {
+        uint32_t WindowId = Windows[Index];
+        macos_window *Window = GetWindowByID(WindowId);
+        if(!AXLibHasFlags(Window, Window_Float))
+        {
+            Result.push_back(WindowId);
+        }
+    }
+
+    return Result;
+}
+
 /* NOTE(koekeishiya): Returns a vector of CGWindowIDs. */
 std::vector<uint32_t> GetAllVisibleWindowsForSpace(macos_space *Space, bool IncludeInvalidWindows, bool IncludeFloatingWindows)
 {
@@ -1278,7 +1298,7 @@ SpaceAndDisplayChangedHandler(void *Data)
     bool Success = AXLibActiveSpace(&Space);
     ASSERT(Success);
 
-    std::vector<uint32_t> Windows = GetAllVisibleWindowsForSpace(Space);
+    std::vector<uint32_t> Windows = GetAllVisibleWindowsForSpace(Space, false, true);
     if(Space->Type != kCGSSpaceUser)
     {
         goto win_focus;
@@ -1304,17 +1324,18 @@ SpaceAndDisplayChangedHandler(void *Data)
     VirtualSpace = AcquireVirtualSpace(Space);
     if(VirtualSpace->Mode != Virtual_Space_Float)
     {
+        std::vector<uint32_t> FilteredWindows = RemoveFloatingWindows(Windows);
         if(VirtualSpace->Tree)
         {
-            RebalanceWindowTreeForSpaceWithWindows(Space, VirtualSpace, Windows);
+            RebalanceWindowTreeForSpaceWithWindows(Space, VirtualSpace, FilteredWindows);
         }
         else if(ShouldDeserializeVirtualSpace(VirtualSpace))
         {
-            CreateDeserializedWindowTreeForSpaceWithWindows(Space, VirtualSpace, Windows);
+            CreateDeserializedWindowTreeForSpaceWithWindows(Space, VirtualSpace, FilteredWindows);
         }
         else
         {
-            CreateWindowTreeForSpaceWithWindows(Space, VirtualSpace, Windows);
+            CreateWindowTreeForSpaceWithWindows(Space, VirtualSpace, FilteredWindows);
         }
     }
     ReleaseVirtualSpace(VirtualSpace);
