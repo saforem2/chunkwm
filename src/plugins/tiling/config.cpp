@@ -2,6 +2,7 @@
 #include "vspace.h"
 #include "node.h"
 #include "controller.h"
+#include "rule.h"
 #include "constants.h"
 #include "misc.h"
 
@@ -1026,6 +1027,56 @@ win_success:;
     }
 }
 
+inline bool
+ParseRuleCommand(const char *Message, window_rule *Rule)
+{
+    int Count;
+    char **Args = BuildArguments(Message, &Count);
+
+    int Option;
+    bool Success = true;
+    const char *Short = "o:n:s:";
+
+    struct option Long[] =
+    {
+        { "owner", required_argument, NULL, 'o' },
+        { "name", required_argument, NULL, 'n' },
+        { "state", required_argument, NULL, 's' },
+        { NULL, 0, NULL, 0 }
+    };
+
+    while((Option = getopt_long(Count, Args, Short, Long, NULL)) != -1)
+    {
+        switch(Option)
+        {
+            case 'o':
+            {
+                Rule->Owner = strdup(optarg);
+            } break;
+            case 'n':
+            {
+                Rule->Name = strdup(optarg);
+            } break;
+            case 's':
+            {
+                Rule->State = strdup(optarg);
+            } break;
+            case '?':
+            {
+                Success = false;
+                goto End;
+            } break;
+        }
+    }
+
+End:
+    // NOTE(koekeishiya): Reset getopt.
+    optind = 1;
+
+    FreeArguments(Count, Args);
+    return Success;
+}
+
 /* NOTE(koekeishiya): Parameters
  *
  * const char *Message
@@ -1044,6 +1095,14 @@ DAEMON_CALLBACK(DaemonCallback)
     else if(TokenEquals(Type, "query"))
     {
         ParseQueryCommand(&Message, SockFD);
+    }
+    else if(TokenEquals(Type, "rule"))
+    {
+        window_rule Rule = {};
+        if(ParseRuleCommand(Message, &Rule))
+        {
+            AddWindowRule(&Rule);
+        }
     }
     else if(TokenEquals(Type, "window"))
     {

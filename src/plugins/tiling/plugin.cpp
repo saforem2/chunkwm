@@ -22,11 +22,24 @@
 #include "node.h"
 #include "vspace.h"
 #include "controller.h"
+#include "rule.h"
 #include "constants.h"
 #include "misc.h"
 
 #define internal static
 #define local_persist static
+
+inline bool
+operator!=(const CGPoint& lhs, const CGPoint& rhs)
+{
+    return (lhs.x != rhs.x) || (lhs.y != rhs.y);
+}
+
+inline bool
+operator!=(const CGSize& lhs, const CGSize& rhs)
+{
+    return (lhs.width != rhs.width) || (lhs.height != rhs.height);
+}
 
 typedef std::map<pid_t, macos_application *> macos_application_map;
 typedef macos_application_map::iterator macos_application_map_it;
@@ -71,6 +84,7 @@ internal void
 AddWindowToCollection(macos_window *Window)
 {
     Windows[Window->Id] = Window;
+    ApplyRulesForWindow(Window);
 }
 
 internal macos_window *
@@ -180,10 +194,21 @@ BroadcastFocusedWindowFloating(macos_window *Window)
 
 bool IsWindowValid(macos_window *Window)
 {
-    bool Result = ((AXLibIsWindowStandard(Window)) &&
-                   (AXLibHasFlags(Window, Window_Movable)) &&
-                   (AXLibHasFlags(Window, Window_Resizable)) &&
-                   (!AXLibHasFlags(Window, Window_Invalid)));
+    bool Result;
+    if(AXLibHasFlags(Window, Window_Invalid))
+    {
+        Result = false;
+    }
+    else if(AXLibHasFlags(Window, Window_ForceTile))
+    {
+        Result = true;
+    }
+    else
+    {
+        Result = ((AXLibIsWindowStandard(Window)) &&
+                  (AXLibHasFlags(Window, Window_Movable)) &&
+                  (AXLibHasFlags(Window, Window_Resizable)));
+    }
     return Result;
 }
 

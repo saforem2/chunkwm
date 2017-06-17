@@ -43,16 +43,4 @@ ReadFile(const char *Absolutepath)
     return Contents;
 }
 
-inline bool
-operator!=(const CGPoint& lhs, const CGPoint& rhs)
-{
-    return (lhs.x != rhs.x) || (lhs.y != rhs.y);
-}
-
-inline bool
-operator!=(const CGSize& lhs, const CGSize& rhs)
-{
-    return (lhs.width != rhs.width) || (lhs.height != rhs.height);
-}
-
 #endif

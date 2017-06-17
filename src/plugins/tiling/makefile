@@ -1,7 +1,7 @@
 BUILD_FLAGS		= -O0 -g -DCHUNKWM_DEBUG -std=c++11 -Wall -Wno-deprecated
 BUILD_PATH		= ./../../../plugins
 SRC				= ./plugin.cpp ./node.cpp ./region.cpp ./vspace.cpp \
-				  ./controller.cpp ./config.cpp \
+				  ./controller.cpp ./config.cpp ./rule.cpp \
 				  ./../../common/accessibility/display.mm \
 				  ./../../common/accessibility/application.cpp \
 				  ./../../common/accessibility/window.cpp \

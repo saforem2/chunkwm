@@ -42,4 +42,19 @@ chunkc config window_region_locked          1
 
 # signal dock to make windows topmost when floated
 # requires chwm-sa (https://github.com/koekeishiya/chwm-sa)
-chunkc config window_float_topmost          1
+chunkc config window_float_topmost          0
+
+# section - window rules
+
+# regex filters (pattern is case sensitive):
+#  --owner | -o
+#  --name  | -n
+
+# properties:
+#  --state | -s
+#   values:
+#    float
+#    tile
+
+chunkc rule --owner "System Preferences" --state tile
+chunkc rule --owner Finder --name Copy --state float
