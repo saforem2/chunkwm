@@ -1,4 +1,4 @@
-BUILD_FLAGS		= -O0 -g -DCHUNKWM_DEBUG -std=c++11 -Wall -Wno-deprecated
+BUILD_FLAGS		= -O0 -g -DCHUNKWM_DEBUG -std=c++11 -Wall -Wno-deprecated -Wno-writable-strings
 BUILD_PATH		= ./../../../plugins
 SRC				= ./plugin.cpp ./node.cpp ./region.cpp ./vspace.cpp \
 				  ./controller.cpp ./config.cpp ./rule.cpp \
