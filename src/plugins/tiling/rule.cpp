@@ -21,7 +21,7 @@ internal std::vector<window_rule *> WindowRules;
 inline bool
 RegexMatchPattern(regex_t *Regex, const char *Match, const char *Pattern)
 {
-    int Result = regcomp(Regex, Pattern, 0);
+    int Result = regcomp(Regex, Pattern, REG_EXTENDED);
     if(Result)
     {
         fprintf(stderr, "tiling: window rule - could not compile regex!\n");
