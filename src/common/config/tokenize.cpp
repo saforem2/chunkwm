@@ -65,15 +65,31 @@ token GetToken(const char **Data)
 {
     token Token;
 
-    Token.Text = *Data;
-    while(**Data && !IsWhiteSpace(**Data))
+    // NOTE(koekeishiya): Allow quoted strings to contain whitespace
+    if(**Data == '"')
     {
         ++(*Data);
+
+        Token.Text = *Data;
+        while(**Data && **Data != '"')
+        {
+            ++(*Data);
+        }
+        Token.Length = *Data - Token.Text;
+
+        ++(*Data);
+    }
+    else
+    {
+        Token.Text = *Data;
+        while(**Data && !IsWhiteSpace(**Data))
+        {
+            ++(*Data);
+        }
+        Token.Length = *Data - Token.Text;
     }
 
-    Token.Length = *Data - Token.Text;
     ASSERT(IsWhiteSpace(**Data) || **Data == '\0');
-
     if(IsWhiteSpace(**Data))
     {
         ++(*Data);
