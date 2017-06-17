@@ -47,8 +47,9 @@ chunkc config window_float_topmost          0
 # section - window rules
 
 # regex filters (pattern is case sensitive):
-#  --owner | -o
-#  --name  | -n
+#  --owner  | -o  (application name contains pattern)
+#  --name   | -n  (window name contains pattern)
+#  --except | -e  (window name does not contain pattern)
 
 # properties:
 #  --state | -s

@@ -18,24 +18,24 @@
 // TODO(koekeishiya): Thread-Safety !!!
 internal std::vector<window_rule *> WindowRules;
 
-inline bool
+internal inline bool
 RegexMatchPattern(regex_t *Regex, const char *Match, const char *Pattern)
 {
-    int Result = regcomp(Regex, Pattern, REG_EXTENDED);
-    if(Result)
+    int Error = regcomp(Regex, Pattern, REG_EXTENDED);
+    if(!Error)
+    {
+        Error = regexec(Regex, Match, 0, NULL, 0);
+        regfree(Regex);
+    }
+    else
     {
         fprintf(stderr, "tiling: window rule - could not compile regex!\n");
-        goto out;
     }
 
-    Result = regexec(Regex, Match, 0, NULL, 0);
-    regfree(Regex);
-
-out:;
-    return Result == 0;
+    return Error == 0;
 }
 
-internal void
+internal inline void
 ApplyWindowRuleState(macos_window *Window, window_rule *Rule)
 {
     if(StringEquals(Rule->State, "float"))
@@ -52,47 +52,31 @@ ApplyWindowRuleState(macos_window *Window, window_rule *Rule)
     }
 }
 
-internal void
+internal inline void
 ApplyWindowRule(macos_window *Window, window_rule *Rule)
 {
     regex_t Regex;
-    bool MatchOwner, MatchName;
-    bool FilterOwner, FilterName;
 
-    FilterOwner = Rule->Owner != NULL;
-    FilterName = Rule->Name != NULL;
-
-    MatchOwner = (Window->Owner->Name && Rule->Owner)
-               ? RegexMatchPattern(&Regex, Window->Owner->Name, Rule->Owner)
-               : false;
-
-    MatchName = (Window->Name && Rule->Name)
-              ? RegexMatchPattern(&Regex, Window->Name, Rule->Name)
-              : false;
-
-    if((FilterOwner) &&
-       (FilterName))
+    bool Match = true;
+    if(Rule->Owner && Window->Owner->Name)
     {
-        if((MatchOwner) &&
-           (MatchName))
-        {
-            ApplyWindowRuleState(Window, Rule);
-        }
+        Match = RegexMatchPattern(&Regex, Window->Owner->Name, Rule->Owner);
+        if(!Match) return;
     }
-    else if(FilterOwner)
+
+    if(Rule->Name && Window->Name)
     {
-        if(MatchOwner)
-        {
-            ApplyWindowRuleState(Window, Rule);
-        }
+        Match &= RegexMatchPattern(&Regex, Window->Name, Rule->Name);
+        if(!Match) return;
     }
-    else if(FilterName)
+
+    if(Rule->Except && Window->Name)
     {
-        if(MatchName)
-        {
-            ApplyWindowRuleState(Window, Rule);
-        }
+        Match &= !RegexMatchPattern(&Regex, Window->Name, Rule->Except);
+        if(!Match) return;
     }
+
+    ApplyWindowRuleState(Window, Rule);
 }
 
 void ApplyRulesForWindow(macos_window *Window)

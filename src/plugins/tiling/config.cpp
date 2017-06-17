@@ -1035,12 +1035,13 @@ ParseRuleCommand(const char *Message, window_rule *Rule)
 
     int Option;
     bool Success = true;
-    const char *Short = "o:n:s:";
+    const char *Short = "o:n:e:s:";
 
     struct option Long[] =
     {
         { "owner", required_argument, NULL, 'o' },
         { "name", required_argument, NULL, 'n' },
+        { "except", required_argument, NULL, 'e' },
         { "state", required_argument, NULL, 's' },
         { NULL, 0, NULL, 0 }
     };
@@ -1060,6 +1061,11 @@ ParseRuleCommand(const char *Message, window_rule *Rule)
             case 'n':
             {
                 Rule->Name = strdup(optarg);
+                HasFilter = true;
+            } break;
+            case 'e':
+            {
+                Rule->Except = strdup(optarg);
                 HasFilter = true;
             } break;
             case 's':

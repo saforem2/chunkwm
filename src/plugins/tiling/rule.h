@@ -5,6 +5,7 @@ struct window_rule
 {
     char *Owner;
     char *Name;
+    char *Except;
     char *State;
 };
 
