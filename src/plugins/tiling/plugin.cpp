@@ -1592,6 +1592,7 @@ Deinit()
 
     ClearApplicationCache();
     ClearWindowCache();
+    FreeWindowRules();
 
     EndVirtualSpaces();
     EndCVars();
