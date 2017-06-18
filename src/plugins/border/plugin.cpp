@@ -23,7 +23,6 @@ UpdateWindow(AXUIElementRef WindowRef)
         CGPoint Position = AXLibGetWindowPosition(WindowRef);
         CGSize Size = AXLibGetWindowSize(WindowRef);
         UpdateBorderWindowRect(Border, Position.x, Position.y, Size.width, Size.height);
-        UpdateBorderWindowColor(Border, 0xffff0000);
     }
 }
 
