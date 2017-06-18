@@ -36,6 +36,7 @@ struct resize_border
 internal std::vector<resize_border> ResizeBorders;
 internal resize_border_state ResizeState;
 internal bool DragResizeActive;
+internal bool DragMoveActive;
 
 internal resize_border
 CreateResizeBorder(node *Node)
@@ -90,6 +91,105 @@ FreeResizeBorders()
         border_window *Border = ResizeBorders.back().Border;
         ResizeBorders.pop_back();
         DestroyBorderWindow(Border);
+    }
+}
+
+internal void
+LeftMouseDown()
+{
+    macos_space *Space;
+    bool Success = AXLibActiveSpace(&Space);
+    ASSERT(Success);
+
+    if(Space->Type != kCGSSpaceUser)
+    {
+        AXLibDestroySpace(Space);
+        return;
+    }
+
+    virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
+    if(VirtualSpace->Mode != Virtual_Space_Bsp)
+    {
+        ReleaseVirtualSpace(VirtualSpace);
+        AXLibDestroySpace(Space);
+        return;
+    }
+
+    node *Root = VirtualSpace->Tree;
+    if(!Root)
+    {
+        ReleaseVirtualSpace(VirtualSpace);
+        AXLibDestroySpace(Space);
+        return;
+    }
+
+    CGPoint Cursor = AXLibGetCursorPos();
+    node *NodeBelowCursor = GetNodeForPoint(Root, &Cursor);
+    if(!NodeBelowCursor)
+    {
+        ReleaseVirtualSpace(VirtualSpace);
+        AXLibDestroySpace(Space);
+        return;
+    }
+
+    DragMoveActive = true;
+    ResizeState.Horizontal = NodeBelowCursor;
+    ResizeState.Space = Space;
+    ResizeState.VirtualSpace = VirtualSpace;
+
+    ResizeBorders.push_back(CreateResizeBorder(NodeBelowCursor));
+}
+
+internal void
+LeftMouseDragged()
+{
+    if(DragMoveActive)
+    {
+        CGPoint Cursor = AXLibGetCursorPos();
+        node *NewNode = GetNodeForPoint(ResizeState.VirtualSpace->Tree, &Cursor);
+        if(NewNode && NewNode != ResizeState.Vertical)
+        {
+            ResizeState.Vertical = NewNode;
+            if(ResizeBorders.size() == 2)
+            {
+                border_window *Border = ResizeBorders.back().Border;
+                UpdateBorderWindowRect(Border,
+                                       NewNode->Region.X,
+                                       NewNode->Region.Y,
+                                       NewNode->Region.Width,
+                                       NewNode->Region.Height);
+            }
+            else
+            {
+                ResizeBorders.push_back(CreateResizeBorder(NewNode));
+            }
+        }
+    }
+}
+
+internal void
+LeftMouseUp()
+{
+    if(DragMoveActive)
+    {
+        FreeResizeBorders();
+
+        if((ResizeState.Horizontal && ResizeState.Vertical) &&
+           (ResizeState.Horizontal != ResizeState.Vertical))
+        {
+            SwapNodeIds(ResizeState.Horizontal, ResizeState.Vertical);
+            ResizeWindowToRegionSize(ResizeState.Horizontal);
+            ResizeWindowToRegionSize(ResizeState.Vertical);
+        }
+
+        if(ResizeState.Space && ResizeState.VirtualSpace)
+        {
+            ReleaseVirtualSpace(ResizeState.VirtualSpace);
+            AXLibDestroySpace(ResizeState.Space);
+        }
+
+        memset(&ResizeState, 0, sizeof(resize_border_state));
+        DragMoveActive = false;
     }
 }
 
@@ -266,6 +366,32 @@ EVENTTAP_CALLBACK(EventTapCallback)
         case kCGEventTapDisabledByUserInput:
         {
             CGEventTapEnable(EventTap->Handle, true);
+        } break;
+        case kCGEventLeftMouseDown:
+        {
+            CGEventFlags Flags = CGEventGetFlags(Event);
+            if(Flags & Event_Mask_Alt)
+            {
+                LeftMouseDown();
+                // NOTE(koekeishiya): Suppress right-click.
+                return NULL;
+            }
+        } break;
+        case kCGEventLeftMouseDragged:
+        {
+            CGEventFlags Flags = CGEventGetFlags(Event);
+            if(Flags & Event_Mask_Alt)
+            {
+                LeftMouseDragged();
+            }
+        } break;
+        case kCGEventLeftMouseUp:
+        {
+            CGEventFlags Flags = CGEventGetFlags(Event);
+            if(Flags & Event_Mask_Alt)
+            {
+                LeftMouseUp();
+            }
         } break;
         case kCGEventRightMouseDown:
         {

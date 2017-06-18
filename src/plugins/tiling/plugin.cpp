@@ -1464,7 +1464,10 @@ Init(plugin_broadcast *ChunkwmBroadcast)
         goto out;
     }
 
-    EventTap.Mask = ((1 << kCGEventRightMouseDown) |
+    EventTap.Mask = ((1 << kCGEventLeftMouseDown) |
+                     (1 << kCGEventLeftMouseDragged) |
+                     (1 << kCGEventLeftMouseUp) |
+                     (1 << kCGEventRightMouseDown) |
                      (1 << kCGEventRightMouseDragged) |
                      (1 << kCGEventRightMouseUp));
     BeginEventTap(&EventTap, &EventTapCallback);
