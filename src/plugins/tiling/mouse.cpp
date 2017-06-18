@@ -370,7 +370,7 @@ EVENTTAP_CALLBACK(EventTapCallback)
         case kCGEventLeftMouseDown:
         {
             CGEventFlags Flags = CGEventGetFlags(Event);
-            if(Flags & Event_Mask_Alt)
+            if(Flags & Event_Mask_Fn)
             {
                 LeftMouseDown();
                 // NOTE(koekeishiya): Suppress right-click.
@@ -380,7 +380,7 @@ EVENTTAP_CALLBACK(EventTapCallback)
         case kCGEventLeftMouseDragged:
         {
             CGEventFlags Flags = CGEventGetFlags(Event);
-            if(Flags & Event_Mask_Alt)
+            if(Flags & Event_Mask_Fn)
             {
                 LeftMouseDragged();
             }
@@ -388,7 +388,7 @@ EVENTTAP_CALLBACK(EventTapCallback)
         case kCGEventLeftMouseUp:
         {
             CGEventFlags Flags = CGEventGetFlags(Event);
-            if(Flags & Event_Mask_Alt)
+            if(Flags & Event_Mask_Fn)
             {
                 LeftMouseUp();
             }
@@ -396,7 +396,7 @@ EVENTTAP_CALLBACK(EventTapCallback)
         case kCGEventRightMouseDown:
         {
             CGEventFlags Flags = CGEventGetFlags(Event);
-            if(Flags & Event_Mask_Alt)
+            if(Flags & Event_Mask_Fn)
             {
                 RightMouseDown();
                 // NOTE(koekeishiya): Suppress right-click.
@@ -406,7 +406,7 @@ EVENTTAP_CALLBACK(EventTapCallback)
         case kCGEventRightMouseDragged:
         {
             CGEventFlags Flags = CGEventGetFlags(Event);
-            if(Flags & Event_Mask_Alt)
+            if(Flags & Event_Mask_Fn)
             {
                 RightMouseDragged();
             }
@@ -414,7 +414,7 @@ EVENTTAP_CALLBACK(EventTapCallback)
         case kCGEventRightMouseUp:
         {
             CGEventFlags Flags = CGEventGetFlags(Event);
-            if(Flags & Event_Mask_Alt)
+            if(Flags & Event_Mask_Fn)
             {
                 RightMouseUp();
             }
