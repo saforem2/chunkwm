@@ -63,6 +63,30 @@ InvertY(int Y, int Height)
     return InvertedY;
 }
 
+static void InitBorderWindow(border_window_internal *Border, int X, int Y, int W, int H, int BorderWidth, int BorderRadius, unsigned int BorderColor)
+{
+    NSRect GraphicsRect = NSMakeRect(X, InvertY(Y, H), W, H);
+    Border->Handle = [[NSWindow alloc] initWithContentRect: GraphicsRect
+                                       styleMask: NSWindowStyleMaskFullSizeContentView
+                                       backing: NSBackingStoreBuffered
+                                       defer: NO];
+    Border->View = [[OverlayView alloc] initWithFrame:GraphicsRect];
+
+    Border->View->Width = Border->Width;
+    Border->View->Radius = Border->Radius;
+    Border->View->Color = Border->Color;
+
+    [Border->Handle setContentView:Border->View];
+    [Border->Handle setIgnoresMouseEvents:YES];
+    [Border->Handle setHasShadow:NO];
+    [Border->Handle setOpaque:NO];
+    [Border->Handle setBackgroundColor: [NSColor clearColor]];
+    [Border->Handle setCollectionBehavior:NSWindowCollectionBehaviorCanJoinAllSpaces];
+    [Border->Handle setLevel:NSFloatingWindowLevel];
+    [Border->Handle makeKeyAndOrderFront:nil];
+    [Border->Handle setReleasedWhenClosed:YES];
+}
+
 border_window *CreateBorderWindow(int X, int Y, int W, int H, int BorderWidth, int BorderRadius, unsigned int BorderColor)
 {
     border_window_internal *Border = (border_window_internal *) malloc(sizeof(border_window_internal));
@@ -71,29 +95,17 @@ border_window *CreateBorderWindow(int X, int Y, int W, int H, int BorderWidth, i
     Border->Radius = BorderRadius;
     Border->Color = BorderColor;
 
-    dispatch_sync(dispatch_get_main_queue(), ^(void)
+    if(dispatch_get_current_queue() == dispatch_get_main_queue())
     {
-        NSRect GraphicsRect = NSMakeRect(X, InvertY(Y, H), W, H);
-        Border->Handle = [[NSWindow alloc] initWithContentRect: GraphicsRect
-                                           styleMask: NSWindowStyleMaskFullSizeContentView
-                                           backing: NSBackingStoreBuffered
-                                           defer: NO];
-        Border->View = [[OverlayView alloc] initWithFrame:GraphicsRect];
-
-        Border->View->Width = Border->Width;
-        Border->View->Radius = Border->Radius;
-        Border->View->Color = Border->Color;
-
-        [Border->Handle setContentView:Border->View];
-        [Border->Handle setIgnoresMouseEvents:YES];
-        [Border->Handle setHasShadow:NO];
-        [Border->Handle setOpaque:NO];
-        [Border->Handle setBackgroundColor: [NSColor clearColor]];
-        [Border->Handle setCollectionBehavior:NSWindowCollectionBehaviorCanJoinAllSpaces];
-        [Border->Handle setLevel:NSFloatingWindowLevel];
-        [Border->Handle makeKeyAndOrderFront:nil];
-        [Border->Handle setReleasedWhenClosed:YES];
-    });
+        InitBorderWindow(Border, X, Y, W, H, BorderWidth, BorderRadius, BorderColor);
+    }
+    else
+    {
+        dispatch_sync(dispatch_get_main_queue(), ^(void)
+        {
+            InitBorderWindow(Border, X, Y, W, H, BorderWidth, BorderRadius, BorderColor);
+        });
+    }
 
     return (border_window *) Border;
 }
