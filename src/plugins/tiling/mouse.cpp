@@ -273,6 +273,8 @@ EVENTTAP_CALLBACK(EventTapCallback)
             if(Flags & Event_Mask_Alt)
             {
                 RightMouseDown();
+                // NOTE(koekeishiya): Suppress right-click.
+                return NULL;
             }
         } break;
         case kCGEventRightMouseDragged:
