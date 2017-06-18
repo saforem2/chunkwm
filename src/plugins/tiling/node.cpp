@@ -467,6 +467,25 @@ void SwapNodeIds(node *A, node *B)
     B->WindowId = TempId;
 }
 
+node *GetNodeForPoint(node *Node, CGPoint *Point)
+{
+    node *Current = GetFirstLeafNode(Node);
+    while(Current)
+    {
+        if((Point->x >= Current->Region.X) &&
+           (Point->x <= Current->Region.X + Current->Region.Width) &&
+           (Point->y >= Current->Region.Y) &&
+           (Point->y <= Current->Region.Y + Current->Region.Height))
+        {
+            return Current;
+        }
+
+        Current = GetNearestNodeToTheRight(Current);
+    }
+
+    return NULL;
+}
+
 // NOTE(koekeishiya): This type is only used internally
 struct serialized_node
 {

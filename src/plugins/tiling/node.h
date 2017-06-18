@@ -89,6 +89,9 @@ node *GetLowestCommonAncestor(node *A, node *B);
 node *GetNearestNodeToTheRight(node *Node);
 node *GetNodeWithId(node *Tree, uint32_t WindowId, virtual_space_mode VirtualSpaceMode);
 
+struct CGPoint;
+node *GetNodeForPoint(node *Node, CGPoint *Point);
+
 void SwapNodeIds(node *A, node *B);
 
 char *SerializeNodeToBuffer(node *Node);

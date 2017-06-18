@@ -4,6 +4,7 @@
 #include "../../common/accessibility/application.h"
 #include "../../common/accessibility/window.h"
 #include "../../common/accessibility/element.h"
+#include "../../common/border/border.h"
 #include "../../common/ipc/daemon.h"
 #include "../../common/misc/assert.h"
 #include "../../common/misc/debug.h"
@@ -200,10 +201,9 @@ WindowIsInDirection(virtual_space *VirtualSpace, char *Op,
     return Result;
 }
 
-internal bool
-FindClosestWindow(macos_space *Space, virtual_space *VirtualSpace,
-                  macos_window *Match, macos_window **ClosestWindow,
-                  char *Direction, bool Wrap)
+bool FindClosestWindow(macos_space *Space, virtual_space *VirtualSpace,
+                       macos_window *Match, macos_window **ClosestWindow,
+                       char *Direction, bool Wrap)
 {
     float MinDist = 0xFFFFFFFF;
     std::vector<uint32_t> Windows = GetAllVisibleWindowsForSpace(Space);

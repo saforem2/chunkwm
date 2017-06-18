@@ -4,7 +4,12 @@
 #include <stdint.h>
 
 struct macos_window;
+struct macos_space;
+struct virtual_space;
 
+bool FindClosestWindow(macos_space *Space, virtual_space *VirtualSpace,
+                       macos_window *Match, macos_window **ClosestWindow,
+                       char *Direction, bool Wrap);
 void CenterMouseInWindow(macos_window *Window);
 
 void FocusWindow(char *Direction);

@@ -11,11 +11,13 @@
 #include "../../common/accessibility/window.h"
 #include "../../common/accessibility/element.h"
 #include "../../common/accessibility/observer.h"
+#include "../../common/dispatch/cgeventtap.h"
 #include "../../common/ipc/daemon.h"
 #include "../../common/misc/carbon.h"
 #include "../../common/misc/assert.h"
 #include "../../common/misc/debug.h"
 #include "../../common/config/cvar.h"
+#include "../../common/border/border.h"
 
 #include "config.h"
 #include "region.h"
@@ -23,6 +25,7 @@
 #include "vspace.h"
 #include "controller.h"
 #include "rule.h"
+#include "mouse.h"
 #include "constants.h"
 #include "misc.h"
 
@@ -67,6 +70,8 @@ internal macos_application_map Applications;
  * RemoveWindowFromCollection(macos_window *Window)
  * */
 internal macos_window_map Windows;
+
+internal event_tap EventTap;
 
 plugin_broadcast *ChunkWMBroadcastEvent;
 
@@ -1459,6 +1464,11 @@ Init(plugin_broadcast *ChunkwmBroadcast)
         goto out;
     }
 
+    EventTap.Mask = ((1 << kCGEventRightMouseDown) |
+                     (1 << kCGEventRightMouseDragged) |
+                     (1 << kCGEventRightMouseUp));
+    BeginEventTap(&EventTap, &EventTapCallback);
+
     CreateCVar(CVAR_SPACE_MODE, Virtual_Space_Bsp);
 
     CreateCVar(CVAR_SPACE_OFFSET_TOP, 60.0f);
@@ -1596,6 +1606,7 @@ Init(plugin_broadcast *ChunkwmBroadcast)
     fprintf(stderr, "   tiling: failed to initialize virtual space system!\n");
 
     StopDaemon();
+    EndEventTap(&EventTap);
     ClearApplicationCache();
     ClearWindowCache();
 
@@ -1610,6 +1621,7 @@ internal void
 Deinit()
 {
     StopDaemon();
+    EndEventTap(&EventTap);
 
     ClearApplicationCache();
     ClearWindowCache();
