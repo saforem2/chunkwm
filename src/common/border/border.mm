@@ -7,7 +7,7 @@ NSColor *ColorFromHex(unsigned int Color);
 {
     @public int Width;
     @public int Radius;
-    @public unsigned HexColor;
+    @public unsigned Color;
 }
 - (void)drawRect:(NSRect)rect;
 @end
@@ -29,7 +29,7 @@ NSColor *ColorFromHex(unsigned int Color);
 
     NSBezierPath *Border = [NSBezierPath bezierPathWithRoundedRect:Frame xRadius:self->Radius yRadius:self->Radius];
     [Border setLineWidth:self->Width];
-    NSColor *Color = ColorFromHex(self->HexColor);
+    NSColor *Color = ColorFromHex(self->Color);
     [Color set];
     [Border stroke];
 }
@@ -66,7 +66,10 @@ InvertY(int Y, int Height)
 border_window *CreateBorderWindow(int X, int Y, int W, int H, int BorderWidth, int BorderRadius, unsigned int BorderColor)
 {
     border_window_internal *Border = (border_window_internal *) malloc(sizeof(border_window_internal));
-    memset(Border, 0, sizeof(border_window_internal));
+
+    Border->Width = BorderWidth;
+    Border->Radius = BorderRadius;
+    Border->Color = BorderColor;
 
     dispatch_sync(dispatch_get_main_queue(), ^(void)
     {
@@ -77,9 +80,9 @@ border_window *CreateBorderWindow(int X, int Y, int W, int H, int BorderWidth, i
                                            defer: NO];
         Border->View = [[OverlayView alloc] initWithFrame:GraphicsRect];
 
-        Border->View->Width = BorderWidth;
-        Border->View->Radius = BorderRadius;
-        Border->View->HexColor = BorderColor;
+        Border->View->Width = Border->Width;
+        Border->View->Radius = Border->Radius;
+        Border->View->Color = Border->Color;
 
         [Border->Handle setContentView:Border->View];
         [Border->Handle setIgnoresMouseEvents:YES];
@@ -95,23 +98,25 @@ border_window *CreateBorderWindow(int X, int Y, int W, int H, int BorderWidth, i
     return (border_window *) Border;
 }
 
-void UpdateBorderWindow(border_window *Border, int X, int Y, int W, int H)
+void UpdateBorderWindowRect(border_window *Border, int X, int Y, int W, int H)
 {
     border_window_internal *BorderInternal = (border_window_internal *) Border;
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void)
+    dispatch_async(dispatch_get_main_queue(), ^(void)
     {
-        dispatch_async(dispatch_get_main_queue(), ^(void)
-        {
-            [BorderInternal->Handle setFrame:NSMakeRect(X, InvertY(Y, H), W, H) display:YES animate:NO];
-        });
+        [BorderInternal->Handle setFrame:NSMakeRect(X, InvertY(Y, H), W, H) display:YES animate:NO];
     });
 }
 
-void SetBorderWindowColor(border_window *Border, unsigned BorderColor)
+void UpdateBorderWindowColor(border_window *Border, unsigned Color)
 {
     border_window_internal *BorderInternal = (border_window_internal *) Border;
-    BorderInternal->View->HexColor = BorderColor;
-    [BorderInternal->View setNeedsDisplay:YES];
+    BorderInternal->Color = Color;
+    BorderInternal->View->Color = BorderInternal->Color;
+
+    dispatch_async(dispatch_get_main_queue(), ^(void)
+    {
+        [BorderInternal->View setNeedsDisplay:YES];
+    });
 }
 
 void DestroyBorderWindow(border_window *Border)
@@ -119,8 +124,11 @@ void DestroyBorderWindow(border_window *Border)
     border_window_internal *BorderInternal = (border_window_internal *) Border;
     if(BorderInternal->Handle)
     {
-        [BorderInternal->Handle close];
-        [BorderInternal->View release];
+        dispatch_sync(dispatch_get_main_queue(), ^(void)
+        {
+            [BorderInternal->Handle close];
+            [BorderInternal->View release];
+        });
         BorderInternal->Handle = nil;
         BorderInternal->View = nil;
     }

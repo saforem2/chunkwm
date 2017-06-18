@@ -22,7 +22,8 @@ UpdateWindow(AXUIElementRef WindowRef)
     {
         CGPoint Position = AXLibGetWindowPosition(WindowRef);
         CGSize Size = AXLibGetWindowSize(WindowRef);
-        UpdateBorderWindow(Border, Position.x, Position.y, Size.width, Size.height);
+        UpdateBorderWindowRect(Border, Position.x, Position.y, Size.width, Size.height);
+        UpdateBorderWindowColor(Border, 0xffff0000);
     }
 }
 
@@ -39,13 +40,13 @@ UpdateToFocusedWindow()
         }
         else
         {
-            UpdateBorderWindow(Border, 0, 0, 0, 0);
+            UpdateBorderWindowRect(Border, 0, 0, 0, 0);
         }
         CFRelease(WindowRef);
     }
     else
     {
-        UpdateBorderWindow(Border, 0, 0, 0, 0);
+        UpdateBorderWindowRect(Border, 0, 0, 0, 0);
     }
 }
 
@@ -82,7 +83,7 @@ ApplicationDeactivatedHandler(void *Data)
     if(Application == Context)
     {
         Application = NULL;
-        UpdateBorderWindow(Border, 0, 0, 0, 0);
+        UpdateBorderWindowRect(Border, 0, 0, 0, 0);
     }
 }
 
@@ -195,7 +196,7 @@ PLUGIN_MAIN_FUNC(PluginMain)
         DrawBorder = Result;
         if(!DrawBorder)
         {
-            UpdateBorderWindow(Border, 0, 0, 0, 0);
+            UpdateBorderWindowRect(Border, 0, 0, 0, 0);
         }
 
         return true;

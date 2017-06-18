@@ -9,8 +9,8 @@ struct border_window
 };
 
 border_window *CreateBorderWindow(int X, int Y, int W, int H, int BorderWidth, int BorderRadius, unsigned BorderColor);
-void UpdateBorderWindow(border_window *Border, int X, int Y, int W, int H);
-void SetBorderWindowColor(border_window *Border, unsigned BorderColor);
+void UpdateBorderWindowRect(border_window *Border, int X, int Y, int W, int H);
+void UpdateBorderWindowColor(border_window *Border, unsigned Color);
 void DestroyBorderWindow(border_window *Border);
 
 #endif
