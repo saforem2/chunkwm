@@ -132,4 +132,5 @@ void DestroyBorderWindow(border_window *Border)
         BorderInternal->Handle = nil;
         BorderInternal->View = nil;
     }
+    free(BorderInternal);
 }
