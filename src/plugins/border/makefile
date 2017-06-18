@@ -1,9 +1,10 @@
 BUILD_FLAGS		= -O0 -g -std=c++11 -Wall
 BUILD_PATH		= ./../../../plugins
-SRC				= ./plugin.cpp ./overlay.mm \
+SRC				= ./plugin.cpp \
 				  ./../../common/accessibility/window.cpp \
 				  ./../../common/accessibility/element.cpp \
-				  ./../../common/accessibility/display.mm
+				  ./../../common/accessibility/display.mm \
+				  ./../../common/border/border.mm
 BINS			= $(BUILD_PATH)/border.so
 LINK			= -shared -fPIC -framework Carbon -framework Cocoa -framework ApplicationServices
 

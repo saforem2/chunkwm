@@ -7,13 +7,13 @@
 #include "../../common/accessibility/window.h"
 #include "../../common/accessibility/element.h"
 #include "../../common/accessibility/display.h"
-
-#include "overlay.h"
+#include "../../common/border/border.h"
 
 #define internal static
 
 internal macos_application *Application;
 internal bool DrawBorder = true;
+internal border_window *Border;
 
 internal void
 UpdateWindow(AXUIElementRef WindowRef)
@@ -22,7 +22,7 @@ UpdateWindow(AXUIElementRef WindowRef)
     {
         CGPoint Position = AXLibGetWindowPosition(WindowRef);
         CGSize Size = AXLibGetWindowSize(WindowRef);
-        UpdateBorder(Position.x, Position.y, Size.width, Size.height);
+        UpdateBorderWindow(Border, Position.x, Position.y, Size.width, Size.height);
     }
 }
 
@@ -39,13 +39,13 @@ UpdateToFocusedWindow()
         }
         else
         {
-            UpdateBorder(0, 0, 0, 0);
+            UpdateBorderWindow(Border, 0, 0, 0, 0);
         }
         CFRelease(WindowRef);
     }
     else
     {
-        UpdateBorder(0, 0, 0, 0);
+        UpdateBorderWindow(Border, 0, 0, 0, 0);
     }
 }
 
@@ -82,7 +82,7 @@ ApplicationDeactivatedHandler(void *Data)
     if(Application == Context)
     {
         Application = NULL;
-        UpdateBorder(0, 0, 0, 0);
+        UpdateBorderWindow(Border, 0, 0, 0, 0);
     }
 }
 
@@ -195,7 +195,7 @@ PLUGIN_MAIN_FUNC(PluginMain)
         DrawBorder = Result;
         if(!DrawBorder)
         {
-            UpdateBorder(0, 0, 0, 0);
+            UpdateBorderWindow(Border, 0, 0, 0, 0);
         }
 
         return true;
@@ -211,12 +211,13 @@ PLUGIN_MAIN_FUNC(PluginMain)
  */
 PLUGIN_BOOL_FUNC(PluginInit)
 {
+    Border = CreateBorderWindow(0, 0, 0, 0, 4, 4, 0xffd5c4a1);
     return true;
 }
 
 PLUGIN_VOID_FUNC(PluginDeInit)
 {
-    DestroyBorder();
+    DestroyBorderWindow(Border);
 }
 
 // NOTE(koekeishiya): Enable to manually trigger ABI mismatch
