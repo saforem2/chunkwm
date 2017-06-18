@@ -136,13 +136,19 @@ void DestroyBorderWindow(border_window *Border)
     border_window_internal *BorderInternal = (border_window_internal *) Border;
     if(BorderInternal->Handle)
     {
-        dispatch_sync(dispatch_get_main_queue(), ^(void)
+        if(dispatch_get_current_queue() == dispatch_get_main_queue())
         {
             [BorderInternal->Handle close];
             [BorderInternal->View release];
-        });
-        BorderInternal->Handle = nil;
-        BorderInternal->View = nil;
+        }
+        else
+        {
+            dispatch_sync(dispatch_get_main_queue(), ^(void)
+            {
+                [BorderInternal->Handle close];
+                [BorderInternal->View release];
+            });
+        }
     }
     free(BorderInternal);
 }
