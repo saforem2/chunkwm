@@ -16,6 +16,8 @@ NSColor *ColorFromHex(unsigned int Color);
 
 - (void)drawRect:(NSRect)Rect
 {
+    NSAutoreleasePool *Pool = [[NSAutoreleasePool alloc] init];
+
     if(self.wantsLayer != YES)
     {
         self.wantsLayer = YES;
@@ -24,15 +26,18 @@ NSColor *ColorFromHex(unsigned int Color);
     }
 
     NSRect Frame = [self bounds];
-    if(Rect.size.height < Frame.size.height)
-        return;
+    if(Rect.size.height >= Frame.size.height)
+    {
+        NSBezierPath *Border = [NSBezierPath bezierPathWithRoundedRect:Frame xRadius:self->Radius yRadius:self->Radius];
+        [Border setLineWidth:self->Width];
+        NSColor *Color = ColorFromHex(self->Color);
+        [Color set];
+        [Border stroke];
+    }
 
-    NSBezierPath *Border = [NSBezierPath bezierPathWithRoundedRect:Frame xRadius:self->Radius yRadius:self->Radius];
-    [Border setLineWidth:self->Width];
-    NSColor *Color = ColorFromHex(self->Color);
-    [Color set];
-    [Border stroke];
+    [Pool release];
 }
+
 @end
 
 struct border_window_internal
@@ -63,14 +68,15 @@ InvertY(int Y, int Height)
     return InvertedY;
 }
 
-static void InitBorderWindow(border_window_internal *Border, int X, int Y, int W, int H, int BorderWidth, int BorderRadius, unsigned int BorderColor)
+static void
+InitBorderWindow(border_window_internal *Border, int X, int Y, int W, int H, int BorderWidth, int BorderRadius, unsigned int BorderColor)
 {
     NSRect GraphicsRect = NSMakeRect(X, InvertY(Y, H), W, H);
     Border->Handle = [[NSWindow alloc] initWithContentRect: GraphicsRect
                                        styleMask: NSWindowStyleMaskFullSizeContentView
                                        backing: NSBackingStoreBuffered
                                        defer: NO];
-    Border->View = [[OverlayView alloc] initWithFrame:GraphicsRect];
+    Border->View = [[[OverlayView alloc] initWithFrame:GraphicsRect] autorelease];
 
     Border->View->Width = Border->Width;
     Border->View->Radius = Border->Radius;
@@ -84,8 +90,7 @@ static void InitBorderWindow(border_window_internal *Border, int X, int Y, int W
     [Border->Handle setCollectionBehavior:NSWindowCollectionBehaviorCanJoinAllSpaces];
     [Border->Handle setLevel:NSFloatingWindowLevel];
     [Border->Handle makeKeyAndOrderFront:nil];
-    [Border->Handle setReleasedWhenClosed:YES];
-}
+    [Border->Handle setReleasedWhenClosed:YES]; }
 
 border_window *CreateBorderWindow(int X, int Y, int W, int H, int BorderWidth, int BorderRadius, unsigned int BorderColor)
 {
@@ -95,15 +100,19 @@ border_window *CreateBorderWindow(int X, int Y, int W, int H, int BorderWidth, i
     Border->Radius = BorderRadius;
     Border->Color = BorderColor;
 
-    if(dispatch_get_current_queue() == dispatch_get_main_queue())
+    if([NSThread isMainThread])
     {
+        NSAutoreleasePool *Pool = [[NSAutoreleasePool alloc] init];
         InitBorderWindow(Border, X, Y, W, H, BorderWidth, BorderRadius, BorderColor);
+        [Pool release];
     }
     else
     {
         dispatch_sync(dispatch_get_main_queue(), ^(void)
         {
+            NSAutoreleasePool *Pool = [[NSAutoreleasePool alloc] init];
             InitBorderWindow(Border, X, Y, W, H, BorderWidth, BorderRadius, BorderColor);
+            [Pool release];
         });
     }
 
@@ -113,10 +122,22 @@ border_window *CreateBorderWindow(int X, int Y, int W, int H, int BorderWidth, i
 void UpdateBorderWindowRect(border_window *Border, int X, int Y, int W, int H)
 {
     border_window_internal *BorderInternal = (border_window_internal *) Border;
-    dispatch_async(dispatch_get_main_queue(), ^(void)
+
+    if([NSThread isMainThread])
     {
+        NSAutoreleasePool *Pool = [[NSAutoreleasePool alloc] init];
         [BorderInternal->Handle setFrame:NSMakeRect(X, InvertY(Y, H), W, H) display:YES animate:NO];
-    });
+        [Pool release];
+    }
+    else
+    {
+        dispatch_sync(dispatch_get_main_queue(), ^(void)
+        {
+            NSAutoreleasePool *Pool = [[NSAutoreleasePool alloc] init];
+            [BorderInternal->Handle setFrame:NSMakeRect(X, InvertY(Y, H), W, H) display:YES animate:NO];
+            [Pool release];
+        });
+    }
 }
 
 void UpdateBorderWindowColor(border_window *Border, unsigned Color)
@@ -125,30 +146,38 @@ void UpdateBorderWindowColor(border_window *Border, unsigned Color)
     BorderInternal->Color = Color;
     BorderInternal->View->Color = BorderInternal->Color;
 
-    dispatch_async(dispatch_get_main_queue(), ^(void)
+    if([NSThread isMainThread])
     {
         [BorderInternal->View setNeedsDisplay:YES];
-    });
+    }
+    else
+    {
+        dispatch_sync(dispatch_get_main_queue(), ^(void)
+        {
+            [BorderInternal->View setNeedsDisplay:YES];
+        });
+    }
 }
 
 void DestroyBorderWindow(border_window *Border)
 {
     border_window_internal *BorderInternal = (border_window_internal *) Border;
-    if(BorderInternal->Handle)
+
+    if([NSThread isMainThread])
     {
-        if(dispatch_get_current_queue() == dispatch_get_main_queue())
-        {
-            [BorderInternal->Handle close];
-            [BorderInternal->View release];
-        }
-        else
-        {
-            dispatch_sync(dispatch_get_main_queue(), ^(void)
-            {
-                [BorderInternal->Handle close];
-                [BorderInternal->View release];
-            });
-        }
+        NSAutoreleasePool *Pool = [[NSAutoreleasePool alloc] init];
+        [BorderInternal->Handle close];
+        [Pool release];
     }
+    else
+    {
+        dispatch_sync(dispatch_get_main_queue(), ^(void)
+        {
+            NSAutoreleasePool *Pool = [[NSAutoreleasePool alloc] init];
+            [BorderInternal->Handle close];
+            [Pool release];
+        });
+    }
+
     free(BorderInternal);
 }
