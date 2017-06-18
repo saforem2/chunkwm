@@ -90,7 +90,8 @@ InitBorderWindow(border_window_internal *Border, int X, int Y, int W, int H, int
     [Border->Handle setCollectionBehavior:NSWindowCollectionBehaviorCanJoinAllSpaces];
     [Border->Handle setLevel:NSFloatingWindowLevel];
     [Border->Handle makeKeyAndOrderFront:nil];
-    [Border->Handle setReleasedWhenClosed:YES]; }
+    [Border->Handle setReleasedWhenClosed:YES];
+}
 
 border_window *CreateBorderWindow(int X, int Y, int W, int H, int BorderWidth, int BorderRadius, unsigned int BorderColor)
 {
