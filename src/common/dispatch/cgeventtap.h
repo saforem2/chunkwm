@@ -20,6 +20,8 @@ enum osx_event_mask
     Event_Mask_Control = 0x00040000,
     Event_Mask_LControl = 0x00000001,
     Event_Mask_RControl = 0x00002000,
+
+    Event_Mask_Fn = kCGEventFlagMaskSecondaryFn,
 };
 
 struct event_tap
