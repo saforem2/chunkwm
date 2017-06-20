@@ -303,6 +303,8 @@ RightMouseDragged()
     if(ResizeState.Mode == Drag_Mode_Resize)
     {
         CGPoint Cursor = AXLibGetCursorPos();
+        local_persist float RatioMinDiff = 0.002f;
+
         if(ResizeState.Vertical)
         {
             float Top = ResizeState.Vertical->Region.Y;
@@ -315,7 +317,8 @@ RightMouseDragged()
             float DeltaY = RegionCenterY - InitialCursorWindowYPos;
 
             float Ratio = (CursorWindowYPos + DeltaY) / Height;
-            if(Ratio >= 0.1f && Ratio <= 0.9f)
+            if((fabs(Ratio - ResizeState.Vertical->Ratio) > RatioMinDiff) &&
+               (Ratio >= 0.1f && Ratio <= 0.9f))
             {
                 ResizeState.Vertical->Ratio = Ratio;
                 ResizeNodeRegion(ResizeState.Vertical, ResizeState.Space, ResizeState.VirtualSpace);
@@ -338,7 +341,8 @@ RightMouseDragged()
             float DeltaX = RegionCenterX - InitialCursorWindowXPos;
 
             float Ratio = (CursorWindowXPos + DeltaX) / Width;
-            if(Ratio >= 0.1f && Ratio <= 0.9f)
+            if((fabs(Ratio - ResizeState.Horizontal->Ratio) > RatioMinDiff) &&
+               (Ratio >= 0.1f && Ratio <= 0.9f))
             {
                 ResizeState.Horizontal->Ratio = Ratio;
                 ResizeNodeRegion(ResizeState.Horizontal, ResizeState.Space, ResizeState.VirtualSpace);
