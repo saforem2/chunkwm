@@ -19,10 +19,21 @@
 
 extern macos_window *GetWindowByID(uint32_t Id);
 
+enum drag_mode
+{
+    Drag_Mode_None = 0,
+    Drag_Mode_Swap,
+    Drag_Mode_Resize
+};
+
 struct resize_border_state
 {
+    drag_mode Mode;
     node *Horizontal;
     node *Vertical;
+    float InitialRatioH;
+    float InitialRatioV;
+    CGPoint InitialCursor;
     macos_space *Space;
     virtual_space *VirtualSpace;
 };
@@ -35,8 +46,6 @@ struct resize_border
 
 internal std::vector<resize_border> ResizeBorders;
 internal resize_border_state ResizeState;
-internal bool DragResizeActive;
-internal bool DragMoveActive;
 
 internal resize_border
 CreateResizeBorder(node *Node)
@@ -132,7 +141,7 @@ LeftMouseDown()
         return;
     }
 
-    DragMoveActive = true;
+    ResizeState.Mode = Drag_Mode_Swap;
     ResizeState.Horizontal = NodeBelowCursor;
     ResizeState.Space = Space;
     ResizeState.VirtualSpace = VirtualSpace;
@@ -143,7 +152,7 @@ LeftMouseDown()
 internal void
 LeftMouseDragged()
 {
-    if(DragMoveActive)
+    if(ResizeState.Mode == Drag_Mode_Swap)
     {
         CGPoint Cursor = AXLibGetCursorPos();
         node *NewNode = GetNodeForPoint(ResizeState.VirtualSpace->Tree, &Cursor);
@@ -170,7 +179,7 @@ LeftMouseDragged()
 internal void
 LeftMouseUp()
 {
-    if(DragMoveActive)
+    if(ResizeState.Mode == Drag_Mode_Swap)
     {
         FreeResizeBorders();
 
@@ -189,7 +198,6 @@ LeftMouseUp()
         }
 
         memset(&ResizeState, 0, sizeof(resize_border_state));
-        DragMoveActive = false;
     }
 }
 
@@ -240,7 +248,8 @@ RightMouseDown()
         return;
     }
 
-    DragResizeActive = true;
+    ResizeState.Mode = Drag_Mode_Resize;
+    ResizeState.InitialCursor = Cursor;
     ResizeState.Space = Space;
     ResizeState.VirtualSpace = VirtualSpace;
 
@@ -267,6 +276,7 @@ RightMouseDown()
         node *VerticalNode = GetNodeWithId(Root, VerticalWindow->Id, VirtualSpace->Mode);
         ASSERT(VerticalNode);
         ResizeState.Vertical = GetLowestCommonAncestor(NodeBelowCursor, VerticalNode);
+        ResizeState.InitialRatioV = ResizeState.Vertical->Ratio;
     }
 
     if(HorizontalWindow)
@@ -274,6 +284,7 @@ RightMouseDown()
         node *HorizontalNode = GetNodeWithId(Root, HorizontalWindow->Id, VirtualSpace->Mode);
         ASSERT(HorizontalNode);
         ResizeState.Horizontal = GetLowestCommonAncestor(NodeBelowCursor, HorizontalNode);
+        ResizeState.InitialRatioH = ResizeState.Horizontal->Ratio;
     }
 
     node *Ancestor;
@@ -289,18 +300,22 @@ RightMouseDown()
 internal void
 RightMouseDragged()
 {
-    if(DragResizeActive)
+    if(ResizeState.Mode == Drag_Mode_Resize)
     {
         CGPoint Cursor = AXLibGetCursorPos();
-        local_persist float RatioMinDiff = 0.002f;
-
         if(ResizeState.Vertical)
         {
             float Top = ResizeState.Vertical->Region.Y;
             float Height = ResizeState.Vertical->Region.Height;
-            float Ratio = (Cursor.y - Top) / Height;
-            if((fabs(Ratio - ResizeState.Vertical->Ratio) > RatioMinDiff) &&
-               (Ratio >= 0.1f && Ratio <= 0.9f))
+
+            float InitialCursorWindowYPos = ResizeState.InitialCursor.y - Top;
+            float CursorWindowYPos = Cursor.y - Top;
+
+            float RegionCenterY = Height * ResizeState.InitialRatioV;
+            float DeltaY = RegionCenterY - InitialCursorWindowYPos;
+
+            float Ratio = (CursorWindowYPos + DeltaY) / Height;
+            if(Ratio >= 0.1f && Ratio <= 0.9f)
             {
                 ResizeState.Vertical->Ratio = Ratio;
                 ResizeNodeRegion(ResizeState.Vertical, ResizeState.Space, ResizeState.VirtualSpace);
@@ -315,9 +330,15 @@ RightMouseDragged()
         {
             float Left = ResizeState.Horizontal->Region.X;
             float Width = ResizeState.Horizontal->Region.Width;
-            float Ratio = (Cursor.x - Left) / Width;
-            if((fabs(Ratio - ResizeState.Horizontal->Ratio) > RatioMinDiff) &&
-               (Ratio >= 0.1f && Ratio <= 0.9f))
+
+            float InitialCursorWindowXPos = ResizeState.InitialCursor.x - Left;
+            float CursorWindowXPos = Cursor.x - Left;
+
+            float RegionCenterX = Width * ResizeState.InitialRatioH;
+            float DeltaX = RegionCenterX - InitialCursorWindowXPos;
+
+            float Ratio = (CursorWindowXPos + DeltaX) / Width;
+            if(Ratio >= 0.1f && Ratio <= 0.9f)
             {
                 ResizeState.Horizontal->Ratio = Ratio;
                 ResizeNodeRegion(ResizeState.Horizontal, ResizeState.Space, ResizeState.VirtualSpace);
@@ -335,7 +356,7 @@ RightMouseDragged()
 internal void
 RightMouseUp()
 {
-    if(DragResizeActive)
+    if(ResizeState.Mode == Drag_Mode_Resize)
     {
         FreeResizeBorders();
 
@@ -353,7 +374,6 @@ RightMouseUp()
         AXLibDestroySpace(ResizeState.Space);
 
         memset(&ResizeState, 0, sizeof(resize_border_state));
-        DragResizeActive = false;
     }
 }
 
@@ -370,54 +390,38 @@ EVENTTAP_CALLBACK(EventTapCallback)
         case kCGEventLeftMouseDown:
         {
             CGEventFlags Flags = CGEventGetFlags(Event);
-            if(Flags & Event_Mask_Fn)
+            if((Flags & Event_Mask_Fn) &&
+               (ResizeState.Mode == Drag_Mode_None))
             {
                 LeftMouseDown();
-                // NOTE(koekeishiya): Suppress right-click.
                 return NULL;
             }
         } break;
         case kCGEventLeftMouseDragged:
         {
-            CGEventFlags Flags = CGEventGetFlags(Event);
-            if(Flags & Event_Mask_Fn)
-            {
-                LeftMouseDragged();
-            }
+            LeftMouseDragged();
         } break;
         case kCGEventLeftMouseUp:
         {
-            CGEventFlags Flags = CGEventGetFlags(Event);
-            if(Flags & Event_Mask_Fn)
-            {
-                LeftMouseUp();
-            }
+            LeftMouseUp();
         } break;
         case kCGEventRightMouseDown:
         {
             CGEventFlags Flags = CGEventGetFlags(Event);
-            if(Flags & Event_Mask_Fn)
+            if((Flags & Event_Mask_Fn) &&
+               (ResizeState.Mode == Drag_Mode_None))
             {
                 RightMouseDown();
-                // NOTE(koekeishiya): Suppress right-click.
                 return NULL;
             }
         } break;
         case kCGEventRightMouseDragged:
         {
-            CGEventFlags Flags = CGEventGetFlags(Event);
-            if(Flags & Event_Mask_Fn)
-            {
-                RightMouseDragged();
-            }
+            RightMouseDragged();
         } break;
         case kCGEventRightMouseUp:
         {
-            CGEventFlags Flags = CGEventGetFlags(Event);
-            if(Flags & Event_Mask_Fn)
-            {
-                RightMouseUp();
-            }
+            RightMouseUp();
         } break;
         default: {} break;
     }
