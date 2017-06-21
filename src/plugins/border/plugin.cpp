@@ -16,6 +16,12 @@ internal macos_application *Application;
 internal border_window *Border;
 
 internal void
+ClearBorderWindow(border_window *Border)
+{
+    UpdateBorderWindowRect(Border, 0, 0, 0, 0);
+}
+
+internal void
 UpdateWindow(AXUIElementRef WindowRef)
 {
     CGPoint Position = AXLibGetWindowPosition(WindowRef);
@@ -23,7 +29,7 @@ UpdateWindow(AXUIElementRef WindowRef)
 
     if(AXLibIsWindowFullscreen(WindowRef))
     {
-        UpdateBorderWindowRect(Border, 0, 0, 0, 0);
+        ClearBorderWindow(Border);
     }
     else
     {
@@ -44,13 +50,13 @@ UpdateToFocusedWindow()
         }
         else
         {
-            UpdateBorderWindowRect(Border, 0, 0, 0, 0);
+            ClearBorderWindow(Border);
         }
         CFRelease(WindowRef);
     }
     else
     {
-        UpdateBorderWindowRect(Border, 0, 0, 0, 0);
+        ClearBorderWindow(Border);
     }
 }
 
@@ -87,7 +93,7 @@ ApplicationDeactivatedHandler(void *Data)
     if(Application == Context)
     {
         Application = NULL;
-        UpdateBorderWindowRect(Border, 0, 0, 0, 0);
+        ClearBorderWindow(Border);
     }
 }
 
@@ -146,7 +152,7 @@ SpaceChangedHandler()
 
     if(Space->Type != kCGSSpaceUser)
     {
-        UpdateBorderWindowRect(Border, 0, 0, 0, 0);
+        ClearBorderWindow(Border);
     }
 
     AXLibDestroySpace(Space);
