@@ -12,16 +12,20 @@
 #define internal static
 
 internal macos_application *Application;
-internal bool DrawBorder = true;
 internal border_window *Border;
 
 internal void
 UpdateWindow(AXUIElementRef WindowRef)
 {
-    if(DrawBorder)
+    CGPoint Position = AXLibGetWindowPosition(WindowRef);
+    CGSize Size = AXLibGetWindowSize(WindowRef);
+
+    if(AXLibIsWindowFullscreen(WindowRef))
     {
-        CGPoint Position = AXLibGetWindowPosition(WindowRef);
-        CGSize Size = AXLibGetWindowSize(WindowRef);
+        UpdateBorderWindowRect(Border, 0, 0, 0, 0);
+    }
+    else
+    {
         UpdateBorderWindowRect(Border, Position.x, Position.y, Size.width, Size.height);
     }
 }
@@ -182,24 +186,6 @@ PLUGIN_MAIN_FUNC(PluginMain)
         WindowMinimizedHandler(Data);
         return true;
     }
-    else if(StringsAreEqual(Node, "chunkwm_export_space_changed"))
-    {
-        macos_space *Space;
-        bool Result = AXLibActiveSpace(&Space);
-        if(Result)
-        {
-            Result = Space->Type == kCGSSpaceUser;
-            AXLibDestroySpace(Space);
-        }
-
-        DrawBorder = Result;
-        if(!DrawBorder)
-        {
-            UpdateBorderWindowRect(Border, 0, 0, 0, 0);
-        }
-
-        return true;
-    }
 
     return false;
 }
@@ -240,8 +226,6 @@ chunkwm_plugin_export Subscriptions[] =
     chunkwm_export_window_moved,
     chunkwm_export_window_resized,
     chunkwm_export_window_minimized,
-
-    chunkwm_export_space_changed,
 };
 CHUNKWM_PLUGIN_SUBSCRIBE(Subscriptions)
 
