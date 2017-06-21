@@ -8,6 +8,7 @@
 #include "../../common/accessibility/element.h"
 #include "../../common/accessibility/display.h"
 #include "../../common/border/border.h"
+#include "../../common/misc/assert.h"
 
 #define internal static
 
@@ -136,6 +137,21 @@ WindowMinimizedHandler(void *Data)
     }
 }
 
+internal void
+SpaceChangedHandler()
+{
+    macos_space *Space;
+    bool Success = AXLibActiveSpace(&Space);
+    ASSERT(Success);
+
+    if(Space->Type != kCGSSpaceUser)
+    {
+        UpdateBorderWindowRect(Border, 0, 0, 0, 0);
+    }
+
+    AXLibDestroySpace(Space);
+}
+
 inline bool
 StringsAreEqual(const char *A, const char *B)
 {
@@ -186,6 +202,11 @@ PLUGIN_MAIN_FUNC(PluginMain)
         WindowMinimizedHandler(Data);
         return true;
     }
+    else if(StringsAreEqual(Node, "chunkwm_export_space_changed"))
+    {
+        SpaceChangedHandler();
+        return true;
+    }
 
     return false;
 }
@@ -226,6 +247,8 @@ chunkwm_plugin_export Subscriptions[] =
     chunkwm_export_window_moved,
     chunkwm_export_window_resized,
     chunkwm_export_window_minimized,
+
+    chunkwm_export_space_changed,
 };
 CHUNKWM_PLUGIN_SUBSCRIBE(Subscriptions)
 
