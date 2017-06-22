@@ -60,7 +60,7 @@ extern "C" CGError CGSGetOnScreenWindowList(const CGSConnectionID CID, CGSConnec
 #define CONFIG_FILE "/.chunkwmtilingrc"
 
 internal const char *PluginName = "Tiling";
-internal const char *PluginVersion = "0.0.2";
+internal const char *PluginVersion = "0.1.0";
 
 internal macos_application_map Applications;
 
