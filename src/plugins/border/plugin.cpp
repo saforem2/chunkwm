@@ -259,4 +259,4 @@ chunkwm_plugin_export Subscriptions[] =
 CHUNKWM_PLUGIN_SUBSCRIBE(Subscriptions)
 
 // NOTE(koekeishiya): Generate plugin
-CHUNKWM_PLUGIN("Border", "0.0.2")
+CHUNKWM_PLUGIN("Border", "0.1.0")
