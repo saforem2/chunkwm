@@ -130,7 +130,7 @@ most of these can therefore be applied during runtime, which leaves us with two 
 * command (runtime interaction)
 
 visit [**chunkwm-tiling reference**](https://github.com/koekeishiya/chunkwm/tree/master/src/plugins/tiling/README.md),
-and the [**sample config**](https://github.com/koekeishiya/chunkwm/blob/master/examples/chunkwmrc)
+and the [**sample config**](https://github.com/koekeishiya/chunkwm/blob/master/src/plugins/tiling/examples/chwmtilingrc)
 for further information
 
 a sample keybinding config file for [**khd**](https://github.com/koekeishiya/khd) is also available [**here**](https://github.com/koekeishiya/chunkwm/tree/master/src/plugins/tiling/examples/khdrc)
