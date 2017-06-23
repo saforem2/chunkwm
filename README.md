@@ -44,7 +44,7 @@ The first time **chunkwm-core** is ran, it will request access to the *accessibi
 
 After access has been granted, the application must be restarted
 
-The chunkwm-tiling plugin requires 'displays have separate spaces' to be enabled.
+The **chunkwm-tiling** plugin requires 'displays have separate spaces' to be enabled.
 
 #### MacPorts
 
