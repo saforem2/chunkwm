@@ -38,6 +38,14 @@ These deliver the basic functionality expected of a window manager.
 is meant to be used together with the window manager, to provide a complete experience.
 Other applications that serve the same purpose can of course be used instead.
 
+**IMPORTANT**:
+
+The first time **chunkwm-core** is ran, it will request access to the *accessibility API*.
+
+After access has been granted, the application must be restarted
+
+The chunkwm-tiling plugin requires 'displays have separate spaces' to be enabled.
+
 #### MacPorts
 
 There are no officially maintained ports in the MacPorts repository, however, I have created
