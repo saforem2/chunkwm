@@ -1,6 +1,6 @@
 #### chunkwm-tiling configuration index
 
-* [config settings](#global-settings)
+* [config variables](#config-variables)
   * [global tiling mode](#set-global-tiling-mode)
   * [specific desktop tiling mode](#set-tiling-mode-for-a-specific-desktop)
   * [default desktop bsp layout](#set-default-bsp-layout-for-a-specific-desktop)
@@ -40,10 +40,11 @@
   * [deserialize desktop from file](#deserialize-desktop-bsp-tree-from-file)
 * [monitor commands](#monitor-commands)
   * [focus monitor](#focus-monitor)
+* [window rules](#window-rules)
 
 ---
 
-#### config settings
+#### config variables
 
 ##### set global tiling mode
 
@@ -267,3 +268,21 @@
 
     chunkc monitor -f <option>
     <option>: prev | next | index
+
+#### window rules
+
+| filter   | short flag | type      | description                        |
+|----------|:----------:|:---------:|:----------------------------------:|
+| --owner  | -o         | POSIX ERE | application name match pattern     |
+| --name   | -n         | POSIX ERE | window name matches pattern        |
+| --except | -e         | POSIX ERE | window name does not match pattern |
+
+| properties | short flag | value | description                            |
+|------------|:----------:|:-----:|:--------------------------------------:|
+| --state    | -s         | float | automatically float window             |
+| --state    | -s         | tile  | force-tile window regardless of AXRole |
+
+sample rules:
+
+    chunkc rule --owner "System Preferences" --state tile
+    chunkc rule --owner Finder --name Copy --state float
