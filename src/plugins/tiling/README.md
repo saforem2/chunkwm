@@ -273,7 +273,7 @@
 
 | filter   | short flag | type      | description                        |
 |----------|:----------:|:---------:|:----------------------------------:|
-| --owner  | -o         | POSIX ERE | application name match pattern     |
+| --owner  | -o         | POSIX ERE | application name matches pattern   |
 | --name   | -n         | POSIX ERE | window name matches pattern        |
 | --except | -e         | POSIX ERE | window name does not match pattern |
 
