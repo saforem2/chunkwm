@@ -44,21 +44,16 @@ GetWindowByID(uint32_t Id)
 bool AddWindowToCollection(macos_window *Window)
 {
     bool Result = true;
-    uint32_t *WindowId;
     AXError Success;
 
     // NOTE(koekeishiya): A window with id 0 is never valid!
-    if(!Window->Id) goto win_zero;
+    if(!Window->Id) goto err;
 
-    WindowId = (uint32_t *) malloc(sizeof(uint32_t));
-    ASSERT(WindowId);
-
-    *WindowId = Window->Id;
     Success = AXLibAddObserverNotification(&Window->Owner->Observer,
                                            Window->Ref,
                                            kAXUIElementDestroyedNotification,
-                                           WindowId);
-    if(Success != kAXErrorSuccess) goto ax_err;
+                                           (void *)(uintptr_t)Window->Id);
+    if(Success != kAXErrorSuccess) goto err;
 
     AXLibAddObserverNotification(&Window->Owner->Observer,
                                  Window->Ref,
@@ -74,10 +69,7 @@ bool AddWindowToCollection(macos_window *Window)
 
     goto out;
 
-ax_err:
-    free(WindowId);
-
-win_zero:
+err:
     Result = false;
 
 out:
@@ -195,20 +187,12 @@ OBSERVER_CALLBACK(ApplicationCallback)
 
         /* NOTE(koekeishiya): Option 'b' has been implemented. Leave note for future reference. */
 
-        uint32_t *WindowId = (uint32_t *) Reference;
-        macos_window *Window = GetWindowByID(*WindowId);
+        uint32_t WindowId = (uintptr_t) Reference;
+        macos_window *Window = GetWindowByID(WindowId);
         if(Window)
         {
             RemoveWindowFromCollection(Window);
-
-            // TODO(koekeishiya): MacOS does not always properly unregister our
-            // notification when we tell it do so. If we then free this pointer
-            // (we should, to avoid memory leaks), we end up in a potential
-            // double-free situation, thanks Apple..
-            // free(WindowId);
-
             __sync_or_and_fetch(&Window->Flags, Window_Invalid);
-
             ConstructEvent(ChunkWM_WindowDestroyed, Window);
         }
     }
