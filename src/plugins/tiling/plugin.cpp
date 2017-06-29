@@ -1460,7 +1460,7 @@ Init(plugin_broadcast *ChunkwmBroadcast)
     Success = BeginCVars();
     if(!Success)
     {
-        fprintf(stderr, "   tiling: failed to initialize cvar system!\n");
+        fprintf(stderr, "chunkwm-tiling: failed to initialize cvar system!\n");
         goto out;
     }
 
@@ -1513,7 +1513,7 @@ Init(plugin_broadcast *ChunkwmBroadcast)
     Success = StartDaemon(Port, DaemonCallback);
     if(!Success)
     {
-        fprintf(stderr, "   tiling: could not listen on port %d, abort..\n", Port);
+        fprintf(stderr, "chunkwm-tiling: could not listen on port %d, abort..\n", Port);
         goto cvar_release;
     }
 
@@ -1540,12 +1540,12 @@ Init(plugin_broadcast *ChunkwmBroadcast)
         }
         else
         {
-            fprintf(stderr, "   tiling: config '%s' not found!\n", PathToConfigFile);
+            fprintf(stderr, "chunkwm-tiling: config '%s' not found!\n", PathToConfigFile);
         }
     }
     else
     {
-        fprintf(stderr,"    tiling: 'env HOME' not set!\n");
+        fprintf(stderr,"chunkwm-tiling: 'env HOME' not set!\n");
     }
 
     Applications = AXLibRunningProcesses(ProcessPolicy);
@@ -1606,7 +1606,7 @@ Init(plugin_broadcast *ChunkwmBroadcast)
         goto out;
     }
 
-    fprintf(stderr, "   tiling: failed to initialize virtual space system!\n");
+    fprintf(stderr, "chunkwm-tiling: failed to initialize virtual space system!\n");
 
     StopDaemon();
     EndEventTap(&EventTap);

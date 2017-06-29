@@ -34,7 +34,7 @@ RegexMatchPattern(regex_t *Regex, const char *Match, const char *Pattern)
     }
     else
     {
-        fprintf(stderr, "tiling: window rule - could not compile regex!\n");
+        fprintf(stderr, "chunkwm-tiling: window rule - could not compile regex!\n");
     }
 
     return Error == 0;
@@ -53,7 +53,7 @@ ApplyWindowRuleState(macos_window *Window, window_rule *Rule)
     }
     else
     {
-        fprintf(stderr, "tiling: window rule - invalid state '%s', ignored..\n", Rule->State);
+        fprintf(stderr, "chunkwm-tiling: window rule - invalid state '%s', ignored..\n", Rule->State);
     }
 }
 

@@ -759,12 +759,12 @@ ParseConfigCommand(const char **Message)
             }
             else
             {
-                fprintf(stderr, " tiling daemon: '%s' is not a valid config option!\n", Variable);
+                fprintf(stderr, "chunkwm-tiling daemon: '%s' is not a valid config option!\n", Variable);
             }
         }
         else
         {
-            fprintf(stderr, " tiling daemon: '%.*s' is not a valid config option!\n", Command.Length, Command.Text);
+            fprintf(stderr, "chunkwm-tiling daemon: '%.*s' is not a valid config option!\n", Command.Length, Command.Text);
         }
         free(Variable);
     }
@@ -1016,12 +1016,12 @@ win_success:;
             }
             else
             {
-                fprintf(stderr, " tiling daemon: '%s' is not a valid config option!\n", Variable);
+                fprintf(stderr, "chunkwm-tiling daemon: '%s' is not a valid config option!\n", Variable);
             }
         }
         else
         {
-            fprintf(stderr, " tiling daemon: '%.*s' is not a valid config option!\n", Command.Length, Command.Text);
+            fprintf(stderr, "chunkwm-tiling daemon: '%.*s' is not a valid config option!\n", Command.Length, Command.Text);
         }
         free(Variable);
     }
@@ -1087,13 +1087,13 @@ End:
 
     if(!HasFilter)
     {
-        fprintf(stderr, "tiling: window rule - no filter specified, ignored..\n");
+        fprintf(stderr, "chunkwm-tiling: window rule - no filter specified, ignored..\n");
         Success = false;
     }
 
     if(!HasProperty)
     {
-        fprintf(stderr, "tiling: window rule - missing value for state, ignored..\n");
+        fprintf(stderr, "chunkwm-tiling: window rule - missing value for state, ignored..\n");
         Success = false;
     }
 
@@ -1109,7 +1109,7 @@ End:
  * */
 DAEMON_CALLBACK(DaemonCallback)
 {
-    DEBUG_PRINT(" msg: '%s'\n", Message);
+    printf("chunkwm-tiling daemon recv: '%s'\n", Message);
     token Type = GetToken(&Message);
 
     if(TokenEquals(Type, "config"))
@@ -1184,6 +1184,6 @@ DAEMON_CALLBACK(DaemonCallback)
     }
     else
     {
-        fprintf(stderr, " tiling daemon: no match for '%.*s'\n", Type.Length, Type.Text);
+        fprintf(stderr, "chunkwm-tiling daemon: no match for '%.*s'\n", Type.Length, Type.Text);
     }
 }
