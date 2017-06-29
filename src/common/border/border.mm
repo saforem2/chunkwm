@@ -73,7 +73,7 @@ InitBorderWindow(border_window_internal *Border, int X, int Y, int W, int H, int
 {
     NSRect GraphicsRect = NSMakeRect(X, InvertY(Y, H), W, H);
     Border->Handle = [[NSWindow alloc] initWithContentRect: GraphicsRect
-                                       styleMask: NSWindowStyleMaskFullSizeContentView
+                                       styleMask: NSWindowStyleMaskBorderless
                                        backing: NSBackingStoreBuffered
                                        defer: NO];
     Border->View = [[[OverlayView alloc] initWithFrame:GraphicsRect] autorelease];
