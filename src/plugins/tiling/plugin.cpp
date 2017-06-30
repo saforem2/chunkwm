@@ -12,11 +12,11 @@
 #include "../../common/accessibility/element.h"
 #include "../../common/accessibility/observer.h"
 #include "../../common/dispatch/cgeventtap.h"
+#include "../../common/config/cvar.h"
 #include "../../common/ipc/daemon.h"
 #include "../../common/misc/carbon.h"
 #include "../../common/misc/assert.h"
 #include "../../common/misc/debug.h"
-#include "../../common/config/cvar.h"
 #include "../../common/border/border.h"
 
 #include "config.h"
@@ -56,9 +56,6 @@ extern "C" CGSConnectionID _CGSDefaultConnection(void);
 extern "C" CGError CGSGetOnScreenWindowCount(const CGSConnectionID CID, CGSConnectionID TID, int *Count);
 extern "C" CGError CGSGetOnScreenWindowList(const CGSConnectionID CID, CGSConnectionID TID, int Count, int *List, int *OutCount);
 
-// TODO(koekeishiya): Shorter name.
-#define CONFIG_FILE "/.chunkwmtilingrc"
-
 internal const char *PluginName = "Tiling";
 internal const char *PluginVersion = "0.1.0";
 
@@ -73,7 +70,7 @@ internal macos_window_map Windows;
 
 internal event_tap EventTap;
 
-plugin_broadcast *ChunkWMBroadcastEvent;
+chunkwm_api ChunkwmAPI;
 
 /* NOTE(koekeishiya): We need a way to retrieve AXUIElementRef from a CGWindowID.
  * There is no way to do this, without caching AXUIElementRef references.
@@ -188,7 +185,7 @@ ClearApplicationCache()
 
 void BroadcastFocusedWindowFloating(int Status)
 {
-    ChunkWMBroadcastEvent(PluginName, "focused_window_float", (char *) &Status, sizeof(int));
+    ChunkwmAPI.Broadcast(PluginName, "focused_window_float", (char *) &Status, sizeof(int));
 }
 
 internal void
@@ -317,7 +314,7 @@ void TileWindowOnSpace(macos_window *Window, macos_space *Space, virtual_space *
                 ASSERT(Node != NULL);
             }
 
-            node_split Split = (node_split) CVarIntegerValue(CVAR_BSP_SPLIT_MODE);
+            node_split Split = NodeSplitFromString(CVarStringValue(CVAR_BSP_SPLIT_MODE));
             if(Split == Split_Optimal)
             {
                 Split = OptimalSplitMode(Node);
@@ -761,7 +758,7 @@ CreateWindowTreeForSpaceWithWindows(macos_space *Space, virtual_space *VirtualSp
             New = GetFirstMinDepthLeafNode(Root);
             ASSERT(New != NULL);
 
-            node_split Split = (node_split) CVarIntegerValue(CVAR_BSP_SPLIT_MODE);
+            node_split Split = NodeSplitFromString(CVarStringValue(CVAR_BSP_SPLIT_MODE));
             if(Split == Split_Optimal)
             {
                 Split = OptimalSplitMode(New);
@@ -838,7 +835,7 @@ CreateDeserializedWindowTreeForSpaceWithWindows(macos_space *Space, virtual_spac
             Node = GetFirstMinDepthLeafNode(Root);
             ASSERT(Node != NULL);
 
-            node_split Split = (node_split) CVarIntegerValue(CVAR_BSP_SPLIT_MODE);
+            node_split Split = NodeSplitFromString(CVarStringValue(CVAR_BSP_SPLIT_MODE));
             if(Split == Split_Optimal)
             {
                 Split = OptimalSplitMode(Node);
@@ -1362,6 +1359,14 @@ space_free:
     AXLibDestroySpace(Space);
 }
 
+internal void
+ChunkwmDaemonCommandHandler(void *Data)
+{
+    chunkwm_payload *Payload = (chunkwm_payload *) Data;
+    printf("chunkwm-tiling command: (%d) '%s %s'\n", Payload->SockFD, Payload->Command, Payload->Message);
+    CommandCallback(Payload->SockFD, Payload->Command, Payload->Message);
+}
+
 /*
  * NOTE(koekeishiya):
  * parameter: const char *Node
@@ -1441,28 +1446,26 @@ PLUGIN_MAIN_FUNC(PluginMain)
         SpaceAndDisplayChangedHandler(Data);
         return true;
     }
+    else if(StringEquals(Node, "chunkwm_daemon_command"))
+    {
+        ChunkwmDaemonCommandHandler(Data);
+        return true;
+    }
 
     return false;
 }
 
 internal bool
-Init(plugin_broadcast *ChunkwmBroadcast)
+Init(chunkwm_api API)
 {
-    int Port = 4131;
-    ChunkWMBroadcastEvent = ChunkwmBroadcast;
+    ChunkwmAPI = API;
+    BeginCVars(&ChunkwmAPI);
+
     uint32_t ProcessPolicy = Process_Policy_Regular;
 
     bool Success;
-    char *HomeEnv;
     AXUIElementRef ApplicationRef;
     std::vector<macos_application *> Applications;
-
-    Success = BeginCVars();
-    if(!Success)
-    {
-        fprintf(stderr, "chunkwm-tiling: failed to initialize cvar system!\n");
-        goto out;
-    }
 
     EventTap.Mask = ((1 << kCGEventLeftMouseDown) |
                      (1 << kCGEventLeftMouseDragged) |
@@ -1472,7 +1475,7 @@ Init(plugin_broadcast *ChunkwmBroadcast)
                      (1 << kCGEventRightMouseUp));
     BeginEventTap(&EventTap, &EventTapCallback);
 
-    CreateCVar(CVAR_SPACE_MODE, Virtual_Space_Bsp);
+    CreateCVar(CVAR_SPACE_MODE, virtual_space_mode_str[Virtual_Space_Bsp]);
 
     CreateCVar(CVAR_SPACE_OFFSET_TOP, 60.0f);
     CreateCVar(CVAR_SPACE_OFFSET_BOTTOM, 50.0f);
@@ -1492,7 +1495,7 @@ Init(plugin_broadcast *ChunkwmBroadcast)
     CreateCVar(CVAR_BSP_SPAWN_LEFT, 1);
     CreateCVar(CVAR_BSP_OPTIMAL_RATIO, 1.618f);
     CreateCVar(CVAR_BSP_SPLIT_RATIO, 0.5f);
-    CreateCVar(CVAR_BSP_SPLIT_MODE, Split_Optimal);
+    CreateCVar(CVAR_BSP_SPLIT_MODE, node_split_str[Split_Optimal]);
 
     CreateCVar(CVAR_WINDOW_FOCUS_CYCLE, "none");
 
@@ -1509,44 +1512,6 @@ Init(plugin_broadcast *ChunkwmBroadcast)
     CreateCVar(CVAR_WINDOW_FLOAT_TOPMOST, 1);
 
     /*   ---------------------------------------------------------   */
-
-    Success = StartDaemon(Port, DaemonCallback);
-    if(!Success)
-    {
-        fprintf(stderr, "chunkwm-tiling: could not listen on port %d, abort..\n", Port);
-        goto cvar_release;
-    }
-
-    HomeEnv = getenv("HOME");
-    if(HomeEnv)
-    {
-        unsigned HomeEnvLength = strlen(HomeEnv);
-        unsigned ConfigFileLength = strlen(CONFIG_FILE);
-        unsigned PathLength = HomeEnvLength + ConfigFileLength;
-
-        // NOTE(koekeishiya): We don't need to store the config-file, as reloading the config
-        // can be done externally by simply executing the bash script instead of sending us
-        // a reload command. Stack allocation..
-        char PathToConfigFile[PathLength + 1];
-        PathToConfigFile[PathLength] = '\0';
-
-        memcpy(PathToConfigFile, HomeEnv, HomeEnvLength);
-        memcpy(PathToConfigFile + HomeEnvLength, CONFIG_FILE, ConfigFileLength);
-
-        if(FileExists(PathToConfigFile))
-        {
-            // NOTE(koekeishiya): The config file is just an executable bash script!
-            system(PathToConfigFile);
-        }
-        else
-        {
-            fprintf(stderr, "chunkwm-tiling: config '%s' not found!\n", PathToConfigFile);
-        }
-    }
-    else
-    {
-        fprintf(stderr,"chunkwm-tiling: 'env HOME' not set!\n");
-    }
 
     Applications = AXLibRunningProcesses(ProcessPolicy);
     for(size_t Index = 0; Index < Applications.size(); ++Index)
@@ -1608,13 +1573,9 @@ Init(plugin_broadcast *ChunkwmBroadcast)
 
     fprintf(stderr, "chunkwm-tiling: failed to initialize virtual space system!\n");
 
-    StopDaemon();
     EndEventTap(&EventTap);
     ClearApplicationCache();
     ClearWindowCache();
-
-cvar_release:
-    EndCVars();
 
 out:
     return Success;
@@ -1623,7 +1584,6 @@ out:
 internal void
 Deinit()
 {
-    StopDaemon();
     EndEventTap(&EventTap);
 
     ClearApplicationCache();
@@ -1631,7 +1591,6 @@ Deinit()
     FreeWindowRules();
 
     EndVirtualSpaces();
-    EndCVars();
 }
 
 /*
@@ -1641,7 +1600,7 @@ Deinit()
  */
 PLUGIN_BOOL_FUNC(PluginInit)
 {
-    return Init(Broadcast);
+    return Init(ChunkwmAPI);
 }
 
 PLUGIN_VOID_FUNC(PluginDeInit)

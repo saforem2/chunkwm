@@ -3,7 +3,6 @@
 #include "vspace.h"
 #include "constants.h"
 
-#include "../../common/config/cvar.h"
 #include "../../common/misc/assert.h"
 #include "../../common/accessibility/display.h"
 #include "../../common/accessibility/window.h"

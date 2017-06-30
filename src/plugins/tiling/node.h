@@ -15,12 +15,19 @@ enum node_type
     Node_Serialized_Leaf = 2
 };
 
+static char *node_split_str[] =
+{
+    "none",
+    "optimal",
+    "vertical",
+    "horizontal"
+};
 enum node_split
 {
     Split_None = 0,
-    Split_Optimal = -1,
-    Split_Vertical = 1,
-    Split_Horizontal = 2
+    Split_Optimal = 1,
+    Split_Vertical = 2,
+    Split_Horizontal = 3
 };
 
 struct node_ids
@@ -56,6 +63,7 @@ inline equalize_node operator+(const equalize_node A, const equalize_node B)
 
 node_ids AssignNodeIds(uint32_t ExistingId, uint32_t NewId);
 node_split OptimalSplitMode(node *Node);
+node_split NodeSplitFromString(char *Value);
 
 node *CreateRootNode(uint32_t WindowId, macos_space *Space, virtual_space *VirtualSpace);
 node *CreateLeafNode(node *Parent, uint32_t WindowId, region_type Type, macos_space *Space, virtual_space *VirtualSpace);

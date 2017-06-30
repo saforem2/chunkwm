@@ -1,6 +1,13 @@
 #ifndef CHUNKWM_PLUGIN_EXPORT_H
 #define CHUNKWM_PLUGIN_EXPORT_H
 
+struct chunkwm_payload
+{
+    int SockFD;
+    char *Command;
+    const char *Message;
+};
+
 static const char *chunkwm_plugin_export_str[] =
 {
     "chunkwm_export_application_launched",

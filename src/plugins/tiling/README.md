@@ -48,89 +48,89 @@
 
 ##### set global tiling mode
 
-    chunkc config global_desktop_mode <option>
+    chunkc set global_desktop_mode <option>
     <option>: bsp | monocle | float
 
 ##### set tiling mode for a specific desktop
 
-    chunkc config <index>_desktop_mode monocle
+    chunkc set <index>_desktop_mode monocle
     <index>: mission-control index
 
 ##### set default bsp-layout for a specific desktop
 
-    chunkc config <index>_desktop_tree <file>
+    chunkc set <index>_desktop_tree <file>
     <index>: mission-control index
     <file>: /path/to/file (e.g: ~/.chunkwm_layouts/dev_1)
 
 ##### set global desktop offset and window gap
 
-    chunkc config global_desktop_offset_top     20
-    chunkc config global_desktop_offset_bottom  20
-    chunkc config global_desktop_offset_left    20
-    chunkc config global_desktop_offset_right   20
-    chunkc config global_desktop_offset_gap     15
+    chunkc set global_desktop_offset_top     20
+    chunkc set global_desktop_offset_bottom  20
+    chunkc set global_desktop_offset_left    20
+    chunkc set global_desktop_offset_right   20
+    chunkc set global_desktop_offset_gap     15
 
 ##### set desktop offset and window gap for a specific desktop
 
-    chunkc config 1_desktop_offset_top          190
-    chunkc config 1_desktop_offset_bottom       190
-    chunkc config 1_desktop_offset_left         190
-    chunkc config 1_desktop_offset_right        190
-    chunkc config 1_desktop_offset_gap          15
+    chunkc set 1_desktop_offset_top          190
+    chunkc set 1_desktop_offset_bottom       190
+    chunkc set 1_desktop_offset_left         190
+    chunkc set 1_desktop_offset_right        190
+    chunkc set 1_desktop_offset_gap          15
 
 ##### set desktop offset and window gap incremental step
 
-    chunkc config desktop_padding_step_size     10.0
-    chunkc config desktop_gap_step_size         5.0
+    chunkc set desktop_padding_step_size     10.0
+    chunkc set desktop_gap_step_size         5.0
 
 ##### spawned windows are tiled to the left
 
-    chunkc config bsp_spawn_left <option>
+    chunkc set bsp_spawn_left <option>
     <option>: 1 | 0
     desc: new windows are tiled as the left-child
 
 ##### set optimal ratio used by bsp_split_mode optimal
 
-    chunkc config bsp_optimal_ratio             1.618
+    chunkc set bsp_optimal_ratio             1.618
     desc: determines if the new split should be horizontal or vertical
 
 ##### configure how regions are split
 
-    chunkc config bsp_split_mode                <option>
+    chunkc set bsp_split_mode                <option>
     <option>: vertical | horizontal | optimal
 
 ##### configure ratio used when regions are split
 
-    chunkc config bsp_split_ratio               <option>
+    chunkc set bsp_split_ratio               <option>
     <option>: 0 < value < 1
 
 ##### set wrap behaviour for window focus command
 
-    chunkc config window_focus_cycle            <option>
+    chunkc set window_focus_cycle            <option>
     <option>: none | monitor | all
 
 ##### set state of mouse follows focus
 
-    chunkc config mouse_follows_focus           <option>
+    chunkc set mouse_follows_focus           <option>
     <option>: 1 | 0
 
 ##### the next window attempted tiled will be made floating instead
 
-    chunkc config window_float_next             <option>
+    chunkc set window_float_next             <option>
     <option>: 1 | 0
 
 ##### center a window on monitor when toggled floating by the user
 
-    chunkc config window_float_center           <option>
+    chunkc set window_float_center           <option>
     <option>: 1 | 0
 
 ##### constrain window to bsp region size
 
-    chunkc config window_region_locked          <option>
+    chunkc set window_region_locked          <option>
     <option>: 1 | 0
 
 ##### signal dock to make windows topmost when floated
-    chunkc config window_float_topmost          <option>
+    chunkc set window_float_topmost          <option>
     <option>: 1 | 0
     desc: requires chwm-sa (https://github.com/koekeishiya/chwm-sa)
 

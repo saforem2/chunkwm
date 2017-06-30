@@ -1,4 +1,5 @@
 #include "plugin.h"
+#include "cvar.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,6 +18,8 @@ internal pthread_mutex_t LoadedPluginLock;
 
 internal pthread_mutex_t Mutexes[chunkwm_export_count];
 internal plugin_list ExportedPlugins[chunkwm_export_count];
+
+internal chunkwm_api API = { UpdateCVarAPI,  AcquireCVarAPI, FindCVarAPI, ChunkwmBroadcast };
 
 internal bool
 VerifyPluginABI(plugin_details *Info)
@@ -153,6 +156,28 @@ IsPluginLoaded(const char *Filename)
     return Result;
 }
 
+plugin *GetPluginFromFilename(const char *Filename)
+{
+    BeginLoadedPluginList();
+
+    int Length = strlen(Filename) + 3 + 1;
+    char FilenameWithExtension[Length];
+    snprintf(FilenameWithExtension, Length, "%s.so", Filename);
+
+    plugin *Result;
+    if(LoadedPlugins.find(FilenameWithExtension) != LoadedPlugins.end())
+    {
+        Result = LoadedPlugins[FilenameWithExtension]->Plugin;
+    }
+    else
+    {
+        Result = NULL;
+    }
+
+    EndLoadedPluginList();
+    return Result;
+}
+
 
 loaded_plugin_list *BeginLoadedPluginList()
 {
@@ -209,7 +234,7 @@ bool LoadPlugin(const char *Absolutepath, const char *Filename)
     LoadedPlugin->Plugin = Plugin;
     LoadedPlugin->Info = Info;
 
-    if(!Plugin->Init(ChunkwmBroadcast))
+    if(!Plugin->Init(API))
     {
         fprintf(stderr, "chunkwm: plugin '%s' init failed!\n", Info->PluginName);
         goto plugin_init_err;

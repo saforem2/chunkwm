@@ -5,10 +5,10 @@
 #include "../../common/accessibility/window.h"
 #include "../../common/accessibility/element.h"
 #include "../../common/border/border.h"
+#include "../../common/config/cvar.h"
 #include "../../common/ipc/daemon.h"
 #include "../../common/misc/assert.h"
 #include "../../common/misc/debug.h"
-#include "../../common/config/cvar.h"
 
 #include "region.h"
 #include "node.h"

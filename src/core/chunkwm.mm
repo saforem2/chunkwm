@@ -11,6 +11,7 @@
 #include "state.h"
 #include "plugin.h"
 #include "wqueue.h"
+#include "cvar.h"
 
 #include "constants.h"
 
@@ -23,8 +24,8 @@
 #include "../common/accessibility/element.cpp"
 
 #include "../common/ipc/daemon.cpp"
-#include "../common/config/cvar.cpp"
 #include "../common/config/tokenize.cpp"
+#include "../common/config/cvar.cpp"
 
 #include "dispatch/carbon.cpp"
 #include "dispatch/workspace.mm"
@@ -37,6 +38,7 @@
 #include "plugin.cpp"
 #include "wqueue.cpp"
 #include "config.cpp"
+#include "cvar.cpp"
 
 #define internal static
 #define local_persist static
