@@ -8,9 +8,9 @@ older versions may or may not be compatible and will not be officially supported
 
 | NAME            | RELEASE | VERSION |
 |-----------------|:-------:|:-------:|
-| chunkwm-core    | Alpha   | 0.1.0   |
-| chunkwm-tiling  | Alpha   | 0.1.0   |
-| chunkwm-border  | Alpha   | 0.1.0   |
+| chunkwm-core    | Alpha   | 0.2.1   |
+| chunkwm-tiling  | Alpha   | 0.2.0   |
+| chunkwm-border  | Alpha   | 0.2.0   |
 | chunkwm-ffm     | Alpha   | 0.1.0   |
 
 [click here to view current project status](https://github.com/koekeishiya/chunkwm/issues/16)
