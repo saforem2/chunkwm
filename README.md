@@ -134,4 +134,6 @@ see [**sample config**](https://github.com/koekeishiya/chunkwm/blob/master/examp
 
 visit [**chunkwm-tiling reference**](https://github.com/koekeishiya/chunkwm/tree/master/src/plugins/tiling/README.md)
 
+visit [**chunkwm-border reference**](https://github.com/koekeishiya/chunkwm/tree/master/src/plugins/border/README.md)
+
 a sample keybinding config file for [**khd**](https://github.com/koekeishiya/khd) is also available [**here**](https://github.com/koekeishiya/chunkwm/tree/master/src/plugins/tiling/examples/khdrc)
