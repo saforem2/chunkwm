@@ -140,27 +140,27 @@
 
 ##### focus window
 
-    chunkc window --focus <option>
+    chunkc tiling::window --focus <option>
     <option>: north | east | south | west
     short flag: -f
 
 ##### swap window
 
-    chunkc window --swap <option>
+    chunkc tiling::window --swap <option>
     <option>: north | east | south | west
     short flag: -s
     desc: swap two windows in-place
 
 ##### warp window
 
-    chunkc window --warp <option>
+    chunkc tiling::window --warp <option>
     <option>: north | east | south | west
     short flag: -w
     desc: move window in direction and modifies layout
 
 ##### warp floating window
 
-    chunkc window --warp-floating <option>
+    chunkc tiling::window --warp-floating <option>
     <option>: fullscreen | left | right | top-left
               top-right  | bottom-left  | bottom-right
     short flag: -W
@@ -168,39 +168,39 @@
 
 ##### send window to desktop
 
-    chunkc window --send-to-desktop <option>
+    chunkc tiling::window --send-to-desktop <option>
     <option>: prev | next | index
     short flag: -d
 
 ##### send window to monitor
 
-    chunkc window --send-to-monitor <option>
+    chunkc tiling::window --send-to-monitor <option>
     <option>: prev | next | index
     short flag: -m
 
 ##### increase region size
 
-    chunkc window --use-temporary-ratio <ratio> --adjust-window-edge <option>
+    chunkc tiling::window --use-temporary-ratio <ratio> --adjust-window-edge <option>
     <ratio>: 0 < value < 1
     <option>: north | east | south | west
     short flags: -r, -e
 
 ##### decrease region size
 
-    chunkc window --use-temporary-ratio <ratio> --adjust-window-edge <option>
+    chunkc tiling::window --use-temporary-ratio <ratio> --adjust-window-edge <option>
     <ratio>: -1 < value < 0
     <option>: north | east | south | west
     short flags: -r, -e
 
 ##### set bsp-insertion point
 
-    chunkc window --use-insertion-point <option>
+    chunkc tiling::window --use-insertion-point <option>
     <option>: focus | north | east | south | west
     short flag: -i
 
 ##### toggle various window options
 
-    chunkc window --toggle <option>
+    chunkc tiling::window --toggle <option>
     <option>: native-fullscreen | fullscreen | parent | split | float
     short flag: -t
 
@@ -210,53 +210,53 @@
 
 ##### desktop layout
 
-    chunkc desktop --layout <option>
+    chunkc tiling::desktop --layout <option>
     <option>: bsp | monocle | float
     short flag: -l
 
 ##### rotate desktop
 
-    chunkc desktop --rotate <option>
+    chunkc tiling::desktop --rotate <option>
     <option>: 90 | 180 | 270
     short flag: -r
 
 ##### mirror desktop
 
-    chunkc desktop --mirror <option>
+    chunkc tiling::desktop --mirror <option>
     <option>: vertical | horizontal
     short flag: -m
 
 ##### equalize size of all windows on desktop
 
-    chunkc desktop --equalize
+    chunkc tiling::desktop --equalize
     short flag: -e
 
 ##### adjust desktop padding
 
-    chunkc desktop --padding <option>
+    chunkc tiling::desktop --padding <option>
     <option>: inc | dec
     short flag: -p
 
 ##### adjust desktop window gap
 
-    chunkc desktop --gap <option>
+    chunkc tiling::desktop --gap <option>
     <option>: inc | dec
     short flag: -g
 
 ##### toggle desktop offset and window gap
 
-    chunkc desktop --toggle offset
+    chunkc tiling::desktop --toggle offset
     short flag: -t
 
 ##### serialize desktop bsp-tree to file
 
-    chunkc desktop --serialize <file
+    chunkc tiling::desktop --serialize <file
     <file>: /path/to/file
     short flag: -s
 
 ##### deserialize desktop bsp-tree from file
 
-    chunkc desktop --deserialize <file
+    chunkc tiling::desktop --deserialize <file
     <file>: /path/to/file
     short flag: -d
 
@@ -266,7 +266,7 @@
 
 ##### focus monitor
 
-    chunkc monitor -f <option>
+    chunkc tiling::monitor -f <option>
     <option>: prev | next | index
 
 #### window rules
@@ -284,5 +284,5 @@
 
 sample rules:
 
-    chunkc rule --owner "System Preferences" --state tile
-    chunkc rule --owner Finder --name Copy --state float
+    chunkc tiling::rule --owner \"System Preferences\" --state tile
+    chunkc tiling::rule --owner Finder --name Copy --state float
