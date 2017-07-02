@@ -60,6 +60,14 @@ chunkc set window_region_locked          1
 chunkc set window_float_topmost          0
 
 #
+# NOTE: The following are config variables for the chunkwm-border plugin
+#
+
+chunkc set focused_border_color          0xffffff00
+chunkc set focused_border_width          4
+chunkc set focused_border_radius         4
+
+#
 # NOTE: specify plugins to load when chunkwm starts.
 #
 

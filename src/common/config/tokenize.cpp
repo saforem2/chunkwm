@@ -51,6 +51,15 @@ int TokenToInt(token Token)
     return Result;
 }
 
+unsigned TokenToUnsigned(token Token)
+{
+    unsigned int Result = 0;
+    char *String = TokenToString(Token);
+    sscanf(String, "%x", &Result);
+    free(String);
+    return Result;
+}
+
 internal inline bool
 IsWhiteSpace(char C)
 {

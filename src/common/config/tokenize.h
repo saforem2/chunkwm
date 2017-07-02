@@ -11,6 +11,7 @@ bool TokenEquals(token Token, const char *Match);
 char *TokenToString(token Token);
 float TokenToFloat(token Token);
 int TokenToInt(token Token);
+unsigned TokenToUnsigned(token Token);
 
 // NOTE(koekeishiya): simple 'whitespace' tokenizer
 token GetToken(const char **Data);

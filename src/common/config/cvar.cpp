@@ -28,6 +28,15 @@ void UpdateCVar(const char *Name, int Value)
     free(String);
 }
 
+void UpdateCVar(const char *Name, unsigned Value)
+{
+    char *String = (char *) malloc(256);
+    memset(String, 0, 256);
+    snprintf(String, 256, "%x", Value);
+    ChunkwmAPI->UpdateCVar(Name, String);
+    free(String);
+}
+
 void UpdateCVar(const char *Name, float Value)
 {
     char *String = (char *) malloc(256);
@@ -43,6 +52,12 @@ void UpdateCVar(const char *Name, char *Value)
 }
 
 void CreateCVar(const char *Name, int Value)
+{
+    if(CVarExists(Name)) return;
+    UpdateCVar(Name, Value);
+}
+
+void CreateCVar(const char *Name, unsigned Value)
 {
     if(CVarExists(Name)) return;
     UpdateCVar(Name, Value);
@@ -65,6 +80,14 @@ int CVarIntegerValue(const char *Name)
     char *String = ChunkwmAPI->AcquireCVar(Name);
     int Result = 0;
     sscanf(String, "%d", &Result);
+    return Result;
+}
+
+int CVarUnsignedValue(const char *Name)
+{
+    char *String = ChunkwmAPI->AcquireCVar(Name);
+    unsigned Result = 0;
+    sscanf(String, "%x", &Result);
     return Result;
 }
 

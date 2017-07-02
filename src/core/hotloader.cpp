@@ -95,13 +95,13 @@ HOTLOADER_CALLBACK(HotloadPluginCallback)
             printf("hotloader: plugin '%s' changed!\n", Filename);
 
             DEBUG_PRINT("hotloader: unloading plugin '%s'\n", Filename);
-            PerformIOOperation("unload", Filename);
+            PerformIOOperation("core::unload", Filename);
 
             struct stat Buffer;
             if(stat(Absolutepath, &Buffer) == 0)
             {
                 DEBUG_PRINT("hotloader: loading plugin '%s'\n", Filename);
-                PerformIOOperation("load", Filename);
+                PerformIOOperation("core::load", Filename);
             }
         }
     }
