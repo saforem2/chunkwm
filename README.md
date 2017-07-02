@@ -48,7 +48,19 @@ The **chunkwm-tiling** plugin requires ['displays have separate spaces'](https:/
 
 #### MacPorts
 
-Soon (TM)
+There are no officially maintained ports in the MacPorts repository, however, I have created
+ports that can be added locally. If someone is interested in maintaining ports in the official
+repository, they are free to do so.
+
+    git clone https://github.com/koekeishiya/portfiles /opt/koekeishiya/portfiles
+    # add /opt/koekeishiya/portfiles to /opt/local/etc/macports/sources.conf
+
+    sudo port -v selfupdate
+
+    # default variant: chunkwm +tiling +border
+    sudo port install chunkwm
+
+    # copy sample config and launchd .plist file as specified in the final *port* notes
 
 #### Homebrew
 
