@@ -218,6 +218,8 @@ int main(int Count, char **Args)
     // NOTE(koekeishiya): The config file is just an executable bash script!
     system(ConfigFile);
 
+    printf("chunkwm: config file finished executing\n");
+
     // NOTE(koekeishiya): Read plugin directory from cvar.
     char *PluginDirectory = CVarStringValue(CVAR_PLUGIN_DIR);
     if(PluginDirectory && CVarIntegerValue(CVAR_PLUGIN_HOTLOAD))
