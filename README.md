@@ -8,7 +8,7 @@ older versions may or may not be compatible and will not be officially supported
 
 | NAME            | RELEASE | VERSION |
 |-----------------|:-------:|:-------:|
-| chunkwm-core    | Alpha   | 0.2.1   |
+| chunkwm-core    | Alpha   | 0.2.2   |
 | chunkwm-tiling  | Alpha   | 0.2.0   |
 | chunkwm-border  | Alpha   | 0.2.0   |
 | chunkwm-ffm     | Alpha   | 0.1.0   |
@@ -101,7 +101,9 @@ requires xcode-8 command line tools.
 
 **chunkwm** uses a bash script as its configuration file and is located at `$HOME/.chunkwmrc`.
 
-a symlink can be made for people who wish to keep the actual file in some other location.
+a different location can be used by using the `--config | -c` argument.
+
+e.g: `chunkwm --config /opt/local/etc/chunkwm/chunkwmrc`
 
 both the *chunkwm-core* and all plugins are configured in this file !!!
 
