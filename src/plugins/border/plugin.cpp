@@ -8,12 +8,15 @@
 #include "../../common/accessibility/element.h"
 #include "../../common/accessibility/display.h"
 #include "../../common/border/border.h"
+#include "../../common/config/tokenize.h"
+#include "../../common/config/cvar.h"
 #include "../../common/misc/assert.h"
 
 #define internal static
 
 internal macos_application *Application;
 internal border_window *Border;
+internal chunkwm_api API;
 
 internal void
 ClearBorderWindow(border_window *Border)
@@ -159,10 +162,28 @@ SpaceChangedHandler()
 }
 
 inline bool
-StringsAreEqual(const char *A, const char *B)
+StringEquals(const char *A, const char *B)
 {
     bool Result = (strcmp(A, B) == 0);
     return Result;
+}
+
+internal void
+CommandHandler(void *Data)
+{
+    chunkwm_payload *Payload = (chunkwm_payload *) Data;
+    if(StringEquals(Payload->Command, "color"))
+    {
+        token Token = GetToken(&Payload->Message);
+        if(Token.Length > 0)
+        {
+            unsigned Color = TokenToUnsigned(Token);
+            if(Border)
+            {
+                UpdateBorderWindowColor(Border, Color);
+            }
+        }
+    }
 }
 
 /*
@@ -173,44 +194,49 @@ StringsAreEqual(const char *A, const char *B)
  * */
 PLUGIN_MAIN_FUNC(PluginMain)
 {
-    if(StringsAreEqual(Node, "chunkwm_export_application_activated"))
+    if(StringEquals(Node, "chunkwm_export_application_activated"))
     {
         ApplicationActivatedHandler(Data);
         return true;
     }
-    else if(StringsAreEqual(Node, "chunkwm_export_application_deactivated"))
+    else if(StringEquals(Node, "chunkwm_export_application_deactivated"))
     {
         ApplicationDeactivatedHandler(Data);
         return true;
     }
-    else if(StringsAreEqual(Node, "chunkwm_export_window_destroyed"))
+    else if(StringEquals(Node, "chunkwm_export_window_destroyed"))
     {
         WindowDestroyedHandler(Data);
         return true;
     }
-    else if(StringsAreEqual(Node, "chunkwm_export_window_focused"))
+    else if(StringEquals(Node, "chunkwm_export_window_focused"))
     {
         WindowFocusedHandler(Data);
         return true;
     }
-    else if(StringsAreEqual(Node, "chunkwm_export_window_moved"))
+    else if(StringEquals(Node, "chunkwm_export_window_moved"))
     {
         WindowMovedHandler(Data);
         return true;
     }
-    else if(StringsAreEqual(Node, "chunkwm_export_window_resized"))
+    else if(StringEquals(Node, "chunkwm_export_window_resized"))
     {
         WindowResizedHandler(Data);
         return true;
     }
-    else if(StringsAreEqual(Node, "chunkwm_export_window_minimized"))
+    else if(StringEquals(Node, "chunkwm_export_window_minimized"))
     {
         WindowMinimizedHandler(Data);
         return true;
     }
-    else if(StringsAreEqual(Node, "chunkwm_export_space_changed"))
+    else if(StringEquals(Node, "chunkwm_export_space_changed"))
     {
         SpaceChangedHandler();
+        return true;
+    }
+    else if(StringEquals(Node, "chunkwm_daemon_command"))
+    {
+        CommandHandler(Data);
         return true;
     }
 
@@ -224,7 +250,28 @@ PLUGIN_MAIN_FUNC(PluginMain)
  */
 PLUGIN_BOOL_FUNC(PluginInit)
 {
-    Border = CreateBorderWindow(0, 0, 0, 0, 4, 4, 0xffd5c4a1);
+    API = ChunkwmAPI;
+    BeginCVars(&API);
+
+    if(!CVarExists("focused_border_color"))
+    {
+        UpdateCVar("focused_border_color", 0xffd5c4a1);
+    }
+
+    if(!CVarExists("focused_border_width"))
+    {
+        UpdateCVar("focused_border_width", 4);
+    }
+
+    if(!CVarExists("focused_border_radius"))
+    {
+        UpdateCVar("focused_border_radius", 4);
+    }
+
+    unsigned Color = CVarUnsignedValue("focused_border_color");
+    int Width = CVarIntegerValue("focused_border_width");
+    int Radius = CVarIntegerValue("focused_border_radius");
+    Border = CreateBorderWindow(0, 0, 0, 0, Width, Radius, Color);
     return true;
 }
 
