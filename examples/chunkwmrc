@@ -67,6 +67,9 @@ chunkc core::load tiling.so
 chunkc core::load ffm.so
 chunkc core::load border.so
 
+chunkc tiling::rule --owner \"System Preferences\" --state tile
+chunkc tiling::rule --owner Finder --name Copy --state float
+
 #
 # NOTE: if chunkc plugin_dir is not set, the absolutepath is necessary.
 #

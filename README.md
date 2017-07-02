@@ -48,24 +48,7 @@ The **chunkwm-tiling** plugin requires ['displays have separate spaces'](https:/
 
 #### MacPorts
 
-There are no officially maintained ports in the MacPorts repository, however, I have created
-ports that can be added locally. If someone is interested in maintaining ports in the official
-repository, they are free to do so.
-
-    git clone https://github.com/koekeishiya/portfiles /opt/koekeishiya/portfiles
-    add /opt/koekeishiya/portfiles in /opt/local/etc/macports/sources.conf
-
-    sudo port -v selfupdate
-
-    sudo port install chunkwm-core
-    ps: notes regarding launchctl and sample config
-
-    sudo port install chunkwm-tiling
-    ps: notes regarding sample config
-
-    sudo port install chunkwm-border
-
-    sudo port install chunkwm-ffm
+Soon (TM)
 
 #### Homebrew
 
@@ -99,7 +82,6 @@ requires xcode-8 command line tools.
     make install
     mkdir -p ~/.chunkwm_plugins
     cp -n ../../../plugins/tiling.so ~/.chunkwm_plugins
-    cp -n examples/chwmtilingrc ~/.chunkwmtilingrc
 
 **chunkwm-border**:
 
@@ -117,28 +99,25 @@ requires xcode-8 command line tools.
 
 ## Configuration
 
-**chunkwm-core** has a very sparse configuration file, located at `$HOME/.chunkwmrc`.
+**chunkwm** uses a bash script as its configuration file and is located at `$HOME/.chunkwmrc`.
 
 a symlink can be made for people who wish to keep the actual file in some other location.
 
-the config file is simply a bash script that specifies which plugins to load and how they are loaded.
+both the *chunkwm-core* and all plugins are configured in this file !!!
+
+settings that should apply to a plugin should be set before the command to load said plugin.
+
+the valid options for **chunkwm-core** are:
+
+    chunkc core::plugin_dir </path/to/plugins>
+    chunkc core::hotload <1 | 0>
+    chunkc core::load <plugin>
+    chunkc core::unload <plugin>
 
 plugins can be loaded and unloaded without having to restart **chunkwm**.
 
 see [**sample config**](https://github.com/koekeishiya/chunkwm/blob/master/examples/chunkwmrc) for further information.
 
-**chunkwm-tiling** is where the magic happens, and so it has a more complex configuration structure.
-
-the config file is also a bash script, located at `$HOME/.chunkwmtilingrc`.
-
-the config simply executes commands that write messages to *chunkwm-tiling*'s socket.
-most of these can therefore be applied during runtime, which leaves us with two types of messages.
-
-* cvar (config variable)
-* command (runtime interaction)
-
-visit [**chunkwm-tiling reference**](https://github.com/koekeishiya/chunkwm/tree/master/src/plugins/tiling/README.md),
-and the [**sample config**](https://github.com/koekeishiya/chunkwm/blob/master/src/plugins/tiling/examples/chwmtilingrc)
-for further information
+visit [**chunkwm-tiling reference**](https://github.com/koekeishiya/chunkwm/tree/master/src/plugins/tiling/README.md)
 
 a sample keybinding config file for [**khd**](https://github.com/koekeishiya/khd) is also available [**here**](https://github.com/koekeishiya/chunkwm/tree/master/src/plugins/tiling/examples/khdrc)
