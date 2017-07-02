@@ -41,6 +41,7 @@
 * [monitor commands](#monitor-commands)
   * [focus monitor](#focus-monitor)
 * [window rules](#window-rules)
+  * [sample rules](#sample-rules)
 
 ---
 
@@ -250,13 +251,13 @@
 
 ##### serialize desktop bsp-tree to file
 
-    chunkc tiling::desktop --serialize <file
+    chunkc tiling::desktop --serialize <file>
     <file>: /path/to/file
     short flag: -s
 
 ##### deserialize desktop bsp-tree from file
 
-    chunkc tiling::desktop --deserialize <file
+    chunkc tiling::desktop --deserialize <file>
     <file>: /path/to/file
     short flag: -d
 
@@ -268,6 +269,8 @@
 
     chunkc tiling::monitor -f <option>
     <option>: prev | next | index
+
+---
 
 #### window rules
 
@@ -282,7 +285,7 @@
 | --state    | -s         | float | automatically float window             |
 | --state    | -s         | tile  | force-tile window regardless of AXRole |
 
-sample rules:
+##### sample rules
 
     chunkc tiling::rule --owner \"System Preferences\" --state tile
     chunkc tiling::rule --owner Finder --name Copy --state float
