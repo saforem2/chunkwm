@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <getopt.h>
 
 #include "dispatch/carbon.h"
 #include "dispatch/workspace.h"
@@ -43,6 +44,27 @@
 #define internal static
 #define local_persist static
 
+internal char *ConfigAbsolutePath;
+
+inline void
+Fail(const char *Format, ...)
+{
+    va_list Args;
+    va_start(Args, Format);
+    vfprintf(stderr, Format, Args);
+    va_end(Args);
+    exit(EXIT_FAILURE);
+}
+
+inline void
+Warn(const char *Format, ...)
+{
+    va_list Args;
+    va_start(Args, Format);
+    vfprintf(stderr, Format, Args);
+    va_end(Args);
+}
+
 inline AXUIElementRef
 SystemWideElement()
 {
@@ -75,47 +97,64 @@ CheckAccessibilityPrivileges()
     return Result;
 }
 
-inline bool
-CheckArguments(int Count, char **Args)
+inline void
+SetConfigFile(char *ConfigFile, size_t Size)
 {
-    if(Count == 2)
+    if(ConfigAbsolutePath)
     {
-        if((strcmp(Args[1], "--version") == 0) ||
-           (strcmp(Args[1], "-v") == 0))
+        snprintf(ConfigFile, Size, "%s", ConfigAbsolutePath);
+    }
+    else
+    {
+        const char *HomeEnv = getenv("HOME");
+        if(!HomeEnv)
         {
-            printf("chunkwm %d.%d.%d\n",
-                    CHUNKWM_MAJOR,
-                    CHUNKWM_MINOR,
-                    CHUNKWM_PATCH);
-            return true;
+            Fail("chunkwm: 'env HOME' not set! abort..\n");
+        }
+
+        snprintf(ConfigFile, Size, "%s/%s", HomeEnv, CHUNKWM_CONFIG);
+    }
+
+}
+
+internal bool
+ParseArguments(int Count, char **Args)
+{
+    int Option;
+    const char *Short = "vc:";
+    struct option Long[] =
+    {
+        { "version", no_argument, NULL, 'v' },
+        { "config", required_argument, NULL, 'c' },
+        { NULL, 0, NULL, 0 }
+    };
+
+    while((Option = getopt_long(Count, Args, Short, Long, NULL)) != -1)
+    {
+        switch(Option)
+        {
+            case 'v':
+            {
+                printf("chunkwm %d.%d.%d\n",
+                        CHUNKWM_MAJOR,
+                        CHUNKWM_MINOR,
+                        CHUNKWM_PATCH);
+                return true;
+            } break;
+            case 'c':
+            {
+                ConfigAbsolutePath = strdup(optarg);
+                return false;
+            } break;
         }
     }
 
     return false;
 }
 
-inline void
-Fail(const char *Format, ...)
-{
-    va_list Args;
-    va_start(Args, Format);
-    vfprintf(stderr, Format, Args);
-    va_end(Args);
-    exit(EXIT_FAILURE);
-}
-
-inline void
-Warn(const char *Format, ...)
-{
-    va_list Args;
-    va_start(Args, Format);
-    vfprintf(stderr, Format, Args);
-    va_end(Args);
-}
-
 int main(int Count, char **Args)
 {
-    if(CheckArguments(Count, Args))
+    if(ParseArguments(Count, Args))
     {
         return EXIT_SUCCESS;
     }
@@ -135,17 +174,9 @@ int main(int Count, char **Args)
         Fail("chunkwm: failed to initialize daemon! abort..\n");
     }
 
-    const char *HomeEnv = getenv("HOME");
-    if(!HomeEnv)
-    {
-        Fail("chunkwm: 'env HOME' not set! abort..\n");
-    }
-
     char ConfigFile[MAX_LEN];
     ConfigFile[0] = '\0';
-
-    snprintf(ConfigFile, sizeof(ConfigFile),
-             "%s/%s", HomeEnv, CHUNKWM_CONFIG);
+    SetConfigFile(ConfigFile, MAX_LEN);
 
     struct stat Buffer;
     if(stat(ConfigFile, &Buffer) != 0)
