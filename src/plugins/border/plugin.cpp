@@ -184,6 +184,10 @@ CommandHandler(void *Data)
             }
         }
     }
+    else if(StringEquals(Payload->Command, "clear"))
+    {
+        ClearBorderWindow(Border);
+    }
 }
 
 /*
