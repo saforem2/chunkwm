@@ -10,8 +10,8 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-// NOTE(koekeishiya): 4131 is the port used by chwm tiling plugin.
-#define FALLBACK_PORT 4131
+// NOTE(koekeishiya): 3920 is the port used by chunkwm.
+#define FALLBACK_PORT 3920
 
 int main(int Argc, char **Argv)
 {

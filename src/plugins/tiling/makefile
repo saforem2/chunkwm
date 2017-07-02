@@ -10,8 +10,8 @@ SRC				= ./plugin.cpp ./node.cpp ./region.cpp ./vspace.cpp \
 				  ./../../common/dispatch/cgeventtap.cpp \
 				  ./../../common/border/border.mm \
 				  ./../../common/ipc/daemon.cpp \
-				  ./../../common/config/cvar.cpp \
 				  ./../../common/config/tokenize.cpp \
+				  ./../../common/config/cvar.cpp \
 				  ./../../common/misc/carbon.cpp \
 				  ./../../common/misc/workspace.mm
 BINS			= $(BUILD_PATH)/tiling.so

@@ -2,8 +2,8 @@
 #include "vspace.h"
 #include "constants.h"
 
-#include "../../common/config/cvar.h"
 #include "../../common/config/tokenize.h"
+#include "../../common/config/cvar.h"
 #include "../../common/misc/assert.h"
 #include "../../common/accessibility/window.h"
 #include "../../common/accessibility/element.h"
@@ -38,6 +38,21 @@ node_split OptimalSplitMode(node *Node)
 
     float NodeRatio = Node->Region.Width / Node->Region.Height;
     return NodeRatio >= OptimalRatio ? Split_Vertical : Split_Horizontal;
+}
+
+node_split NodeSplitFromString(char *Value)
+{
+    for(int Index = Split_None;
+        Index <= Split_Horizontal;
+        ++Index)
+    {
+        if(strcmp(Value, node_split_str[Index]) == 0)
+        {
+            return (node_split) Index;
+        }
+    }
+
+    return Split_None;
 }
 
 node *CreateRootNode(uint32_t WindowId, macos_space *Space, virtual_space *VirtualSpace)
@@ -491,7 +506,7 @@ struct serialized_node
 {
     int TypeId;
     char *Type;
-    int Split;
+    char *Split;
     float Ratio;
     serialized_node *Next;
 };
@@ -504,7 +519,7 @@ ChainSerializedNode(serialized_node *Root, const char *NodeType, node *Node)
 
     SerializedNode->TypeId = Node_Serialized_Root;
     SerializedNode->Type = strdup(NodeType);
-    SerializedNode->Split = Node->Split;
+    SerializedNode->Split = node_split_str[Node->Split];
     SerializedNode->Ratio = Node->Ratio;
 
     Root->Next = SerializedNode;
@@ -572,7 +587,7 @@ char *SerializeNodeToBuffer(node *Node)
         {
             ASSERT(Cursor < EndOfBuffer);
             BytesWritten = snprintf(Cursor, BufferSize,
-                                    "%s %d %.3f\n",
+                                    "%s %s %.3f\n",
                                     Current->Type,
                                     Current->Split,
                                     Current->Ratio);
@@ -609,10 +624,12 @@ node *DeserializeNodeFromBuffer(char *Buffer)
     ASSERT(TokenEquals(Token, "root"));
 
     token Split = GetToken(&Cursor);
+    char *SplitString = TokenToString(Split);
     token Ratio = GetToken(&Cursor);
 
     Tree->WindowId = Node_PseudoLeaf;
-    Tree->Split = (node_split) TokenToInt(Split);
+    Tree->Split = NodeSplitFromString(SplitString);
+    free(SplitString);
     Tree->Ratio = TokenToFloat(Ratio);
 
     Token = GetToken(&Cursor);
@@ -624,11 +641,13 @@ node *DeserializeNodeFromBuffer(char *Buffer)
             memset(Left, 0, sizeof(node));
 
             token Split = GetToken(&Cursor);
+            char *SplitString = TokenToString(Split);
             token Ratio = GetToken(&Cursor);
 
             Left->WindowId = Node_PseudoLeaf;
             Left->Parent = Current;
-            Left->Split = (node_split) TokenToInt(Split);
+            Left->Split = NodeSplitFromString(SplitString);
+            free(SplitString);
             Left->Ratio = TokenToFloat(Ratio);
 
             Current->Left = Left;
@@ -640,11 +659,13 @@ node *DeserializeNodeFromBuffer(char *Buffer)
             memset(Right, 0, sizeof(node));
 
             token Split = GetToken(&Cursor);
+            char *SplitString = TokenToString(Split);
             token Ratio = GetToken(&Cursor);
 
             Right->WindowId = Node_PseudoLeaf;
             Right->Parent = Current;
-            Right->Split = (node_split) TokenToInt(Split);
+            Right->Split = NodeSplitFromString(SplitString);
+            free(SplitString);
             Right->Ratio = TokenToFloat(Ratio);
 
             Current->Right = Right;

@@ -3,10 +3,10 @@
 #include "constants.h"
 #include "misc.h"
 
-#include "../../common/config/cvar.h"
 #include "../../common/accessibility/element.h"
 #include "../../common/accessibility/display.h"
 #include "../../common/misc/assert.h"
+#include "../../common/config/cvar.h"
 
 #include <stdlib.h>
 #include <pthread.h>
@@ -17,6 +17,22 @@
 internal virtual_space_map VirtualSpaces;
 internal pthread_mutex_t VirtualSpacesLock;
 
+internal virtual_space_mode
+VirtualSpaceModeFromString(char *Value)
+{
+    for(int Index = Virtual_Space_Bsp;
+        Index <= Virtual_Space_Float;
+        ++Index)
+    {
+        if(strcmp(Value, virtual_space_mode_str[Index]) == 0)
+        {
+            return (virtual_space_mode) Index;
+        }
+    }
+
+    return Virtual_Space_Bsp;
+}
+
 internal virtual_space_config
 GetVirtualSpaceConfig(unsigned SpaceIndex)
 {
@@ -24,8 +40,8 @@ GetVirtualSpaceConfig(unsigned SpaceIndex)
 
     char KeyMode[BUFFER_SIZE];
     snprintf(KeyMode, BUFFER_SIZE, "%d_%s", SpaceIndex, _CVAR_SPACE_MODE);
-    Config.Mode = CVarExists(KeyMode) ? (virtual_space_mode) CVarIntegerValue(KeyMode)
-                                      : (virtual_space_mode) CVarIntegerValue(CVAR_SPACE_MODE);
+    Config.Mode = CVarExists(KeyMode) ? VirtualSpaceModeFromString(CVarStringValue(KeyMode))
+                                      : VirtualSpaceModeFromString(CVarStringValue(CVAR_SPACE_MODE));
     char KeyTop[BUFFER_SIZE];
     snprintf(KeyTop, BUFFER_SIZE, "%d_%s", SpaceIndex, _CVAR_SPACE_OFFSET_TOP);
     Config.Offset.Top = CVarExists(KeyTop) ? CVarFloatingPointValue(KeyTop)

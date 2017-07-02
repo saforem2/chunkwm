@@ -2,21 +2,17 @@
 #define CHUNKWM_PLUGIN_API_H
 
 #include "plugin_export.h"
+#include "plugin_cvar.h"
 
 #define CHUNKWM_EXTERN extern "C"
 
 // NOTE(koekeishiya): Increment upon ABI breaking changes!
-#define CHUNKWM_PLUGIN_API_VERSION 4
+#define CHUNKWM_PLUGIN_API_VERSION 5
 
 // NOTE(koekeishiya): Forward-declare struct
 struct plugin;
 
-typedef void (plugin_broadcast)(const char *Plugin,
-                                const char *Event,
-                                void *Data,
-                                size_t Size);
-
-#define PLUGIN_BOOL_FUNC(name) bool name(plugin_broadcast *Broadcast)
+#define PLUGIN_BOOL_FUNC(name) bool name(chunkwm_api ChunkwmAPI)
 typedef PLUGIN_BOOL_FUNC(plugin_bool_func);
 
 #define PLUGIN_VOID_FUNC(name) void name()

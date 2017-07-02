@@ -8,6 +8,12 @@
 #include <pthread.h>
 #include <map>
 
+static char *virtual_space_mode_str[] =
+{
+    "bsp",
+    "monocle",
+    "float"
+};
 enum virtual_space_mode
 {
     Virtual_Space_Bsp,

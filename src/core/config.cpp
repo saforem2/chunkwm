@@ -1,16 +1,23 @@
 #include "plugin.h"
 
 #include "../common/config/tokenize.h"
-#include "../common/config/cvar.h"
 #include "../common/misc/assert.h"
 #include "../common/ipc/daemon.h"
 
 #include "constants.h"
+#include "cvar.h"
 
 #include <stdio.h>
 #include <string.h>
 
 #define internal static
+
+struct chunkwm_delegate
+{
+    char *Target;
+    char *Command;
+    const char *Message;
+};
 
 struct plugin_fs
 {
@@ -101,26 +108,65 @@ DestroyPluginFS(plugin_fs *PluginFS)
     free(PluginFS->Filename);
 }
 
-DAEMON_CALLBACK(DaemonCallback)
+internal bool
+ChunkwmDaemonDelegate(const char *Message, chunkwm_delegate *Delegate)
 {
-    token Type = GetToken(&Message);
-    if(TokenEquals(Type, CVAR_PLUGIN_DIR))
+    bool Success = false;
+    token IdentifierToken = GetToken(&Message);
+
+    if(IdentifierToken.Length > 0)
     {
-        token Token = GetToken(&Message);
+        char *Identifier = TokenToString(IdentifierToken);
+        char Target[64];
+        char Command[64];
+
+        Success = (sscanf(Identifier, "%[^:]%*[:]%s", Target, Command) == 2);
+        if(Success)
+        {
+            Delegate->Target = strdup(Target);
+            Delegate->Command = strdup(Command);
+            Delegate->Message = Message;
+        }
+
+        free(Identifier);
+    }
+
+    return Success;
+}
+
+internal void
+DestroyChunkwmDaemonDelegate(chunkwm_delegate *Delegate)
+{
+    free(Delegate->Target);
+    free(Delegate->Command);
+}
+
+internal inline bool
+StringEquals(const char *A, const char *B)
+{
+    return (strcmp(A, B) == 0);
+}
+
+internal void
+HandleCore(chunkwm_delegate *Delegate)
+{
+    if(StringEquals(Delegate->Command, CVAR_PLUGIN_DIR))
+    {
+        token Token = GetToken(&Delegate->Message);
         char *Directory = TokenToString(Token);
         UpdateCVar(CVAR_PLUGIN_DIR, Directory);
         free(Directory);
     }
-    else if(TokenEquals(Type, CVAR_PLUGIN_HOTLOAD))
+    else if(StringEquals(Delegate->Command, CVAR_PLUGIN_HOTLOAD))
     {
-        token Token = GetToken(&Message);
+        token Token = GetToken(&Delegate->Message);
         int Status = TokenToInt(Token);
         UpdateCVar(CVAR_PLUGIN_HOTLOAD, Status);
     }
-    else if(TokenEquals(Type, "load"))
+    else if(StringEquals(Delegate->Command, "load"))
     {
         plugin_fs PluginFS;
-        if(PopulatePluginPath(&Message, &PluginFS))
+        if(PopulatePluginPath(&Delegate->Message, &PluginFS))
         {
             struct stat Buffer;
             if(stat(PluginFS.Absolutepath, &Buffer) == 0)
@@ -134,13 +180,110 @@ DAEMON_CALLBACK(DaemonCallback)
             DestroyPluginFS(&PluginFS);
         }
     }
-    else if(TokenEquals(Type, "unload"))
+    else if(StringEquals(Delegate->Command, "unload"))
     {
         plugin_fs PluginFS;
-        if(PopulatePluginPath(&Message, &PluginFS))
+        if(PopulatePluginPath(&Delegate->Message, &PluginFS))
         {
             UnloadPlugin(PluginFS.Absolutepath, PluginFS.Filename);
             DestroyPluginFS(&PluginFS);
+        }
+    }
+    else
+    {
+        fprintf(stderr, "chunkwm: invalid command '%s::%s'\n", Delegate->Target, Delegate->Command);
+    }
+}
+
+internal void
+HandlePlugin(int SockFD, chunkwm_delegate *Delegate)
+{
+    plugin *Plugin = GetPluginFromFilename(Delegate->Target);
+    if(Plugin)
+    {
+        chunkwm_payload Payload = { SockFD, Delegate->Command, Delegate->Message };
+        Plugin->Run("chunkwm_daemon_command", (void *) &Payload);
+    }
+    else
+    {
+        fprintf(stderr, "chunkwm: plugin '%s' is not loaded\n", Delegate->Target);
+    }
+}
+
+internal inline bool
+ValidToken(token *Token, const char *Format, ...)
+{
+    bool Result = Token->Length > 0;
+    if(!Result)
+    {
+        va_list Args;
+        va_start(Args, Format);
+        vfprintf(stderr, Format, Args);
+        va_end(Args);
+    }
+    return Result;
+}
+
+internal void
+SetCVar(const char **Message)
+{
+    token NameToken = GetToken(Message);
+    if(ValidToken(&NameToken, "chunkwm: missing cvar name !!!\n"))
+    {
+        token ValueToken = GetToken(Message);
+        if(ValidToken(&ValueToken, "chunkwm: missing value for cvar '%.*s'\n", NameToken.Length, NameToken.Text))
+        {
+            char *Name = TokenToString(NameToken);
+            char *Value = TokenToString(ValueToken);
+            UpdateCVar(Name, Value);
+            free(Name);
+            free(Value);
+        }
+    }
+}
+
+internal void
+GetCVar(const char **Message, int SockFD)
+{
+    token NameToken = GetToken(Message);
+    if(ValidToken(&NameToken, "chunkwm: missing cvar name !!!\n"))
+    {
+        char *Name = TokenToString(NameToken);
+        char *Value = CVarStringValue(Name);
+        WriteToSocket(Value, SockFD);
+        free(Name);
+    }
+}
+
+DAEMON_CALLBACK(DaemonCallback)
+{
+    chunkwm_delegate Delegate;
+    if(ChunkwmDaemonDelegate(Message, &Delegate))
+    {
+        if(StringEquals(Delegate.Target, "core"))
+        {
+            HandleCore(&Delegate);
+        }
+        else
+        {
+            HandlePlugin(SockFD, &Delegate);
+        }
+        DestroyChunkwmDaemonDelegate(&Delegate);
+    }
+    else
+    {
+        token Type = GetToken(&Message);
+        if(TokenEquals(Type, "set"))
+        {
+            SetCVar(&Message);
+        }
+        else if(TokenEquals(Type, "get"))
+        {
+            GetCVar(&Message, SockFD);
+        }
+        else
+        {
+            fprintf(stderr, "chunkwm: invalid command '%.*s %s'\n", Type.Length, Type.Text, Message);
         }
     }
 }
