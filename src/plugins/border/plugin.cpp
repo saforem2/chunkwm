@@ -257,20 +257,9 @@ PLUGIN_BOOL_FUNC(PluginInit)
     API = ChunkwmAPI;
     BeginCVars(&API);
 
-    if(!CVarExists("focused_border_color"))
-    {
-        UpdateCVar("focused_border_color", 0xffd5c4a1);
-    }
-
-    if(!CVarExists("focused_border_width"))
-    {
-        UpdateCVar("focused_border_width", 4);
-    }
-
-    if(!CVarExists("focused_border_radius"))
-    {
-        UpdateCVar("focused_border_radius", 4);
-    }
+    CreateCVar("focused_border_color", 0xffd5c4a1);
+    CreateCVar("focused_border_width", 4);
+    CreateCVar("focused_border_radius", 4);
 
     unsigned Color = CVarUnsignedValue("focused_border_color");
     int Width = CVarIntegerValue("focused_border_width");
