@@ -7,9 +7,8 @@
 #define internal static
 
 internal const char *PluginName = "template";
-internal const char *PluginVersion = "0.0.2";
-
-internal plugin_broadcast *ChunkWMBroadcastEvent;
+internal const char *PluginVersion = "0.1.0";
+internal chunkwm_api API;
 
 inline bool
 StringsAreEqual(const char *A, const char *B)
@@ -42,12 +41,12 @@ PLUGIN_MAIN_FUNC(PluginMain)
 
 /*
  * NOTE(koekeishiya):
- * parameter: plugin_broadcast *Broadcast
+ * parameter: chunkwm_api ChunkwmAPI
  * return: bool -> true if startup succeeded
  */
 PLUGIN_BOOL_FUNC(PluginInit)
 {
-    ChunkWMBroadcastEvent = Broadcast;
+    API = ChunkwmAPI;
     return true;
 }
 
