@@ -3,6 +3,7 @@
 #include "misc.h"
 
 #include "../../common/misc/assert.h"
+#include "../../common/accessibility/display.h"
 #include "../../common/accessibility/window.h"
 #include "../../common/accessibility/application.h"
 #include "../../common/misc/assert.h"
@@ -57,7 +58,15 @@ ApplyWindowRuleState(macos_window *Window, window_rule *Rule)
     else if(StringEquals(Rule->State, "tile"))
     {
         AXLibAddFlags(Window, Window_ForceTile);
-        TileWindow(Window);
+
+        macos_space *Space;
+        bool Success = AXLibActiveSpace(&Space);
+        ASSERT(Success);
+
+        if(AXLibSpaceHasWindow(Space->Id, Window->Id))
+        {
+            TileWindow(Window);
+        }
     }
     else
     {
