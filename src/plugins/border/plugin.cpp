@@ -16,6 +16,8 @@
 
 internal macos_application *Application;
 internal border_window *Border;
+internal bool SkipFloating;
+internal bool DrawBorder;
 internal chunkwm_api API;
 
 internal void
@@ -27,16 +29,19 @@ ClearBorderWindow(border_window *Border)
 internal void
 UpdateWindow(AXUIElementRef WindowRef)
 {
-    CGPoint Position = AXLibGetWindowPosition(WindowRef);
-    CGSize Size = AXLibGetWindowSize(WindowRef);
+    if(DrawBorder)
+    {
+        CGPoint Position = AXLibGetWindowPosition(WindowRef);
+        CGSize Size = AXLibGetWindowSize(WindowRef);
 
-    if(AXLibIsWindowFullscreen(WindowRef))
-    {
-        ClearBorderWindow(Border);
-    }
-    else
-    {
-        UpdateBorderWindowRect(Border, Position.x, Position.y, Size.width, Size.height);
+        if(AXLibIsWindowFullscreen(WindowRef))
+        {
+            ClearBorderWindow(Border);
+        }
+        else
+        {
+            UpdateBorderWindowRect(Border, Position.x, Position.y, Size.width, Size.height);
+        }
     }
 }
 
@@ -190,6 +195,22 @@ CommandHandler(void *Data)
     }
 }
 
+internal inline void
+TilingFocusedWindowFloatStatus(void *Data)
+{
+    uint32_t Status = *(uint32_t *) Data;
+    if(Status)
+    {
+        DrawBorder = false;
+        ClearBorderWindow(Border);
+    }
+    else
+    {
+        DrawBorder = true;
+        UpdateToFocusedWindow();
+    }
+}
+
 /*
  * NOTE(koekeishiya):
  * parameter: const char *Node
@@ -243,6 +264,12 @@ PLUGIN_MAIN_FUNC(PluginMain)
         CommandHandler(Data);
         return true;
     }
+    else if((StringEquals(Node, "Tiling_focused_window_float")) &&
+            (SkipFloating))
+    {
+        TilingFocusedWindowFloatStatus(Data);
+        return true;
+    }
 
     return false;
 }
@@ -260,10 +287,13 @@ PLUGIN_BOOL_FUNC(PluginInit)
     CreateCVar("focused_border_color", 0xffd5c4a1);
     CreateCVar("focused_border_width", 4);
     CreateCVar("focused_border_radius", 4);
+    CreateCVar("focused_border_skip_floating", 0);
 
     unsigned Color = CVarUnsignedValue("focused_border_color");
     int Width = CVarIntegerValue("focused_border_width");
     int Radius = CVarIntegerValue("focused_border_radius");
+    SkipFloating = CVarIntegerValue("focused_border_skip_floating");
+    DrawBorder = !SkipFloating;
     Border = CreateBorderWindow(0, 0, 0, 0, Width, Radius, Color);
     return true;
 }
