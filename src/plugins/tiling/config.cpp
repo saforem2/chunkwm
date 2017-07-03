@@ -519,37 +519,6 @@ End:
 }
 
 inline void
-FetchAndSendIntegerCVar(char *Variable, int SockFD)
-{
-    char Response[32];
-    Response[0] = '\0';
-
-    int Value = CVarIntegerValue(Variable);
-    snprintf(Response, sizeof(Response), "%d", Value);
-
-    WriteToSocket(Response, SockFD);
-}
-
-inline void
-FetchAndSendFloatingPointCVar(char *Variable, int SockFD)
-{
-    char Response[32];
-    Response[0] = '\0';
-
-    float Value = CVarFloatingPointValue(Variable);
-    snprintf(Response, sizeof(Response), "%f", Value);
-
-    WriteToSocket(Response, SockFD);
-}
-
-inline void
-FetchAndSendStringCVar(char *Variable, int SockFD)
-{
-    char *Value = CVarStringValue(Variable);
-    WriteToSocket(Value, SockFD);
-}
-
-inline void
 ParseQueryCommand(const char **Message, int SockFD)
 {
     token Command = GetToken(Message);
