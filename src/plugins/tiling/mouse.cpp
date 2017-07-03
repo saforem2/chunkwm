@@ -60,20 +60,13 @@ CreateResizeBorder(node *Node)
 internal void
 CreateResizeBorders(node *Node)
 {
-    if(Node->WindowId && Node->WindowId != Node_PseudoLeaf)
+    if((Node->WindowId) && (Node->WindowId != Node_PseudoLeaf))
     {
         ResizeBorders.push_back(CreateResizeBorder(Node));
     }
 
-    if(Node->Left)
-    {
-        CreateResizeBorders(Node->Left);
-    }
-
-    if(Node->Right)
-    {
-        CreateResizeBorders(Node->Right);
-    }
+    if(Node->Left)  CreateResizeBorders(Node->Left);
+    if(Node->Right) CreateResizeBorders(Node->Right);
 }
 
 internal void
@@ -110,36 +103,16 @@ LeftMouseDown()
     bool Success = AXLibActiveSpace(&Space);
     ASSERT(Success);
 
-    if(Space->Type != kCGSSpaceUser)
-    {
-        AXLibDestroySpace(Space);
-        return;
-    }
+    virtual_space *VirtualSpace;
+    node *Root, *NodeBelowCursor;
+    CGPoint Cursor;
 
-    virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
-    if(VirtualSpace->Mode != Virtual_Space_Bsp)
-    {
-        ReleaseVirtualSpace(VirtualSpace);
-        AXLibDestroySpace(Space);
-        return;
-    }
-
-    node *Root = VirtualSpace->Tree;
-    if(!Root)
-    {
-        ReleaseVirtualSpace(VirtualSpace);
-        AXLibDestroySpace(Space);
-        return;
-    }
-
-    CGPoint Cursor = AXLibGetCursorPos();
-    node *NodeBelowCursor = GetNodeForPoint(Root, &Cursor);
-    if(!NodeBelowCursor)
-    {
-        ReleaseVirtualSpace(VirtualSpace);
-        AXLibDestroySpace(Space);
-        return;
-    }
+    if(Space->Type != kCGSSpaceUser) goto free_space;
+    VirtualSpace = AcquireVirtualSpace(Space);
+    if(VirtualSpace->Mode != Virtual_Space_Bsp) goto release_vspace;
+    if(!(Root = VirtualSpace->Tree)) goto release_vspace;
+    Cursor = AXLibGetCursorPos();
+    if(!(NodeBelowCursor = GetNodeForPoint(Root, &Cursor))) goto release_vspace;
 
     ResizeState.Mode = Drag_Mode_Swap;
     ResizeState.Horizontal = NodeBelowCursor;
@@ -147,6 +120,13 @@ LeftMouseDown()
     ResizeState.VirtualSpace = VirtualSpace;
 
     ResizeBorders.push_back(CreateResizeBorder(NodeBelowCursor));
+    goto out;
+
+release_vspace:
+        ReleaseVirtualSpace(VirtualSpace);
+free_space:
+        AXLibDestroySpace(Space);
+out:;
 }
 
 internal void
@@ -210,62 +190,35 @@ RightMouseDown()
     bool Success = AXLibActiveSpace(&Space);
     ASSERT(Success);
 
-    if(Space->Type != kCGSSpaceUser)
-    {
-        AXLibDestroySpace(Space);
-        return;
-    }
+    virtual_space *VirtualSpace;
+    bool North, East, South, West;
+    macos_window *WindowBelowCursor;
+    node *Root, *NodeBelowCursor, *Ancestor;
+    macos_window *VerticalWindow, *HorizontalWindow;
+    macos_window *NorthWindow, *EastWindow, *SouthWindow, *WestWindow;
 
-    virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
-    if(VirtualSpace->Mode != Virtual_Space_Bsp)
-    {
-        ReleaseVirtualSpace(VirtualSpace);
-        AXLibDestroySpace(Space);
-        return;
-    }
-
-    node *Root = VirtualSpace->Tree;
-    if(!Root)
-    {
-        ReleaseVirtualSpace(VirtualSpace);
-        AXLibDestroySpace(Space);
-        return;
-    }
-
-    node *NodeBelowCursor = GetNodeForPoint(Root, &Cursor);
-    if(!NodeBelowCursor)
-    {
-        ReleaseVirtualSpace(VirtualSpace);
-        AXLibDestroySpace(Space);
-        return;
-    }
-
-    macos_window *WindowBelowCursor = GetWindowByID(NodeBelowCursor->WindowId);
-    if(!WindowBelowCursor)
-    {
-        ReleaseVirtualSpace(VirtualSpace);
-        AXLibDestroySpace(Space);
-        return;
-    }
+    if(Space->Type != kCGSSpaceUser) goto free_space;
+    VirtualSpace = AcquireVirtualSpace(Space);
+    if(VirtualSpace->Mode != Virtual_Space_Bsp) goto release_vspace;
+    if(!(Root = VirtualSpace->Tree)) goto release_vspace;
+    if(!(NodeBelowCursor = GetNodeForPoint(Root, &Cursor))) goto release_vspace;
+    if(!(WindowBelowCursor = GetWindowByID(NodeBelowCursor->WindowId))) goto release_vspace;
 
     ResizeState.Mode = Drag_Mode_Resize;
     ResizeState.InitialCursor = Cursor;
     ResizeState.Space = Space;
     ResizeState.VirtualSpace = VirtualSpace;
 
-    macos_window *NorthWindow, *EastWindow, *SouthWindow, *WestWindow;
-    bool North = FindClosestWindow(Space, VirtualSpace, WindowBelowCursor, &NorthWindow, "north", false);
-    bool East = FindClosestWindow(Space, VirtualSpace, WindowBelowCursor, &EastWindow, "east", false);
-    bool South = FindClosestWindow(Space, VirtualSpace, WindowBelowCursor, &SouthWindow, "south", false);
-    bool West = FindClosestWindow(Space, VirtualSpace, WindowBelowCursor, &WestWindow, "west", false);
+    North = FindClosestWindow(Space, VirtualSpace, WindowBelowCursor, &NorthWindow, "north", false);
+    East = FindClosestWindow(Space, VirtualSpace, WindowBelowCursor, &EastWindow, "east", false);
+    South = FindClosestWindow(Space, VirtualSpace, WindowBelowCursor, &SouthWindow, "south", false);
+    West = FindClosestWindow(Space, VirtualSpace, WindowBelowCursor, &WestWindow, "west", false);
 
-    macos_window *VerticalWindow;
     if     (North && South) VerticalWindow = NorthWindow;
     else if(North)          VerticalWindow = NorthWindow;
     else if(South)          VerticalWindow = SouthWindow;
     else                    VerticalWindow = NULL;
 
-    macos_window *HorizontalWindow;
     if     (East && West) HorizontalWindow = EastWindow;
     else if(East)         HorizontalWindow = EastWindow;
     else if(West)         HorizontalWindow = WestWindow;
@@ -287,7 +240,6 @@ RightMouseDown()
         ResizeState.InitialRatioH = ResizeState.Horizontal->Ratio;
     }
 
-    node *Ancestor;
     if     ((ResizeState.Vertical) &&
             (ResizeState.Horizontal))    Ancestor = GetLowestCommonAncestor(ResizeState.Vertical, ResizeState.Horizontal);
     else if(ResizeState.Vertical)        Ancestor = ResizeState.Vertical;
@@ -295,6 +247,13 @@ RightMouseDown()
     else                                 Ancestor = Root;
 
     CreateResizeBorders(Ancestor);
+    goto out;
+
+release_vspace:
+    ReleaseVirtualSpace(VirtualSpace);
+free_space:
+    AXLibDestroySpace(Space);
+out:;
 }
 
 internal void
