@@ -100,6 +100,12 @@ RemoveWindowFromCollection(macos_window *Window)
     return Result;
 }
 
+macos_window_map CopyWindowCache()
+{
+    macos_window_map Copy = Windows;
+    return Copy;
+}
+
 internal void
 ClearWindowCache()
 {
