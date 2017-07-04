@@ -11,7 +11,7 @@ older versions may or may not be compatible and will not be officially supported
 | chunkwm-core    | Alpha   | 0.2.6   |
 | chunkwm-tiling  | Alpha   | 0.2.3   |
 | chunkwm-border  | Alpha   | 0.2.2   |
-| chunkwm-ffm     | Alpha   | 0.1.0   |
+| chunkwm-ffm     | Alpha   | 0.1.1   |
 
 [click here to view current project status](https://github.com/koekeishiya/chunkwm/issues/16)
 
