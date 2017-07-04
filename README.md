@@ -8,8 +8,8 @@ older versions may or may not be compatible and will not be officially supported
 
 | NAME            | RELEASE | VERSION |
 |-----------------|:-------:|:-------:|
-| chunkwm-core    | Alpha   | 0.2.7   |
-| chunkwm-tiling  | Alpha   | 0.2.3   |
+| chunkwm-core    | Alpha   | 0.2.8   |
+| chunkwm-tiling  | Alpha   | 0.2.4   |
 | chunkwm-border  | Alpha   | 0.2.2   |
 | chunkwm-ffm     | Alpha   | 0.1.1   |
 
