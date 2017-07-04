@@ -81,6 +81,29 @@ macos_window *GetWindowByID(uint32_t Id)
     return It != Windows.end() ? It->second : NULL;
 }
 
+macos_window *GetFocusedWindow()
+{
+    AXUIElementRef ApplicationRef, WindowRef;
+    macos_window *Result = NULL;
+    uint32_t WindowId;
+
+    ApplicationRef = AXLibGetFocusedApplication();
+    if(!ApplicationRef) goto out;
+
+    WindowRef = AXLibGetFocusedWindow(ApplicationRef);
+    if(!WindowRef) goto err;
+
+    WindowId = AXLibGetWindowID(WindowRef);
+    CFRelease(WindowRef);
+    Result = GetWindowByID(WindowId);
+
+err:
+    CFRelease(ApplicationRef);
+
+out:
+    return Result;
+}
+
 // NOTE(koekeishiya): Caller is responsible for making sure that the window is not a dupe.
 internal void
 AddWindowToCollection(macos_window *Window)
@@ -223,7 +246,8 @@ bool IsWindowValid(macos_window *Window)
 internal bool
 IsWindowFocusable(macos_window *Window)
 {
-    bool Result = ((AXLibIsWindowStandard(Window)) &&
+    bool Result = ((AXLibIsWindowStandard(Window) ||
+                    AXLibHasFlags(Window, Window_ForceTile)) &&
                    (!AXLibHasFlags(Window, Window_Invalid)));
     return Result;
 }
@@ -284,7 +308,7 @@ void TileWindowOnSpace(macos_window *Window, macos_space *Space, virtual_space *
         }
 
         node *Node = NULL;
-        uint32_t InsertionPoint = CVarIntegerValue(CVAR_BSP_INSERTION_POINT);
+        uint32_t InsertionPoint = CVarUnsignedValue(CVAR_BSP_INSERTION_POINT);
 
         if(VirtualSpace->Mode == Virtual_Space_Bsp)
         {
@@ -1103,6 +1127,26 @@ space_free:
 }
 
 internal void
+WindowFocusedHandler(uint32_t WindowId)
+{
+    macos_window *Window = GetWindowByID(WindowId);
+    if(Window && IsWindowFocusable(Window))
+    {
+        BroadcastFocusedWindowFloating(Window);
+
+        if(!AXLibHasFlags(Window, Window_Float))
+        {
+            UpdateCVar(CVAR_BSP_INSERTION_POINT, Window->Id);
+        }
+
+        if(CVarIntegerValue(CVAR_MOUSE_FOLLOWS_FOCUS))
+        {
+            CenterMouseInWindow(Window);
+        }
+    }
+}
+
+internal void
 ApplicationActivatedHandler(void *Data)
 {
     macos_application *Application = (macos_application *) Data;
@@ -1111,27 +1155,7 @@ ApplicationActivatedHandler(void *Data)
     {
         uint32_t WindowId = AXLibGetWindowID(WindowRef);
         CFRelease(WindowRef);
-
-        macos_window *Window = GetWindowByID(WindowId);
-        if(Window)
-        {
-            uint32_t CurrentFocus = CVarIntegerValue(CVAR_FOCUSED_WINDOW);
-
-            UpdateCVar(CVAR_FOCUSED_WINDOW, (int)Window->Id);
-            BroadcastFocusedWindowFloating(Window);
-
-            if(!AXLibHasFlags(Window, Window_Float))
-            {
-                UpdateCVar(CVAR_BSP_INSERTION_POINT, (int)Window->Id);
-            }
-
-            if((CurrentFocus != Window->Id) &&
-               (IsWindowFocusable(Window)) &&
-               (CVarIntegerValue(CVAR_MOUSE_FOLLOWS_FOCUS)))
-            {
-                CenterMouseInWindow(Window);
-            }
-        }
+        WindowFocusedHandler(WindowId);
     }
 }
 
@@ -1162,13 +1186,8 @@ WindowDestroyedHandler(void *Data)
         {
             RebalanceWindowTree();
         }
+        BroadcastFocusedWindowFloating(Copy);
         AXLibDestroyWindow(Copy);
-
-        uint32_t FocusedWindowId = CVarIntegerValue(CVAR_FOCUSED_WINDOW);
-        if(FocusedWindowId == Window->Id)
-        {
-            BroadcastFocusedWindowFloating(0);
-        }
     }
     else
     {
@@ -1215,27 +1234,7 @@ internal void
 WindowFocusedHandler(void *Data)
 {
     macos_window *Window = (macos_window *) Data;
-
-    macos_window *Copy = GetWindowByID(Window->Id);
-    if(Copy)
-    {
-        uint32_t CurrentFocus = CVarIntegerValue(CVAR_FOCUSED_WINDOW);
-
-        UpdateCVar(CVAR_FOCUSED_WINDOW, (int)Copy->Id);
-        BroadcastFocusedWindowFloating(Copy);
-
-        if(!AXLibHasFlags(Copy, Window_Float))
-        {
-            UpdateCVar(CVAR_BSP_INSERTION_POINT, (int)Copy->Id);
-        }
-
-        if((CurrentFocus != Copy->Id) &&
-           (IsWindowFocusable(Copy)) &&
-           (CVarIntegerValue(CVAR_MOUSE_FOLLOWS_FOCUS)))
-        {
-            CenterMouseInWindow(Copy);
-        }
-    }
+    WindowFocusedHandler(Window->Id);
 }
 
 internal void
@@ -1355,7 +1354,6 @@ win_focus:
     // is a native fullscreen space.
     if(!Windows.empty())
     {
-        UpdateCVar(CVAR_FOCUSED_WINDOW, (int)Windows[0]);
         macos_window *Window = GetWindowByID(Windows[0]);
         ASSERT(Window);
         BroadcastFocusedWindowFloating(Window);
@@ -1470,7 +1468,6 @@ Init(chunkwm_api API)
     uint32_t ProcessPolicy = Process_Policy_Regular;
 
     bool Success;
-    AXUIElementRef ApplicationRef;
     std::vector<macos_application *> Applications;
 
     EventTap.Mask = ((1 << kCGEventLeftMouseDown) |
@@ -1492,7 +1489,6 @@ Init(chunkwm_api API)
     CreateCVar(CVAR_PADDING_STEP_SIZE, 10.0f);
     CreateCVar(CVAR_GAP_STEP_SIZE, 5.0f);
 
-    CreateCVar(CVAR_FOCUSED_WINDOW, 0);
     CreateCVar(CVAR_BSP_INSERTION_POINT, 0);
 
     CreateCVar(CVAR_ACTIVE_DESKTOP, 0);
@@ -1528,32 +1524,15 @@ Init(chunkwm_api API)
     }
 
     /* NOTE(koekeishiya): Set our initial insertion-point on launch. */
-    ApplicationRef = AXLibGetFocusedApplication();
-    if(ApplicationRef)
+    macos_window *Window = GetFocusedWindow();
+    if(Window && IsWindowFocusable(Window))
     {
-        AXUIElementRef WindowRef = AXLibGetFocusedWindow(ApplicationRef);
-        CFRelease(ApplicationRef);
-
-        if(WindowRef)
+        if(!AXLibHasFlags(Window, Window_Float))
         {
-            uint32_t WindowId = AXLibGetWindowID(WindowRef);
-            CFRelease(WindowRef);
-
-            macos_window *Window = GetWindowByID(WindowId);
-            ASSERT(Window);
-
-            UpdateCVar(CVAR_FOCUSED_WINDOW, (int)Window->Id);
-
-            if(!AXLibHasFlags(Window, Window_Float))
-            {
-                UpdateCVar(CVAR_BSP_INSERTION_POINT, (int)Window->Id);
-            }
-
-            if(IsWindowFocusable(Window))
-            {
-                BroadcastFocusedWindowFloating(Window);
-            }
+            UpdateCVar(CVAR_BSP_INSERTION_POINT, Window->Id);
         }
+
+        BroadcastFocusedWindowFloating(Window);
     }
 
     macos_space *Space;

@@ -22,6 +22,7 @@
 #define internal static
 
 extern macos_window *GetWindowByID(uint32_t Id);
+extern macos_window *GetFocusedWindow();
 extern std::vector<uint32_t> GetAllVisibleWindowsForSpace(macos_space *Space);
 extern std::vector<uint32_t> GetAllVisibleWindowsForSpace(macos_space *Space, bool IncludeInvalidWindows, bool IncludeFloatingWindows);
 extern void CreateWindowTreeForSpace(macos_space *Space, virtual_space *VirtualSpace);
@@ -236,7 +237,7 @@ void FocusWindow(char *Direction)
     macos_window *Window;
     virtual_space *VirtualSpace;
 
-    Window = GetWindowByID(CVarIntegerValue(CVAR_BSP_INSERTION_POINT));
+    Window = GetWindowByID(CVarUnsignedValue(CVAR_BSP_INSERTION_POINT));
     if(!Window)
     {
         return; // TODO(koekeishiya): Focus first or last leaf ?
@@ -338,7 +339,7 @@ void SwapWindow(char *Direction)
     node *WindowNode, *ClosestNode;
     macos_window *Window, *ClosestWindow;
 
-    Window = GetWindowByID(CVarIntegerValue(CVAR_BSP_INSERTION_POINT));
+    Window = GetWindowByID(CVarUnsignedValue(CVAR_BSP_INSERTION_POINT));
     if(!Window)
     {
         goto out;
@@ -433,7 +434,7 @@ void WarpWindow(char *Direction)
     macos_window *Window, *ClosestWindow;
     node *WindowNode, *ClosestNode, *FocusedNode;
 
-    Window = GetWindowByID(CVarIntegerValue(CVAR_BSP_INSERTION_POINT));
+    Window = GetWindowByID(CVarUnsignedValue(CVAR_BSP_INSERTION_POINT));
     if(!Window)
     {
         goto out;
@@ -476,9 +477,9 @@ void WarpWindow(char *Direction)
     {
         // NOTE(koekeishiya): Modify tree layout.
         UntileWindowFromSpace(Window, Space, VirtualSpace);
-        UpdateCVar(CVAR_BSP_INSERTION_POINT, (int)ClosestWindow->Id);
+        UpdateCVar(CVAR_BSP_INSERTION_POINT, ClosestWindow->Id);
         TileWindowOnSpace(Window, Space, VirtualSpace);
-        UpdateCVar(CVAR_BSP_INSERTION_POINT, (int)Window->Id);
+        UpdateCVar(CVAR_BSP_INSERTION_POINT, Window->Id);
 
         FocusedNode = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
     }
@@ -582,8 +583,7 @@ UnfloatWindow(macos_window *Window)
 internal void
 ToggleWindowFloat()
 {
-    uint32_t WindowId = CVarIntegerValue(CVAR_FOCUSED_WINDOW);
-    macos_window *Window = GetWindowByID(WindowId);
+    macos_window *Window = GetFocusedWindow();
     if(!Window)
     {
         return;
@@ -604,8 +604,7 @@ ToggleWindowFloat()
 internal void
 ToggleWindowNativeFullscreen()
 {
-    uint32_t WindowId = CVarIntegerValue(CVAR_FOCUSED_WINDOW);
-    macos_window *Window = GetWindowByID(WindowId);
+    macos_window *Window = GetFocusedWindow();
     if(!Window)
     {
         return;
@@ -633,7 +632,7 @@ ToggleWindowFullscreenZoom()
 {
     node *Node;
     bool Success;
-    uint32_t WindowId;
+    macos_window *Window;
     macos_space *Space;
     virtual_space *VirtualSpace;
 
@@ -652,8 +651,13 @@ ToggleWindowFullscreenZoom()
         goto vspace_release;
     }
 
-    WindowId = CVarIntegerValue(CVAR_FOCUSED_WINDOW);
-    Node = GetNodeWithId(VirtualSpace->Tree, WindowId, VirtualSpace->Mode);
+    Window = GetFocusedWindow();
+    if(!Window)
+    {
+        goto vspace_release;
+    }
+
+    Node = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
     if(!Node)
     {
         goto vspace_release;
@@ -696,7 +700,7 @@ ToggleWindowParentZoom()
 {
     node *Node;
     bool Success;
-    uint32_t WindowId;
+    macos_window *Window;
     macos_space *Space;
     virtual_space *VirtualSpace;
 
@@ -715,8 +719,13 @@ ToggleWindowParentZoom()
         goto vspace_release;
     }
 
-    WindowId = CVarIntegerValue(CVAR_FOCUSED_WINDOW);
-    Node = GetNodeWithId(VirtualSpace->Tree, WindowId, VirtualSpace->Mode);
+    Window = GetFocusedWindow();
+    if(!Window)
+    {
+        goto vspace_release;
+    }
+
+    Node = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
     if(!Node || !Node->Parent)
     {
         goto vspace_release;
@@ -778,7 +787,7 @@ ToggleWindowSplitMode()
         goto vspace_release;
     }
 
-    WindowId = CVarIntegerValue(CVAR_BSP_INSERTION_POINT);
+    WindowId = CVarUnsignedValue(CVAR_BSP_INSERTION_POINT);
     Node = GetNodeWithId(VirtualSpace->Tree, WindowId, VirtualSpace->Mode);
     if(!Node || !Node->Parent)
     {
@@ -823,7 +832,7 @@ void UseInsertionPoint(char *Direction)
     virtual_space *VirtualSpace;
     macos_window *Window, *ClosestWindow;
 
-    Window = GetWindowByID(CVarIntegerValue(CVAR_BSP_INSERTION_POINT));
+    Window = GetWindowByID(CVarUnsignedValue(CVAR_BSP_INSERTION_POINT));
     if(!Window)
     {
         goto out;
@@ -846,11 +855,12 @@ void UseInsertionPoint(char *Direction)
 
     if(StringEquals(Direction, "focus"))
     {
-        UpdateCVar(CVAR_BSP_INSERTION_POINT, CVarIntegerValue(CVAR_FOCUSED_WINDOW));
+        ClosestWindow = GetFocusedWindow();
+        if(ClosestWindow) UpdateCVar(CVAR_BSP_INSERTION_POINT, ClosestWindow->Id);
     }
     else if(FindClosestWindow(Space, VirtualSpace, Window, &ClosestWindow, Direction, true))
     {
-        UpdateCVar(CVAR_BSP_INSERTION_POINT, (int)ClosestWindow->Id);
+        UpdateCVar(CVAR_BSP_INSERTION_POINT, ClosestWindow->Id);
     }
 
 vspace_release:
@@ -986,7 +996,7 @@ void AdjustWindowRatio(char *Direction)
     macos_window *Window, *ClosestWindow;
     node *WindowNode, *ClosestNode, *Ancestor;
 
-    Window = GetWindowByID(CVarIntegerValue(CVAR_BSP_INSERTION_POINT));
+    Window = GetWindowByID(CVarUnsignedValue(CVAR_BSP_INSERTION_POINT));
     if(!Window)
     {
         goto out;
@@ -1288,7 +1298,7 @@ void SendWindowToDesktop(char *Op)
     macos_space *Space, *DestinationMonitorActiveSpace;
     CFStringRef SourceMonitorRef, DestinationMonitorRef;
 
-    Window = GetWindowByID(CVarIntegerValue(CVAR_FOCUSED_WINDOW));
+    Window = GetFocusedWindow();
     if(!Window)
     {
         goto out;
@@ -1420,7 +1430,7 @@ void SendWindowToMonitor(char *Op)
     unsigned SourceMonitor, DestinationMonitor;
     CFStringRef SourceMonitorRef, DestinationMonitorRef;
 
-    Window = GetWindowByID(CVarIntegerValue(CVAR_FOCUSED_WINDOW));
+    Window = GetFocusedWindow();
     if(!Window)
     {
         goto out;
@@ -1627,7 +1637,7 @@ void WarpFloatingWindow(char *Op)
     CFStringRef DisplayRef;
     virtual_space *VirtualSpace;
 
-    Window = GetWindowByID(CVarIntegerValue(CVAR_FOCUSED_WINDOW));
+    Window = GetFocusedWindow();
     if(!Window)
     {
         goto out;
