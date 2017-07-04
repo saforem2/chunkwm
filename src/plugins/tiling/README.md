@@ -142,20 +142,20 @@
 ##### focus window
 
     chunkc tiling::window --focus <option>
-    <option>: north | east | south | west
+    <option>: north | east | south | west | prev | next
     short flag: -f
 
 ##### swap window
 
     chunkc tiling::window --swap <option>
-    <option>: north | east | south | west
+    <option>: north | east | south | west | prev | next
     short flag: -s
     desc: swap two windows in-place
 
 ##### warp window
 
     chunkc tiling::window --warp <option>
-    <option>: north | east | south | west
+    <option>: north | east | south | west | prev | next
     short flag: -w
     desc: move window in direction and modifies layout
 
@@ -183,20 +183,20 @@
 
     chunkc tiling::window --use-temporary-ratio <ratio> --adjust-window-edge <option>
     <ratio>: 0 < value < 1
-    <option>: north | east | south | west
+    <option>: north | east | south | west | prev | next
     short flags: -r, -e
 
 ##### decrease region size
 
     chunkc tiling::window --use-temporary-ratio <ratio> --adjust-window-edge <option>
     <ratio>: -1 < value < 0
-    <option>: north | east | south | west
+    <option>: north | east | south | west | prev | next
     short flags: -r, -e
 
 ##### set bsp-insertion point
 
     chunkc tiling::window --use-insertion-point <option>
-    <option>: focus | north | east | south | west
+    <option>: focus | north | east | south | west | prev | next
     short flag: -i
 
 ##### toggle various window options

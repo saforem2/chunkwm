@@ -94,7 +94,8 @@ node *GetFirstMinDepthLeafNode(node *Root);
 node *GetFirstMinDepthPseudoLeafNode(node *Root);
 node *GetLowestCommonAncestor(node *A, node *B);
 
-node *GetNearestNodeToTheRight(node *Node);
+node *GetNextLeafNode(node *Node);
+node *GetPrevLeafNode(node *Node);
 node *GetNodeWithId(node *Tree, uint32_t WindowId, virtual_space_mode VirtualSpaceMode);
 
 struct CGPoint;

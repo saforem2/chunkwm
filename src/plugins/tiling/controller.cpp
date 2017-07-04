@@ -230,6 +230,53 @@ bool FindClosestWindow(macos_space *Space, virtual_space *VirtualSpace,
     return MinDist != 0xFFFFFFFF;
 }
 
+internal bool
+FindWindowUndirected(macos_space *Space, virtual_space *VirtualSpace,
+                     macos_window *Window, macos_window **ClosestWindow,
+                     char *Direction, bool WrapMonitor)
+{
+    bool Result = false;
+    if(StringEquals(Direction, "prev"))
+    {
+        node *WindowNode = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
+        ASSERT(WindowNode);
+        node *PrevNode = GetPrevLeafNode(WindowNode);
+        if(PrevNode)
+        {
+            *ClosestWindow = GetWindowByID(PrevNode->WindowId);
+            ASSERT(*ClosestWindow);
+            Result = true;
+        }
+        else if(WrapMonitor)
+        {
+            PrevNode = GetLastLeafNode(VirtualSpace->Tree);
+            *ClosestWindow = GetWindowByID(PrevNode->WindowId);
+            ASSERT(*ClosestWindow);
+            Result = true;
+        }
+    }
+    else if(StringEquals(Direction, "next"))
+    {
+        node *WindowNode = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
+        ASSERT(WindowNode);
+        node *NextNode = GetNextLeafNode(WindowNode);
+        if(NextNode)
+        {
+            *ClosestWindow = GetWindowByID(NextNode->WindowId);
+            ASSERT(*ClosestWindow);
+            Result = true;
+        }
+        else if(WrapMonitor)
+        {
+            NextNode = GetFirstLeafNode(VirtualSpace->Tree);
+            *ClosestWindow = GetWindowByID(NextNode->WindowId);
+            ASSERT(*ClosestWindow);
+            Result = true;
+        }
+    }
+    return Result;
+}
+
 void FocusWindow(char *Direction)
 {
     bool Success;
@@ -266,16 +313,19 @@ void FocusWindow(char *Direction)
         if(StringEquals(FocusCycleMode, Window_Focus_Cycle_All))
         {
             macos_window *ClosestWindow;
-            if(FindClosestWindow(Space, VirtualSpace, Window, &ClosestWindow, Direction, false))
+            if((FindWindowUndirected(Space, VirtualSpace, Window, &ClosestWindow, Direction, false)) ||
+               (FindClosestWindow(Space, VirtualSpace, Window, &ClosestWindow, Direction, false)))
             {
                 AXLibSetFocusedWindow(ClosestWindow->Ref);
                 AXLibSetFocusedApplication(ClosestWindow->Owner->PSN);
             }
-            else if(StringEquals(Direction, "east"))
+            else if((StringEquals(Direction, "east")) ||
+                    (StringEquals(Direction, "next")))
             {
                 FocusMonitor("next");
             }
-            else if(StringEquals(Direction, "west"))
+            else if((StringEquals(Direction, "west")) ||
+                    (StringEquals(Direction, "prev")))
             {
                 FocusMonitor("prev");
             }
@@ -284,7 +334,8 @@ void FocusWindow(char *Direction)
         {
             bool WrapMonitor = StringEquals(FocusCycleMode, Window_Focus_Cycle_Monitor);
             macos_window *ClosestWindow;
-            if(FindClosestWindow(Space, VirtualSpace, Window, &ClosestWindow, Direction, WrapMonitor))
+            if((FindWindowUndirected(Space, VirtualSpace, Window, &ClosestWindow, Direction, WrapMonitor)) ||
+               (FindClosestWindow(Space, VirtualSpace, Window, &ClosestWindow, Direction, WrapMonitor)))
             {
                 AXLibSetFocusedWindow(ClosestWindow->Ref);
                 AXLibSetFocusedApplication(ClosestWindow->Owner->PSN);
@@ -300,13 +351,15 @@ void FocusWindow(char *Direction)
         if(WindowNode)
         {
             node *Node = NULL;
-            if(StringEquals(Direction, "west"))
+            if((StringEquals(Direction, "west")) ||
+               (StringEquals(Direction, "prev")))
             {
                 if     (WindowNode->Left)                                           Node = WindowNode->Left;
                 else if(StringEquals(FocusCycleMode, Window_Focus_Cycle_All))       FocusMonitor("prev");
                 else if(StringEquals(FocusCycleMode, Window_Focus_Cycle_Monitor))   Node = GetLastLeafNode(VirtualSpace->Tree);
             }
-            else if(StringEquals(Direction, "east"))
+            else if((StringEquals(Direction, "east")) ||
+                    (StringEquals(Direction, "next")))
             {
                 if     (WindowNode->Right)                                          Node = WindowNode->Right;
                 else if(StringEquals(FocusCycleMode, Window_Focus_Cycle_All))       FocusMonitor("next");
@@ -368,9 +421,12 @@ void SwapWindow(char *Direction)
             goto vspace_release;
         }
 
-        if(!FindClosestWindow(Space, VirtualSpace, Window, &ClosestWindow, Direction, false))
+        if(!FindWindowUndirected(Space, VirtualSpace, Window, &ClosestWindow, Direction, false))
         {
-            goto vspace_release;
+            if(!FindClosestWindow(Space, VirtualSpace, Window, &ClosestWindow, Direction, false))
+            {
+                goto vspace_release;
+            }
         }
 
         ClosestNode = GetNodeWithId(VirtualSpace->Tree, ClosestWindow->Id, VirtualSpace->Mode);
@@ -393,13 +449,15 @@ void SwapWindow(char *Direction)
             goto vspace_release;
         }
 
-        if(StringEquals(Direction, "west"))
+        if((StringEquals(Direction, "west")) ||
+           (StringEquals(Direction, "prev")))
         {
             ClosestNode = WindowNode->Left
                         ? WindowNode->Left
                         : GetLastLeafNode(VirtualSpace->Tree);
         }
-        else if(StringEquals(Direction, "east"))
+        else if((StringEquals(Direction, "east")) ||
+                (StringEquals(Direction, "next")))
         {
             ClosestNode = WindowNode->Right
                         ? WindowNode->Right
@@ -450,45 +508,85 @@ void WarpWindow(char *Direction)
 
     VirtualSpace = AcquireVirtualSpace(Space);
     if((!VirtualSpace->Tree) ||
-       (VirtualSpace->Mode != Virtual_Space_Bsp))
+       (VirtualSpace->Mode == Virtual_Space_Float))
     {
         goto vspace_release;
     }
 
-    if(!FindClosestWindow(Space, VirtualSpace, Window, &ClosestWindow, Direction, true))
+    if(VirtualSpace->Mode == Virtual_Space_Bsp)
     {
-        goto vspace_release;
+        if(!FindWindowUndirected(Space, VirtualSpace, Window, &ClosestWindow, Direction, false))
+        {
+            if(!FindClosestWindow(Space, VirtualSpace, Window, &ClosestWindow, Direction, false))
+            {
+                goto vspace_release;
+            }
+        }
+
+        WindowNode = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
+        ASSERT(WindowNode);
+        ClosestNode = GetNodeWithId(VirtualSpace->Tree, ClosestWindow->Id, VirtualSpace->Mode);
+        ASSERT(ClosestNode);
+
+        if(WindowNode->Parent == ClosestNode->Parent)
+        {
+            // NOTE(koekeishiya): Windows have the same parent, perform a regular swap.
+            SwapNodeIds(WindowNode, ClosestNode);
+            ResizeWindowToRegionSize(WindowNode);
+            ResizeWindowToRegionSize(ClosestNode);
+            FocusedNode = ClosestNode;
+        }
+        else
+        {
+            // NOTE(koekeishiya): Modify tree layout.
+            UntileWindowFromSpace(Window, Space, VirtualSpace);
+            UpdateCVar(CVAR_BSP_INSERTION_POINT, ClosestWindow->Id);
+            TileWindowOnSpace(Window, Space, VirtualSpace);
+            UpdateCVar(CVAR_BSP_INSERTION_POINT, Window->Id);
+
+            FocusedNode = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
+        }
+
+        ASSERT(FocusedNode);
+
+        if(CVarIntegerValue(CVAR_MOUSE_FOLLOWS_FOCUS))
+        {
+            CenterMouseInRegion(&FocusedNode->Region);
+        }
     }
-
-    WindowNode = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
-    ASSERT(WindowNode);
-    ClosestNode = GetNodeWithId(VirtualSpace->Tree, ClosestWindow->Id, VirtualSpace->Mode);
-    ASSERT(ClosestNode);
-
-    if(WindowNode->Parent == ClosestNode->Parent)
+    else if(VirtualSpace->Mode == Virtual_Space_Monocle)
     {
-        // NOTE(koekeishiya): Windows have the same parent, perform a regular swap.
-        SwapNodeIds(WindowNode, ClosestNode);
-        ResizeWindowToRegionSize(WindowNode);
-        ResizeWindowToRegionSize(ClosestNode);
-        FocusedNode = ClosestNode;
-    }
-    else
-    {
-        // NOTE(koekeishiya): Modify tree layout.
-        UntileWindowFromSpace(Window, Space, VirtualSpace);
-        UpdateCVar(CVAR_BSP_INSERTION_POINT, ClosestWindow->Id);
-        TileWindowOnSpace(Window, Space, VirtualSpace);
-        UpdateCVar(CVAR_BSP_INSERTION_POINT, Window->Id);
+        WindowNode = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
+        if(!WindowNode)
+        {
+            goto vspace_release;
+        }
 
-        FocusedNode = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
-    }
+        if((StringEquals(Direction, "west")) ||
+           (StringEquals(Direction, "prev")))
+        {
+            ClosestNode = WindowNode->Left
+                        ? WindowNode->Left
+                        : GetLastLeafNode(VirtualSpace->Tree);
+        }
+        else if((StringEquals(Direction, "east")) ||
+                (StringEquals(Direction, "next")))
+        {
+            ClosestNode = WindowNode->Right
+                        ? WindowNode->Right
+                        : GetFirstLeafNode(VirtualSpace->Tree);
+        }
+        else
+        {
+            ClosestNode = NULL;
+        }
 
-    ASSERT(FocusedNode);
-
-    if(CVarIntegerValue(CVAR_MOUSE_FOLLOWS_FOCUS))
-    {
-        CenterMouseInRegion(&FocusedNode->Region);
+        if(ClosestNode && ClosestNode != WindowNode)
+        {
+            // NOTE(koekeishiya): Swapping windows in monocle mode
+            // should not trigger mouse_follows_focus.
+            SwapNodeIds(WindowNode, ClosestNode);
+        }
     }
 
 vspace_release:
@@ -858,7 +956,8 @@ void UseInsertionPoint(char *Direction)
         ClosestWindow = GetFocusedWindow();
         if(ClosestWindow) UpdateCVar(CVAR_BSP_INSERTION_POINT, ClosestWindow->Id);
     }
-    else if(FindClosestWindow(Space, VirtualSpace, Window, &ClosestWindow, Direction, true))
+    else if((FindWindowUndirected(Space, VirtualSpace, Window, &ClosestWindow, Direction, false)) ||
+            (FindClosestWindow(Space, VirtualSpace, Window, &ClosestWindow, Direction, false)))
     {
         UpdateCVar(CVAR_BSP_INSERTION_POINT, ClosestWindow->Id);
     }
@@ -1024,9 +1123,12 @@ void AdjustWindowRatio(char *Direction)
         goto vspace_release;
     }
 
-    if(!FindClosestWindow(Space, VirtualSpace, Window, &ClosestWindow, Direction, false))
+    if(!FindWindowUndirected(Space, VirtualSpace, Window, &ClosestWindow, Direction, false))
     {
-        goto vspace_release;
+        if(!FindClosestWindow(Space, VirtualSpace, Window, &ClosestWindow, Direction, false))
+        {
+            goto vspace_release;
+        }
     }
 
     ClosestNode = GetNodeWithId(VirtualSpace->Tree, ClosestWindow->Id, VirtualSpace->Mode);

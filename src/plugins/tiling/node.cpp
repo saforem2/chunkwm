@@ -371,14 +371,41 @@ node *GetFirstMinDepthPseudoLeafNode(node *Tree)
     return NULL;
 }
 
-node *GetNearestNodeToTheRight(node *Node)
+node *GetPrevLeafNode(node *Node)
+{
+    node *Parent = Node->Parent;
+    if(Parent)
+    {
+        if(Parent->Left == Node)
+        {
+            return GetPrevLeafNode(Parent);
+        }
+
+        if(IsLeafNode(Parent->Left))
+        {
+            return Parent->Left;
+        }
+
+        Parent = Parent->Left;
+        while(!IsLeafNode(Parent->Right))
+        {
+            Parent = Parent->Right;
+        }
+
+        return Parent->Right;
+    }
+
+    return NULL;
+}
+
+node *GetNextLeafNode(node *Node)
 {
     node *Parent = Node->Parent;
     if(Parent)
     {
         if(Parent->Right == Node)
         {
-            return GetNearestNodeToTheRight(Parent);
+            return GetNextLeafNode(Parent);
         }
 
         if(IsLeafNode(Parent->Right))
@@ -464,7 +491,7 @@ node *GetNodeWithId(node *Tree, uint32_t WindowId, virtual_space_mode VirtualSpa
         }
         else if(VirtualSpaceMode == Virtual_Space_Bsp)
         {
-            Node = GetNearestNodeToTheRight(Node);
+            Node = GetNextLeafNode(Node);
         }
         else if(VirtualSpaceMode == Virtual_Space_Monocle)
         {
@@ -495,7 +522,7 @@ node *GetNodeForPoint(node *Node, CGPoint *Point)
             return Current;
         }
 
-        Current = GetNearestNodeToTheRight(Current);
+        Current = GetNextLeafNode(Current);
     }
 
     return NULL;

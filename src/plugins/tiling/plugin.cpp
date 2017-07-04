@@ -696,7 +696,7 @@ GetAllWindowsInTree(node *Tree, virtual_space_mode VirtualSpaceMode)
 
         if(VirtualSpaceMode == Virtual_Space_Bsp)
         {
-            Node = GetNearestNodeToTheRight(Node);
+            Node = GetNextLeafNode(Node);
         }
         else if(VirtualSpaceMode == Virtual_Space_Monocle)
         {

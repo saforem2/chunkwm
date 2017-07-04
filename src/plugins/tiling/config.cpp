@@ -149,7 +149,9 @@ ParseWindowCommand(const char *Message, command *Chain)
                 if((StringEquals(optarg, "west")) ||
                    (StringEquals(optarg, "east")) ||
                    (StringEquals(optarg, "north")) ||
-                   (StringEquals(optarg, "south")))
+                   (StringEquals(optarg, "south")) ||
+                   (StringEquals(optarg, "prev")) ||
+                   (StringEquals(optarg, "next")))
                 {
                     command *Entry = ConstructCommand(Option, optarg);
                     Command->Next = Entry;
@@ -169,6 +171,8 @@ ParseWindowCommand(const char *Message, command *Chain)
                    (StringEquals(optarg, "east")) ||
                    (StringEquals(optarg, "north")) ||
                    (StringEquals(optarg, "south")) ||
+                   (StringEquals(optarg, "prev")) ||
+                   (StringEquals(optarg, "next")) ||
                    (StringEquals(optarg, "focus")))
                 {
                     command *Entry = ConstructCommand(Option, optarg);
