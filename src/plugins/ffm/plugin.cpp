@@ -54,6 +54,7 @@ struct window_info
 {
     uint32_t ID;
     uint32_t PID;
+    uint32_t Layer;
 };
 
 window_info GetWindowBelowCursor(CGPoint Cursor)
@@ -104,7 +105,7 @@ window_info GetWindowBelowCursor(CGPoint Cursor)
 
             if(IsPointInsideRect(&Cursor, &WindowRect))
             {
-                Result = (window_info) { WindowID, WindowPID };
+                Result = (window_info) { WindowID, WindowPID, WindowLayer };
                 break;
             }
         }
@@ -135,7 +136,9 @@ void FocusWindowBelowCursor(CGPoint Cursor)
     }
 
     window_info Window = GetWindowBelowCursor(Cursor);
-    if(Window.ID == 0 || Window.ID == FocusedWindowId)
+    if((Window.ID == FocusedWindowId) ||
+       (Window.Layer != 0) ||
+       (Window.ID == 0))
     {
         return;
     }
