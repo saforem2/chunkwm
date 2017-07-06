@@ -4,6 +4,7 @@
 
 #include "../../common/config/tokenize.h"
 #include "../../common/config/cvar.h"
+#include "../../common/border/border.h"
 #include "../../common/misc/assert.h"
 #include "../../common/accessibility/window.h"
 #include "../../common/accessibility/element.h"
@@ -16,10 +17,10 @@
 
 extern macos_window *GetWindowByID(uint32_t Id);
 
-node_ids AssignNodeIds(uint32_t ExistingId, uint32_t NewId)
+node_ids AssignNodeIds(uint32_t ExistingId, uint32_t NewId, bool SpawnLeft)
 {
     node_ids NodeIds;
-    if(CVarIntegerValue(CVAR_BSP_SPAWN_LEFT))
+    if(SpawnLeft)
     {
         NodeIds.Left = NewId;
         NodeIds.Right = ExistingId;
@@ -90,7 +91,8 @@ void CreateLeafNodePair(node *Parent, uint32_t ExistingWindowId, uint32_t Spawne
     Parent->Split = Split;
     Parent->Ratio = CVarFloatingPointValue(CVAR_BSP_SPLIT_RATIO);
 
-    node_ids NodeIds = AssignNodeIds(ExistingWindowId, SpawnedWindowId);
+    int SpawnLeft = CVarIntegerValue(CVAR_BSP_SPAWN_LEFT);
+    node_ids NodeIds = AssignNodeIds(ExistingWindowId, SpawnedWindowId, SpawnLeft);
 
     ASSERT(Split == Split_Vertical || Split == Split_Horizontal);
     if(Split == Split_Vertical)
@@ -99,6 +101,28 @@ void CreateLeafNodePair(node *Parent, uint32_t ExistingWindowId, uint32_t Spawne
         Parent->Right = CreateLeafNode(Parent, NodeIds.Right, Region_Right, Space, VirtualSpace);
     }
     else if(Split == Split_Horizontal)
+    {
+        Parent->Left = CreateLeafNode(Parent, NodeIds.Left, Region_Upper, Space, VirtualSpace);
+        Parent->Right = CreateLeafNode(Parent, NodeIds.Right, Region_Lower, Space, VirtualSpace);
+    }
+}
+
+void CreateLeafNodePairPreselect(node *Parent, uint32_t ExistingWindowId, uint32_t SpawnedWindowId,
+                                 macos_space *Space, virtual_space *VirtualSpace)
+{
+    Parent->WindowId = Node_Root;
+    Parent->Split = Parent->Preselect->Split;
+    Parent->Ratio = Parent->Preselect->Ratio;
+
+    node_ids NodeIds = AssignNodeIds(ExistingWindowId, SpawnedWindowId, Parent->Preselect->SpawnLeft);
+
+    ASSERT(Parent->Split == Split_Vertical || Parent->Split == Split_Horizontal);
+    if(Parent->Split == Split_Vertical)
+    {
+        Parent->Left = CreateLeafNode(Parent, NodeIds.Left, Region_Left, Space, VirtualSpace);
+        Parent->Right = CreateLeafNode(Parent, NodeIds.Right, Region_Right, Space, VirtualSpace);
+    }
+    else if(Parent->Split == Split_Horizontal)
     {
         Parent->Left = CreateLeafNode(Parent, NodeIds.Left, Region_Upper, Space, VirtualSpace);
         Parent->Right = CreateLeafNode(Parent, NodeIds.Right, Region_Lower, Space, VirtualSpace);
@@ -258,8 +282,21 @@ void ConstrainWindowToRegion(macos_window *Window)
     CFRelease(DisplayRef);
 }
 
+void FreePreselectNode(node *Node)
+{
+    DestroyBorderWindow(Node->Preselect->Border);
+    free(Node->Preselect->Direction);
+    free(Node->Preselect);
+    Node->Preselect = NULL;
+}
+
 void FreeNodeTree(node *Node, virtual_space_mode VirtualSpaceMode)
 {
+    if(Node->Preselect)
+    {
+        FreePreselectNode(Node);
+    }
+
     if(Node->Left && VirtualSpaceMode == Virtual_Space_Bsp)
     {
         FreeNodeTree(Node->Left, VirtualSpaceMode);
@@ -268,6 +305,16 @@ void FreeNodeTree(node *Node, virtual_space_mode VirtualSpaceMode)
     if(Node->Right)
     {
         FreeNodeTree(Node->Right, VirtualSpaceMode);
+    }
+
+    free(Node);
+}
+
+void FreeNode(node *Node)
+{
+    if(Node->Preselect)
+    {
+        FreePreselectNode(Node);
     }
 
     free(Node);
@@ -705,6 +752,7 @@ node *DeserializeNodeFromBuffer(char *Buffer)
 
             Leaf->WindowId = Node_PseudoLeaf;
             Leaf->Parent = Current;
+            Leaf->Ratio = CVarFloatingPointValue(CVAR_BSP_SPLIT_RATIO);
             Current->Left = Leaf;
         }
         else if(TokenEquals(Token, "right_leaf"))
@@ -714,6 +762,7 @@ node *DeserializeNodeFromBuffer(char *Buffer)
 
             Leaf->WindowId = Node_PseudoLeaf;
             Leaf->Parent = Current;
+            Leaf->Ratio = CVarFloatingPointValue(CVAR_BSP_SPLIT_RATIO);
             Current->Right = Leaf;
 
             // NOTE(koekeishiya): After parsing a right-leaf, we are done with this node

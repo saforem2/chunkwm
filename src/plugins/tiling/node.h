@@ -6,6 +6,8 @@
 #include "region.h"
 #include "vspace.h"
 
+struct border_window;
+
 enum node_type
 {
     Node_PseudoLeaf = -1,
@@ -36,6 +38,19 @@ struct node_ids
     uint32_t Right;
 };
 
+struct preselect_node
+{
+    node_split Split;
+    float Ratio;
+    bool SpawnLeft;
+
+    node *Node;
+    region Region;
+    char *Direction;
+
+    border_window *Border;
+};
+
 struct node
 {
     uint32_t WindowId;
@@ -48,6 +63,8 @@ struct node
 
     node *Zoom;
     region Region;
+
+    preselect_node *Preselect;
 };
 
 struct equalize_node
@@ -61,15 +78,18 @@ inline equalize_node operator+(const equalize_node A, const equalize_node B)
              A.HorizontalCount + B.HorizontalCount };
 }
 
-node_ids AssignNodeIds(uint32_t ExistingId, uint32_t NewId);
+node_ids AssignNodeIds(uint32_t ExistingId, uint32_t NewId, bool SpawnLeft);
 node_split OptimalSplitMode(node *Node);
 node_split NodeSplitFromString(char *Value);
 
 node *CreateRootNode(uint32_t WindowId, macos_space *Space, virtual_space *VirtualSpace);
 node *CreateLeafNode(node *Parent, uint32_t WindowId, region_type Type, macos_space *Space, virtual_space *VirtualSpace);
 void CreateLeafNodePair(node *Parent, uint32_t ExistingWindowId, uint32_t SpawnedWindowId, node_split Split, macos_space *Space, virtual_space *VirtualSpace);
-void FreeNodeTree(node *Node, virtual_space_mode VirtualSpaceMode);
+void CreateLeafNodePairPreselect(node *Parent, uint32_t ExistingWindowId, uint32_t SpawnedWindowId, macos_space *Space, virtual_space *VirtualSpace);
 equalize_node EqualizeNodeTree(node *Tree);
+void FreeNodeTree(node *Node, virtual_space_mode VirtualSpaceMode);
+void FreePreselectNode(node *Node);
+void FreeNode(node *Node);
 
 void ApplyNodeRegion(node *Node, virtual_space_mode VirtualSpaceMode);
 void ApplyNodeRegion(node *Node, virtual_space_mode VirtualSpaceMode, bool Center);

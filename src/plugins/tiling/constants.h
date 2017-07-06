@@ -38,6 +38,10 @@
 
 #define CVAR_WINDOW_REGION_LOCKED   "window_region_locked"
 
+#define CVAR_PRE_BORDER_COLOR       "preselect_border_color"
+#define CVAR_PRE_BORDER_WIDTH       "preselect_border_width"
+#define CVAR_PRE_BORDER_RADIUS      "preselect_border_radius"
+
 /* NOTE(koekeishiya): The following cvars requires extended dock
  * functionality provided by chwm-sa to work. */
 

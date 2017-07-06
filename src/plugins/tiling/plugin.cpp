@@ -57,7 +57,7 @@ extern "C" CGError CGSGetOnScreenWindowCount(const CGSConnectionID CID, CGSConne
 extern "C" CGError CGSGetOnScreenWindowList(const CGSConnectionID CID, CGSConnectionID TID, int Count, int *List, int *OutCount);
 
 internal const char *PluginName = "Tiling";
-internal const char *PluginVersion = "0.2.4";
+internal const char *PluginVersion = "0.2.5";
 
 internal macos_application_map Applications;
 
@@ -317,7 +317,8 @@ void TileWindowOnSpace(macos_window *Window, macos_space *Space, virtual_space *
             {
                 if(Node->Parent)
                 {
-                    node_ids NodeIds = AssignNodeIds(Node->Parent->WindowId, Window->Id);
+                    int SpawnLeft = CVarIntegerValue(CVAR_BSP_SPAWN_LEFT);
+                    node_ids NodeIds = AssignNodeIds(Node->Parent->WindowId, Window->Id, SpawnLeft);
                     Node->Parent->WindowId = Node_Root;
                     Node->Parent->Left->WindowId = NodeIds.Left;
                     Node->Parent->Right->WindowId = NodeIds.Right;
@@ -344,14 +345,23 @@ void TileWindowOnSpace(macos_window *Window, macos_space *Space, virtual_space *
                 ASSERT(Node != NULL);
             }
 
-            node_split Split = NodeSplitFromString(CVarStringValue(CVAR_BSP_SPLIT_MODE));
-            if(Split == Split_Optimal)
+            if(Node->Preselect)
             {
-                Split = OptimalSplitMode(Node);
+                CreateLeafNodePairPreselect(Node, Node->WindowId, Window->Id, Space, VirtualSpace);
+                ApplyNodeRegion(Node, VirtualSpace->Mode);
+                FreePreselectNode(Node);
             }
+            else
+            {
+                node_split Split = NodeSplitFromString(CVarStringValue(CVAR_BSP_SPLIT_MODE));
+                if(Split == Split_Optimal)
+                {
+                    Split = OptimalSplitMode(Node);
+                }
 
-            CreateLeafNodePair(Node, Node->WindowId, Window->Id, Split, Space, VirtualSpace);
-            ApplyNodeRegion(Node, VirtualSpace->Mode);
+                CreateLeafNodePair(Node, Node->WindowId, Window->Id, Split, Space, VirtualSpace);
+                ApplyNodeRegion(Node, VirtualSpace->Mode);
+            }
 
             // NOTE(koekeishiya): Reset fullscreen-zoom state.
             if(VirtualSpace->Tree->Zoom)
@@ -511,12 +521,12 @@ UntileWindowFromSpace(uint32_t WindowId, macos_space *Space, virtual_space *Virt
                                                  NewLeaf->Parent->Region);
             }
 
-            free(RemainingLeaf);
-            free(Node);
+            FreeNode(RemainingLeaf);
+            FreeNode(Node);
         }
         else if(!Node->Parent)
         {
-            free(VirtualSpace->Tree);
+            FreeNode(VirtualSpace->Tree);
             VirtualSpace->Tree = NULL;
         }
     }
@@ -540,7 +550,7 @@ UntileWindowFromSpace(uint32_t WindowId, macos_space *Space, virtual_space *Virt
             VirtualSpace->Tree = Next;
         }
 
-        free(Node);
+        FreeNode(Node);
     }
 }
 
@@ -846,7 +856,8 @@ CreateDeserializedWindowTreeForSpaceWithWindows(macos_space *Space, virtual_spac
                 // NOTE(koekeishiya): This is an intermediate leaf node in the tree.
                 // We simulate the process of performing a new split, but use the
                 // existing node configuration.
-                node_ids NodeIds = AssignNodeIds(Node->Parent->WindowId, Windows[Index]);
+                int SpawnLeft = CVarIntegerValue(CVAR_BSP_SPAWN_LEFT);
+                node_ids NodeIds = AssignNodeIds(Node->Parent->WindowId, Windows[Index], SpawnLeft);
                 Node->Parent->WindowId = Node_Root;
                 Node->Parent->Left->WindowId = NodeIds.Left;
                 Node->Parent->Right->WindowId = NodeIds.Right;
@@ -1465,8 +1476,6 @@ Init(chunkwm_api API)
     ChunkwmAPI = API;
     BeginCVars(&ChunkwmAPI);
 
-    uint32_t ProcessPolicy = Process_Policy_Regular;
-
     bool Success;
     std::vector<macos_application *> Applications;
 
@@ -1508,6 +1517,10 @@ Init(chunkwm_api API)
 
     CreateCVar(CVAR_WINDOW_REGION_LOCKED, 0);
 
+    CreateCVar(CVAR_PRE_BORDER_COLOR, 0xffffff00);
+    CreateCVar(CVAR_PRE_BORDER_WIDTH, 4);
+    CreateCVar(CVAR_PRE_BORDER_RADIUS, 4);
+
     /* NOTE(koekeishiya): The following cvars requires extended dock
      * functionality provided by chwm-sa to work. */
 
@@ -1515,6 +1528,7 @@ Init(chunkwm_api API)
 
     /*   ---------------------------------------------------------   */
 
+    uint32_t ProcessPolicy = Process_Policy_Regular;
     Applications = AXLibRunningProcesses(ProcessPolicy);
     for(size_t Index = 0; Index < Applications.size(); ++Index)
     {

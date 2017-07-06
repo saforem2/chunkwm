@@ -207,6 +207,27 @@ void CreateNodeRegion(node *Node, region_type Type, macos_space *Space, virtual_
     CFRelease(DisplayRef);
 }
 
+void CreatePreselectRegion(preselect_node *Preselect, region_type Type, macos_space *Space, virtual_space *VirtualSpace)
+{
+    ASSERT(Type >= Region_Full && Type <= Region_Lower);
+
+    CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromSpace(Space->Id);
+    ASSERT(DisplayRef);
+
+    switch(Type)
+    {
+        case Region_Full:   { Preselect->Region = FullscreenRegion(DisplayRef, VirtualSpace);           } break;
+        case Region_Left:   { Preselect->Region = LeftVerticalRegion(Preselect->Node, VirtualSpace);    } break;
+        case Region_Right:  { Preselect->Region = RightVerticalRegion(Preselect->Node, VirtualSpace);   } break;
+        case Region_Upper:  { Preselect->Region = UpperHorizontalRegion(Preselect->Node, VirtualSpace); } break;
+        case Region_Lower:  { Preselect->Region = LowerHorizontalRegion(Preselect->Node, VirtualSpace); } break;
+        default:            { /* NOTE(koekeishiya): Invalid region specified. */                        } break;
+    }
+
+    Preselect->Region.Type = Type;
+    CFRelease(DisplayRef);
+}
+
 internal void
 CreateNodeRegionPair(node *Left, node *Right, node_split Split, macos_space *Space, virtual_space *VirtualSpace)
 {
