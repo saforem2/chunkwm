@@ -1,11 +1,5 @@
 ## Description [![Build Status](https://travis-ci.org/koekeishiya/chunkwm.svg?branch=master)](https://travis-ci.org/koekeishiya/chunkwm)
 
-**chunkwm** is a tiling window manager for MacOS that uses a plugin architecture, successor to [**kwm**](https://github.com/koekeishiya/kwm)
-
-development is happening on and primarily for MacOS Sierra (10.12.3).
-
-older versions may or may not be compatible and will not be officially supported.
-
 | NAME            | RELEASE | VERSION |
 |-----------------|:-------:|:-------:|
 | chunkwm-core    | Alpha   | 0.2.8   |
@@ -13,7 +7,23 @@ older versions may or may not be compatible and will not be officially supported
 | chunkwm-border  | Alpha   | 0.2.2   |
 | chunkwm-ffm     | Alpha   | 0.1.1   |
 
-[click here to view current project status](https://github.com/koekeishiya/chunkwm/issues/16)
+
+**chunkwm** is a tiling window manager for macOS that uses a plugin architecture, successor to [**kwm**](https://github.com/koekeishiya/kwm).
+It represents windows as the leaves of a binary tree, and supports binary space partitioned, monocle and floating desktops.
+
+**chunkwm** runs a local daemon to receive messages on a dedicated socket.
+
+**chunkc** is a program that writes messages on *chunkwm's* socket.
+
+**chunkwm** does not handle any keyboard input.
+
+A third party program (e.g: [*khd*](https://github.com/koekeishiya/khd)) is needed to map keyboard events to *chunkwm* actions.
+
+Development is happening on and primarily for macOS Sierra (10.12.3).
+
+Older versions may or may not be compatible and will not be officially supported.
+
+[Click here to view current project status](https://github.com/koekeishiya/chunkwm/issues/16)
 
 ![chunkwm_demo](https://cloud.githubusercontent.com/assets/6175959/25564481/6863954c-2db4-11e7-8332-221cecb52ce5.gif)
 
@@ -34,10 +44,6 @@ There are currently three plugins available, developed alongside the **chunkwm-c
 
 These deliver the basic functionality expected of a window manager.
 
-[**khd**](https://github.com/koekeishiya/khd) is an application for creating hotkeys and
-is meant to be used together with the window manager, to provide a complete experience.
-Other applications that serve the same purpose can of course be used instead.
-
 **IMPORTANT**:
 
 The first time **chunkwm-core** is ran, it will request access to the *accessibility API*.
@@ -52,15 +58,16 @@ There are no officially maintained ports in the MacPorts repository, however, I 
 ports that can be added locally. If someone is interested in maintaining ports in the official
 repository, they are free to do so.
 
+The **chunkwm** port installs *chunkwm-core* together with *chunkwm-tiling* and *chunkwm-border*.
+Plugins to install can be modified through the *variants* system.
+
     git clone https://github.com/koekeishiya/portfiles /opt/koekeishiya/portfiles
     # add /opt/koekeishiya/portfiles to /opt/local/etc/macports/sources.conf
 
     sudo port -v selfupdate
-
-    # default variant: chunkwm +tiling +border
     sudo port install chunkwm
 
-    # copy sample config and launchd .plist file as specified in the final *port* notes
+    # copy sample config and launchd .plist file as specified in the final port notes
 
 #### Homebrew
 
@@ -70,7 +77,7 @@ If anyone is interested in doing so, feel free to contact me.
 
 #### Source
 
-requires xcode-8 command line tools.
+Requires xcode-8 command line tools.
 
     git clone https://github.com/koekeishiya/chunkwm
 
@@ -78,13 +85,13 @@ requires xcode-8 command line tools.
 
     cd chunkwm
     make install
-    cp -n bin/chunkwm /usr/local/bin
+    cp bin/chunkwm /usr/local/bin
     cp examples/chunkwmrc ~/.chunkwmrc
     cp examples/com.koekeishiya.chunkwm.plist ~/Library/LaunchAgents
 
     cd chunkwm/src/chunkc
     make
-    cp -n bin/chunkc /usr/local/bin
+    cp bin/chunkc /usr/local/bin
 
     launchctl load -w ~/Library/LaunchAgents/com.koekeishiya.chunkwm.plist
 
@@ -93,47 +100,47 @@ requires xcode-8 command line tools.
     cd chunkwm/src/plugins/tiling
     make install
     mkdir -p ~/.chunkwm_plugins
-    cp -n ../../../plugins/tiling.so ~/.chunkwm_plugins
+    cp ../../../plugins/tiling.so ~/.chunkwm_plugins
 
 **chunkwm-border**:
 
     cd chunkwm/src/plugins/border
     make install
     mkdir -p ~/.chunkwm_plugins
-    cp -n ../../../plugins/border.so ~/.chunkwm_plugins
+    cp ../../../plugins/border.so ~/.chunkwm_plugins
 
 **chunkwm-ffm**:
 
     cd chunkwm/src/plugins/ffm
     make install
     mkdir -p ~/.chunkwm_plugins
-    cp -n ../../../plugins/ffm.so ~/.chunkwm_plugins
+    cp ../../../plugins/ffm.so ~/.chunkwm_plugins
 
 ## Configuration
 
 **chunkwm** uses a bash script as its configuration file and is located at `$HOME/.chunkwmrc`.
 
-a different location can be used by using the `--config | -c` argument.
+A different location can be specified with the `--config | -c` argument.
 
 e.g: `chunkwm --config /opt/local/etc/chunkwm/chunkwmrc`
 
-both the *chunkwm-core* and all plugins are configured in this file !!!
+Both the *chunkwm-core* and all plugins are configured in this file.
 
-settings that should apply to a plugin should be set before the command to load said plugin.
+Plugin settings should be set before the command to load said plugin.
 
-the valid options for **chunkwm-core** are:
+The valid options for *chunkwm-core* are:
 
     chunkc core::plugin_dir </path/to/plugins>
     chunkc core::hotload <1 | 0>
     chunkc core::load <plugin>
     chunkc core::unload <plugin>
 
-plugins can be loaded and unloaded without having to restart **chunkwm**.
+Plugins can be loaded and unloaded without having to restart *chunkwm*.
 
-see [**sample config**](https://github.com/koekeishiya/chunkwm/blob/master/examples/chunkwmrc) for further information.
+See [**sample config**](https://github.com/koekeishiya/chunkwm/blob/master/examples/chunkwmrc) for further information.
 
-visit [**chunkwm-tiling reference**](https://github.com/koekeishiya/chunkwm/tree/master/src/plugins/tiling/README.md)
+Visit [**chunkwm-tiling reference**](https://github.com/koekeishiya/chunkwm/tree/master/src/plugins/tiling/README.md)
 
-visit [**chunkwm-border reference**](https://github.com/koekeishiya/chunkwm/tree/master/src/plugins/border/README.md)
+Visit [**chunkwm-border reference**](https://github.com/koekeishiya/chunkwm/tree/master/src/plugins/border/README.md)
 
-a sample keybinding config file for [**khd**](https://github.com/koekeishiya/khd) is also available [**here**](https://github.com/koekeishiya/chunkwm/tree/master/src/plugins/tiling/examples/khdrc)
+A sample keybinding config file for [**khd**](https://github.com/koekeishiya/khd) is available [**here**](https://github.com/koekeishiya/chunkwm/tree/master/src/plugins/tiling/examples/khdrc)
