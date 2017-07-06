@@ -294,7 +294,7 @@ PLUGIN_BOOL_FUNC(PluginInit)
     int Radius = CVarIntegerValue("focused_border_radius");
     SkipFloating = CVarIntegerValue("focused_border_skip_floating");
     DrawBorder = !SkipFloating;
-    Border = CreateBorderWindow(0, 0, 0, 0, Width, Radius, Color);
+    Border = CreateBorderWindow(0, 0, 0, 0, Width, Radius, Color, true);
     return true;
 }
 
@@ -329,4 +329,4 @@ chunkwm_plugin_export Subscriptions[] =
 CHUNKWM_PLUGIN_SUBSCRIBE(Subscriptions)
 
 // NOTE(koekeishiya): Generate plugin
-CHUNKWM_PLUGIN("Border", "0.2.2")
+CHUNKWM_PLUGIN("Border", "0.2.3")

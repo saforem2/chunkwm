@@ -3,11 +3,13 @@
 #include "../../common/accessibility/display.h"
 #include "../../common/accessibility/window.h"
 #include "../../common/border/border.h"
+#include "../../common/config/cvar.h"
 #include "../../common/misc/assert.h"
 
 #include "node.h"
 #include "vspace.h"
 #include "controller.h"
+#include "constants.h"
 
 #include <string.h>
 #include <math.h>
@@ -50,10 +52,13 @@ internal resize_border_state ResizeState;
 internal resize_border
 CreateResizeBorder(node *Node)
 {
-    // TODO(koekeishiya): read border settings from cvars
+    unsigned PreselectBorderColor = CVarUnsignedValue(CVAR_PRE_BORDER_COLOR);
+    int PreselectBorderWidth = CVarIntegerValue(CVAR_PRE_BORDER_WIDTH);
+    int PreselectBorderRadius = CVarIntegerValue(CVAR_PRE_BORDER_RADIUS);
     border_window *Border = CreateBorderWindow(Node->Region.X, Node->Region.Y,
                                                Node->Region.Width, Node->Region.Height,
-                                               4, 4, 0xffffff00);
+                                               PreselectBorderWidth, PreselectBorderRadius,
+                                               PreselectBorderColor, false);
     return (resize_border) { Border, Node };
 }
 

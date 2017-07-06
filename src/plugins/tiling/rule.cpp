@@ -59,13 +59,18 @@ ApplyWindowRuleState(macos_window *Window, window_rule *Rule)
     {
         AXLibAddFlags(Window, Window_ForceTile);
 
-        macos_space *Space;
-        bool Success = AXLibActiveSpace(&Space);
-        ASSERT(Success);
-
-        if(AXLibSpaceHasWindow(Space->Id, Window->Id))
+        if(!AXLibHasFlags(Window, Window_Minimized))
         {
-            TileWindow(Window);
+            macos_space *Space;
+            bool Success = AXLibActiveSpace(&Space);
+            ASSERT(Success);
+
+            if(AXLibSpaceHasWindow(Space->Id, Window->Id))
+            {
+                TileWindow(Window);
+            }
+
+            AXLibDestroySpace(Space);
         }
     }
     else

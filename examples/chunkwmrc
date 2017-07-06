@@ -55,6 +55,10 @@ chunkc set window_float_next             0
 chunkc set window_float_center           1
 chunkc set window_region_locked          1
 
+chunkc set preselect_border_color        0xffffff00
+chunkc set preselect_border_width        4
+chunkc set preselect_border_radius       4
+
 # signal dock to make windows topmost when floated
 # requires chwm-sa (https://github.com/koekeishiya/chwm-sa)
 chunkc set window_float_topmost          0

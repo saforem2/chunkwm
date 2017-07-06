@@ -26,7 +26,7 @@
   * [send window to monitor](#send-window-to-monitor)
   * [increase region size](#increase-region-size)
   * [decrease region size](#decrease-region-size)
-  * [set bsp-insertion point](#set-bsp-insertion-point)
+  * [set insertion point for the focused container](#set-bsp-insertion-point-for-the-focused-container)
   * [toggle various window options](#toggle-various-window-options)
 * [desktop commands](#desktop-commands)
   * [desktop layout](#desktop-layout)
@@ -193,10 +193,11 @@
     <option>: north | east | south | west | prev | next
     short flags: -r, -e
 
-##### set bsp-insertion point
+##### set bsp-insertion point for the focused container
 
-    chunkc tiling::window --use-insertion-point <option>
-    <option>: focus | north | east | south | west | prev | next
+    chunkc tiling::window --use-temporary-ratio <ratio> --use-insertion-point <option>
+    <ratio>: 0 < value < 1
+    <option>: north | east | south | west | cancel
     short flag: -i
 
 ##### toggle various window options

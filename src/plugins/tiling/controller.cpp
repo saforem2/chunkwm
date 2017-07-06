@@ -928,9 +928,14 @@ void UseInsertionPoint(char *Direction)
     bool Success;
     macos_space *Space;
     virtual_space *VirtualSpace;
-    macos_window *Window, *ClosestWindow;
+    macos_window *Window;
+    node *Node;
 
-    Window = GetWindowByID(CVarUnsignedValue(CVAR_BSP_INSERTION_POINT));
+    unsigned PreselectBorderColor;
+    int PreselectBorderWidth;
+    int PreselectBorderRadius;
+
+    Window = GetFocusedWindow();
     if(!Window)
     {
         goto out;
@@ -951,16 +956,89 @@ void UseInsertionPoint(char *Direction)
         goto vspace_release;
     }
 
-    if(StringEquals(Direction, "focus"))
+    Node = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
+    if(!Node)
     {
-        ClosestWindow = GetFocusedWindow();
-        if(ClosestWindow) UpdateCVar(CVAR_BSP_INSERTION_POINT, ClosestWindow->Id);
+        goto vspace_release;
     }
-    else if((FindWindowUndirected(Space, VirtualSpace, Window, &ClosestWindow, Direction, false)) ||
-            (FindClosestWindow(Space, VirtualSpace, Window, &ClosestWindow, Direction, false)))
+
+    if(Node->Preselect)
     {
-        UpdateCVar(CVAR_BSP_INSERTION_POINT, ClosestWindow->Id);
+        if(StringEquals(Direction, Node->Preselect->Direction))
+        {
+            FreePreselectNode(Node);
+            goto vspace_release;
+        }
+        else
+        {
+            FreePreselectNode(Node);
+        }
     }
+
+    if(StringEquals(Direction, "cancel"))
+    {
+        goto vspace_release;
+    }
+
+    Node->Preselect = (preselect_node *) malloc(sizeof(preselect_node));
+    memset(Node->Preselect, 0, sizeof(preselect_node));
+
+    Node->Preselect->Direction = strdup(Direction);
+
+    if(StringEquals(Direction, "west"))
+    {
+        Node->Preselect->SpawnLeft = true;
+        Node->Preselect->Split = Split_Vertical;
+    }
+    else if(StringEquals(Direction, "east"))
+    {
+        Node->Preselect->SpawnLeft = false;
+        Node->Preselect->Split = Split_Vertical;
+    }
+    else if(StringEquals(Direction, "north"))
+    {
+        Node->Preselect->SpawnLeft = true;
+        Node->Preselect->Split = Split_Horizontal;
+    }
+    else if(StringEquals(Direction, "south"))
+    {
+        Node->Preselect->SpawnLeft = false;
+        Node->Preselect->Split = Split_Horizontal;
+    }
+
+    Node->Preselect->Node = Node;
+    Node->Preselect->Ratio = Node->Preselect->SpawnLeft
+                           ? CVarFloatingPointValue(CVAR_BSP_SPLIT_RATIO)
+                           : 1 - CVarFloatingPointValue(CVAR_BSP_SPLIT_RATIO);
+
+
+    if(Node->Preselect->Split == Split_Vertical)
+    {
+        CreatePreselectRegion(Node->Preselect,
+                              Node->Preselect->SpawnLeft ? Region_Left : Region_Right,
+                              Space,
+                              VirtualSpace);
+    }
+    else if(Node->Preselect->Split == Split_Horizontal)
+    {
+        CreatePreselectRegion(Node->Preselect,
+                              Node->Preselect->SpawnLeft ? Region_Upper : Region_Lower,
+                              Space,
+                              VirtualSpace);
+    }
+
+    PreselectBorderColor = CVarUnsignedValue(CVAR_PRE_BORDER_COLOR);
+    PreselectBorderWidth = CVarIntegerValue(CVAR_PRE_BORDER_WIDTH);
+    PreselectBorderRadius = CVarIntegerValue(CVAR_PRE_BORDER_RADIUS);
+
+    Node->Preselect->Border = CreateBorderWindow(Node->Preselect->Region.X,
+                                                 Node->Preselect->Region.Y,
+                                                 Node->Preselect->Region.Width,
+                                                 Node->Preselect->Region.Height,
+                                                 PreselectBorderWidth,
+                                                 PreselectBorderRadius,
+                                                 PreselectBorderColor,
+                                                 false);
 
 vspace_release:
     ReleaseVirtualSpace(VirtualSpace);
