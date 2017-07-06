@@ -144,3 +144,105 @@ Visit [**chunkwm-tiling reference**](https://github.com/koekeishiya/chunkwm/tree
 Visit [**chunkwm-border reference**](https://github.com/koekeishiya/chunkwm/tree/master/src/plugins/border/README.md)
 
 A sample keybinding config file for [**khd**](https://github.com/koekeishiya/khd) is available [**here**](https://github.com/koekeishiya/chunkwm/tree/master/src/plugins/tiling/examples/khdrc)
+
+## Insertion Modes
+
+#### Prelude
+
+When **chunkwm** detects a new window, it inserts it into a window tree at the specified insertion point, using the insertion mode specified for that insertion point.
+
+The insertion mode tells **chunkwm** how it should alter the tree in order to insert new windows on a given insertion point.
+
+The insertion point is the focused window and its default insertion mode is *automatic*.
+
+If the focused window is not eligible for any reason, the minimum-depth leaf node is chosen instead.
+
+#### Automatic Mode
+
+The *automatic* mode, as opposed to the *manual* mode, doesn't require any user choice: the new window will *split the focused window*
+using the parameters set in the config file:
+
+* *bsp_split_mode*
+* *bsp_spawn_left*
+* *bsp_split_ratio*
+
+Consider the following scenario:
+
+```
+             a                          a                          a
+            / \                        / \                        / \
+           1   b         --->         1   b         --->         1   b
+              / \                        / \                        / \
+             2   3                      c   3                      c   3
+             ^                         / \                        / \
+                                      4   2                      d   2
+                                      ^                         / \
+                                                               5   4
+
+ +-----------------------+  +-----------------------+  +-----------------------+
+ |           |           |  |           |     |     |  |           |  5  |     |
+ |           |     2     |  |           |  4  |  2  |  |           |-----|  2  |
+ |           |     ^     |  |           |  ^  |     |  |           |  4  |     |
+ |     1     |-----------|  |     1     |-----------|  |     1     |-----------|
+ |           |           |  |           |           |  |           |           |
+ |           |     3     |  |           |     3     |  |           |     3     |
+ |           |           |  |           |           |  |           |           |
+ +-----------------------+  +-----------------------+  +-----------------------+
+
+              X                         Y                          Z
+```
+
+In state *X*, the insertion point, *2* is in automatic mode.
+
+When we add a new window, *4*, the insertion point is split, and becomes the right child of a new internal node, *c*.
+
+Then the insertion of *5*, with *4* as insertion point, leads to *Z*.
+
+#### Manual Mode
+
+The user can specify a region in the insertion point where the next new window should appear by sending a `chunkc tiling::window -i | --use-insertion-point <direction>` message.
+
+The *\<direction>* argument specifies how the insertion point should be split (horizontally or vertically) and if the new window should be the left or the right child of the new internal node.
+
+After doing so, the insertion point goes into *manual* mode.
+
+Consider the following scenario:
+
+```
+            a                          a                          a
+           / \                        / \                        / \
+          1   b         --->         c   b         --->         c   b
+          ^  / \                    / \ / \                    / \ / \
+            2   3                  1  4 2  3                  1  d 2  3
+                                      ^                         / \
+                                                               4   5
+                                                                   ^
+
++-----------------------+  +-----------------------+  +-----------------------+
+|           |           |  |           |           |  |           |           |
+|           |     2     |  |     1     |     2     |  |     1     |     2     |
+|           |           |  |           |           |  |           |           |
+|     1     |-----------|  |-----------|-----------|  |-----------|-----------|
+|     ^     |           |  |           |           |  |     |     |           |
+|           |     3     |  |     4     |     3     |  |  4  |  5  |     3     |
+|           |           |  |     ^     |           |  |     |     |           |
++-----------------------+  +-----------------------+  +-----------------------+
+
+            X                          Y                          Z
+```
+
+In state *X*, the insertion point is *1*.
+
+We send the following message to **chunkwm**: `chunkc tiling::window -i south`.
+
+Then add a new window: *4*, this leads to state *Y*: the new internal node, *c* becomes *a*'s left child.
+
+Finally we send another message: `chunkc tiling::window -i east` and add window *5*.
+
+The ratio of the preselection can be set by including the `-r | --use-temporary-ratio <ratio>` flag in the message.
+e.g: `chunkc tiling::window -r 0.3 -i east`
+
+## A tribute
+
+Both of my tiling window managers (*kwm* and *chunkwm*) have been heavily inspired by [bspwm](https://github.com/baskerville/bspwm),
+and I'd like to thank [baskerville](https://github.com/baskerville) for his project and for introducing me to an interesting tiling concept.

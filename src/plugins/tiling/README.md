@@ -24,6 +24,7 @@
   * [warp floating window](#warp-floating-window)
   * [send window to desktop](#send-window-to-desktop)
   * [send window to monitor](#send-window-to-monitor)
+  * [use temporary ratio in commands](#use-temporary-ratio-in-commands)
   * [increase region size](#increase-region-size)
   * [decrease region size](#decrease-region-size)
   * [set insertion point for the focused container](#set-bsp-insertion-point-for-the-focused-container)
@@ -179,6 +180,13 @@
     <option>: prev | next | index
     short flag: -m
 
+##### use temporary ratio in commands
+
+    chunkc tiling::window --use-temporary-ratio <ratio>
+    <ratio>: 0 < value < 1
+    short flags: -r
+    desc: must be used in combination with other commands
+
 ##### increase region size
 
     chunkc tiling::window --use-temporary-ratio <ratio> --adjust-window-edge <option>
@@ -195,10 +203,12 @@
 
 ##### set bsp-insertion point for the focused container
 
-    chunkc tiling::window --use-temporary-ratio <ratio> --use-insertion-point <option>
-    <ratio>: 0 < value < 1
+    chunkc tiling::window --use-insertion-point <option>
     <option>: north | east | south | west | cancel
     short flag: -i
+
+    # specify --use-temporary-ratio to set preselect ratio
+    chunkc tiling::window --use-temporary-ratio <ratio> --use-insertion-point <option>
 
 ##### toggle various window options
 
