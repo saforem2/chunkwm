@@ -147,7 +147,7 @@ bool BeginCallbackThreads(int Count)
         Index < Count;
         ++Index)
     {
-        pthread_create(&Thread[Count], NULL, &WorkQueueThreadProc, &Queue);
+        pthread_create(&Thread[Index], NULL, &WorkQueueThreadProc, &Queue);
     }
 
     return true;
