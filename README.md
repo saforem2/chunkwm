@@ -54,26 +54,38 @@ The **chunkwm-tiling** plugin requires ['displays have separate spaces'](https:/
 
 #### MacPorts
 
-There are no officially maintained ports in the MacPorts repository, however, I have created
-ports that can be added locally. If someone is interested in maintaining ports in the official
+There are no officially maintained ports in the MacPorts repository, however, [terinjokes](https://github.com/terinjokes) have created
+a port that can be added locally. If someone is interested in maintaining ports in the official
 repository, they are free to do so.
 
 The **chunkwm** port installs *chunkwm-core* together with *chunkwm-tiling* and *chunkwm-border*.
 Plugins to install can be modified through the *variants* system.
 
     git clone https://github.com/koekeishiya/portfiles /opt/koekeishiya/portfiles
-    # add /opt/koekeishiya/portfiles to /opt/local/etc/macports/sources.conf
+    # manually add /opt/koekeishiya/portfiles to /opt/local/etc/macports/sources.conf
 
+    # update the ports tree
     sudo port -v selfupdate
-    sudo port install chunkwm
 
-    # copy sample config and launchd .plist file as specified in the final port notes
+    # install latest stable version
+    sudo port install chunkwm
 
 #### Homebrew
 
-As of right now, there are no brew formulae available. Ideally, they would follow the same pattern
-as MacPorts. I'm not well versed in creating brew formulae, so this might take a while.
-If anyone is interested in doing so, feel free to contact me.
+Thanks to [crisidev](https://github.com/crisidev) for providing and maintaining a homebrew formulae.
+The repository can be found [here](https://github.com/crisidev/homebrew-chunkwm).
+
+The **chunkwm** formuale installs *chunkwm-core* together with *chunkwm-tiling* and *chunkwm-border*.
+Plugins to install can be modified through the *options* system.
+
+    # clone tap
+    brew tap crisidev/homebrew-chunkwm
+
+    # install latest stable version
+    brew install crisidev/homebrew-chunkwm/chunkwm
+
+    # install from git repo
+    brew install --HEAD crisidev/homebrew-chunkwm/chunkwm
 
 #### Source
 
