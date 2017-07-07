@@ -77,25 +77,25 @@ void CreateCVar(const char *Name, char *Value)
 
 int CVarIntegerValue(const char *Name)
 {
-    char *String = ChunkwmAPI->AcquireCVar(Name);
     int Result = 0;
-    sscanf(String, "%d", &Result);
+    char *String = ChunkwmAPI->AcquireCVar(Name);
+    if(String) sscanf(String, "%d", &Result);
     return Result;
 }
 
 int CVarUnsignedValue(const char *Name)
 {
-    char *String = ChunkwmAPI->AcquireCVar(Name);
     unsigned Result = 0;
-    sscanf(String, "%x", &Result);
+    char *String = ChunkwmAPI->AcquireCVar(Name);
+    if(String) sscanf(String, "%x", &Result);
     return Result;
 }
 
 float CVarFloatingPointValue(const char *Name)
 {
-    char *String = ChunkwmAPI->AcquireCVar(Name);
     float Result = 0.0f;
-    sscanf(String, "%f", &Result);
+    char *String = ChunkwmAPI->AcquireCVar(Name);
+    if(String) sscanf(String, "%f", &Result);
     return Result;
 }
 
