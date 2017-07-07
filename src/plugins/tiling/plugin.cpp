@@ -1343,6 +1343,8 @@ SpaceAndDisplayChangedHandler(void *Data)
     if(VirtualSpace->Mode != Virtual_Space_Float)
     {
         std::vector<uint32_t> FilteredWindows = RemoveFloatingWindows(Windows);
+        if(FilteredWindows.empty()) goto vspace_release;
+
         if(VirtualSpace->Tree)
         {
             RebalanceWindowTreeForSpaceWithWindows(Space, VirtualSpace, FilteredWindows);
@@ -1356,6 +1358,8 @@ SpaceAndDisplayChangedHandler(void *Data)
             CreateWindowTreeForSpaceWithWindows(Space, VirtualSpace, FilteredWindows);
         }
     }
+
+vspace_release:
     ReleaseVirtualSpace(VirtualSpace);
 
 win_focus:
