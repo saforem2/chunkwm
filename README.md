@@ -48,13 +48,13 @@ These deliver the basic functionality expected of a window manager.
 
 The first time **chunkwm-core** is ran, it will request access to the *accessibility API*.
 
-After access has been granted, the application must be restarted
+After access has been granted, the application must be restarted.
 
 The **chunkwm-tiling** plugin requires ['displays have separate spaces'](https://support.apple.com/library/content/dam/edam/applecare/images/en_US/osx/separate_spaces.png) to be enabled.
 
 #### MacPorts
 
-There are no officially maintained ports in the MacPorts repository, however, [terinjokes](https://github.com/terinjokes) have created
+There are no officially maintained ports in the MacPorts repository, however, [terinjokes](https://github.com/terinjokes) has created
 a port that can be added locally. If someone is interested in maintaining ports in the official
 repository, they are free to do so.
 
@@ -75,7 +75,7 @@ Plugins to install can be modified through the *variants* system.
 Thanks to [crisidev](https://github.com/crisidev) for providing and maintaining a homebrew formulae.
 The repository can be found [here](https://github.com/crisidev/homebrew-chunkwm).
 
-The **chunkwm** formuale installs *chunkwm-core* together with *chunkwm-tiling* and *chunkwm-border*.
+The **chunkwm** formulae installs *chunkwm-core* together with *chunkwm-tiling* and *chunkwm-border*.
 Plugins to install can be modified through the *options* system.
 
     # clone tap
@@ -134,7 +134,7 @@ Requires xcode-8 command line tools.
 
 A different location can be specified with the `--config | -c` argument.
 
-e.g: `chunkwm --config /opt/local/etc/chunkwm/chunkwmrc`
+e.g: `chunkwm --config /opt/local/etc/chunkwm/chunkwmrc`.
 
 Both the *chunkwm-core* and all plugins are configured in this file.
 
@@ -151,11 +151,11 @@ Plugins can be loaded and unloaded without having to restart *chunkwm*.
 
 See [**sample config**](https://github.com/koekeishiya/chunkwm/blob/master/examples/chunkwmrc) for further information.
 
-Visit [**chunkwm-tiling reference**](https://github.com/koekeishiya/chunkwm/tree/master/src/plugins/tiling/README.md)
+Visit [**chunkwm-tiling reference**](https://github.com/koekeishiya/chunkwm/tree/master/src/plugins/tiling/README.md).
 
-Visit [**chunkwm-border reference**](https://github.com/koekeishiya/chunkwm/tree/master/src/plugins/border/README.md)
+Visit [**chunkwm-border reference**](https://github.com/koekeishiya/chunkwm/tree/master/src/plugins/border/README.md).
 
-A sample keybinding config file for [**khd**](https://github.com/koekeishiya/khd) is available [**here**](https://github.com/koekeishiya/chunkwm/tree/master/src/plugins/tiling/examples/khdrc)
+A sample keybinding config file for [**khd**](https://github.com/koekeishiya/khd) is available [**here**](https://github.com/koekeishiya/chunkwm/tree/master/src/plugins/tiling/examples/khdrc).
 
 ## Insertion Modes
 
@@ -252,7 +252,7 @@ Then add a new window: *4*, this leads to state *Y*: the new internal node, *c* 
 Finally we send another message: `chunkc tiling::window -i east` and add window *5*.
 
 The ratio of the preselection can be set by including the `-r | --use-temporary-ratio <ratio>` flag in the message.
-e.g: `chunkc tiling::window -r 0.3 -i east`
+e.g: `chunkc tiling::window -r 0.3 -i east`.
 
 ## A tribute
 
