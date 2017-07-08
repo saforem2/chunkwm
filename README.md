@@ -82,10 +82,10 @@ Plugins to install can be modified through the *options* system.
     brew tap crisidev/homebrew-chunkwm
 
     # install latest stable version
-    brew install crisidev/homebrew-chunkwm/chunkwm
+    brew install chunkwm
 
     # install from git repo
-    brew install --HEAD crisidev/homebrew-chunkwm/chunkwm
+    brew install --HEAD chunkwm
 
 #### Source
 
