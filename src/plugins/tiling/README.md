@@ -295,8 +295,10 @@
 |------------|:----------:|:-----:|:--------------------------------------:|
 | --state    | -s         | float | automatically float window             |
 | --state    | -s         | tile  | force-tile window regardless of AXRole |
+| --desktop  | -d         | index | send window to desktop                 |
 
 ##### sample rules
 
     chunkc tiling::rule --owner \"System Preferences\" --state tile
     chunkc tiling::rule --owner Finder --name Copy --state float
+    chunkc tiling::rule --owner Spotify --desktop 5

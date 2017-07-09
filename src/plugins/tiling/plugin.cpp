@@ -105,11 +105,11 @@ out:
 }
 
 // NOTE(koekeishiya): Caller is responsible for making sure that the window is not a dupe.
-internal void
+internal uint32_t
 AddWindowToCollection(macos_window *Window)
 {
     Windows[Window->Id] = Window;
-    ApplyRulesForWindow(Window);
+    return ApplyRulesForWindow(Window);
 }
 
 internal macos_window *
@@ -1073,7 +1073,9 @@ ApplicationLaunchedHandler(void *Data)
             }
             else
             {
-                AddWindowToCollection(Window);
+                uint32_t Result = AddWindowToCollection(Window);
+                if(RuleChangedDesktop(Result)) continue;
+                if(RuleTiledWindow(Result))    continue;
                 TileWindow(Window);
             }
         }
@@ -1174,10 +1176,10 @@ internal void
 WindowCreatedHandler(void *Data)
 {
     macos_window *Window = (macos_window *) Data;
-
     macos_window *Copy = AXLibCopyWindow(Window);
-    AddWindowToCollection(Copy);
-
+    uint32_t Result = AddWindowToCollection(Copy);
+    if(RuleChangedDesktop(Result)) return;
+    if(RuleTiledWindow(Result))    return;
     TileWindow(Copy);
 }
 

@@ -49,7 +49,7 @@ RegexMatchPattern(regex_t *Regex, const char *Match, const char *Pattern)
 }
 
 internal inline void
-ApplyWindowRuleState(macos_window *Window, window_rule *Rule)
+ApplyWindowRuleState(macos_window *Window, window_rule *Rule, uint32_t *RuleResult)
 {
     if(StringEquals(Rule->State, "float"))
     {
@@ -68,6 +68,7 @@ ApplyWindowRuleState(macos_window *Window, window_rule *Rule)
             if(AXLibSpaceHasWindow(Space->Id, Window->Id))
             {
                 TileWindow(Window);
+                (*RuleResult) |= Rule_State_Tiled;
             }
 
             AXLibDestroySpace(Space);
@@ -80,7 +81,16 @@ ApplyWindowRuleState(macos_window *Window, window_rule *Rule)
 }
 
 internal inline void
-ApplyWindowRule(macos_window *Window, window_rule *Rule)
+ApplyWindowRuleDesktop(macos_window *Window, window_rule *Rule, uint32_t *RuleResult)
+{
+    if(SendWindowToDesktop(Window, Rule->Desktop))
+    {
+        (*RuleResult) |= Rule_Desktop_Changed;
+    }
+}
+
+internal inline void
+ApplyWindowRule(macos_window *Window, window_rule *Rule, uint32_t *RuleResult)
 {
     regex_t Regex;
 
@@ -103,30 +113,34 @@ ApplyWindowRule(macos_window *Window, window_rule *Rule)
         if(!Match) return;
     }
 
-    ApplyWindowRuleState(Window, Rule);
+    if(Rule->Desktop)   ApplyWindowRuleDesktop(Window, Rule, RuleResult);
+    if(Rule->State)     ApplyWindowRuleState(Window, Rule, RuleResult);
 }
 
-void ApplyRulesForWindow(macos_window *Window)
+uint32_t ApplyRulesForWindow(macos_window *Window)
 {
+    uint32_t Result = 0;
     for(size_t Index = 0;
         Index < WindowRules.size();
         ++Index)
     {
         window_rule *Rule = WindowRules[Index];
-        ApplyWindowRule(Window, Rule);
+        ApplyWindowRule(Window, Rule, &Result);
     }
+    return Result;
 }
 
 internal void
 ApplyRuleToExistingWindows(window_rule *Rule)
 {
+    uint32_t Result = 0;
     macos_window_map Windows = CopyWindowCache();
     for(macos_window_map_it It = Windows.begin();
         It != Windows.end();
         ++It)
     {
         macos_window *Window = It->second;
-        ApplyWindowRule(Window, Rule);
+        ApplyWindowRule(Window, Rule, &Result);
     }
 }
 
