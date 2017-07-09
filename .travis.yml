@@ -5,6 +5,7 @@ env:
     - BUILD_DIR=./src/plugins/tiling
     - BUILD_DIR=./src/plugins/border
     - BUILD_DIR=./src/plugins/ffm
+    - BUILD_DIR=./src/plugins/transparency
 script: cd $BUILD_DIR && make install
 notifications:
 irc:
