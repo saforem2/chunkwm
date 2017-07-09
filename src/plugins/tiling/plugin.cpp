@@ -1145,17 +1145,39 @@ WindowFocusedHandler(uint32_t WindowId)
     macos_window *Window = GetWindowByID(WindowId);
     if(Window && IsWindowFocusable(Window))
     {
-        BroadcastFocusedWindowFloating(Window);
+        macos_space *Space;
+        bool Success = AXLibActiveSpace(&Space);
+        ASSERT(Success);
 
-        if(!AXLibHasFlags(Window, Window_Float))
+        if(AXLibSpaceHasWindow(Space->Id, WindowId))
         {
-            UpdateCVar(CVAR_BSP_INSERTION_POINT, Window->Id);
-        }
+            BroadcastFocusedWindowFloating(Window);
 
-        if(CVarIntegerValue(CVAR_MOUSE_FOLLOWS_FOCUS))
-        {
-            CenterMouseInWindow(Window);
+            if(!AXLibHasFlags(Window, Window_Float))
+            {
+                UpdateCVar(CVAR_BSP_INSERTION_POINT, Window->Id);
+            }
+
+            if(CVarIntegerValue(CVAR_MOUSE_FOLLOWS_FOCUS))
+            {
+                CenterMouseInWindow(Window);
+            }
         }
+        else
+        {
+            std::vector<uint32_t> WindowIds = GetAllVisibleWindowsForSpace(Space);
+            for(int Index = 0;
+                Index < WindowIds.size();
+                ++Index)
+            {
+                if(WindowIds[Index] == Window->Id) continue;
+                macos_window *Window = GetWindowByID(WindowIds[Index]);
+                AXLibSetFocusedWindow(Window->Ref);
+                AXLibSetFocusedApplication(Window->Owner->PSN);
+                break;
+            }
+        }
+        AXLibDestroySpace(Space);
     }
 }
 

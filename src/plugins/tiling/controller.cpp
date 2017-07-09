@@ -239,39 +239,43 @@ FindWindowUndirected(macos_space *Space, virtual_space *VirtualSpace,
     if(StringEquals(Direction, "prev"))
     {
         node *WindowNode = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
-        ASSERT(WindowNode);
-        node *PrevNode = GetPrevLeafNode(WindowNode);
-        if(PrevNode)
+        if(WindowNode)
         {
-            *ClosestWindow = GetWindowByID(PrevNode->WindowId);
-            ASSERT(*ClosestWindow);
-            Result = true;
-        }
-        else if(WrapMonitor)
-        {
-            PrevNode = GetLastLeafNode(VirtualSpace->Tree);
-            *ClosestWindow = GetWindowByID(PrevNode->WindowId);
-            ASSERT(*ClosestWindow);
-            Result = true;
+            node *PrevNode = GetPrevLeafNode(WindowNode);
+            if(PrevNode)
+            {
+                *ClosestWindow = GetWindowByID(PrevNode->WindowId);
+                ASSERT(*ClosestWindow);
+                Result = true;
+            }
+            else if(WrapMonitor)
+            {
+                PrevNode = GetLastLeafNode(VirtualSpace->Tree);
+                *ClosestWindow = GetWindowByID(PrevNode->WindowId);
+                ASSERT(*ClosestWindow);
+                Result = true;
+            }
         }
     }
     else if(StringEquals(Direction, "next"))
     {
         node *WindowNode = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
-        ASSERT(WindowNode);
-        node *NextNode = GetNextLeafNode(WindowNode);
-        if(NextNode)
+        if(WindowNode)
         {
-            *ClosestWindow = GetWindowByID(NextNode->WindowId);
-            ASSERT(*ClosestWindow);
-            Result = true;
-        }
-        else if(WrapMonitor)
-        {
-            NextNode = GetFirstLeafNode(VirtualSpace->Tree);
-            *ClosestWindow = GetWindowByID(NextNode->WindowId);
-            ASSERT(*ClosestWindow);
-            Result = true;
+            node *NextNode = GetNextLeafNode(WindowNode);
+            if(NextNode)
+            {
+                *ClosestWindow = GetWindowByID(NextNode->WindowId);
+                ASSERT(*ClosestWindow);
+                Result = true;
+            }
+            else if(WrapMonitor)
+            {
+                NextNode = GetFirstLeafNode(VirtualSpace->Tree);
+                *ClosestWindow = GetWindowByID(NextNode->WindowId);
+                ASSERT(*ClosestWindow);
+                Result = true;
+            }
         }
     }
     return Result;
@@ -1552,6 +1556,7 @@ bool SendWindowToDesktop(macos_window *Window, char *Op)
         macos_window *Window = GetWindowByID(WindowIds[Index]);
         AXLibSetFocusedWindow(Window->Ref);
         AXLibSetFocusedApplication(Window->Owner->PSN);
+        break;
     }
 
     if(DestinationMonitor == SourceMonitor)
@@ -1712,6 +1717,7 @@ void SendWindowToMonitor(char *Op)
         macos_window *Window = GetWindowByID(WindowIds[Index]);
         AXLibSetFocusedWindow(Window->Ref);
         AXLibSetFocusedApplication(Window->Owner->PSN);
+        break;
     }
 
     SourceMonitorRef = AXLibGetDisplayIdentifierFromSpace(Space->Id);

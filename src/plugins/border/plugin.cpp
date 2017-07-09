@@ -113,7 +113,16 @@ WindowFocusedHandler(void *Data)
        ((Window->Owner == Application) ||
        (Application == NULL)))
     {
-        UpdateWindow(Window->Ref);
+        macos_space *Space;
+        bool Success = AXLibActiveSpace(&Space);
+        ASSERT(Success);
+
+        if(AXLibSpaceHasWindow(Space->Id, Window->Id))
+        {
+            UpdateWindow(Window->Ref);
+        }
+
+        AXLibDestroySpace(Space);
     }
 }
 
