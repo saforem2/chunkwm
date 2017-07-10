@@ -130,7 +130,9 @@ Requires xcode-8 command line tools.
 
 ## Configuration
 
-**chunkwm** uses a bash script as its configuration file and is located at `$HOME/.chunkwmrc`.
+**chunkwm** uses a shell script as its configuration file and is located at `$HOME/.chunkwmrc`.
+
+This implies that the `.chunkwmrc` file needs executable permissions; `chmod +x ~/.chunkwmrc`.
 
 A different location can be specified with the `--config | -c` argument.
 
