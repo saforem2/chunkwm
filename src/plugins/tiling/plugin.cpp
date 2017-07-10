@@ -1145,9 +1145,13 @@ WindowFocusedHandler(uint32_t WindowId)
     macos_window *Window = GetWindowByID(WindowId);
     if(Window && IsWindowFocusable(Window))
     {
-        macos_space *Space;
-        bool Success = AXLibActiveSpace(&Space);
-        ASSERT(Success);
+        CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromWindow(WindowId);
+        if(!DisplayRef) DisplayRef = AXLibGetDisplayIdentifierFromWindowRect(Window->Position, Window->Size);
+        ASSERT(DisplayRef);
+
+        macos_space *Space = AXLibActiveSpace(DisplayRef);
+        ASSERT(Space);
+        CFRelease(DisplayRef);
 
         if(AXLibSpaceHasWindow(Space->Id, WindowId))
         {
@@ -1177,6 +1181,7 @@ WindowFocusedHandler(uint32_t WindowId)
                 break;
             }
         }
+
         AXLibDestroySpace(Space);
     }
 }
