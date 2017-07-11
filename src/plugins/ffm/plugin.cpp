@@ -1,182 +1,75 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <mach/mach_time.h>
 
 #include "../../api/plugin_api.h"
 #include "../../common/accessibility/element.h"
-#include "../../common/accessibility/display.h"
+#include "../../common/accessibility/window.h"
+#include "../../common/accessibility/application.h"
 #include "../../common/dispatch/cgeventtap.h"
-#include "../../common/misc/assert.h"
+
+extern "C" int CGSMainConnectionID(void);
+extern "C" OSStatus CGSFindWindowByGeometry(int cid, int zero, int one, int zero_again, CGPoint *screen_point, CGPoint *window_coords_out, int *wid_out, int *cid_out);
+extern "C" CGError CGSConnectionGetPID(const int cid, pid_t *pid);
 
 #define internal static
-#define local_persist static
-#define CLOCK_PRECISION 1E-9
 
 internal event_tap EventTap;
 internal bool volatile IsActive;
-internal double MouseMovedDeltaTime;
-internal double MouseMovedThrottle = 0.125;
+internal uint32_t volatile FocusedWindowId;
 
 internal inline void
-ClockGetTime(long long *Time)
+FocusWindow(uint32_t WindowID, pid_t WindowPID)
 {
-    local_persist mach_timebase_info_data_t Timebase;
-    if(Timebase.denom == 0)
-    {
-        mach_timebase_info(&Timebase);
-    }
+    AXUIElementRef ApplicationRef;
+    CFArrayRef WindowList;
+    CFIndex WindowCount;
 
-    uint64_t Temp = mach_absolute_time();
-    *Time = (Temp * Timebase.numer) / Timebase.denom;
-}
+    ApplicationRef = AXUIElementCreateApplication(WindowPID);
+    if(!ApplicationRef) goto out;
 
-internal inline double
-GetTimeDiff(long long A, long long B)
-{
-    return (A - B) * CLOCK_PRECISION;
-}
+    WindowList = (CFArrayRef) AXLibGetWindowProperty(ApplicationRef, kAXWindowsAttribute);
+    if(!WindowList) goto app_release;
 
-internal bool
-IsPointInsideRect(CGPoint *Point, CGRect *Rect)
-{
-    if(Point->x >= Rect->origin.x &&
-       Point->x <= Rect->origin.x + Rect->size.width &&
-       Point->y >= Rect->origin.y &&
-       Point->y <= Rect->origin.y + Rect->size.height)
-        return true;
-
-    return false;
-}
-
-#define CONTEXT_MENU_LAYER 101
-struct window_info
-{
-    uint32_t ID;
-    uint32_t PID;
-    uint32_t Layer;
-};
-
-window_info GetWindowBelowCursor(CGPoint Cursor)
-{
-    local_persist CGWindowListOption WindowListOption = kCGWindowListOptionOnScreenOnly |
-                                                        kCGWindowListExcludeDesktopElements;
-    window_info Result = {};
-    CFArrayRef WindowList = CGWindowListCopyWindowInfo(WindowListOption, kCGNullWindowID);
-    if(WindowList)
-    {
-        CFIndex WindowCount = CFArrayGetCount(WindowList);
-        for(size_t Index = 0; Index < WindowCount; ++Index)
-        {
-            CGRect WindowRect = {};
-            uint32_t WindowID, WindowLayer, WindowPID;
-            CFDictionaryRef Elem = (CFDictionaryRef)CFArrayGetValueAtIndex(WindowList, Index);
-            CFDictionaryRef CFWindowBounds = (CFDictionaryRef) CFDictionaryGetValue(Elem, CFSTR("kCGWindowBounds"));
-            CFNumberRef CFWindowNumber = (CFNumberRef) CFDictionaryGetValue(Elem, CFSTR("kCGWindowNumber"));
-            CFNumberRef CFWindowPID = (CFNumberRef) CFDictionaryGetValue(Elem, CFSTR("kCGWindowOwnerPID"));
-            CFNumberRef CFWindowLayer = (CFNumberRef) CFDictionaryGetValue(Elem, CFSTR("kCGWindowLayer"));
-            CFNumberGetValue(CFWindowNumber, kCFNumberSInt32Type, &WindowID);
-            CFNumberGetValue(CFWindowPID, kCFNumberIntType, &WindowPID);
-            CFNumberGetValue(CFWindowLayer, kCFNumberSInt32Type, &WindowLayer);
-            CFRelease(CFWindowNumber);
-            CFRelease(CFWindowPID);
-            CFRelease(CFWindowLayer);
-            if(CFWindowBounds)
-            {
-                CGRectMakeWithDictionaryRepresentation(CFWindowBounds, &WindowRect);
-            }
-
-            CFStringRef CFOwner = (CFStringRef) CFDictionaryGetValue(Elem, CFSTR("kCGWindowOwnerName"));
-            CFStringRef CFName = (CFStringRef) CFDictionaryGetValue(Elem, CFSTR("kCGWindowName"));
-
-            bool IsOwnedByChunkWM = (CFOwner && CFStringCompare(CFOwner, CFSTR("chunkwm"), 0) == kCFCompareEqualTo);
-            bool IsDock = (CFOwner && CFStringCompare(CFOwner, CFSTR("Dock"), 0) == kCFCompareEqualTo);
-            bool IsLaunchpad = (CFName && CFStringCompare(CFName, CFSTR("LPSpringboard"), 0) == kCFCompareEqualTo);
-            bool IsDockBar = (CFName && CFStringCompare(CFName, CFSTR("Dock"), 0) == kCFCompareEqualTo);
-
-            if((IsDock && IsDockBar) || IsOwnedByChunkWM)
-                continue;
-
-            if((IsDock && IsLaunchpad) || (WindowLayer == CONTEXT_MENU_LAYER))
-            {
-                CFRelease(WindowList);
-                return Result;
-            }
-
-            if(IsPointInsideRect(&Cursor, &WindowRect))
-            {
-                Result = (window_info) { WindowID, WindowPID, WindowLayer };
-                break;
-            }
-        }
-        CFRelease(WindowList);
-    }
-
-    return Result;
-}
-
-void FocusWindowBelowCursor(CGPoint Cursor)
-{
-    AXUIElementRef ApplicationRef = AXLibGetFocusedApplication();
-    AXUIElementRef WindowRef = AXLibGetFocusedWindow(ApplicationRef);
-    CFRelease(ApplicationRef);
-
-    uint32_t FocusedWindowId = 0;
-    if(WindowRef)
-    {
-        FocusedWindowId = AXLibGetWindowID(WindowRef);
-        CGPoint Position = AXLibGetWindowPosition(WindowRef);
-        CGSize Size = AXLibGetWindowSize(WindowRef);
-        CFRelease(WindowRef);
-        CGRect WindowRect = { Position, Size };
-        if(IsPointInsideRect(&Cursor, &WindowRect))
-        {
-            return;
-        }
-    }
-
-    window_info Window = GetWindowBelowCursor(Cursor);
-    if((Window.ID == FocusedWindowId) ||
-       (Window.Layer != 0) ||
-       (Window.ID == 0))
-    {
-        return;
-    }
-
-    ApplicationRef = AXUIElementCreateApplication(Window.PID);
-    if(!ApplicationRef)
-    {
-        return;
-    }
-
-    CFArrayRef WindowList = NULL;
-    AXUIElementCopyAttributeValue(ApplicationRef, kAXWindowsAttribute, (CFTypeRef*)&WindowList);
-    if(!WindowList)
-    {
-        CFRelease(ApplicationRef);
-        return;
-    }
-
-    CFIndex WindowCount = CFArrayGetCount(WindowList);
-    for(CFIndex Index = 0;
-        Index < WindowCount;
-        ++Index)
+    WindowCount = CFArrayGetCount(WindowList);
+    for(CFIndex Index = 0; Index < WindowCount; ++Index)
     {
         AXUIElementRef WindowRef = (AXUIElementRef) CFArrayGetValueAtIndex(WindowList, Index);
-        if(WindowRef)
+        if(!WindowRef) continue;
+
+        int WindowRefWID = AXLibGetWindowID(WindowRef);
+        if(WindowRefWID != WindowID) continue;
+
+        if(!AXLibIsWindowMinimized(WindowRef))
         {
-            int WindowRefWID = AXLibGetWindowID(WindowRef);
-            if(WindowRefWID == Window.ID && !AXLibIsWindowMinimized(WindowRef))
-            {
-                AXLibSetFocusedWindow(WindowRef);
-                AXLibSetFocusedApplication(Window.PID);
-                break;
-            }
+            AXLibSetFocusedWindow(WindowRef);
+            AXLibSetFocusedApplication(WindowPID);
         }
+        break;
     }
 
     CFRelease(WindowList);
+app_release:
     CFRelease(ApplicationRef);
+out:;
+}
+
+internal inline void
+FocusFollowsMouse(CGEventRef Event)
+{
+    pid_t WindowPid = 0;
+    int WindowId = 0, WindowConnection = 0;
+    CGPoint WindowPosition;
+
+    int Connection = CGSMainConnectionID();
+    CGPoint CursorPosition = CGEventGetLocation(Event);
+    CGSFindWindowByGeometry(Connection, 0, 1, 0, &CursorPosition, &WindowPosition, &WindowId, &WindowConnection);
+
+    if(Connection == WindowConnection) return;
+    if(WindowId == FocusedWindowId)    return;
+
+    CGSConnectionGetPID(WindowConnection, &WindowPid);
+    FocusWindow(WindowId, WindowPid);
 }
 
 EVENTTAP_CALLBACK(EventTapCallback)
@@ -191,35 +84,12 @@ EVENTTAP_CALLBACK(EventTapCallback)
         } break;
         case kCGEventMouseMoved:
         {
-            if(IsActive)
-            {
-                long long CurrentTime;
-                ClockGetTime(&CurrentTime);
+            if(!IsActive) break;
 
-                if(GetTimeDiff(CurrentTime, MouseMovedDeltaTime) > MouseMovedThrottle)
-                {
-                    MouseMovedDeltaTime = CurrentTime;
-                    CGEventFlags Flags = CGEventGetFlags(Event);
-                    if(!(Flags & Event_Mask_Alt))
-                    {
-                        macos_space *Space;
-                        bool Success = AXLibActiveSpace(&Space);
-                        ASSERT(Success);
+            CGEventFlags Flags = CGEventGetFlags(Event);
+            if(Flags & Event_Mask_Alt) break;
 
-                        CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromSpace(Space->Id);
-                        ASSERT(DisplayRef);
-                        AXLibDestroySpace(Space);
-
-                        if(!AXLibIsDisplayChangingSpaces(DisplayRef))
-                        {
-                            CGPoint Cursor = CGEventGetLocation(Event);
-                            FocusWindowBelowCursor(Cursor);
-                        }
-
-                        CFRelease(DisplayRef);
-                    }
-                }
-            }
+            FocusFollowsMouse(Event);
         } break;
         default: {} break;
     }
@@ -227,36 +97,53 @@ EVENTTAP_CALLBACK(EventTapCallback)
     return Event;
 }
 
-/*
- * NOTE(koekeishiya):
- * parameter: const char *Node
- * parameter: void *Data
- * return: bool
- * */
+internal inline void
+ApplicationActivatedHandler(void *Data)
+{
+    macos_application *Application = (macos_application *) Data;
+    AXUIElementRef WindowRef = AXLibGetFocusedWindow(Application->Ref);
+    if(WindowRef)
+    {
+        uint32_t WindowId = AXLibGetWindowID(WindowRef);
+        FocusedWindowId = WindowId;
+        CFRelease(WindowRef);
+    }
+}
+
+internal inline void
+WindowFocusedHandler(void *Data)
+{
+    macos_window *Window = (macos_window *) Data;
+    FocusedWindowId = Window->Id;
+}
+
+internal inline void
+TilingWindowFloatHandler(void *Data)
+{
+    uint32_t Status = *(uint32_t *) Data;
+    IsActive = !(Status & 0x1);
+}
+
 PLUGIN_MAIN_FUNC(PluginMain)
 {
-    if(strcmp(Node, "Tiling_focused_window_float") == 0)
+    if(strcmp(Node, "chunkwm_export_application_activated") == 0)
     {
-        uint32_t Status = *(uint32_t *) Data;
-        if(Status)
-        {
-            printf("focus-follows-mouse: focused window is floating.");
-            IsActive = false;;
-        }
-        else
-        {
-            IsActive = true;;
-        }
+        ApplicationActivatedHandler(Data);
+        return true;
+    }
+    else if(strcmp(Node, "chunkwm_export_window_focused") == 0)
+    {
+        WindowFocusedHandler(Data);
+        return true;
+    }
+    else if(strcmp(Node, "Tiling_focused_window_float") == 0)
+    {
+        TilingWindowFloatHandler(Data);
         return true;
     }
     return false;
 }
 
-/*
- * NOTE(koekeishiya):
- * parameter: plugin_broadcast *Broadcast
- * return: bool -> true if startup succeeded
- */
 PLUGIN_BOOL_FUNC(PluginInit)
 {
     IsActive = true;
@@ -270,18 +157,11 @@ PLUGIN_VOID_FUNC(PluginDeInit)
     EndEventTap(&EventTap);
 }
 
-// NOTE(koekeishiya): Enable to manually trigger ABI mismatch
-#if 0
-#undef CHUNKWM_PLUGIN_API_VERSION
-#define CHUNKWM_PLUGIN_API_VERSION 0
-#endif
-
-// NOTE(koekeishiya): Initialize plugin function pointers.
 CHUNKWM_PLUGIN_VTABLE(PluginInit, PluginDeInit, PluginMain)
-
-// NOTE(koekeishiya): Subscribe to ChunkWM events!
-chunkwm_plugin_export Subscriptions[] = { };
+chunkwm_plugin_export Subscriptions[] =
+{
+    chunkwm_export_application_activated,
+    chunkwm_export_window_focused
+};
 CHUNKWM_PLUGIN_SUBSCRIBE(Subscriptions)
-
-// NOTE(koekeishiya): Generate plugin
-CHUNKWM_PLUGIN("Focus Follows Mouse", "0.1.1")
+CHUNKWM_PLUGIN("Focus Follows Mouse", "0.2.0")
