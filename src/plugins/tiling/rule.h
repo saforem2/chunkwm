@@ -5,8 +5,8 @@
 
 enum window_rule_flags
 {
-    Rule_State_Tiled = (1 << 0),
-    Rule_Desktop_Changed = (1 << 1)
+    Rule_State_Tiled = (1 << 10),
+    Rule_Desktop_Changed = (1 << 11)
 };
 struct window_rule
 {
@@ -20,20 +20,20 @@ struct window_rule
 void AddWindowRule(window_rule *Rule);
 
 struct macos_window;
-uint32_t ApplyRulesForWindow(macos_window *Window);
+void ApplyRulesForWindow(macos_window *Window);
 void FreeWindowRules();
 
 static inline bool
-RuleChangedDesktop(uint32_t RuleResult)
+RuleChangedDesktop(uint32_t Flags)
 {
-    bool Result = ((RuleResult & Rule_Desktop_Changed) != 0);
+    bool Result = ((Flags & Rule_Desktop_Changed) != 0);
     return Result;
 }
 
 static inline bool
-RuleTiledWindow(uint32_t RuleResult)
+RuleTiledWindow(uint32_t Flags)
 {
-    bool Result = ((RuleResult & Rule_State_Tiled) != 0);
+    bool Result = ((Flags & Rule_State_Tiled) != 0);
     return Result;
 }
 
