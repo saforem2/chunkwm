@@ -1923,6 +1923,16 @@ void WarpFloatingWindow(char *Op)
         AXLibSetWindowPosition(Window->Ref, Region.X + Region.Width / 2, Region.Y + Region.Height / 2);
         AXLibSetWindowSize(Window->Ref, Region.Width / 2, Region.Height / 2);
     }
+    else if(StringEquals(Op, "pip-left"))
+    {
+        AXLibSetWindowPosition(Window->Ref, Region.X, Region.Y);
+        AXLibSetWindowSize(Window->Ref, Region.Width / 5, Region.Height / 5);
+    }
+    else if(StringEquals(Op, "pip-right"))
+    {
+        AXLibSetWindowPosition(Window->Ref, (Region.X + Region.Width) -  (Region.Width / 5), Region.Y);
+        AXLibSetWindowSize(Window->Ref, Region.Width / 5, Region.Height / 5);
+    }
 
 space_free:
     ReleaseVirtualSpace(VirtualSpace);

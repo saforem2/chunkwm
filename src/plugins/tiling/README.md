@@ -165,6 +165,7 @@
     chunkc tiling::window --warp-floating <option>
     <option>: fullscreen | left | right | top-left
               top-right  | bottom-left  | bottom-right
+              pip-right  | pip-left
     short flag: -W
     desc: move and resize a floating window to specific region of monitor
 
