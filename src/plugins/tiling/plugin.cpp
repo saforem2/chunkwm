@@ -1146,7 +1146,11 @@ WindowFocusedHandler(uint32_t WindowId)
     macos_window *Window = GetWindowByID(WindowId);
     if(Window && IsWindowFocusable(Window))
     {
-        if(RuleChangedDesktop(Window->Flags)) return;
+        if(RuleChangedDesktop(Window->Flags))
+        {
+            AXLibClearFlags(Window, Rule_Desktop_Changed);
+            return;
+        }
 
         BroadcastFocusedWindowFloating(Window);
         if(!AXLibHasFlags(Window, Window_Float))
