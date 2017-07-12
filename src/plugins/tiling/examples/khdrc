@@ -122,6 +122,9 @@ alt - e : chunkc tiling::window --toggle split
 # float / unfloat window
 alt - t : chunkc tiling::window --toggle float
 
+# sticky / unsticky window, also makes window floating
+alt - s : chunkc tiling::window --toggle sticky
+
 # float next window to be tiled
 shift + alt - t : chunkc set window_float_next 1
 

@@ -213,8 +213,9 @@
 ##### toggle various window options
 
     chunkc tiling::window --toggle <option>
-    <option>: native-fullscreen | fullscreen | parent | split | float
+    <option>: native-fullscreen | fullscreen | parent | split | float | sticky
     short flag: -t
+    desc: option 'sticky' requires chwm-sa (https://github.com/koekeishiya/chwm-sa)
 
 ---
 

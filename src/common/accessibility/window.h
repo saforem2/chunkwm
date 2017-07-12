@@ -21,8 +21,9 @@ enum macos_window_flags
     Window_Resizable = (1 << 1),
     Window_Minimized = (1 << 2),
     Window_Float = (1 << 3),
-    Window_Invalid = (1 << 4),
-    Window_ForceTile = (1 << 5),
+    Window_Sticky = (1 << 4),
+    Window_Invalid = (1 << 5),
+    Window_ForceTile = (1 << 6),
 };
 
 struct macos_application;

@@ -609,26 +609,26 @@ void TemporaryRatio(char *Ratio)
 }
 
 internal void
-ExtendedDockSetTopmost(macos_window *Window)
+ExtendedDockSetWindowLevel(macos_window *Window, int WindowLevelKey)
 {
     int SockFD;
     if(ConnectToDaemon(&SockFD, 5050))
     {
         char Message[64];
-        sprintf(Message, "window_level %d %d", Window->Id, kCGFloatingWindowLevelKey);
+        sprintf(Message, "window_level %d %d", Window->Id, WindowLevelKey);
         WriteToSocket(Message, SockFD);
     }
     CloseSocket(SockFD);
 }
 
 internal void
-ExtendedDockResetTopmost(macos_window *Window)
+ExtendedDockSetWindowSticky(macos_window *Window, int Value)
 {
     int SockFD;
     if(ConnectToDaemon(&SockFD, 5050))
     {
         char Message[64];
-        sprintf(Message, "window_level %d %d", Window->Id, kCGNormalWindowLevelKey);
+        sprintf(Message, "window_sticky %d %d", Window->Id, Value);
         WriteToSocket(Message, SockFD);
     }
     CloseSocket(SockFD);
@@ -660,7 +660,7 @@ void FloatWindow(macos_window *Window, bool UserInitiated)
 
     if(CVarIntegerValue(CVAR_WINDOW_FLOAT_TOPMOST))
     {
-        ExtendedDockSetTopmost(Window);
+        ExtendedDockSetWindowLevel(Window, kCGFloatingWindowLevelKey);
     }
 
     if((UserInitiated) &&
@@ -678,7 +678,7 @@ UnfloatWindow(macos_window *Window)
 
     if(CVarIntegerValue(CVAR_WINDOW_FLOAT_TOPMOST))
     {
-        ExtendedDockResetTopmost(Window);
+        ExtendedDockSetWindowLevel(Window, kCGNormalWindowLevelKey);
     }
 }
 
@@ -700,6 +700,39 @@ ToggleWindowFloat()
     {
         UntileWindow(Window);
         FloatWindow(Window, true);
+    }
+}
+
+internal void
+ToggleWindowSticky()
+{
+    macos_window *Window = GetFocusedWindow();
+    if(!Window)
+    {
+        return;
+    }
+
+    if(AXLibHasFlags(Window, Window_Sticky))
+    {
+        ExtendedDockSetWindowSticky(Window, 0);
+        AXLibClearFlags(Window, Window_Sticky);
+
+        if(AXLibHasFlags(Window, Window_Float))
+        {
+            UnfloatWindow(Window);
+            TileWindow(Window);
+        }
+    }
+    else
+    {
+        ExtendedDockSetWindowSticky(Window, 1);
+        AXLibAddFlags(Window, Window_Sticky);
+
+        if(!AXLibHasFlags(Window, Window_Float))
+        {
+            UntileWindow(Window);
+            FloatWindow(Window, true);
+        }
     }
 }
 
@@ -921,6 +954,7 @@ void ToggleWindow(char *Type)
     // because the window that we toggle options for may not be in a tree,
     // and we will not be able to perform an operation in that case.
     if     (StringEquals(Type, "float"))               ToggleWindowFloat();
+    else if(StringEquals(Type, "sticky"))              ToggleWindowSticky();
     else if(StringEquals(Type, "native-fullscreen"))   ToggleWindowNativeFullscreen();
     else if(StringEquals(Type, "fullscreen"))          ToggleWindowFullscreenZoom();
     else if(StringEquals(Type, "parent"))              ToggleWindowParentZoom();
