@@ -2,10 +2,10 @@
 
 | NAME            | RELEASE | VERSION |
 |-----------------|:-------:|:-------:|
-| chunkwm-core    | Alpha   | 0.2.13  |
+| chunkwm-core    | Alpha   | 0.2.14  |
 | chunkwm-tiling  | Alpha   | 0.2.8   |
 | chunkwm-border  | Alpha   | 0.2.5   |
-| chunkwm-ffm     | Alpha   | 0.1.1   |
+| chunkwm-ffm     | Alpha   | 0.2.0   |
 
 
 **chunkwm** is a tiling window manager for macOS that uses a plugin architecture, successor to [**kwm**](https://github.com/koekeishiya/kwm).
