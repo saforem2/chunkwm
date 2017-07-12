@@ -1201,8 +1201,8 @@ WindowDestroyedHandler(void *Data)
         {
             RebalanceWindowTree();
         }
-        BroadcastFocusedWindowFloating(Copy);
         AXLibDestroyWindow(Copy);
+        BroadcastFocusedWindowFloating(0);
     }
     else
     {
