@@ -566,7 +566,8 @@ void UntileWindow(macos_window *Window)
 {
     if(UntileWindowPreValidation(Window))
     {
-        CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromWindowRect(Window->Position, Window->Size);
+        CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromWindow(Window->Id);
+        if(!DisplayRef) DisplayRef = AXLibGetDisplayIdentifierFromWindowRect(Window->Position, Window->Size);
         ASSERT(DisplayRef);
 
         macos_space *Space = AXLibActiveSpace(DisplayRef);
