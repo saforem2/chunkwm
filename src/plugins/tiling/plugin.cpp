@@ -585,26 +585,6 @@ void UntileWindow(macos_window *Window)
     }
 }
 
-internal std::vector<uint32_t>
-RemoveFloatingWindows(std::vector<uint32_t> Windows)
-{
-    std::vector<uint32_t> Result;
-
-    for(int Index = 0;
-        Index < Windows.size();
-        ++Index)
-    {
-        uint32_t WindowId = Windows[Index];
-        macos_window *Window = GetWindowByID(WindowId);
-        if(!AXLibHasFlags(Window, Window_Float))
-        {
-            Result.push_back(WindowId);
-        }
-    }
-
-    return Result;
-}
-
 /* NOTE(koekeishiya): Returns a vector of CGWindowIDs. */
 std::vector<uint32_t> GetAllVisibleWindowsForSpace(macos_space *Space, bool IncludeInvalidWindows, bool IncludeFloatingWindows)
 {
@@ -1335,14 +1315,15 @@ SpaceAndDisplayChangedHandler(void *Data)
 {
     UpdateWindowCollection();
 
+    std::vector<uint32_t> Windows;
+
     macos_space *Space;
     bool Success = AXLibActiveSpace(&Space);
     ASSERT(Success);
 
-    std::vector<uint32_t> Windows = GetAllVisibleWindowsForSpace(Space, false, true);
     if(Space->Type != kCGSSpaceUser)
     {
-        goto win_focus;
+        goto space_free;
     }
 
     unsigned DesktopId, CachedDesktopId;
@@ -1356,6 +1337,7 @@ SpaceAndDisplayChangedHandler(void *Data)
         UpdateCVar(CVAR_ACTIVE_DESKTOP, (int)DesktopId);
     }
 
+    Windows = GetAllVisibleWindowsForSpace(Space);
     if(Windows.empty())
     {
         goto space_free;
@@ -1365,37 +1347,21 @@ SpaceAndDisplayChangedHandler(void *Data)
     VirtualSpace = AcquireVirtualSpace(Space);
     if(VirtualSpace->Mode != Virtual_Space_Float)
     {
-        std::vector<uint32_t> FilteredWindows = RemoveFloatingWindows(Windows);
-        if(FilteredWindows.empty()) goto vspace_release;
-
         if(VirtualSpace->Tree)
         {
-            RebalanceWindowTreeForSpaceWithWindows(Space, VirtualSpace, FilteredWindows);
+            RebalanceWindowTreeForSpaceWithWindows(Space, VirtualSpace, Windows);
         }
         else if(ShouldDeserializeVirtualSpace(VirtualSpace))
         {
-            CreateDeserializedWindowTreeForSpaceWithWindows(Space, VirtualSpace, FilteredWindows);
+            CreateDeserializedWindowTreeForSpaceWithWindows(Space, VirtualSpace, Windows);
         }
         else
         {
-            CreateWindowTreeForSpaceWithWindows(Space, VirtualSpace, FilteredWindows);
+            CreateWindowTreeForSpaceWithWindows(Space, VirtualSpace, Windows);
         }
     }
 
-vspace_release:
     ReleaseVirtualSpace(VirtualSpace);
-
-win_focus:
-    // NOTE(koekeishiya): Update _focused_window to the active window of the new space.
-    // This is necessary because the focused notification sometimes fail in these cases.
-    // In addition to this, we do not receive the focus notification if this new space
-    // is a native fullscreen space.
-    if(!Windows.empty())
-    {
-        macos_window *Window = GetWindowByID(Windows[0]);
-        ASSERT(Window);
-        BroadcastFocusedWindowFloating(Window);
-    }
 
 space_free:
     AXLibDestroySpace(Space);
