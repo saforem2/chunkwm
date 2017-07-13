@@ -1554,7 +1554,7 @@ Init(chunkwm_api API)
 
     CreateCVar(CVAR_WINDOW_FLOAT_TOPMOST, 0);
     CreateCVar(CVAR_WINDOW_FADE_INACTIVE, 0);
-    CreateCVar(CVAR_WINDOW_FADE_ALPHA, 0.75f);
+    CreateCVar(CVAR_WINDOW_FADE_ALPHA, 0.85f);
     CreateCVar(CVAR_WINDOW_FADE_DURATION, 0.5f);
 
     /*   ---------------------------------------------------------   */
