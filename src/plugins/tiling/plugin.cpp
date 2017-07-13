@@ -1143,6 +1143,7 @@ space_free:
 internal void
 WindowFocusedHandler(uint32_t WindowId)
 {
+    UpdateCVar(CVAR_FOCUSED_WINDOW, WindowId);
     macos_window *Window = GetWindowByID(WindowId);
     if(Window && IsWindowFocusable(Window))
     {
@@ -1197,6 +1198,15 @@ WindowDestroyedHandler(void *Data)
     macos_window *Copy = RemoveWindowFromCollection(Window);
     if(Copy)
     {
+        if(AXLibHasFlags(Copy, Window_Float))
+        {
+            unsigned FocusedWindowId = CVarUnsignedValue(CVAR_FOCUSED_WINDOW);
+            if(Copy->Id == FocusedWindowId)
+            {
+                BroadcastFocusedWindowFloating(0);
+            }
+        }
+
         if(IsWindowValid(Copy))
         {
             UntileWindow(Copy);
@@ -1204,9 +1214,14 @@ WindowDestroyedHandler(void *Data)
         else
         {
             RebalanceWindowTree();
+            macos_window *FocusedWindow = GetFocusedWindow();
+            if(FocusedWindow)
+            {
+                UpdateCVar(CVAR_FOCUSED_WINDOW, FocusedWindow->Id);
+            }
         }
+
         AXLibDestroyWindow(Copy);
-        BroadcastFocusedWindowFloating(0);
     }
     else
     {
@@ -1510,6 +1525,7 @@ Init(chunkwm_api API)
     CreateCVar(CVAR_PADDING_STEP_SIZE, 10.0f);
     CreateCVar(CVAR_GAP_STEP_SIZE, 5.0f);
 
+    CreateCVar(CVAR_FOCUSED_WINDOW, 0);
     CreateCVar(CVAR_BSP_INSERTION_POINT, 0);
 
     CreateCVar(CVAR_ACTIVE_DESKTOP, 0);
@@ -1551,14 +1567,15 @@ Init(chunkwm_api API)
 
     /* NOTE(koekeishiya): Set our initial insertion-point on launch. */
     macos_window *Window = GetFocusedWindow();
-    if(Window && IsWindowFocusable(Window))
+    if(Window)
     {
-        if(!AXLibHasFlags(Window, Window_Float))
+        UpdateCVar(CVAR_FOCUSED_WINDOW, Window->Id);
+        BroadcastFocusedWindowFloating(Window);
+        if((IsWindowFocusable(Window)) &&
+           (!AXLibHasFlags(Window, Window_Float)))
         {
             UpdateCVar(CVAR_BSP_INSERTION_POINT, Window->Id);
         }
-
-        BroadcastFocusedWindowFloating(Window);
     }
 
     macos_space *Space;
