@@ -17,6 +17,9 @@
   * [center window on monitor when floated](#center-a-window-on-monitor-when-toggled-floating-by-the-user)
   * [constrain window to region size](#constrain-window-to-bsp-region-size)
   * [signal dock to make windows topmost when floated](#signal-dock-to-make-windows-topmost-when-floated)
+  * [signal dock to fade inactive windows](#signal-dock-to-fade-inactive-windows)
+  * [set the alpha value for faded windows](#set-the-target-alpha-value-for-faded-windows)
+  * [set the time in seconds the fade animation should last](#set-the-time-in-seconds-the-fade-animation-should-last)
 * [window commands](#window-commands)
   * [focus window](#focus-window)
   * [swap window](#swap-window)
@@ -132,9 +135,25 @@
     <option>: 1 | 0
 
 ##### signal dock to make windows topmost when floated
+
     chunkc set window_float_topmost          <option>
     <option>: 1 | 0
     desc: requires chwm-sa (https://github.com/koekeishiya/chwm-sa)
+
+##### signal dock to fade inactive windows
+
+    chunkc set window_fade_inactive          <option>
+    <option>: 1 | 0
+    desc: requires chwm-sa (https://github.com/koekeishiya/chwm-sa)
+
+##### set the target alpha value for faded windows
+
+    chunkc set window_fade_alpha             <alpha>
+    <alpha>: 0 < value < 1
+
+##### set the time in seconds the fade animation should last
+
+    chunkc set window_fade_duration          0.5
 
 ---
 
