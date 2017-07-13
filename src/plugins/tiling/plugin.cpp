@@ -72,6 +72,33 @@ internal event_tap EventTap;
 
 chunkwm_api ChunkwmAPI;
 
+internal void
+ExtendedDockSetWindowAlpha(uint32_t WindowId, float Value, float Duration)
+{
+    int SockFD;
+    if(ConnectToDaemon(&SockFD, 5050))
+    {
+        char Message[64];
+        sprintf(Message, "window_alpha_fade %d %f %f", WindowId, Value, Duration);
+        WriteToSocket(Message, SockFD);
+    }
+    CloseSocket(SockFD);
+}
+
+internal void
+FadeAllWindows(float Value, float Duration)
+{
+    unsigned FocusedWindowId = CVarUnsignedValue(CVAR_FOCUSED_WINDOW);
+    for(macos_window_map_it It = Windows.begin();
+        It != Windows.end();
+        ++It)
+    {
+        macos_window *Window = It->second;
+        if(Window->Id == FocusedWindowId) continue;
+        ExtendedDockSetWindowAlpha(Window->Id, Value, Duration);
+    }
+}
+
 /* NOTE(koekeishiya): We need a way to retrieve AXUIElementRef from a CGWindowID.
  * There is no way to do this, without caching AXUIElementRef references.
  * Here we perform a lookup of macos_window structs. */
@@ -1133,6 +1160,14 @@ WindowFocusedHandler(uint32_t WindowId)
             return;
         }
 
+        if(CVarIntegerValue(CVAR_WINDOW_FADE_INACTIVE))
+        {
+            float Alpha = CVarFloatingPointValue(CVAR_WINDOW_FADE_ALPHA);
+            float Duration = CVarFloatingPointValue(CVAR_WINDOW_FADE_DURATION);
+            ExtendedDockSetWindowAlpha(WindowId, 1.0f, Duration);
+            FadeAllWindows(Alpha, Duration);
+        }
+
         BroadcastFocusedWindowFloating(Window);
         if(!AXLibHasFlags(Window, Window_Float))
         {
@@ -1508,7 +1543,6 @@ Init(chunkwm_api API)
 
     CreateCVar(CVAR_WINDOW_FLOAT_NEXT, 0);
     CreateCVar(CVAR_WINDOW_FLOAT_CENTER, 0);
-
     CreateCVar(CVAR_WINDOW_REGION_LOCKED, 0);
 
     CreateCVar(CVAR_PRE_BORDER_COLOR, 0xffffff00);
@@ -1518,7 +1552,10 @@ Init(chunkwm_api API)
     /* NOTE(koekeishiya): The following cvars requires extended dock
      * functionality provided by chwm-sa to work. */
 
-    CreateCVar(CVAR_WINDOW_FLOAT_TOPMOST, 1);
+    CreateCVar(CVAR_WINDOW_FLOAT_TOPMOST, 0);
+    CreateCVar(CVAR_WINDOW_FADE_INACTIVE, 0);
+    CreateCVar(CVAR_WINDOW_FADE_ALPHA, 0.75f);
+    CreateCVar(CVAR_WINDOW_FADE_DURATION, 0.5f);
 
     /*   ---------------------------------------------------------   */
 

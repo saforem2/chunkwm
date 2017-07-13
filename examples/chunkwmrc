@@ -62,6 +62,9 @@ chunkc set preselect_border_radius       0
 # signal dock to make windows topmost when floated
 # requires chwm-sa (https://github.com/koekeishiya/chwm-sa)
 chunkc set window_float_topmost          0
+chunkc set window_fade_inactive          0
+chunkc set window_fade_alpha             0.75
+chunkc set window_fade_duration          0.25
 
 #
 # NOTE: The following are config variables for the chunkwm-border plugin

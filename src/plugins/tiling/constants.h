@@ -46,6 +46,9 @@
  * functionality provided by chwm-sa to work. */
 
 #define CVAR_WINDOW_FLOAT_TOPMOST   "window_float_topmost"
+#define CVAR_WINDOW_FADE_INACTIVE   "window_fade_inactive"
+#define CVAR_WINDOW_FADE_ALPHA      "window_fade_alpha"
+#define CVAR_WINDOW_FADE_DURATION   "window_fade_duration"
 
 /*   ---------------------------------------------------------   */
 
