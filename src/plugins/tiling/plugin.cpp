@@ -1400,6 +1400,25 @@ SpaceAndDisplayChangedHandler(void *Data)
 
 space_free:
     AXLibDestroySpace(Space);
+
+    macos_window *Window = GetFocusedWindow();
+    if(Window)
+    {
+        UpdateCVar(CVAR_FOCUSED_WINDOW, Window->Id);
+        if(CVarIntegerValue(CVAR_WINDOW_FADE_INACTIVE))
+        {
+            float Alpha = CVarFloatingPointValue(CVAR_WINDOW_FADE_ALPHA);
+            float Duration = CVarFloatingPointValue(CVAR_WINDOW_FADE_DURATION);
+            ExtendedDockSetWindowAlpha(Window->Id, 1.0f, Duration);
+            FadeAllWindows(Alpha, Duration);
+        }
+        BroadcastFocusedWindowFloating(Window);
+        if((IsWindowFocusable(Window)) &&
+           (!AXLibHasFlags(Window, Window_Float)))
+        {
+            UpdateCVar(CVAR_BSP_INSERTION_POINT, Window->Id);
+        }
+    }
 }
 
 internal void
@@ -1573,6 +1592,13 @@ Init(chunkwm_api API)
     if(Window)
     {
         UpdateCVar(CVAR_FOCUSED_WINDOW, Window->Id);
+        if(CVarIntegerValue(CVAR_WINDOW_FADE_INACTIVE))
+        {
+            float Alpha = CVarFloatingPointValue(CVAR_WINDOW_FADE_ALPHA);
+            float Duration = CVarFloatingPointValue(CVAR_WINDOW_FADE_DURATION);
+            ExtendedDockSetWindowAlpha(Window->Id, 1.0f, Duration);
+            FadeAllWindows(Alpha, Duration);
+        }
         BroadcastFocusedWindowFloating(Window);
         if((IsWindowFocusable(Window)) &&
            (!AXLibHasFlags(Window, Window_Float)))
