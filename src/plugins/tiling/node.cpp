@@ -361,8 +361,8 @@ node *GetFirstLeafNode(node *Tree)
 node *GetLastLeafNode(node *Tree)
 {
     node *Node = Tree;
-    while((!IsLeafNode(Node)) &&
-          (Node->Right))
+    while((Node->Right) &&
+          (Node->Right->WindowId != Node_PseudoLeaf))
     {
         Node = Node->Right;
     }
