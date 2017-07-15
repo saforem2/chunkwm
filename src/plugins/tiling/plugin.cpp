@@ -1559,6 +1559,7 @@ Init(chunkwm_api API)
     CreateCVar(CVAR_WINDOW_FOCUS_CYCLE, "none");
 
     CreateCVar(CVAR_MOUSE_FOLLOWS_FOCUS, 1);
+    CreateCVar(CVAR_MOUSE_MODIFIER, "fn");
 
     CreateCVar(CVAR_WINDOW_FLOAT_NEXT, 0);
     CreateCVar(CVAR_WINDOW_FLOAT_CENTER, 0);
@@ -1623,6 +1624,7 @@ Init(chunkwm_api API)
     Success = BeginVirtualSpaces();
     if(Success)
     {
+        SetMouseModifier(CVarStringValue(CVAR_MOUSE_MODIFIER));
         /* NOTE(koekeishiya): Tile windows visible on the current space using configured mode */
         CreateWindowTree();
         goto out;

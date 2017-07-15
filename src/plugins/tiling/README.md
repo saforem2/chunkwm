@@ -13,6 +13,7 @@
   * [configure ratio used when regions are split](#configure-ratio-used-when-regions-are-split)
   * [set wrap behaviour for window focus command](#set-wrap-behaviour-for-window-focus-command)
   * [set state of mouse follows focus](#set-state-of-mouse-follows-focus)
+  * [set modifier used for mouse interaction](#set-modifier-used-for-mouse-interaction)
   * [float the next window attempted tiled](#the-next-window-attempted-tiled-will-be-made-floating-instead)
   * [center window on monitor when floated](#center-a-window-on-monitor-when-toggled-floating-by-the-user)
   * [constrain window to region size](#constrain-window-to-bsp-region-size)
@@ -118,6 +119,12 @@
 
     chunkc set mouse_follows_focus           <option>
     <option>: 1 | 0
+
+##### set modifier used for mouse interaction
+
+    chunkc set mouse_modifier                <option>
+    <option>: fn | shift | alt | cmd | ctrl
+    desc: arbitrary combination allowed, separate by whitespace
 
 ##### the next window attempted tiled will be made floating instead
 

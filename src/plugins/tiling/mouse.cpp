@@ -4,6 +4,7 @@
 #include "../../common/accessibility/window.h"
 #include "../../common/border/border.h"
 #include "../../common/config/cvar.h"
+#include "../../common/config/tokenize.h"
 #include "../../common/misc/assert.h"
 
 #include "node.h"
@@ -48,6 +49,7 @@ struct resize_border
 
 internal std::vector<resize_border> ResizeBorders;
 internal resize_border_state ResizeState;
+internal uint32_t MouseModifier;
 
 internal resize_border
 CreateResizeBorder(node *Node)
@@ -358,7 +360,7 @@ EVENTTAP_CALLBACK(EventTapCallback)
         case kCGEventLeftMouseDown:
         {
             CGEventFlags Flags = CGEventGetFlags(Event);
-            if((Flags & Event_Mask_Fn) &&
+            if(((Flags & MouseModifier) == MouseModifier) &&
                (ResizeState.Mode == Drag_Mode_None))
             {
                 LeftMouseDown();
@@ -376,7 +378,7 @@ EVENTTAP_CALLBACK(EventTapCallback)
         case kCGEventRightMouseDown:
         {
             CGEventFlags Flags = CGEventGetFlags(Event);
-            if((Flags & Event_Mask_Fn) &&
+            if(((Flags & MouseModifier) == MouseModifier) &&
                (ResizeState.Mode == Drag_Mode_None))
             {
                 RightMouseDown();
@@ -395,4 +397,36 @@ EVENTTAP_CALLBACK(EventTapCallback)
     }
 
     return Event;
+}
+
+// NOTE(koekeishiya): This function should only be called once (during init) !!
+void SetMouseModifier(const char *Mod)
+{
+    while(*Mod)
+    {
+        token ModToken = GetToken(&Mod);
+        if(TokenEquals(ModToken, "fn"))
+        {
+            MouseModifier |= Event_Mask_Fn;
+        }
+        else if(TokenEquals(ModToken, "shift"))
+        {
+            MouseModifier |= Event_Mask_Shift;
+        }
+        else if(TokenEquals(ModToken, "alt"))
+        {
+            MouseModifier |= Event_Mask_Alt;
+        }
+        else if(TokenEquals(ModToken, "cmd"))
+        {
+            MouseModifier |= Event_Mask_Cmd;
+        }
+        else if(TokenEquals(ModToken, "ctrl"))
+        {
+            MouseModifier |= Event_Mask_Control;
+        }
+    }
+
+    // NOTE(koekeishiya): If no matches were found, we default to FN
+    if(MouseModifier == 0) MouseModifier |= Event_Mask_Fn;
 }

@@ -32,6 +32,7 @@
 #define Window_Focus_Cycle_All      "all"
 
 #define CVAR_MOUSE_FOLLOWS_FOCUS    "mouse_follows_focus"
+#define CVAR_MOUSE_MODIFIER         "mouse_modifier"
 
 #define CVAR_WINDOW_FLOAT_NEXT      "window_float_next"
 #define CVAR_WINDOW_FLOAT_CENTER    "window_float_center"
