@@ -6,6 +6,8 @@
 #include "../../common/accessibility/element.h"
 #include "../../common/accessibility/window.h"
 #include "../../common/accessibility/application.h"
+#include "../../common/config/cvar.h"
+#include "../../common/config/tokenize.h"
 #include "../../common/dispatch/cgeventtap.h"
 
 extern "C" int CGSMainConnectionID(void);
@@ -15,8 +17,10 @@ extern "C" CGError CGSConnectionGetPID(const int cid, pid_t *pid);
 #define internal static
 
 internal event_tap EventTap;
+internal uint32_t MouseModifier;
 internal bool volatile IsActive;
 internal uint32_t volatile FocusedWindowId;
+internal chunkwm_api API;
 
 internal inline void
 FocusWindow(uint32_t WindowID, pid_t WindowPID)
@@ -87,7 +91,7 @@ EVENTTAP_CALLBACK(EventTapCallback)
             if(!IsActive) break;
 
             CGEventFlags Flags = CGEventGetFlags(Event);
-            if(Flags & Event_Mask_Alt) break;
+            if((Flags & MouseModifier) == MouseModifier) break;
 
             FocusFollowsMouse(Event);
         } break;
@@ -124,6 +128,38 @@ TilingWindowFloatHandler(void *Data)
     IsActive = !(Status & 0x1);
 }
 
+internal inline void
+SetMouseModifier(const char *Mod)
+{
+    while(*Mod)
+    {
+        token ModToken = GetToken(&Mod);
+        if(TokenEquals(ModToken, "fn"))
+        {
+            MouseModifier |= Event_Mask_Fn;
+        }
+        else if(TokenEquals(ModToken, "shift"))
+        {
+            MouseModifier |= Event_Mask_Shift;
+        }
+        else if(TokenEquals(ModToken, "alt"))
+        {
+            MouseModifier |= Event_Mask_Alt;
+        }
+        else if(TokenEquals(ModToken, "cmd"))
+        {
+            MouseModifier |= Event_Mask_Cmd;
+        }
+        else if(TokenEquals(ModToken, "ctrl"))
+        {
+            MouseModifier |= Event_Mask_Control;
+        }
+    }
+
+    // NOTE(koekeishiya): If no matches were found, we default to FN
+    if(MouseModifier == 0) MouseModifier |= Event_Mask_Fn;
+}
+
 PLUGIN_MAIN_FUNC(PluginMain)
 {
     if(strcmp(Node, "chunkwm_export_application_activated") == 0)
@@ -146,9 +182,12 @@ PLUGIN_MAIN_FUNC(PluginMain)
 
 PLUGIN_BOOL_FUNC(PluginInit)
 {
+    API = ChunkwmAPI;
     IsActive = true;
     EventTap.Mask = (1 << kCGEventMouseMoved);
     bool Result = BeginEventTap(&EventTap, &EventTapCallback);
+    BeginCVars(&API);
+    SetMouseModifier(CVarStringValue("mouse_modifier"));
     return Result;
 }
 
