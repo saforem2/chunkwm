@@ -131,7 +131,7 @@ TilingWindowFloatHandler(void *Data)
 internal inline void
 SetMouseModifier(const char *Mod)
 {
-    while(*Mod)
+    while(Mod && *Mod)
     {
         token ModToken = GetToken(&Mod);
         if(TokenEquals(ModToken, "fn"))
@@ -187,6 +187,7 @@ PLUGIN_BOOL_FUNC(PluginInit)
     EventTap.Mask = (1 << kCGEventMouseMoved);
     bool Result = BeginEventTap(&EventTap, &EventTapCallback);
     BeginCVars(&API);
+    CreateCVar("mouse_modifier", "fn");
     SetMouseModifier(CVarStringValue("mouse_modifier"));
     return Result;
 }
