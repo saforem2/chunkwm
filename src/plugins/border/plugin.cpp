@@ -171,6 +171,10 @@ SpaceChangedHandler()
     {
         ClearBorderWindow(Border);
     }
+    else if(Application)
+    {
+        UpdateToFocusedWindow();
+    }
 
     AXLibDestroySpace(Space);
 }
