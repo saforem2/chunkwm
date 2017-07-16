@@ -3,14 +3,21 @@
 #include <string.h>
 
 #include "../../api/plugin_api.h"
+#include "../../common/accessibility/display.h"
 #include "../../common/accessibility/application.h"
 #include "../../common/accessibility/window.h"
 #include "../../common/accessibility/element.h"
-#include "../../common/accessibility/display.h"
 #include "../../common/border/border.h"
 #include "../../common/config/tokenize.h"
 #include "../../common/config/cvar.h"
 #include "../../common/misc/assert.h"
+
+#include "../../common/accessibility/display.mm"
+#include "../../common/accessibility/window.cpp"
+#include "../../common/accessibility/element.cpp"
+#include "../../common/config/tokenize.cpp"
+#include "../../common/config/cvar.cpp"
+#include "../../common/border/border.mm"
 
 #define internal static
 

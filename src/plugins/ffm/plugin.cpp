@@ -10,6 +10,11 @@
 #include "../../common/config/tokenize.h"
 #include "../../common/dispatch/cgeventtap.h"
 
+#include "../../common/accessibility/element.cpp"
+#include "../../common/config/cvar.cpp"
+#include "../../common/config/tokenize.cpp"
+#include "../../common/dispatch/cgeventtap.cpp"
+
 extern "C" int CGSMainConnectionID(void);
 extern "C" OSStatus CGSFindWindowByGeometry(int cid, int zero, int one, int zero_again, CGPoint *screen_point, CGPoint *window_coords_out, int *wid_out, int *cid_out);
 extern "C" CGError CGSConnectionGetPID(const int cid, pid_t *pid);

@@ -13,11 +13,26 @@
 #include "../../common/accessibility/observer.h"
 #include "../../common/dispatch/cgeventtap.h"
 #include "../../common/config/cvar.h"
+#include "../../common/config/tokenize.h"
 #include "../../common/ipc/daemon.h"
 #include "../../common/misc/carbon.h"
+#include "../../common/misc/workspace.h"
 #include "../../common/misc/assert.h"
 #include "../../common/misc/debug.h"
 #include "../../common/border/border.h"
+
+#include "../../common/accessibility/display.mm"
+#include "../../common/accessibility/application.cpp"
+#include "../../common/accessibility/window.cpp"
+#include "../../common/accessibility/element.cpp"
+#include "../../common/accessibility/observer.cpp"
+#include "../../common/dispatch/cgeventtap.cpp"
+#include "../../common/config/cvar.cpp"
+#include "../../common/config/tokenize.cpp"
+#include "../../common/ipc/daemon.cpp"
+#include "../../common/misc/carbon.cpp"
+#include "../../common/misc/workspace.mm"
+#include "../../common/border/border.mm"
 
 #include "config.h"
 #include "region.h"
@@ -28,6 +43,14 @@
 #include "mouse.h"
 #include "constants.h"
 #include "misc.h"
+
+#include "config.cpp"
+#include "region.cpp"
+#include "node.cpp"
+#include "vspace.cpp"
+#include "controller.cpp"
+#include "rule.cpp"
+#include "mouse.cpp"
 
 #define internal static
 #define local_persist static
@@ -67,10 +90,8 @@ internal macos_application_map Applications;
  * RemoveWindowFromCollection(macos_window *Window)
  * */
 internal macos_window_map Windows;
-
 internal event_tap EventTap;
-
-chunkwm_api ChunkwmAPI;
+internal chunkwm_api API;
 
 internal void
 ExtendedDockSetWindowAlpha(uint32_t WindowId, float Value, float Duration)
@@ -241,7 +262,7 @@ ClearApplicationCache()
 
 void BroadcastFocusedWindowFloating(int Status)
 {
-    ChunkwmAPI.Broadcast(PluginName, "focused_window_float", (char *) &Status, sizeof(int));
+    API.Broadcast(PluginName, "focused_window_float", (char *) &Status, sizeof(int));
 }
 
 internal void
@@ -1518,10 +1539,10 @@ PLUGIN_MAIN_FUNC(PluginMain)
 }
 
 internal bool
-Init(chunkwm_api API)
+Init(chunkwm_api ChunkwmAPI)
 {
-    ChunkwmAPI = API;
-    BeginCVars(&ChunkwmAPI);
+    API = ChunkwmAPI;
+    BeginCVars(&API);
 
     bool Success;
     std::vector<macos_application *> Applications;
