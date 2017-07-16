@@ -2,6 +2,8 @@ BUILD_FLAGS		= -O0 -g -DCHUNKWM_DEBUG -std=c++11 -Wall
 BUILD_PATH		= ./../../../plugins
 SRC				= ./plugin.cpp \
 				  ./../../common/accessibility/element.cpp \
+				  ./../../common/config/cvar.cpp \
+				  ./../../common/config/tokenize.cpp \
 				  ./../../common/dispatch/cgeventtap.cpp
 BINS			= $(BUILD_PATH)/ffm.so
 LINK			= -shared -fPIC -framework Carbon -framework ApplicationServices
