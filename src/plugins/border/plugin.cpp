@@ -20,26 +20,25 @@ internal bool SkipFloating;
 internal bool DrawBorder;
 internal chunkwm_api API;
 
-internal void
+internal inline void
 ClearBorderWindow(border_window *Border)
 {
     UpdateBorderWindowRect(Border, 0, 0, 0, 0);
 }
 
-internal void
+internal inline void
 UpdateWindow(AXUIElementRef WindowRef)
 {
     if(DrawBorder)
     {
-        CGPoint Position = AXLibGetWindowPosition(WindowRef);
-        CGSize Size = AXLibGetWindowSize(WindowRef);
-
         if(AXLibIsWindowFullscreen(WindowRef))
         {
             ClearBorderWindow(Border);
         }
         else
         {
+            CGPoint Position = AXLibGetWindowPosition(WindowRef);
+            CGSize Size = AXLibGetWindowSize(WindowRef);
             UpdateBorderWindowRect(Border, Position.x, Position.y, Size.width, Size.height);
         }
     }
@@ -54,7 +53,23 @@ UpdateToFocusedWindow()
         uint32_t WindowId = AXLibGetWindowID(WindowRef);
         if(WindowId)
         {
-            UpdateWindow(WindowRef);
+            CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromWindow(WindowId);
+            if(!DisplayRef)
+            {
+                CGPoint Position = AXLibGetWindowPosition(WindowRef);
+                CGSize Size = AXLibGetWindowSize(WindowRef);
+                DisplayRef = AXLibGetDisplayIdentifierFromWindowRect(Position, Size);
+            }
+            ASSERT(DisplayRef);
+
+            macos_space *Space = AXLibActiveSpace(DisplayRef);
+            if(AXLibSpaceHasWindow(Space->Id, WindowId))
+            {
+                UpdateWindow(WindowRef);
+            }
+
+            AXLibDestroySpace(Space);
+            CFRelease(DisplayRef);
         }
         else
         {
@@ -87,14 +102,14 @@ UpdateIfFocusedWindow(AXUIElementRef Element)
     }
 }
 
-internal void
+internal inline void
 ApplicationActivatedHandler(void *Data)
 {
     Application = (macos_application *) Data;
     UpdateToFocusedWindow();
 }
 
-internal void
+internal inline void
 ApplicationDeactivatedHandler(void *Data)
 {
     macos_application *Context = (macos_application *) Data;
@@ -113,20 +128,22 @@ WindowFocusedHandler(void *Data)
        ((Window->Owner == Application) ||
        (Application == NULL)))
     {
-        macos_space *Space;
-        bool Success = AXLibActiveSpace(&Space);
-        ASSERT(Success);
+        CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromWindow(Window->Id);
+        if(!DisplayRef) DisplayRef = AXLibGetDisplayIdentifierFromWindowRect(Window->Position, Window->Size);
+        ASSERT(DisplayRef);
 
+        macos_space *Space = AXLibActiveSpace(DisplayRef);
         if(AXLibSpaceHasWindow(Space->Id, Window->Id))
         {
             UpdateWindow(Window->Ref);
         }
 
         AXLibDestroySpace(Space);
+        CFRelease(DisplayRef);
     }
 }
 
-internal void
+internal inline void
 WindowDestroyedHandler(void *Data)
 {
     macos_window *Window = (macos_window *) Data;
@@ -136,21 +153,21 @@ WindowDestroyedHandler(void *Data)
     }
 }
 
-internal void
+internal inline void
 WindowMovedHandler(void *Data)
 {
     macos_window *Window = (macos_window *) Data;
     UpdateIfFocusedWindow(Window->Ref);
 }
 
-internal void
+internal inline void
 WindowResizedHandler(void *Data)
 {
     macos_window *Window = (macos_window *) Data;
     UpdateIfFocusedWindow(Window->Ref);
 }
 
-internal void
+internal inline void
 WindowMinimizedHandler(void *Data)
 {
     macos_window *Window = (macos_window *) Data;
@@ -160,7 +177,7 @@ WindowMinimizedHandler(void *Data)
     }
 }
 
-internal void
+internal inline void
 SpaceChangedHandler()
 {
     macos_space *Space;
@@ -175,11 +192,15 @@ SpaceChangedHandler()
     {
         UpdateToFocusedWindow();
     }
+    else
+    {
+        ClearBorderWindow(Border);
+    }
 
     AXLibDestroySpace(Space);
 }
 
-inline bool
+internal inline bool
 StringEquals(const char *A, const char *B)
 {
     bool Result = (strcmp(A, B) == 0);
@@ -224,12 +245,6 @@ TilingFocusedWindowFloatStatus(void *Data)
     }
 }
 
-/*
- * NOTE(koekeishiya):
- * parameter: const char *Node
- * parameter: void *Data
- * return: bool
- * */
 PLUGIN_MAIN_FUNC(PluginMain)
 {
     if(StringEquals(Node, "chunkwm_export_application_activated"))
@@ -287,11 +302,6 @@ PLUGIN_MAIN_FUNC(PluginMain)
     return false;
 }
 
-/*
- * NOTE(koekeishiya):
- * parameter: plugin_broadcast *Broadcast
- * return: bool -> true if startup succeeded
- */
 PLUGIN_BOOL_FUNC(PluginInit)
 {
     API = ChunkwmAPI;
@@ -316,16 +326,7 @@ PLUGIN_VOID_FUNC(PluginDeInit)
     DestroyBorderWindow(Border);
 }
 
-// NOTE(koekeishiya): Enable to manually trigger ABI mismatch
-#if 0
-#undef CHUNKWM_PLUGIN_API_VERSION
-#define CHUNKWM_PLUGIN_API_VERSION 0
-#endif
-
-// NOTE(koekeishiya): Initialize plugin function pointers.
 CHUNKWM_PLUGIN_VTABLE(PluginInit, PluginDeInit, PluginMain)
-
-// NOTE(koekeishiya): Subscribe to ChunkWM events!
 chunkwm_plugin_export Subscriptions[] =
 {
     chunkwm_export_application_activated,
@@ -340,6 +341,4 @@ chunkwm_plugin_export Subscriptions[] =
     chunkwm_export_space_changed,
 };
 CHUNKWM_PLUGIN_SUBSCRIBE(Subscriptions)
-
-// NOTE(koekeishiya): Generate plugin
 CHUNKWM_PLUGIN("Border", "0.2.6")
