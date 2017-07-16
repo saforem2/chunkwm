@@ -53,23 +53,7 @@ UpdateToFocusedWindow()
         uint32_t WindowId = AXLibGetWindowID(WindowRef);
         if(WindowId)
         {
-            CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromWindow(WindowId);
-            if(!DisplayRef)
-            {
-                CGPoint Position = AXLibGetWindowPosition(WindowRef);
-                CGSize Size = AXLibGetWindowSize(WindowRef);
-                DisplayRef = AXLibGetDisplayIdentifierFromWindowRect(Position, Size);
-            }
-            ASSERT(DisplayRef);
-
-            macos_space *Space = AXLibActiveSpace(DisplayRef);
-            if(AXLibSpaceHasWindow(Space->Id, WindowId))
-            {
-                UpdateWindow(WindowRef);
-            }
-
-            AXLibDestroySpace(Space);
-            CFRelease(DisplayRef);
+            UpdateWindow(WindowRef);
         }
         else
         {
