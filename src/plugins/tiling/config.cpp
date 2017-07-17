@@ -32,7 +32,7 @@ BuildArguments(const char *Message, int *Count)
         Args[(*Count)++] = Arg;
     }
 
-#if 1
+#if 0
     for(int Index = 1;
         Index < *Count;
         ++Index)
@@ -89,6 +89,7 @@ ConstructCommand(char Flag, char *Arg)
     return Command;
 }
 
+typedef void (*query_func)(char *, int);
 typedef void (*command_func)(char *);
 command_func WindowCommandDispatch(char Flag)
 {
@@ -523,47 +524,110 @@ End:
     return Success;
 }
 
-inline void
-ParseQueryCommand(const char **Message, int SockFD)
+query_func QueryCommandDispatch(char Flag)
 {
-    token Command = GetToken(Message);
-    if(TokenEquals(Command, "window"))
+    switch(Flag)
     {
-        token Selector = GetToken(Message);
-        if(TokenEquals(Selector, "details"))
+        case 'w': return QueryWindow;             break;
+        case 'd': return QueryDesktop;            break;
+        case 'm': return QueryMonitor;            break;
+
+        // NOTE(koekeishiya): silence compiler warning.
+        default: return 0; break;
+    }
+}
+inline bool
+ParseQueryCommand(const char *Message, command *Chain)
+{
+    int Count;
+    char **Args = BuildArguments(Message, &Count);
+
+    int Option;
+    bool Success = true;
+    const char *Short = "w:d:m:";
+
+    struct option Long[] =
+    {
+        { "window", required_argument, NULL, 'w' },
+        { "desktop", required_argument, NULL, 'd' },
+        { "monitor", required_argument, NULL, 'm' },
+        { NULL, 0, NULL, 0 }
+    };
+
+    command *Command = Chain;
+    while((Option = getopt_long(Count, Args, Short, Long, NULL)) != -1)
+    {
+        switch(Option)
         {
-            token ValueToken = GetToken(Message);
-            if(ValueToken.Length > 0)
+            case 'w':
             {
                 uint32_t WindowId;
-                if(sscanf(ValueToken.Text, "%d", &WindowId) == 1)
+                if((StringEquals(optarg, "owner")) ||
+                   (StringEquals(optarg, "name")) ||
+                   (StringEquals(optarg, "tag")) ||
+                   (sscanf(optarg, "%d", &WindowId) == 1))
                 {
-                    char *Response = QueryWindowDetails(WindowId);
-                    if(Response)
-                    {
-                        WriteToSocket(Response, SockFD);
-                        free(Response);
-                        goto win_success;
-                    }
+                    command *Entry = ConstructCommand(Option, optarg);
+                    Command->Next = Entry;
+                    Command = Entry;
                 }
-            }
-
-            char Response[32];
-            Response[0] = '\0';
-            snprintf(Response, sizeof(Response), "%s", "invalid windowid");
-            WriteToSocket(Response, SockFD);
-win_success:;
-        }
-        else if(TokenEquals(Selector, "list"))
-        {
-            char *Response = QueryWindowsForActiveSpace();
-            if(Response)
+                else
+                {
+                    fprintf(stderr, "    invalid selector '%s' for window flag '%c'\n", optarg, Option);
+                    Success = false;
+                    FreeCommandChain(Chain);
+                    goto End;
+                }
+            } break;
+            case 'd':
             {
-                WriteToSocket(Response, SockFD);
-                free(Response);
-            }
+                if((StringEquals(optarg, "id")) ||
+                   (StringEquals(optarg, "mode")) ||
+                   (StringEquals(optarg, "windows")))
+                {
+                    command *Entry = ConstructCommand(Option, optarg);
+                    Command->Next = Entry;
+                    Command = Entry;
+                }
+                else
+                {
+                    fprintf(stderr, "    invalid selector '%s' for window flag '%c'\n", optarg, Option);
+                    Success = false;
+                    FreeCommandChain(Chain);
+                    goto End;
+                }
+            } break;
+            case 'm':
+            {
+                if(StringEquals(optarg, "id"))
+                {
+                    command *Entry = ConstructCommand(Option, optarg);
+                    Command->Next = Entry;
+                    Command = Entry;
+                }
+                else
+                {
+                    fprintf(stderr, "    invalid selector '%s' for window flag '%c'\n", optarg, Option);
+                    Success = false;
+                    FreeCommandChain(Chain);
+                    goto End;
+                }
+            } break;
+            case '?':
+            {
+                Success = false;
+                FreeCommandChain(Chain);
+                goto End;
+            } break;
         }
     }
+
+End:
+    // NOTE(koekeishiya): Reset getopt.
+    optind = 1;
+
+    FreeArguments(Count, Args);
+    return Success;
 }
 
 inline bool
@@ -648,11 +712,21 @@ End:
 
 void CommandCallback(int SockFD, const char *Type, const char *Message)
 {
-    printf("chunkwm-tiling recv: '%s %s'\n", Type, Message);
-
     if(StringEquals(Type, "query"))
     {
-        ParseQueryCommand(&Message, SockFD);
+        command Chain = {};
+        bool Success = ParseQueryCommand(Message, &Chain);
+        if(Success)
+        {
+            command *Command = &Chain;
+            while((Command = Command->Next))
+            {
+                DEBUG_PRINT("    command: '%c', arg: '%s'\n", Command->Flag, Command->Arg);
+                (*QueryCommandDispatch(Command->Flag))(Command->Arg, SockFD);
+            }
+
+            FreeCommandChain(&Chain);
+        }
     }
     else if(StringEquals(Type, "rule"))
     {

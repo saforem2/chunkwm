@@ -2064,20 +2064,75 @@ space_free:
     AXLibDestroySpace(Space);
 }
 
-// NOTE(koekeishiya): Caller is responsible for memory.
-char *QueryWindowDetails(uint32_t WindowId)
+internal void
+QueryFocusedWindowOwner(int SockFD)
 {
-    char *Result = NULL;
+    char Message[512];
+    macos_window *Window;
 
+    Window = GetFocusedWindow();
+    if(Window)
+    {
+        snprintf(Message, sizeof(Message), "%s", Window->Owner->Name);
+    }
+    else
+    {
+        snprintf(Message, sizeof(Message), "?");
+    }
+
+    WriteToSocket(Message, SockFD);
+}
+
+internal void
+QueryFocusedWindowName(int SockFD)
+{
+    char Message[512];
+    macos_window *Window;
+
+    Window = GetFocusedWindow();
+    if(Window)
+    {
+        snprintf(Message, sizeof(Message), "%s", Window->Name);
+    }
+    else
+    {
+        snprintf(Message, sizeof(Message), "?");
+    }
+
+    WriteToSocket(Message, SockFD);
+}
+
+internal void
+QueryFocusedWindowTag(int SockFD)
+{
+    char Message[512];
+    macos_window *Window;
+
+    Window = GetFocusedWindow();
+    if(Window)
+    {
+        snprintf(Message, sizeof(Message), "%s - %s", Window->Owner->Name, Window->Name);
+    }
+    else
+    {
+        snprintf(Message, sizeof(Message), "?");
+    }
+
+    WriteToSocket(Message, SockFD);
+}
+
+internal void
+QueryWindowDetails(uint32_t WindowId, int SockFD)
+{
+    char Buffer[1024];
     macos_window *Window = GetWindowByID(WindowId);
     if(Window)
     {
-        char Details[1024];
         char *Mainrole = Window->Mainrole ? CopyCFStringToC(Window->Mainrole) : NULL;
         char *Subrole = Window->Subrole ? CopyCFStringToC(Window->Subrole) : NULL;
         char *Name = AXLibGetWindowTitle(Window->Ref);
 
-        snprintf(Details, sizeof(Details),
+        snprintf(Buffer, sizeof(Buffer),
                 "id: %d\n"
                 "level: %d\n"
                 "name: %s\n"
@@ -2098,21 +2153,93 @@ char *QueryWindowDetails(uint32_t WindowId)
         if(Name) { free(Name); }
         if(Subrole) { free(Subrole); }
         if(Mainrole) { free(Mainrole); }
-
-        Result = strdup(Details);
+    }
+    else
+    {
+        snprintf(Buffer, sizeof(Buffer), "window not found..\n");
     }
 
-    return Result;
+    WriteToSocket(Buffer, SockFD);
 }
 
-// NOTE(koekeishiya): Caller is responsible for memory.
-char *QueryWindowsForActiveSpace()
+void QueryWindow(char *Op, int SockFD)
+{
+    uint32_t WindowId;
+    if(StringEquals(Op, "owner"))
+    {
+        QueryFocusedWindowOwner(SockFD);
+    }
+    else if(StringEquals(Op, "name"))
+    {
+        QueryFocusedWindowName(SockFD);
+    }
+    else if(StringEquals(Op, "tag"))
+    {
+        QueryFocusedWindowTag(SockFD);
+    }
+    else if(sscanf(Op, "%d", &WindowId) == 1)
+    {
+        QueryWindowDetails(WindowId, SockFD);
+    }
+}
+
+internal void
+QueryFocusedDesktop(int SockFD)
+{
+    char Message[512];
+    macos_space *Space;
+    unsigned DesktopId;
+    bool Success;
+
+    Success = AXLibActiveSpace(&Space);
+    if(!Success)
+    {
+        snprintf(Message, sizeof(Message), "?");
+        goto out;
+    }
+
+    Success = AXLibCGSSpaceIDToDesktopID(Space->Id, NULL, &DesktopId);
+    ASSERT(Success);
+    snprintf(Message, sizeof(Message), "%d", DesktopId);
+
+    AXLibDestroySpace(Space);
+
+out:
+    WriteToSocket(Message, SockFD);
+}
+
+internal void
+QueryFocusedVirtualSpaceMode(int SockFD)
+{
+    char Message[512];
+    macos_space *Space;
+    virtual_space *VirtualSpace;
+    bool Success;
+
+    Success = AXLibActiveSpace(&Space);
+    if(!Success)
+    {
+        snprintf(Message, sizeof(Message), "?");
+        goto out;
+    }
+
+    VirtualSpace = AcquireVirtualSpace(Space);
+    snprintf(Message, sizeof(Message), "%s", virtual_space_mode_str[VirtualSpace->Mode]);
+    ReleaseVirtualSpace(VirtualSpace);
+
+    AXLibDestroySpace(Space);
+
+out:
+    WriteToSocket(Message, SockFD);
+}
+
+internal void
+QueryWindowsForActiveSpace(int SockFD)
 {
     macos_space *Space;
     bool Success = AXLibActiveSpace(&Space);
     ASSERT(Success);
 
-    char *Result = NULL;
     char Buffer[1024] = {};
     char Temp[64] = {};
 
@@ -2133,10 +2260,59 @@ char *QueryWindowsForActiveSpace()
         strcat(Buffer, Temp);
     }
 
-    if(!Windows.empty())
+    if(Windows.empty())
     {
-        Result = strdup(Buffer);
+        snprintf(Buffer, sizeof(Buffer), "desktop is empty..\n");
     }
 
-    return Result;
+    WriteToSocket(Buffer, SockFD);
+}
+
+void QueryDesktop(char *Op, int SockFD)
+{
+    if(StringEquals(Op, "id"))
+    {
+        QueryFocusedDesktop(SockFD);
+    }
+    else if(StringEquals(Op, "mode"))
+    {
+        QueryFocusedVirtualSpaceMode(SockFD);
+    }
+    else if(StringEquals(Op, "windows"))
+    {
+        QueryWindowsForActiveSpace(SockFD);
+    }
+}
+
+internal inline void
+QueryFocusedMonitor(int SockFD)
+{
+    char Message[512];
+    macos_space *Space;
+    unsigned MonitorId;
+    bool Success;
+
+    Success = AXLibActiveSpace(&Space);
+    if(!Success)
+    {
+        snprintf(Message, sizeof(Message), "?");
+        goto out;
+    }
+
+    Success = AXLibCGSSpaceIDToDesktopID(Space->Id, &MonitorId, NULL);
+    ASSERT(Success);
+    snprintf(Message, sizeof(Message), "%d", (MonitorId + 1));
+
+    AXLibDestroySpace(Space);
+
+out:
+    WriteToSocket(Message, SockFD);
+}
+
+void QueryMonitor(char *Op, int SockFD)
+{
+    if(StringEquals(Op, "id"))
+    {
+        QueryFocusedMonitor(SockFD);
+    }
 }

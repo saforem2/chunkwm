@@ -42,7 +42,8 @@ void FocusMonitor(char *Op);
 void SerializeDesktop(char *Op);
 void DeserializeDesktop(char *Op);
 
-char *QueryWindowDetails(uint32_t WindowId);
-char *QueryWindowsForActiveSpace();
+void QueryWindow(char *Op, int SockFD);
+void QueryDesktop(char *Op, int SockFD);
+void QueryMonitor(char *Op, int SockFD);
 
 #endif

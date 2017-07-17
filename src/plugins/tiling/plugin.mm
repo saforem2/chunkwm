@@ -83,13 +83,8 @@ internal const char *PluginName = "Tiling";
 internal const char *PluginVersion = "0.2.16";
 
 internal macos_application_map Applications;
-
-/* TODO(koekeishiya): All functions operating on this structure must be made thread-safe:
- * macos_window *GetWindowByID(uint32_t Id)
- * AddWindowToCollection(macos_window *Window)
- * RemoveWindowFromCollection(macos_window *Window)
- * */
 internal macos_window_map Windows;
+internal pthread_mutex_t WindowsLock;
 internal event_tap EventTap;
 internal chunkwm_api API;
 
@@ -110,8 +105,9 @@ internal void
 FadeAllWindows(float Value, float Duration)
 {
     unsigned FocusedWindowId = CVarUnsignedValue(CVAR_FOCUSED_WINDOW);
-    for(macos_window_map_it It = Windows.begin();
-        It != Windows.end();
+    macos_window_map Copy = CopyWindowCache();
+    for(macos_window_map_it It = Copy.begin();
+        It != Copy.end();
         ++It)
     {
         macos_window *Window = It->second;
@@ -123,10 +119,27 @@ FadeAllWindows(float Value, float Duration)
 /* NOTE(koekeishiya): We need a way to retrieve AXUIElementRef from a CGWindowID.
  * There is no way to do this, without caching AXUIElementRef references.
  * Here we perform a lookup of macos_window structs. */
-macos_window *GetWindowByID(uint32_t Id)
+internal inline macos_window *
+_GetWindowByID(uint32_t Id)
 {
     macos_window_map_it It = Windows.find(Id);
     return It != Windows.end() ? It->second : NULL;
+}
+
+macos_window *GetWindowByID(uint32_t Id)
+{
+    pthread_mutex_lock(&WindowsLock);
+    macos_window *Result = _GetWindowByID(Id);
+    pthread_mutex_unlock(&WindowsLock);
+    return Result;
+}
+
+macos_window_map CopyWindowCache()
+{
+    pthread_mutex_lock(&WindowsLock);
+    macos_window_map Copy = Windows;
+    pthread_mutex_unlock(&WindowsLock);
+    return Copy;
 }
 
 macos_window *GetFocusedWindow()
@@ -156,30 +169,29 @@ out:
 internal void
 AddWindowToCollection(macos_window *Window)
 {
+    pthread_mutex_lock(&WindowsLock);
     Windows[Window->Id] = Window;
+    pthread_mutex_unlock(&WindowsLock);
     ApplyRulesForWindow(Window);
 }
 
 internal macos_window *
 RemoveWindowFromCollection(macos_window *Window)
 {
-    macos_window *Result = GetWindowByID(Window->Id);
+    pthread_mutex_lock(&WindowsLock);
+    macos_window *Result = _GetWindowByID(Window->Id);
     if(Result)
     {
         Windows.erase(Window->Id);
     }
+    pthread_mutex_unlock(&WindowsLock);
     return Result;
-}
-
-macos_window_map CopyWindowCache()
-{
-    macos_window_map Copy = Windows;
-    return Copy;
 }
 
 internal void
 ClearWindowCache()
 {
+    pthread_mutex_lock(&WindowsLock);
     for(macos_window_map_it It = Windows.begin();
         It != Windows.end();
         ++It)
@@ -188,6 +200,7 @@ ClearWindowCache()
         AXLibDestroyWindow(Window);
     }
     Windows.clear();
+    pthread_mutex_unlock(&WindowsLock);
 }
 
 internal void
@@ -1541,11 +1554,20 @@ PLUGIN_MAIN_FUNC(PluginMain)
 internal bool
 Init(chunkwm_api ChunkwmAPI)
 {
+    bool Success;
+    std::vector<macos_application *> Applications;
+    uint32_t ProcessPolicy;
+
+    macos_window *Window;
+    macos_space *Space;
+    unsigned DesktopId;
+
     API = ChunkwmAPI;
     BeginCVars(&API);
 
-    bool Success;
-    std::vector<macos_application *> Applications;
+    Success = (pthread_mutex_init(&WindowsLock, NULL) == 0);
+    if(!Success) goto out;
+
 
     EventTap.Mask = ((1 << kCGEventLeftMouseDown) |
                      (1 << kCGEventLeftMouseDragged) |
@@ -1600,7 +1622,7 @@ Init(chunkwm_api ChunkwmAPI)
 
     /*   ---------------------------------------------------------   */
 
-    uint32_t ProcessPolicy = Process_Policy_Regular;
+    ProcessPolicy = Process_Policy_Regular;
     Applications = AXLibRunningProcesses(ProcessPolicy);
     for(size_t Index = 0; Index < Applications.size(); ++Index)
     {
@@ -1610,7 +1632,7 @@ Init(chunkwm_api ChunkwmAPI)
     }
 
     /* NOTE(koekeishiya): Set our initial insertion-point on launch. */
-    macos_window *Window = GetFocusedWindow();
+    Window = GetFocusedWindow();
     if(Window)
     {
         UpdateCVar(CVAR_FOCUSED_WINDOW, Window->Id);
@@ -1629,11 +1651,9 @@ Init(chunkwm_api ChunkwmAPI)
         }
     }
 
-    macos_space *Space;
     Success = AXLibActiveSpace(&Space);
     ASSERT(Success);
 
-    unsigned DesktopId;
     Success = AXLibCGSSpaceIDToDesktopID(Space->Id, NULL, &DesktopId);
     ASSERT(Success);
 

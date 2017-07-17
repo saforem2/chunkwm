@@ -6,7 +6,7 @@ LINK			= -shared -fPIC -framework Carbon -framework Cocoa -framework Application
 
 all: $(BINS)
 
-install: BUILD_FLAGS=-O2 -std=c++11 -Wall
+install: BUILD_FLAGS=-O2 -std=c++11 -Wall -Wno-deprecated -Wno-writable-strings
 install: clean $(BINS)
 
 .PHONY: all clean install

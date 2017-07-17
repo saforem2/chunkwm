@@ -47,6 +47,17 @@
   * [focus monitor](#focus-monitor)
 * [window rules](#window-rules)
   * [sample rules](#sample-rules)
+* [query commands](#window-rules)
+  * [query window related](#query-window-related)
+      * [query focused window name](#query-focused-window-name)
+      * [query focused window owner](#query-focused-window-owner)
+      * [query focused window tag](#query-focused-window-tag)
+      * [query window information](#query-window-information)
+  * [query desktop related](#query-desktop-related)
+      * [query focused desktop id](#query-focused-desktop-id)
+      * [query list of windows on focused desktop](#query-list-of-windows-on-focused-desktop)
+  * [query monitor related](#query-monitor-related)
+      * [query focused monitor](#query-focused-monitor-id)
 
 ---
 
@@ -330,3 +341,54 @@
     chunkc tiling::rule --owner \"System Preferences\" --state tile
     chunkc tiling::rule --owner Finder --name Copy --state float
     chunkc tiling::rule --owner Spotify --desktop 5
+
+---
+
+#### query commands
+
+##### query window related
+
+##### query focused window name
+
+    chunkc tiling::query --window name
+    short flag: w
+
+##### query focused window owner
+
+    chunkc tiling::query --window owner
+    short flag: w
+
+##### query focused window tag
+
+    chunkc tiling::query --window tag
+    short flag: w
+    desc: outputs '<window owner> - <window name>'
+
+##### query window information
+
+    chunkc tiling::query --window <window_id>
+    <window_id>: internal id of a window, retrieved with `query desktop ..`
+    short flag: w
+
+---
+
+##### query desktop related
+
+##### query focused desktop id
+
+    chunkc tiling::query --desktop id
+    short flag: d
+
+##### query list of windows on focused desktop
+
+    chunkc tiling::query --desktop windows
+    short flag: d
+
+---
+
+##### query monitor related
+
+##### query focused monitor id
+
+    chunkc tiling::query --monitor id
+    short flag: d
