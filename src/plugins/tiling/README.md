@@ -55,6 +55,7 @@
       * [query window information](#query-window-information)
   * [query desktop related](#query-desktop-related)
       * [query focused desktop id](#query-focused-desktop-id)
+      * [query focused desktop mode](#query-focused-desktop-mode)
       * [query list of windows on focused desktop](#query-list-of-windows-on-focused-desktop)
   * [query monitor related](#query-monitor-related)
       * [query focused monitor](#query-focused-monitor-id)
@@ -378,6 +379,12 @@
 
     chunkc tiling::query --desktop id
     short flag: d
+
+##### query focused desktop mode
+
+    chunkc tiling::query --desktop mode
+    short flag: d
+    desc: outputs 'bsp | monocle | float'
 
 ##### query list of windows on focused desktop
 
