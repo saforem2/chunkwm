@@ -104,7 +104,7 @@ ExtendedDockSetWindowAlpha(uint32_t WindowId, float Value, float Duration)
 internal void
 FadeAllWindows(float Value, float Duration)
 {
-    unsigned FocusedWindowId = CVarUnsignedValue(CVAR_FOCUSED_WINDOW);
+    uint32_t FocusedWindowId = CVarUnsignedValue(CVAR_FOCUSED_WINDOW);
     macos_window_map Copy = CopyWindowCache();
     for(macos_window_map_it It = Copy.begin();
         It != Copy.end();
@@ -1184,9 +1184,10 @@ space_free:
 internal void
 WindowFocusedHandler(uint32_t WindowId)
 {
+    uint32_t FocusedWindowId = CVarUnsignedValue(CVAR_FOCUSED_WINDOW);
     UpdateCVar(CVAR_FOCUSED_WINDOW, WindowId);
     macos_window *Window = GetWindowByID(WindowId);
-    if(Window && IsWindowFocusable(Window))
+    if(Window && IsWindowFocusable(Window) && FocusedWindowId != WindowId)
     {
         if(RuleChangedDesktop(Window->Flags))
         {
