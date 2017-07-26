@@ -258,12 +258,23 @@ void ResizeNodeRegion(node *Node, macos_space *Space, virtual_space *VirtualSpac
 
 void CreateNodeRegionRecursive(node *Node, bool Optimal, macos_space *Space, virtual_space *VirtualSpace)
 {
-    if(Node && Node->Left && Node->Right)
+    if(VirtualSpace->Mode == Virtual_Space_Bsp)
     {
-        Node->Split = Optimal ? OptimalSplitMode(Node) : Node->Split;
-        CreateNodeRegionPair(Node->Left, Node->Right, Node->Split, Space, VirtualSpace);
+        if(Node && Node->Left && Node->Right)
+        {
+            Node->Split = Optimal ? OptimalSplitMode(Node) : Node->Split;
+            CreateNodeRegionPair(Node->Left, Node->Right, Node->Split, Space, VirtualSpace);
 
-        CreateNodeRegionRecursive(Node->Left, Optimal, Space, VirtualSpace);
-        CreateNodeRegionRecursive(Node->Right, Optimal, Space, VirtualSpace);
+            CreateNodeRegionRecursive(Node->Left, Optimal, Space, VirtualSpace);
+            CreateNodeRegionRecursive(Node->Right, Optimal, Space, VirtualSpace);
+        }
+    }
+    else if(VirtualSpace->Mode == Virtual_Space_Monocle)
+    {
+        if(Node && Node->Right)
+        {
+            CreateNodeRegion(Node->Right, Region_Full, Space, VirtualSpace);
+            CreateNodeRegionRecursive(Node->Right, Optimal, Space, VirtualSpace);
+        }
     }
 }
