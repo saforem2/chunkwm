@@ -142,11 +142,11 @@ macos_window_map CopyWindowCache()
     return Copy;
 }
 
-macos_window *GetFocusedWindow()
+internal uint32_t
+GetFocusedWindowId()
 {
     AXUIElementRef ApplicationRef, WindowRef;
-    macos_window *Result = NULL;
-    uint32_t WindowId;
+    uint32_t WindowId = 0;
 
     ApplicationRef = AXLibGetFocusedApplication();
     if(!ApplicationRef) goto out;
@@ -156,13 +156,18 @@ macos_window *GetFocusedWindow()
 
     WindowId = AXLibGetWindowID(WindowRef);
     CFRelease(WindowRef);
-    Result = GetWindowByID(WindowId);
 
 err:
     CFRelease(ApplicationRef);
 
 out:
-    return Result;
+    return WindowId;
+}
+
+macos_window *GetFocusedWindow()
+{
+    uint32_t WindowId = GetFocusedWindowId();
+    return WindowId ? GetWindowByID(WindowId) : NULL;
 }
 
 // NOTE(koekeishiya): Caller is responsible for making sure that the window is not a dupe.
@@ -1189,10 +1194,22 @@ WindowFocusedHandler(uint32_t WindowId)
     macos_window *Window = GetWindowByID(WindowId);
     if(Window && IsWindowFocusable(Window) && FocusedWindowId != WindowId)
     {
+        CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromWindow(Window->Id);
+        if(!DisplayRef) DisplayRef = AXLibGetDisplayIdentifierFromWindowRect(Window->Position, Window->Size);
+        ASSERT(DisplayRef);
+
+        macos_space *Space = AXLibActiveSpace(DisplayRef);
+        ASSERT(Space);
+
+        if(!AXLibSpaceHasWindow(Space->Id, Window->Id))
+        {
+            goto space_free;
+        }
+
         if(RuleChangedDesktop(Window->Flags))
         {
             AXLibClearFlags(Window, Rule_Desktop_Changed);
-            return;
+            goto space_free;
         }
 
         if(CVarIntegerValue(CVAR_WINDOW_FADE_INACTIVE))
@@ -1213,6 +1230,10 @@ WindowFocusedHandler(uint32_t WindowId)
         {
             CenterMouseInWindow(Window);
         }
+
+space_free:
+        AXLibDestroySpace(Space);
+        CFRelease(DisplayRef);
     }
 }
 
@@ -1225,6 +1246,15 @@ ApplicationActivatedHandler(void *Data)
     {
         uint32_t WindowId = AXLibGetWindowID(WindowRef);
         CFRelease(WindowRef);
+
+        /* TODO(koekeishiya): We do not actually want this to happen if this application is
+         * on a different space on the same monitor. In this case we need to defer the call
+         * to the end of the 'SpaceAndDisplayChangedHandler', because we receive the
+         * 'application_activated' event before the 'space_changed' event when using CMD+TAB.
+         * This is an issue because of workarounds implemented for:
+         *      https://github.com/koekeishiya/chunkwm/issues/169
+         *      https://github.com/koekeishiya/chunkwm/issues/160
+        */
         WindowFocusedHandler(WindowId);
     }
 }
@@ -1264,10 +1294,10 @@ WindowDestroyedHandler(void *Data)
         else
         {
             RebalanceWindowTree();
-            macos_window *FocusedWindow = GetFocusedWindow();
+            uint32_t FocusedWindow = GetFocusedWindowId();
             if(FocusedWindow)
             {
-                UpdateCVar(CVAR_FOCUSED_WINDOW, FocusedWindow->Id);
+                UpdateCVar(CVAR_FOCUSED_WINDOW, FocusedWindow);
             }
         }
 
@@ -1436,23 +1466,10 @@ SpaceAndDisplayChangedHandler(void *Data)
 space_free:
     AXLibDestroySpace(Space);
 
-    macos_window *Window = GetFocusedWindow();
-    if(Window)
+    uint32_t WindowId = GetFocusedWindowId();
+    if(WindowId)
     {
-        UpdateCVar(CVAR_FOCUSED_WINDOW, Window->Id);
-        if(CVarIntegerValue(CVAR_WINDOW_FADE_INACTIVE))
-        {
-            float Alpha = CVarFloatingPointValue(CVAR_WINDOW_FADE_ALPHA);
-            float Duration = CVarFloatingPointValue(CVAR_WINDOW_FADE_DURATION);
-            ExtendedDockSetWindowAlpha(Window->Id, 1.0f, Duration);
-            FadeAllWindows(Alpha, Duration);
-        }
-        BroadcastFocusedWindowFloating(Window);
-        if((IsWindowFocusable(Window)) &&
-           (!AXLibHasFlags(Window, Window_Float)))
-        {
-            UpdateCVar(CVAR_BSP_INSERTION_POINT, Window->Id);
-        }
+        WindowFocusedHandler(WindowId);
     }
 }
 
@@ -1559,7 +1576,7 @@ Init(chunkwm_api ChunkwmAPI)
     std::vector<macos_application *> Applications;
     uint32_t ProcessPolicy;
 
-    macos_window *Window;
+    uint32_t WindowId;
     macos_space *Space;
     unsigned DesktopId;
 
@@ -1633,23 +1650,10 @@ Init(chunkwm_api ChunkwmAPI)
     }
 
     /* NOTE(koekeishiya): Set our initial insertion-point on launch. */
-    Window = GetFocusedWindow();
-    if(Window)
+    WindowId = GetFocusedWindowId();
+    if(WindowId)
     {
-        UpdateCVar(CVAR_FOCUSED_WINDOW, Window->Id);
-        if(CVarIntegerValue(CVAR_WINDOW_FADE_INACTIVE))
-        {
-            float Alpha = CVarFloatingPointValue(CVAR_WINDOW_FADE_ALPHA);
-            float Duration = CVarFloatingPointValue(CVAR_WINDOW_FADE_DURATION);
-            ExtendedDockSetWindowAlpha(Window->Id, 1.0f, Duration);
-            FadeAllWindows(Alpha, Duration);
-        }
-        BroadcastFocusedWindowFloating(Window);
-        if((IsWindowFocusable(Window)) &&
-           (!AXLibHasFlags(Window, Window_Float)))
-        {
-            UpdateCVar(CVAR_BSP_INSERTION_POINT, Window->Id);
-        }
+        WindowFocusedHandler(WindowId);
     }
 
     Success = AXLibActiveSpace(&Space);
