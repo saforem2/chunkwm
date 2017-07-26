@@ -6,7 +6,6 @@
 char *CopyCFStringToC(CFStringRef String)
 {
     ASSERT(String);
-
     CFStringEncoding Encoding = kCFStringEncodingUTF8;
     CFIndex Length = CFStringGetLength(String);
     CFIndex Bytes = CFStringGetMaximumSizeForEncoding(Length, Encoding);
@@ -37,7 +36,6 @@ CFTypeRef AXLibGetWindowProperty(AXUIElementRef WindowRef, CFStringRef Property)
 {
     ASSERT(WindowRef);
     ASSERT(Property);
-
     CFTypeRef TypeRef;
     AXError Error = AXUIElementCopyAttributeValue(WindowRef, Property, &TypeRef);
     bool Result = (Error == kAXErrorSuccess);
@@ -56,7 +54,6 @@ AXError AXLibSetWindowProperty(AXUIElementRef WindowRef, CFStringRef Property, C
     ASSERT(WindowRef);
     ASSERT(Property);
     ASSERT(Value);
-
     return AXUIElementSetAttributeValue(WindowRef, Property, Value);
 }
 
@@ -65,7 +62,6 @@ AXError AXLibSetWindowProperty(AXUIElementRef WindowRef, CFStringRef Property, C
 AXUIElementRef AXLibGetFocusedWindow(AXUIElementRef ApplicationRef)
 {
     ASSERT(ApplicationRef);
-
     return (AXUIElementRef) AXLibGetWindowProperty(ApplicationRef, kAXFocusedWindowAttribute);
 }
 
@@ -74,10 +70,11 @@ AXUIElementRef AXLibGetFocusedWindow(AXUIElementRef ApplicationRef)
 void AXLibSetFocusedWindow(AXUIElementRef WindowRef)
 {
     ASSERT(WindowRef);
-
     AXUIElementSetAttributeValue(WindowRef, kAXMainAttribute, kCFBooleanTrue);
     AXUIElementSetAttributeValue(WindowRef, kAXFocusedAttribute, kCFBooleanTrue);
-    AXUIElementPerformAction(WindowRef, kAXRaiseAction);
+    // NOTE(koekeishiya): The following raise action is not necessary on Sierra 10.12.6
+    // and causes macOS to trigger two focus window events, for the same window reference.
+    // AXUIElementPerformAction(WindowRef, kAXRaiseAction);
 }
 
 // NOTE(koekeishiya): Caller is responsible for calling 'CFRelease()'. */
@@ -108,7 +105,6 @@ void AXLibSetFocusedApplication(pid_t PID)
 bool AXLibIsWindowMinimized(AXUIElementRef WindowRef)
 {
     ASSERT(WindowRef);
-
     // NOTE(koekeishiya): Boolean: typedef -> unsigned char; false = 0, true != 0
     Boolean Result = 0;
 
@@ -126,7 +122,6 @@ bool AXLibIsWindowMinimized(AXUIElementRef WindowRef)
 bool AXLibIsWindowMovable(AXUIElementRef WindowRef)
 {
     ASSERT(WindowRef);
-
     // NOTE(koekeishiya): Boolean: typedef -> unsigned char; false = 0, true != 0
     Boolean Result;
 
@@ -143,7 +138,6 @@ bool AXLibIsWindowMovable(AXUIElementRef WindowRef)
 bool AXLibIsWindowFullscreen(AXUIElementRef WindowRef)
 {
     ASSERT(WindowRef);
-
     // NOTE(koekeishiya): Boolean: typedef -> unsigned char; false = 0, true != 0
     Boolean Result = 0;
 
@@ -161,7 +155,6 @@ bool AXLibIsWindowFullscreen(AXUIElementRef WindowRef)
 bool AXLibIsWindowResizable(AXUIElementRef WindowRef)
 {
     ASSERT(WindowRef);
-
     // NOTE(koekeishiya): Boolean: typedef -> unsigned char; false = 0, true != 0
     Boolean Result;
 
@@ -178,7 +171,6 @@ bool AXLibIsWindowResizable(AXUIElementRef WindowRef)
 bool AXLibSetWindowPosition(AXUIElementRef WindowRef, float X, float Y)
 {
     ASSERT(WindowRef);
-
     bool Result = false;
     CGPoint WindowPos = CGPointMake(X, Y);
 
@@ -197,7 +189,6 @@ bool AXLibSetWindowPosition(AXUIElementRef WindowRef, float X, float Y)
 bool AXLibSetWindowSize(AXUIElementRef WindowRef, float Width, float Height)
 {
     ASSERT(WindowRef);
-
     bool Result = false;
     CGSize WindowSize = CGSizeMake(Width, Height);
 
@@ -216,7 +207,6 @@ bool AXLibSetWindowSize(AXUIElementRef WindowRef, float Width, float Height)
 bool AXLibSetWindowFullscreen(AXUIElementRef WindowRef, bool Fullscreen)
 {
     ASSERT(WindowRef);
-
     CFBooleanRef Value = Fullscreen ? kCFBooleanTrue : kCFBooleanFalse;
     AXError Error = AXLibSetWindowProperty(WindowRef, kAXFullscreenAttribute, Value);
     bool Result = (Error == kAXErrorSuccess);
@@ -230,7 +220,6 @@ bool AXLibSetWindowFullscreen(AXUIElementRef WindowRef, bool Fullscreen)
 uint32_t AXLibGetWindowID(AXUIElementRef WindowRef)
 {
     ASSERT(WindowRef);
-
     uint32_t WindowID = kCGNullWindowID;
     _AXUIElementGetWindow(WindowRef, &WindowID);
     return WindowID;
@@ -241,7 +230,6 @@ uint32_t AXLibGetWindowID(AXUIElementRef WindowRef)
 char *AXLibGetWindowTitle(AXUIElementRef WindowRef)
 {
     ASSERT(WindowRef);
-
     char *Result = NULL;
     CFStringRef WindowTitleRef = (CFStringRef) AXLibGetWindowProperty(WindowRef, kAXTitleAttribute);
 
@@ -268,7 +256,6 @@ char *AXLibGetWindowTitle(AXUIElementRef WindowRef)
 CGPoint AXLibGetWindowPosition(AXUIElementRef WindowRef)
 {
     ASSERT(WindowRef);
-
     CGPoint WindowPos = {};
     AXValueRef WindowPosRef = (AXValueRef) AXLibGetWindowProperty(WindowRef, kAXPositionAttribute);
 
@@ -285,7 +272,6 @@ CGPoint AXLibGetWindowPosition(AXUIElementRef WindowRef)
 CGSize AXLibGetWindowSize(AXUIElementRef WindowRef)
 {
     ASSERT(WindowRef);
-
     CGSize WindowSize = {};
     AXValueRef WindowSizeRef = (AXValueRef) AXLibGetWindowProperty(WindowRef, kAXSizeAttribute);
 
@@ -304,7 +290,6 @@ bool AXLibGetWindowRole(AXUIElementRef WindowRef, CFStringRef *Role)
 {
     ASSERT(WindowRef);
     ASSERT(Role);
-
     *Role = (CFStringRef) AXLibGetWindowProperty(WindowRef, kAXRoleAttribute);
     return *Role != NULL;
 }
@@ -315,7 +300,6 @@ bool AXLibGetWindowSubrole(AXUIElementRef WindowRef, CFStringRef *Subrole)
 {
     ASSERT(WindowRef);
     ASSERT(Subrole);
-
     *Subrole = (CFStringRef) AXLibGetWindowProperty(WindowRef, kAXSubroleAttribute);
     return *Subrole != NULL;
 }
