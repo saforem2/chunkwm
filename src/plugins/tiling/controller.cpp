@@ -2240,24 +2240,33 @@ QueryWindowsForActiveSpace(int SockFD)
     bool Success = AXLibActiveSpace(&Space);
     ASSERT(Success);
 
-    char Buffer[1024] = {};
-    char Temp[64] = {};
+    char *Cursor, *Buffer, *EndOfBuffer;
+    size_t BufferSize = sizeof(char) * 4096;
+    size_t BytesWritten = 0;
+
+    Cursor = Buffer = (char *) malloc(BufferSize);
+    EndOfBuffer = Buffer + BufferSize;
 
     std::vector<uint32_t> Windows = GetAllVisibleWindowsForSpace(Space, true, true);
     for(int Index = 0; Index < Windows.size(); ++Index)
     {
+        ASSERT(Cursor < EndOfBuffer);
+
         macos_window *Window = GetWindowByID(Windows[Index]);
         ASSERT(Window);
 
         if(IsWindowValid(Window))
         {
-            snprintf(Temp, sizeof(Temp), "%d, %s\n", Window->Id, Window->Owner->Name);
+            BytesWritten = snprintf(Cursor, BufferSize, "%d, %s, %s\n", Window->Id, Window->Owner->Name, Window->Name);
         }
         else
         {
-            snprintf(Temp, sizeof(Temp), "%d, %s (invalid)\n", Window->Id, Window->Owner->Name);
+            BytesWritten = snprintf(Cursor, BufferSize, "%d, %s, %s (invalid)\n", Window->Id, Window->Owner->Name, Window->Name);
         }
-        strcat(Buffer, Temp);
+
+        ASSERT(BytesWritten >= 0);
+        Cursor += BytesWritten;
+        BufferSize -= BytesWritten;
     }
 
     if(Windows.empty())
@@ -2266,6 +2275,7 @@ QueryWindowsForActiveSpace(int SockFD)
     }
 
     WriteToSocket(Buffer, SockFD);
+    free(Buffer);
 }
 
 void QueryDesktop(char *Op, int SockFD)
