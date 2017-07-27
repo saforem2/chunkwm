@@ -53,6 +53,7 @@ struct macos_display
 macos_display *AXLibConstructDisplay(CGDirectDisplayID Id, unsigned Arrangement);
 void  AXLibDestroyDisplay(macos_display *Display);
 macos_display **AXLibDisplayList(unsigned *Count);
+unsigned AXLibDisplayCount();
 
 CGSSpaceID AXLibActiveCGSSpaceID(CFStringRef DisplayRef);
 macos_space *AXLibActiveSpace(CFStringRef DisplayRef);

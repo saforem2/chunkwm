@@ -94,6 +94,16 @@ macos_display **AXLibDisplayList(unsigned *Count)
     return DisplayList;
 }
 
+unsigned AXLibDisplayCount()
+{
+    unsigned Count = 0;
+
+    // NOTE(koekeishiya): We can pass NULL to only get the display count in return
+    CGGetActiveDisplayList(0, NULL, &Count);
+
+    return Count;
+}
+
 CGRect AXLibGetDisplayBounds(CFStringRef DisplayRef)
 {
     CGRect Result = {};
