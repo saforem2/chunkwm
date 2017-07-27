@@ -316,9 +316,10 @@ void FocusWindow(char *Direction)
 
         if(StringEquals(FocusCycleMode, Window_Focus_Cycle_All))
         {
+            bool WrapMonitor = AXLibDisplayCount() == 1;
             macos_window *ClosestWindow;
-            if((FindWindowUndirected(Space, VirtualSpace, Window, &ClosestWindow, Direction, false)) ||
-               (FindClosestWindow(Space, VirtualSpace, Window, &ClosestWindow, Direction, false)))
+            if((FindWindowUndirected(Space, VirtualSpace, Window, &ClosestWindow, Direction, WrapMonitor)) ||
+               (FindClosestWindow(Space, VirtualSpace, Window, &ClosestWindow, Direction, WrapMonitor)))
             {
                 AXLibSetFocusedWindow(ClosestWindow->Ref);
                 AXLibSetFocusedApplication(ClosestWindow->Owner->PSN);
@@ -358,16 +359,50 @@ void FocusWindow(char *Direction)
             if((StringEquals(Direction, "west")) ||
                (StringEquals(Direction, "prev")))
             {
-                if     (WindowNode->Left)                                           Node = WindowNode->Left;
-                else if(StringEquals(FocusCycleMode, Window_Focus_Cycle_All))       FocusMonitor("prev");
-                else if(StringEquals(FocusCycleMode, Window_Focus_Cycle_Monitor))   Node = GetLastLeafNode(VirtualSpace->Tree);
+                if(WindowNode->Left)
+                {
+                    Node = WindowNode->Left;
+                }
+                else if(StringEquals(FocusCycleMode, Window_Focus_Cycle_All))
+                {
+                    bool WrapMonitor = AXLibDisplayCount() == 1;
+                    if(WrapMonitor)
+                    {
+                        Node = GetLastLeafNode(VirtualSpace->Tree);
+                    }
+                    else
+                    {
+                        FocusMonitor("prev");
+                    }
+                }
+                else if(StringEquals(FocusCycleMode, Window_Focus_Cycle_Monitor))
+                {
+                    Node = GetLastLeafNode(VirtualSpace->Tree);
+                }
             }
             else if((StringEquals(Direction, "east")) ||
                     (StringEquals(Direction, "next")))
             {
-                if     (WindowNode->Right)                                          Node = WindowNode->Right;
-                else if(StringEquals(FocusCycleMode, Window_Focus_Cycle_All))       FocusMonitor("next");
-                else if(StringEquals(FocusCycleMode, Window_Focus_Cycle_Monitor))   Node = GetFirstLeafNode(VirtualSpace->Tree);
+                if(WindowNode->Right)
+                {
+                    Node = WindowNode->Right;
+                }
+                else if(StringEquals(FocusCycleMode, Window_Focus_Cycle_All))
+                {
+                    bool WrapMonitor = AXLibDisplayCount() == 1;
+                    if(WrapMonitor)
+                    {
+                        Node = GetFirstLeafNode(VirtualSpace->Tree);
+                    }
+                    else
+                    {
+                        FocusMonitor("next");
+                    }
+                }
+                else if(StringEquals(FocusCycleMode, Window_Focus_Cycle_Monitor))
+                {
+                    Node = GetFirstLeafNode(VirtualSpace->Tree);
+                }
             }
 
             if(Node)
