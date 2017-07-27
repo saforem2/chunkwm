@@ -98,6 +98,7 @@ HookPlugin(loaded_plugin *LoadedPlugin)
             SubscribeToEvent(Plugin, *Export);
         }
     }
+    Plugin->Run("chunkwm_events_subscribed", NULL);
 }
 
 internal void

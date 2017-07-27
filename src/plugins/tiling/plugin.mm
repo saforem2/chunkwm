@@ -1565,6 +1565,16 @@ PLUGIN_MAIN_FUNC(PluginMain)
         ChunkwmDaemonCommandHandler(Data);
         return true;
     }
+    else if(StringEquals(Node, "chunkwm_events_subscribed"))
+    {
+        /* NOTE(koekeishiya): Tile windows visible on the current space using configured mode */
+        CreateWindowTree();
+
+        /* NOTE(koekeishiya): Set our initial insertion-point on launch. */
+        uint32_t WindowId = GetFocusedWindowId();
+        if(WindowId) WindowFocusedHandler(WindowId);
+        return true;
+    }
 
     return false;
 }
@@ -1576,7 +1586,6 @@ Init(chunkwm_api ChunkwmAPI)
     std::vector<macos_application *> Applications;
     uint32_t ProcessPolicy;
 
-    uint32_t WindowId;
     macos_space *Space;
     unsigned DesktopId;
 
@@ -1649,13 +1658,6 @@ Init(chunkwm_api ChunkwmAPI)
         AddApplicationWindowList(Application);
     }
 
-    /* NOTE(koekeishiya): Set our initial insertion-point on launch. */
-    WindowId = GetFocusedWindowId();
-    if(WindowId)
-    {
-        WindowFocusedHandler(WindowId);
-    }
-
     Success = AXLibActiveSpace(&Space);
     ASSERT(Success);
 
@@ -1671,8 +1673,6 @@ Init(chunkwm_api ChunkwmAPI)
     if(Success)
     {
         SetMouseModifier(CVarStringValue(CVAR_MOUSE_MODIFIER));
-        /* NOTE(koekeishiya): Tile windows visible on the current space using configured mode */
-        CreateWindowTree();
         goto out;
     }
 
