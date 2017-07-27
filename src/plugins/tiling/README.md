@@ -333,11 +333,12 @@
 | --subrole | -R         | FIXED CMP | window subrole equals role         |
 | --except  | -e         | POSIX ERE | window name does not match pattern |
 
-| properties | short flag | value | description                            |
-|------------|:----------:|:-----:|:--------------------------------------:|
-| --state    | -s         | float | automatically float window             |
-| --state    | -s         | tile  | force-tile window regardless of AXRole |
-| --desktop  | -d         | index | send window to desktop                 |
+| properties | short flag | value              | description                            |
+|------------|:----------:|:------------------:|:--------------------------------------:|
+| --state    | -s         | float              | automatically float window             |
+| --state    | -s         | tile               | force-tile window regardless of AXRole |
+| --state    | -s         | native-fullscreen  | automatically enter native-fullscreen  |
+| --desktop  | -d         | index              | send window to desktop                 |
 
 ##### sample rules
 

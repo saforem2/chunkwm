@@ -74,6 +74,11 @@ ApplyWindowRuleState(macos_window *Window, window_rule *Rule)
             AXLibDestroySpace(Space);
         }
     }
+    else if(StringEquals(Rule->State, "native-fullscreen"))
+    {
+        AXLibSetWindowFullscreen(Window->Ref, true);
+        AXLibAddFlags(Window, Rule_Desktop_Changed);
+    }
     else
     {
         fprintf(stderr, "chunkwm-tiling: window rule - invalid state '%s', ignored..\n", Rule->State);
