@@ -12,6 +12,7 @@
 #include "../../common/misc/assert.h"
 #include "../../common/misc/debug.h"
 
+#include <CoreFoundation/CFString.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -638,12 +639,14 @@ ParseRuleCommand(const char *Message, window_rule *Rule)
 
     int Option;
     bool Success = true;
-    const char *Short = "o:n:e:s:d:";
+    const char *Short = "o:n:r:R:e:s:d:";
 
     struct option Long[] =
     {
         { "owner", required_argument, NULL, 'o' },
         { "name", required_argument, NULL, 'n' },
+        { "role", required_argument, NULL, 'r' },
+        { "subrole", required_argument, NULL, 'R' },
         { "except", required_argument, NULL, 'e' },
         { "state", required_argument, NULL, 's' },
         { "desktop", required_argument, NULL, 'd' },
@@ -665,6 +668,16 @@ ParseRuleCommand(const char *Message, window_rule *Rule)
             case 'n':
             {
                 Rule->Name = strdup(optarg);
+                HasFilter = true;
+            } break;
+            case 'r':
+            {
+                Rule->Role = CFStringCreateWithCString(NULL, optarg, kCFStringEncodingMacRoman);
+                HasFilter = true;
+            } break;
+            case 'R':
+            {
+                Rule->Subrole = CFStringCreateWithCString(NULL, optarg, kCFStringEncodingMacRoman);
                 HasFilter = true;
             } break;
             case 'e':

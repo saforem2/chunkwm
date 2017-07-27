@@ -1,6 +1,7 @@
 #ifndef PLUGIN_RULE_H
 #define PLUGIN_RULE_H
 
+#include <CoreFoundation/CFString.h>
 #include <stdint.h>
 
 enum window_rule_flags
@@ -12,6 +13,8 @@ struct window_rule
 {
     char *Owner;
     char *Name;
+    CFStringRef Role;
+    CFStringRef Subrole;
     char *Except;
     char *State;
     char *Desktop;

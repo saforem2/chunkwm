@@ -325,11 +325,13 @@
 
 #### window rules
 
-| filter   | short flag | type      | description                        |
-|----------|:----------:|:---------:|:----------------------------------:|
-| --owner  | -o         | POSIX ERE | application name matches pattern   |
-| --name   | -n         | POSIX ERE | window name matches pattern        |
-| --except | -e         | POSIX ERE | window name does not match pattern |
+| filter    | short flag | type      | description                        |
+|-----------|:----------:|:---------:|:----------------------------------:|
+| --owner   | -o         | POSIX ERE | application name matches pattern   |
+| --name    | -n         | POSIX ERE | window name matches pattern        |
+| --role    | -r         | FIXED CMP | window mainrole equals role        |
+| --subrole | -R         | FIXED CMP | window subrole equals role         |
+| --except  | -e         | POSIX ERE | window name does not match pattern |
 
 | properties | short flag | value | description                            |
 |------------|:----------:|:-----:|:--------------------------------------:|
@@ -339,7 +341,7 @@
 
 ##### sample rules
 
-    chunkc tiling::rule --owner \"System Preferences\" --state tile
+    chunkc tiling::rule --owner \"System Preferences\" --role AXSystemDialog --state tile
     chunkc tiling::rule --owner Finder --name Copy --state float
     chunkc tiling::rule --owner Spotify --desktop 5
 

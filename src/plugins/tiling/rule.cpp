@@ -107,6 +107,18 @@ ApplyWindowRule(macos_window *Window, window_rule *Rule)
         if(!Match) return;
     }
 
+    if(Rule->Role && Window->Mainrole)
+    {
+        Match &= CFEqual(Rule->Role, Window->Mainrole);
+        if(!Match) return;
+    }
+
+    if(Rule->Subrole && Window->Subrole)
+    {
+        Match &= CFEqual(Rule->Subrole, Window->Subrole);
+        if(!Match) return;
+    }
+
     if(Rule->Except && Window->Name)
     {
         Match &= !RegexMatchPattern(&Regex, Window->Name, Rule->Except);
@@ -153,11 +165,12 @@ internal void
 FreeWindowRule(window_rule *Rule)
 {
     ASSERT(Rule);
-
-    if(Rule->Owner)  free(Rule->Owner);
-    if(Rule->Name)   free(Rule->Name);
-    if(Rule->Except) free(Rule->Except);
-    if(Rule->State)  free(Rule->State);
+    if(Rule->Owner)     free(Rule->Owner);
+    if(Rule->Name)      free(Rule->Name);
+    if(Rule->Role)      CFRelease(Rule->Role);
+    if(Rule->Subrole)   CFRelease(Rule->Subrole);
+    if(Rule->Except)    free(Rule->Except);
+    if(Rule->State)     free(Rule->State);
     free(Rule);
 }
 
