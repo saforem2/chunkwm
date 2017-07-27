@@ -1190,9 +1190,11 @@ internal void
 WindowFocusedHandler(uint32_t WindowId)
 {
     uint32_t FocusedWindowId = CVarUnsignedValue(CVAR_FOCUSED_WINDOW);
+    uint32_t InsertionPointId = CVarUnsignedValue(CVAR_BSP_INSERTION_POINT);
     UpdateCVar(CVAR_FOCUSED_WINDOW, WindowId);
     macos_window *Window = GetWindowByID(WindowId);
-    if(Window && IsWindowFocusable(Window) && FocusedWindowId != WindowId)
+    if((Window && IsWindowFocusable(Window)) &&
+       (FocusedWindowId != WindowId || InsertionPointId != WindowId))
     {
         CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromWindow(Window->Id);
         if(!DisplayRef) DisplayRef = AXLibGetDisplayIdentifierFromWindowRect(Window->Position, Window->Size);
@@ -1246,41 +1248,7 @@ ApplicationActivatedHandler(void *Data)
     {
         uint32_t WindowId = AXLibGetWindowID(WindowRef);
         CFRelease(WindowRef);
-
-        macos_space *Space;
-        bool Success = AXLibActiveSpace(&Space);
-        ASSERT(Success);
-
-        CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromSpace(Space->Id);
-        ASSERT(DisplayRef);
-
-        bool Found = false;
-        macos_space *WindowSpace, **List, **Spaces;
-        List = Spaces = AXLibSpacesForWindow(WindowId);
-        while((WindowSpace = *List++))
-        {
-            if(!Found && Space->Id != WindowSpace->Id)
-            {
-                CFStringRef WindowDisplayRef = AXLibGetDisplayIdentifierFromSpace(WindowSpace->Id);
-                ASSERT(WindowDisplayRef);
-                Found = CFEqual(DisplayRef, WindowDisplayRef);
-                CFRelease(WindowDisplayRef);
-            }
-            AXLibDestroySpace(WindowSpace);
-        }
-        free(Spaces);
-        AXLibDestroySpace(Space);
-        CFRelease(DisplayRef);
-
-        /* NOTE(koekeishiya): We do not actually want this to happen if this application is
-         * on a different space on the same monitor. In this case we need to defer the call
-         * to the end of the 'SpaceAndDisplayChangedHandler', because we receive the
-         * 'application_activated' event before the 'space_changed' event when using CMD+TAB.
-         * This is an issue because of workarounds implemented for:
-         *      https://github.com/koekeishiya/chunkwm/issues/169
-         *      https://github.com/koekeishiya/chunkwm/issues/160
-        */
-        if(!Found) WindowFocusedHandler(WindowId);
+        WindowFocusedHandler(WindowId);
     }
 }
 
