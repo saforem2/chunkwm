@@ -1259,7 +1259,7 @@ ApplicationActivatedHandler(void *Data)
         List = Spaces = AXLibSpacesForWindow(WindowId);
         while((WindowSpace = *List++))
         {
-            if(!Found)
+            if(!Found && Space->Id != WindowSpace->Id)
             {
                 CFStringRef WindowDisplayRef = AXLibGetDisplayIdentifierFromSpace(WindowSpace->Id);
                 ASSERT(WindowDisplayRef);
