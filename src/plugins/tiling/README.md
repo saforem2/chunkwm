@@ -341,7 +341,7 @@
 
 ##### sample rules
 
-    chunkc tiling::rule --owner \"System Preferences\" --role AXWindow --state tile
+    chunkc tiling::rule --owner \"System Preferences\" --subrole AXStandardWindow --state tile
     chunkc tiling::rule --owner Finder --name Copy --state float
     chunkc tiling::rule --owner Spotify --desktop 5
 
