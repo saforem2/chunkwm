@@ -1581,7 +1581,7 @@ bool SendWindowToDesktop(macos_window *Window, char *Op)
     // We retain focus on this space by giving focus to the window with the highest
     // priority as reported by MacOS. If there are no windows left on the source space,
     // we still experience desync. Not exactly sure what can be done about that.
-    WindowIds = GetAllVisibleWindowsForSpace(Space);
+    WindowIds = GetAllVisibleWindowsForSpace(Space, false, true);
     for(int Index = 0;
         Index < WindowIds.size();
         ++Index)
@@ -1735,7 +1735,7 @@ void SendWindowToMonitor(char *Op)
     // We retain focus on this monitor by giving focus to the window with the highest
     // priority as reported by MacOS. If there are no windows left on the source monitor,
     // we still experience desync. Not exactly sure what can be done about that.
-    WindowIds = GetAllVisibleWindowsForSpace(Space);
+    WindowIds = GetAllVisibleWindowsForSpace(Space, false, true);
     for(int Index = 0;
         Index < WindowIds.size();
         ++Index)
@@ -1780,13 +1780,56 @@ space_free:
 out:;
 }
 
+internal bool
+FocusMonitor(unsigned MonitorId)
+{
+    bool Result = false;
+    std::vector<uint32_t> WindowIds;
+    CFStringRef MonitorRef;
+    macos_window *Window;
+    macos_space *Space;
+
+    MonitorRef = AXLibGetDisplayIdentifierFromArrangement(MonitorId);
+    if(!MonitorRef)
+    {
+        // NOTE(koekeishiya): Convert 0-indexed back to 1-index when printng error to user.
+        fprintf(stderr,
+                "invalid destination monitor specified, monitor '%d' does not exist!\n",
+                MonitorId + 1);
+        goto out;
+    }
+
+    Space = AXLibActiveSpace(MonitorRef);
+    ASSERT(Space);
+    if(Space->Type != kCGSSpaceUser)
+    {
+        goto space_free;
+    }
+
+    WindowIds = GetAllVisibleWindowsForSpace(Space, false, true);
+    if(WindowIds.empty())
+    {
+        goto space_free;
+    }
+
+    Window = GetWindowByID(WindowIds[0]);
+    AXLibSetFocusedWindow(Window->Ref);
+    AXLibSetFocusedApplication(Window->Owner->PSN);
+    Result = true;
+
+space_free:
+    AXLibDestroySpace(Space);
+    CFRelease(MonitorRef);
+
+out:
+    return Result;
+}
+
 void FocusMonitor(char *Op)
 {
     bool Success;
-    macos_window *Window;
-    std::vector<uint32_t> WindowIds;
-    CFStringRef DestinationMonitorRef;
-    macos_space *Space, *DestinationSpace;
+    int Operation;
+    macos_space *Space;
     unsigned SourceMonitor, DestinationMonitor;
 
     Success = AXLibActiveSpace(&Space);
@@ -1798,15 +1841,18 @@ void FocusMonitor(char *Op)
     if(StringEquals(Op, "prev"))
     {
         DestinationMonitor = SourceMonitor - 1;
+        Operation = -1;
     }
     else if(StringEquals(Op, "next"))
     {
         DestinationMonitor = SourceMonitor + 1;
+        Operation = 1;
     }
     else if(sscanf(Op, "%d", &DestinationMonitor) == 1)
     {
         // NOTE(koekeishiya): Convert 1-indexed back to 0-index expected by the system.
         --DestinationMonitor;
+        Operation = 0;
     }
     else
     {
@@ -1822,36 +1868,39 @@ void FocusMonitor(char *Op)
         goto space_free;
     }
 
-    DestinationMonitorRef = AXLibGetDisplayIdentifierFromArrangement(DestinationMonitor);
-    if(!DestinationMonitorRef)
+    switch(Operation)
     {
-        // NOTE(koekeishiya): Convert 0-indexed back to 1-index when printng error to user.
-        fprintf(stderr,
-                "invalid destination monitor specified, monitor '%d' does not exist!\n",
-                DestinationMonitor + 1);
-        goto space_free;
+        case -1:
+        {
+            if(!FocusMonitor(DestinationMonitor))
+            {
+                char *FocusCycleMode = CVarStringValue(CVAR_WINDOW_FOCUS_CYCLE);
+                ASSERT(FocusCycleMode);
+                if(StringEquals(FocusCycleMode, Window_Focus_Cycle_All))
+                {
+                    DestinationMonitor = AXLibDisplayCount() - 1;
+                    FocusMonitor(DestinationMonitor);
+                }
+            }
+        } break;
+        case 0:
+        {
+            FocusMonitor(DestinationMonitor);
+        } break;
+        case 1:
+        {
+            if(!FocusMonitor(DestinationMonitor))
+            {
+                char *FocusCycleMode = CVarStringValue(CVAR_WINDOW_FOCUS_CYCLE);
+                ASSERT(FocusCycleMode);
+                if(StringEquals(FocusCycleMode, Window_Focus_Cycle_All))
+                {
+                    DestinationMonitor = 0;
+                    FocusMonitor(DestinationMonitor);
+                }
+            }
+        } break;
     }
-
-    DestinationSpace = AXLibActiveSpace(DestinationMonitorRef);
-    ASSERT(DestinationSpace);
-    if(DestinationSpace->Type != kCGSSpaceUser)
-    {
-        goto dest_space_free;
-    }
-
-    WindowIds = GetAllVisibleWindowsForSpace(DestinationSpace);
-    if(WindowIds.empty())
-    {
-        goto dest_space_free;
-    }
-
-    Window = GetWindowByID(WindowIds[0]);
-    AXLibSetFocusedWindow(Window->Ref);
-    AXLibSetFocusedApplication(Window->Owner->PSN);
-
-dest_space_free:
-    AXLibDestroySpace(DestinationSpace);
-    CFRelease(DestinationMonitorRef);
 
 space_free:
     AXLibDestroySpace(Space);
