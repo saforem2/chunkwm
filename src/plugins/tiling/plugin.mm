@@ -1190,11 +1190,9 @@ internal void
 WindowFocusedHandler(uint32_t WindowId)
 {
     uint32_t FocusedWindowId = CVarUnsignedValue(CVAR_FOCUSED_WINDOW);
-    uint32_t InsertionPointId = CVarUnsignedValue(CVAR_BSP_INSERTION_POINT);
     UpdateCVar(CVAR_FOCUSED_WINDOW, WindowId);
     macos_window *Window = GetWindowByID(WindowId);
-    if((Window && IsWindowFocusable(Window)) &&
-       (FocusedWindowId != WindowId || InsertionPointId != WindowId))
+    if(Window && IsWindowFocusable(Window))
     {
         CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromWindow(Window->Id);
         if(!DisplayRef) DisplayRef = AXLibGetDisplayIdentifierFromWindowRect(Window->Position, Window->Size);
@@ -1228,7 +1226,8 @@ WindowFocusedHandler(uint32_t WindowId)
             UpdateCVar(CVAR_BSP_INSERTION_POINT, Window->Id);
         }
 
-        if(CVarIntegerValue(CVAR_MOUSE_FOLLOWS_FOCUS))
+        if((FocusedWindowId != WindowId) &&
+           (CVarIntegerValue(CVAR_MOUSE_FOLLOWS_FOCUS)))
         {
             CenterMouseInWindow(Window);
         }
