@@ -1247,7 +1247,32 @@ ApplicationActivatedHandler(void *Data)
         uint32_t WindowId = AXLibGetWindowID(WindowRef);
         CFRelease(WindowRef);
 
-        /* TODO(koekeishiya): We do not actually want this to happen if this application is
+        macos_space *Space;
+        bool Success = AXLibActiveSpace(&Space);
+        ASSERT(Success);
+
+        CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromSpace(Space->Id);
+        ASSERT(DisplayRef);
+
+        bool Found = false;
+        macos_space *WindowSpace, **List, **Spaces;
+        List = Spaces = AXLibSpacesForWindow(WindowId);
+        while((WindowSpace = *List++))
+        {
+            if(!Found)
+            {
+                CFStringRef WindowDisplayRef = AXLibGetDisplayIdentifierFromSpace(WindowSpace->Id);
+                ASSERT(WindowDisplayRef);
+                Found = CFEqual(DisplayRef, WindowDisplayRef);
+                CFRelease(WindowDisplayRef);
+            }
+            AXLibDestroySpace(WindowSpace);
+        }
+        free(Spaces);
+        AXLibDestroySpace(Space);
+        CFRelease(DisplayRef);
+
+        /* NOTE(koekeishiya): We do not actually want this to happen if this application is
          * on a different space on the same monitor. In this case we need to defer the call
          * to the end of the 'SpaceAndDisplayChangedHandler', because we receive the
          * 'application_activated' event before the 'space_changed' event when using CMD+TAB.
@@ -1255,7 +1280,7 @@ ApplicationActivatedHandler(void *Data)
          *      https://github.com/koekeishiya/chunkwm/issues/169
          *      https://github.com/koekeishiya/chunkwm/issues/160
         */
-        WindowFocusedHandler(WindowId);
+        if(!Found) WindowFocusedHandler(WindowId);
     }
 }
 
