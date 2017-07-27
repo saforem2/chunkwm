@@ -2,8 +2,8 @@
 
 | NAME            | RELEASE | VERSION |
 |-----------------|:-------:|:-------:|
-| chunkwm-core    | Alpha   | 0.2.27  |
-| chunkwm-tiling  | Alpha   | 0.2.19  |
+| chunkwm-core    | Alpha   | 0.2.28  |
+| chunkwm-tiling  | Alpha   | 0.2.20  |
 | chunkwm-border  | Alpha   | 0.2.7   |
 | chunkwm-ffm     | Alpha   | 0.2.1   |
 
