@@ -19,7 +19,7 @@ It represents windows as the leaves of a binary tree, and supports binary space 
 
 A third party program (e.g: [*khd*](https://github.com/koekeishiya/khd)) is needed to map keyboard events to *chunkwm* actions.
 
-Development is happening on and primarily for macOS Sierra (10.12.3).
+Development is happening on and primarily for macOS Sierra (10.12.6).
 
 Older versions may or may not be compatible and will not be officially supported.
 
