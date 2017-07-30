@@ -20,15 +20,9 @@ struct cgs_window
     CGSConnectionID connection;
     CGSWindowID id;
     CGLContextObj context;
-    CGWindowLevel level;
     CGSSurfaceID surface;
+    CGWindowLevel level;
     int x, y, width, height;
-};
-
-struct cgl_context
-{
-    CGSWindowID window_id;
-    CGLContextObj context;
 };
 
 int cgs_window_init(struct cgs_window *window);

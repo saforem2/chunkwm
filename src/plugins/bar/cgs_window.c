@@ -1,8 +1,11 @@
 #include "cgs_window.h"
 
-#define kCGSBufferedBackingType 2
-#define kCGDesktopWindowLevelKey 2
-#define kCGMaximumWindowLevelKey 14
+enum CGSWindowBackingType
+{
+	kCGSBackingNonRetained = 0,
+	kCGSBackingRetained = 1,
+	kCGSBackingBuffered = 2
+};
 
 enum CGSWindowOrderingMode
 {
@@ -124,7 +127,7 @@ int cgs_window_init(struct cgs_window *window)
         goto err;
     }
 
-    CGSNewWindow(window->connection, kCGSBufferedBackingType, window->x, window->y, region, &window->id);
+    CGSNewWindow(window->connection, kCGSBackingBuffered, window->x, window->y, region, &window->id);
     if(!window->id) {
         goto err_region;
     }
