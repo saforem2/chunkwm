@@ -234,6 +234,9 @@ void *BarMainThreadProcedure(void*)
         }
     }
 
+    glDeleteVertexArrays(1, &VAO);
+    glDeleteBuffers(1, &VBO);
+
     CGLSetCurrentContext(NULL);
     CGLDestroyContext(GlContext);
     return NULL;
