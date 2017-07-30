@@ -50,18 +50,13 @@ const char *FragmentShaderCode =
 
 void *BarMainThreadProcedure(void*)
 {
-    CGLSetCurrentContext(Window.context);
+    struct shader ShaderProgram;
+
+    CGLError CGlErr;
+    GLenum GlErr;
 
     GLint CGLMajor, CGLMinor;
-    CGLGetVersion(&CGLMajor, &CGLMinor);
-    printf("CGL Version: %d.%d\nOpenGL Version: %s\n",
-           CGLMajor, CGLMinor, glGetString(GL_VERSION));
-
-    // NOTE(koekeishiya): wireframe mode
-    // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
-    struct shader ShaderProgram;
-    shader_init_buffer(&ShaderProgram, VertexShaderCode, FragmentShaderCode);
+    GLuint VAO, VBO;
 
     float Vertices[] = {
         -0.5f, -0.5f, 0.0f, 0.2f, 1.0f, 0.2f,
@@ -69,7 +64,17 @@ void *BarMainThreadProcedure(void*)
          0.0f,  0.5f, 0.0f, 0.2f, 0.2f, 1.0f
     };
 
-    GLuint VAO, VBO;
+    cgs_window_make_current(&Window);
+
+    CGLGetVersion(&CGLMajor, &CGLMinor);
+    printf("CGL Version: %d.%d\nOpenGL Version: %s\n",
+           CGLMajor, CGLMinor, glGetString(GL_VERSION));
+
+    // NOTE(koekeishiya): wireframe mode
+    // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+    shader_init_buffer(&ShaderProgram, VertexShaderCode, FragmentShaderCode);
+
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
     glBindVertexArray(VAO);
@@ -97,13 +102,13 @@ void *BarMainThreadProcedure(void*)
         glBindVertexArray(0);
         shader_disable();
 
-        CGLError CGlErr = CGLFlushDrawable(Window.context);
-        if(CGlErr != kCGLNoError) {
+        if((CGlErr = cgs_window_flush(&Window)) != kCGLNoError)
+        {
             printf("CGL Error: %d\n", CGlErr);
         }
 
-        GLenum GlErr = glGetError();
-        if(GlErr != GL_NO_ERROR) {
+        if((GlErr = glGetError()) != GL_NO_ERROR)
+        {
             printf("OpenGL Error: %d\n", GlErr);
         }
 
@@ -113,7 +118,6 @@ void *BarMainThreadProcedure(void*)
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
 
-    CGLSetCurrentContext(NULL);
     return NULL;
 }
 

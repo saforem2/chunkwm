@@ -100,6 +100,7 @@ cgs_window_context_init(struct cgs_window *window)
     return 1;
 
 err_context:
+    CGLSetCurrentContext(NULL);
     CGLDestroyContext(window->context);
 
 err_pix_fmt:
@@ -153,4 +154,14 @@ void cgs_window_destroy(struct cgs_window *window)
 {
     CGLDestroyContext(window->context);
     CGSReleaseWindow(window->connection, window->id);
+}
+
+void cgs_window_make_current(struct cgs_window *window)
+{
+    CGLSetCurrentContext(window->context);
+}
+
+CGLError cgs_window_flush(struct cgs_window *window)
+{
+    return CGLFlushDrawable(window->context);
 }

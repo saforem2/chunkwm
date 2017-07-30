@@ -28,4 +28,7 @@ struct cgs_window
 int cgs_window_init(struct cgs_window *window);
 void cgs_window_destroy(struct cgs_window *window);
 
+void cgs_window_make_current(struct cgs_window *window);
+CGLError cgs_window_flush(struct cgs_window *window);
+
 #endif
