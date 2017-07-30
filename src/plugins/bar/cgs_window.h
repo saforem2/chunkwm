@@ -25,7 +25,7 @@ struct cgs_window
     int x, y, width, height;
 };
 
-int cgs_window_init(struct cgs_window *window);
+int cgs_window_init(struct cgs_window *window, int x, int y, int width, int height, int level);
 void cgs_window_destroy(struct cgs_window *window);
 
 void cgs_window_make_current(struct cgs_window *window);

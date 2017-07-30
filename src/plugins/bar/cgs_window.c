@@ -110,7 +110,7 @@ err:
     return 0;
 }
 
-int cgs_window_init(struct cgs_window *window)
+int cgs_window_init(struct cgs_window *window, int x, int y, int width, int height, int level)
 {
     CGContextRef context;
     CGSRegionRef region;
@@ -121,6 +121,12 @@ int cgs_window_init(struct cgs_window *window)
     if(!window->connection) {
         goto err;
     }
+
+    window->x = x;
+    window->y = y;
+    window->width = width;
+    window->height = height;
+    window->level = level;
 
     rect = CGRectMake(0, 0, window->width, window->height);
     CGSNewRegionWithRect(&rect, &region);
