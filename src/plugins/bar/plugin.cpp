@@ -1,9 +1,7 @@
 #include <stdio.h>
-#include <stdint.h>
 #include <stdlib.h>
-#include <string.h>
+#include <stdint.h>
 
-#include <ApplicationServices/ApplicationServices.h>
 #include <Carbon/Carbon.h>
 #include <OpenGL/CGLTypes.h>
 #include <OpenGL/CGLCurrent.h>
@@ -13,6 +11,9 @@
 
 #include "../../api/plugin_api.h"
 #include "../../common/accessibility/application.h"
+
+#include "shader.h"
+#include "shader.c"
 
 typedef int CGSConnectionID;
 typedef uint32_t CGSWindowID;
@@ -134,17 +135,21 @@ bool CreateCGLContext(int Width, int Height)
 const char *VertexShaderCode =
     "#version 330 core\n"
     "layout (location = 0) in vec3 aPos;\n"
+    "layout (location = 1) in vec3 aColor;\n"
+    "out vec3 oColor;\n"
     "void main()\n"
     "{\n"
     "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
+    "   oColor = aColor;\n"
     "}\n\0";
 
 const char *FragmentShaderCode =
     "#version 330 core\n"
     "out vec4 FragColor;\n"
+    "in vec3 oColor;\n"
     "void main()\n"
     "{\n"
-    "   FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
+    "   FragColor = vec4(oColor, 1.0f);\n"
     "}\n\0";
 
 void *BarMainThreadProcedure(void*)
@@ -159,48 +164,13 @@ void *BarMainThreadProcedure(void*)
     // NOTE(koekeishiya): wireframe mode
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-    GLint Success;
-    char InfoLog[512];
-
-    int VertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(VertexShader, 1, &VertexShaderCode, NULL);
-    glCompileShader(VertexShader);
-    glGetShaderiv(VertexShader, GL_COMPILE_STATUS, &Success);
-    if(Success == GL_FALSE)
-    {
-        glGetShaderInfoLog(VertexShader, 512, NULL, InfoLog);
-        fprintf(stderr, "ERROR::SHADER::VERTEX::COMPILATION_FAILED: %s\n", InfoLog);
-    }
-
-    int FragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(FragmentShader, 1, &FragmentShaderCode, NULL);
-    glCompileShader(FragmentShader);
-    glGetShaderiv(FragmentShader, GL_COMPILE_STATUS, &Success);
-    if(Success == GL_FALSE)
-    {
-        glGetShaderInfoLog(FragmentShader, 512, NULL, InfoLog);
-        fprintf(stderr, "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED: %s\n", InfoLog);
-    }
-
-    int ShaderProgram = glCreateProgram();
-    glAttachShader(ShaderProgram, VertexShader);
-    glAttachShader(ShaderProgram, FragmentShader);
-    glLinkProgram(ShaderProgram);
-    glValidateProgram(ShaderProgram);
-    glGetProgramiv(ShaderProgram, GL_LINK_STATUS, &Success);
-    if(Success == GL_FALSE)
-    {
-        glGetProgramInfoLog(ShaderProgram, 512, NULL, InfoLog);
-        fprintf(stderr, "ERROR::SHADER::PROGRAM::LINKING__FAILED: %s\n", InfoLog);
-    }
-
-    glDeleteShader(VertexShader);
-    glDeleteShader(FragmentShader);
+    struct shader ShaderProgram;
+    shader_init_buffer(&ShaderProgram, VertexShaderCode, FragmentShaderCode);
 
     float Vertices[] = {
-        -0.5f, -0.5f, 0.0f,
-         0.5f, -0.5f, 0.0f,
-         0.0f,  0.5f, 0.0f
+        -0.5f, -0.5f, 0.0f, 0.2f, 1.0f, 0.2f,
+         0.5f, -0.5f, 0.0f, 1.0f, 0.5f, 0.2f,
+         0.0f,  0.5f, 0.0f, 0.2f, 0.2f, 1.0f
     };
 
     GLuint VAO, VBO;
@@ -211,8 +181,11 @@ void *BarMainThreadProcedure(void*)
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(Vertices), Vertices, GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *) 0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *) 0);
     glEnableVertexAttribArray(0);
+
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *) (3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
 
     glBindVertexArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -222,10 +195,11 @@ void *BarMainThreadProcedure(void*)
         glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        glUseProgram(ShaderProgram);
+        shader_enable(&ShaderProgram);
         glBindVertexArray(VAO);
         glDrawArrays(GL_TRIANGLES, 0, 3);
         glBindVertexArray(0);
+        shader_disable();
 
         CGLError CGlErr = CGLFlushDrawable(GlContext);
         if(CGlErr != kCGLNoError) {
@@ -236,6 +210,8 @@ void *BarMainThreadProcedure(void*)
         if(GlErr != GL_NO_ERROR) {
             printf("OpenGL Error: %d\n", GlErr);
         }
+
+        sleep(1);
     }
 
     glDeleteVertexArrays(1, &VAO);
@@ -254,7 +230,7 @@ PLUGIN_MAIN_FUNC(PluginMain)
 PLUGIN_BOOL_FUNC(PluginInit)
 {
     API = ChunkwmAPI;
-    if(!CreateWindow(100, 100, 500, 500))
+    if(!CreateWindow(0, 22, 500, 500))
     {
         goto out;
     }
