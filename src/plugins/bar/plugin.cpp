@@ -90,6 +90,11 @@ bool CreateCGLContext(int Width, int Height)
     CGLPixelFormatAttribute Attributes[] = {
         kCGLPFADoubleBuffer,
         kCGLPFAAccelerated,
+        kCGLPFAOpenGLProfile,
+        // NOTE(koekeishiya: GL 2.1
+        (CGLPixelFormatAttribute) kCGLOGLPVersion_Legacy,
+        // NOTE(koekeishiya: GL 4.1
+        // (CGLPixelFormatAttribute) kCGLOGLPVersion_3_2_Core,
         (CGLPixelFormatAttribute)0
     };
 
@@ -100,7 +105,7 @@ bool CreateCGLContext(int Width, int Height)
     if(!PixelFormat) return false;
 
     CGLCreateContext(PixelFormat, NULL, &GlContext);
-    assert(GlContext);
+    if(!GlContext) return false;
     CGLDestroyPixelFormat(PixelFormat);
     CGLSetCurrentContext(GlContext);
 
@@ -132,10 +137,15 @@ void *BarMainThreadProcedure(void*)
 {
     CGLSetCurrentContext(GlContext);
 
+    GLint CGLMajor, CGLMinor;
+    CGLGetVersion(&CGLMajor, &CGLMinor);
+    printf("CGL Version: %d.%d\nOpenGL Version: %s\n",
+           CGLMajor, CGLMinor, glGetString(GL_VERSION));
+
     while(!Quit)
     {
         glClearColor(0, 1, 0, 0.5);
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
         glMatrixMode(GL_MODELVIEW);
@@ -152,9 +162,15 @@ void *BarMainThreadProcedure(void*)
         glVertex2f(0.25, 0.75);
         glEnd();
 
-        CGLError GlError = CGLFlushDrawable(GlContext);
-        assert(GlError == kCGLNoError);
-        assert(glGetError() == GL_NO_ERROR);
+        CGLError CGlErr = CGLFlushDrawable(GlContext);
+        if(CGlErr != kCGLNoError) {
+            printf("CGL Error: %d\n", CGlErr);
+        }
+
+        GLenum GlErr = glGetError();
+        if(GlErr != GL_NO_ERROR) {
+            printf("OpenGL Error: %d\n", GlErr);
+        }
     }
 
     CGLSetCurrentContext(NULL);
