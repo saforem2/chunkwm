@@ -16,8 +16,9 @@
 
 typedef int CGSConnectionID;
 typedef uint32_t CGSWindowID;
+typedef int CGWindowLevel;
 typedef int CGSSurfaceID;
-typedef void *CGSRegion;
+typedef CFTypeRef CGSRegionRef;
 typedef int CGSValue;
 
 enum CGSWindowOrderingMode
@@ -30,18 +31,23 @@ enum CGSWindowOrderingMode
 extern "C"
 {
     CGSConnectionID CGSMainConnectionID(void);
-    CGError CGSNewWindow(CGSConnectionID cid, int, float, float, const CGSRegion, CGSWindowID *);
+    CGError CGSNewWindow(CGSConnectionID cid, int, float, float, const CGSRegionRef, CGSWindowID *);
     CGError CGSReleaseWindow(CGSConnectionID cid, CGWindowID wid);
-    CGError CGSNewRegionWithRect(const CGRect * rect, CGSRegion *newRegion);
+    CGError CGSNewRegionWithRect(const CGRect * rect, CGSRegionRef *newRegion);
     OSStatus CGSOrderWindow(CGSConnectionID cid, CGSWindowID wid, CGSWindowOrderingMode place, CGSWindowID relativeToWindow /* nullable */);
+    CGError CGSSetWindowOpacity(CGSConnectionID cid, CGSWindowID wid, bool isOpaque);
+    CGError CGSSetWindowLevel(CGSConnectionID cid, CGSWindowID wid, CGWindowLevel level);
     CGError CGSAddSurface(CGSConnectionID cid, CGSWindowID wid, CGSSurfaceID *sid);
     CGError CGSSetSurfaceBounds(CGSConnectionID cid, CGSWindowID wid, CGSSurfaceID sid, CGRect rect);
     CGError CGSOrderSurface(CGSConnectionID cid, CGSWindowID wid, CGSSurfaceID sid, int a, int b);
     CGLError CGLSetSurface(CGLContextObj gl, CGSConnectionID cid, CGSWindowID wid, CGSSurfaceID sid);
+    CGContextRef CGWindowContextCreate(CGSConnectionID cid, CGSWindowID wid, CFDictionaryRef options);
 }
 
 #define internal static
 #define kCGSBufferedBackingType 2
+#define kCGDesktopWindowLevelKey 2
+#define kCGMaximumWindowLevelKey 14
 
 internal const char *PluginName = "bar";
 internal const char *PluginVersion = "0.0.1";
@@ -60,12 +66,17 @@ bool CreateWindow(int X, int Y, int Width, int Height)
     if(!Connection) return false;
     assert(Connection);
 
-    CGSRegion Region;
+    CGSRegionRef Region;
     CGRect Rect = CGRectMake(0,0, Width, Height);
     CGSNewRegionWithRect(&Rect, &Region);
     if(!Region) return false;
     CGSNewWindow(Connection, kCGSBufferedBackingType, X, Y, Region, &Window);
     if(!Window) return false;
+    CGSSetWindowOpacity(Connection, Window, 0);
+    CGContextRef Context = CGWindowContextCreate(Connection, Window, 0);
+    CGContextClearRect(Context, Rect);
+    CGContextRelease(Context);
+    CGSSetWindowLevel(Connection, Window, CGWindowLevelForKey((CGWindowLevelKey)kCGMaximumWindowLevelKey));
     OSStatus Error = CGSOrderWindow(Connection, Window, kCGSOrderAbove, 0);
     if(Error != kCGErrorSuccess) return false;
     return true;
@@ -95,6 +106,8 @@ bool CreateCGLContext(int Width, int Height)
 
     GLint VSyncEnabled = 1;
     CGLSetParameter(GlContext, kCGLCPSwapInterval, &VSyncEnabled);
+    GLint SurfaceOpacity = 0;
+    CGLSetParameter(GlContext, kCGLCPSurfaceOpacity, &SurfaceOpacity);
 
     CGSSurfaceID Surface;
     CGError Error = CGSAddSurface(Connection, Window, &Surface);
@@ -121,7 +134,7 @@ void *BarMainThreadProcedure(void*)
 
     while(!Quit)
     {
-        glClearColor(0,1,0,1);
+        glClearColor(0, 1, 0, 0.5);
         glClear(GL_COLOR_BUFFER_BIT);
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
