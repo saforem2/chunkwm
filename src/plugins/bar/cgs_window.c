@@ -62,8 +62,6 @@ cgs_window_context_init(struct cgs_window *window)
         goto err_pix_fmt;
     }
 
-    CGLSetCurrentContext(window->context);
-
     v_sync_enabled = 1;
     CGLSetParameter(window->context, kCGLCPSwapInterval, &v_sync_enabled);
 
@@ -96,11 +94,9 @@ cgs_window_context_init(struct cgs_window *window)
     }
 
     CGLDestroyPixelFormat(pixel_format);
-    CGLSetCurrentContext(NULL);
     return 1;
 
 err_context:
-    CGLSetCurrentContext(NULL);
     CGLDestroyContext(window->context);
 
 err_pix_fmt:
