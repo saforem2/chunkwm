@@ -8,7 +8,7 @@
 #include <OpenGL/CGLTypes.h>
 #include <OpenGL/CGLCurrent.h>
 #include <OpenGL/OpenGL.h>
-#include <OpenGL/gl.h>
+#include <OpenGL/gl3.h>
 #include <pthread.h>
 
 #include "../../api/plugin_api.h"
@@ -91,10 +91,8 @@ bool CreateCGLContext(int Width, int Height)
         kCGLPFADoubleBuffer,
         kCGLPFAAccelerated,
         kCGLPFAOpenGLProfile,
-        // NOTE(koekeishiya: GL 2.1
-        (CGLPixelFormatAttribute) kCGLOGLPVersion_Legacy,
         // NOTE(koekeishiya: GL 4.1
-        // (CGLPixelFormatAttribute) kCGLOGLPVersion_3_2_Core,
+        (CGLPixelFormatAttribute) kCGLOGLPVersion_3_2_Core,
         (CGLPixelFormatAttribute)0
     };
 
@@ -133,6 +131,22 @@ bool CreateCGLContext(int Width, int Height)
     return true;
 }
 
+const char *VertexShaderCode =
+    "#version 330 core\n"
+    "layout (location = 0) in vec3 aPos;\n"
+    "void main()\n"
+    "{\n"
+    "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
+    "}\n\0";
+
+const char *FragmentShaderCode =
+    "#version 330 core\n"
+    "layout (location = 0) out vec4 FragColor;\n"
+    "void main()\n"
+    "{\n"
+    "   FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
+    "}\n\0";
+
 void *BarMainThreadProcedure(void*)
 {
     CGLSetCurrentContext(GlContext);
@@ -142,25 +156,72 @@ void *BarMainThreadProcedure(void*)
     printf("CGL Version: %d.%d\nOpenGL Version: %s\n",
            CGLMajor, CGLMinor, glGetString(GL_VERSION));
 
+    GLint Success;
+    char InfoLog[512];
+
+    int VertexShader = glCreateShader(GL_VERTEX_SHADER);
+    glShaderSource(VertexShader, 1, &VertexShaderCode, NULL);
+    glCompileShader(VertexShader);
+    glGetShaderiv(VertexShader, GL_COMPILE_STATUS, &Success);
+    if(Success == GL_FALSE)
+    {
+        glGetShaderInfoLog(VertexShader, 512, NULL, InfoLog);
+        fprintf(stderr, "ERROR::SHADER::VERTEX::COMPILATION_FAILED: %s\n", InfoLog);
+    }
+
+    int FragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(FragmentShader, 1, &FragmentShaderCode, NULL);
+    glCompileShader(FragmentShader);
+    glGetShaderiv(FragmentShader, GL_COMPILE_STATUS, &Success);
+    if(Success == GL_FALSE)
+    {
+        glGetShaderInfoLog(FragmentShader, 512, NULL, InfoLog);
+        fprintf(stderr, "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED: %s\n", InfoLog);
+    }
+
+    int ShaderProgram = glCreateProgram();
+    glAttachShader(ShaderProgram, VertexShader);
+    glAttachShader(ShaderProgram, FragmentShader);
+    glLinkProgram(ShaderProgram);
+    glValidateProgram(ShaderProgram);
+    glGetProgramiv(ShaderProgram, GL_LINK_STATUS, &Success);
+    if(Success == GL_FALSE)
+    {
+        glGetProgramInfoLog(ShaderProgram, 512, NULL, InfoLog);
+        fprintf(stderr, "ERROR::SHADER::PROGRAM::LINKING__FAILED: %s\n", InfoLog);
+    }
+
+    glDeleteShader(VertexShader);
+    glDeleteShader(FragmentShader);
+
+    float Vertices[] = {
+        -0.5f, -0.5f, 0.0f,
+         0.5f, -0.5f, 0.0f,
+         0.0f,  0.5f, 0.0f
+    };
+
+    GLuint VAO, VBO;
+    glGenVertexArrays(1, &VAO);
+    glGenBuffers(1, &VBO);
+    glBindVertexArray(VAO);
+
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(Vertices), Vertices, GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *) 0);
+    glEnableVertexAttribArray(0);
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+
     while(!Quit)
     {
-        glClearColor(0, 1, 0, 0.5);
+        glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glMatrixMode(GL_PROJECTION);
-        glLoadIdentity();
-        glMatrixMode(GL_MODELVIEW);
-        glLoadIdentity();
-        static float a = 0;
-        glRotatef(a * 1000, 0, 0, 1);
-        a= a + .001;
-        glBegin(GL_QUADS);
-        if (a>1.5) a=0;
-        glColor4f(0,a,1,1);
-        glVertex2f(0.25, 0.25);
-        glVertex2f(0.75, 0.25);
-        glVertex2f(0.75, 0.75);
-        glVertex2f(0.25, 0.75);
-        glEnd();
+
+        glUseProgram(ShaderProgram);
+        glBindVertexArray(VAO);
+        glDrawArrays(GL_TRIANGLES, 0, 3);
 
         CGLError CGlErr = CGLFlushDrawable(GlContext);
         if(CGlErr != kCGLNoError) {
