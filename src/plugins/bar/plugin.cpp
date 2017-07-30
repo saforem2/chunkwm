@@ -12,8 +12,8 @@
 #include "../../api/plugin_api.h"
 #include "../../common/accessibility/application.h"
 
-#include "cgs_window.h"
-#include "cgs_window.c"
+#include "cgl_window.h"
+#include "cgl_window.c"
 
 #include "shader.h"
 #include "shader.c"
@@ -24,7 +24,7 @@ internal const char *PluginName = "bar";
 internal const char *PluginVersion = "0.0.1";
 internal chunkwm_api API;
 
-internal struct cgs_window Window;
+internal struct cgl_window Window;
 internal pthread_t BarThread;
 internal bool Quit;
 
@@ -64,7 +64,7 @@ void *BarMainThreadProcedure(void*)
          0.0f,  0.5f, 0.0f, 0.2f, 0.2f, 1.0f
     };
 
-    cgs_window_make_current(&Window);
+    cgl_window_make_current(&Window);
 
     CGLGetVersion(&CGLMajor, &CGLMinor);
     printf("CGL Version: %d.%d\nOpenGL Version: %s\n",
@@ -102,7 +102,7 @@ void *BarMainThreadProcedure(void*)
         glBindVertexArray(0);
         shader_disable();
 
-        if((CGlErr = cgs_window_flush(&Window)) != kCGLNoError)
+        if((CGlErr = cgl_window_flush(&Window)) != kCGLNoError)
         {
             printf("CGL Error: %d\n", CGlErr);
         }
@@ -136,7 +136,7 @@ PLUGIN_BOOL_FUNC(PluginInit)
     int height = 500;
     int level = kCGMaximumWindowLevelKey;
 
-    if(!cgs_window_init(&Window, x, y, width, height, level))
+    if(!cgl_window_init(&Window, x, y, width, height, level))
     {
         return false;
     }
@@ -149,7 +149,7 @@ PLUGIN_VOID_FUNC(PluginDeInit)
 {
     Quit = true;
     pthread_join(BarThread, NULL);
-    cgs_window_destroy(&Window);
+    cgl_window_destroy(&Window);
 }
 
 CHUNKWM_PLUGIN_VTABLE(PluginInit, PluginDeInit, PluginMain)

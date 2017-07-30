@@ -15,7 +15,7 @@ typedef int CGWindowLevel;
 typedef int CGSSurfaceID;
 typedef CFTypeRef CGSRegionRef;
 
-struct cgs_window
+struct cgl_window
 {
     CGSConnectionID connection;
     CGSWindowID id;
@@ -25,10 +25,10 @@ struct cgs_window
     int x, y, width, height;
 };
 
-int cgs_window_init(struct cgs_window *window, int x, int y, int width, int height, int level);
-void cgs_window_destroy(struct cgs_window *window);
+int cgl_window_init(struct cgl_window *window, int x, int y, int width, int height, int level);
+void cgl_window_destroy(struct cgl_window *window);
 
-void cgs_window_make_current(struct cgs_window *window);
-CGLError cgs_window_flush(struct cgs_window *window);
+void cgl_window_make_current(struct cgl_window *window);
+CGLError cgl_window_flush(struct cgl_window *window);
 
 #endif

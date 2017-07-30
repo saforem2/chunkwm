@@ -1,4 +1,4 @@
-#include "cgs_window.h"
+#include "cgl_window.h"
 
 enum CGSWindowBackingType
 {
@@ -34,7 +34,7 @@ CGContextRef CGWindowContextCreate(CGSConnectionID cid, CGSWindowID wid, CFDicti
 #endif
 
 static int
-cgs_window_context_init(struct cgs_window *window)
+cgl_window_context_init(struct cgl_window *window)
 {
     CGLPixelFormatObj pixel_format;
     GLint surface_opacity;
@@ -106,7 +106,7 @@ err:
     return 0;
 }
 
-int cgs_window_init(struct cgs_window *window, int x, int y, int width, int height, int level)
+int cgl_window_init(struct cgl_window *window, int x, int y, int width, int height, int level)
 {
     CGContextRef context;
     CGSRegionRef region;
@@ -143,7 +143,7 @@ int cgs_window_init(struct cgs_window *window, int x, int y, int width, int heig
     CGContextClearRect(context, rect);
     CGContextRelease(context);
 
-    result = cgs_window_context_init(window);
+    result = cgl_window_context_init(window);
 
 err_region:
     CFRelease(region);
@@ -152,18 +152,18 @@ err:
     return result;
 }
 
-void cgs_window_destroy(struct cgs_window *window)
+void cgl_window_destroy(struct cgl_window *window)
 {
     CGLDestroyContext(window->context);
     CGSReleaseWindow(window->connection, window->id);
 }
 
-void cgs_window_make_current(struct cgs_window *window)
+void cgl_window_make_current(struct cgl_window *window)
 {
     CGLSetCurrentContext(window->context);
 }
 
-CGLError cgs_window_flush(struct cgs_window *window)
+CGLError cgl_window_flush(struct cgl_window *window)
 {
     return CGLFlushDrawable(window->context);
 }
