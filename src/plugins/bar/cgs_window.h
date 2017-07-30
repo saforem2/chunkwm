@@ -1,5 +1,5 @@
-#ifndef CGL_CONTEXT_H
-#define CGL_CONTEXT_H
+#ifndef CGL_WINDOW_H
+#define CGL_WINDOW_H
 
 #include <Carbon/Carbon.h>
 #include <OpenGL/CGLTypes.h>
