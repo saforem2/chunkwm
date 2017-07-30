@@ -141,7 +141,7 @@ const char *VertexShaderCode =
 
 const char *FragmentShaderCode =
     "#version 330 core\n"
-    "layout (location = 0) out vec4 FragColor;\n"
+    "out vec4 FragColor;\n"
     "void main()\n"
     "{\n"
     "   FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
@@ -155,6 +155,9 @@ void *BarMainThreadProcedure(void*)
     CGLGetVersion(&CGLMajor, &CGLMinor);
     printf("CGL Version: %d.%d\nOpenGL Version: %s\n",
            CGLMajor, CGLMinor, glGetString(GL_VERSION));
+
+    // NOTE(koekeishiya): wireframe mode
+    // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     GLint Success;
     char InfoLog[512];
@@ -211,8 +214,8 @@ void *BarMainThreadProcedure(void*)
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *) 0);
     glEnableVertexAttribArray(0);
 
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     while(!Quit)
     {
@@ -222,6 +225,7 @@ void *BarMainThreadProcedure(void*)
         glUseProgram(ShaderProgram);
         glBindVertexArray(VAO);
         glDrawArrays(GL_TRIANGLES, 0, 3);
+        glBindVertexArray(0);
 
         CGLError CGlErr = CGLFlushDrawable(GlContext);
         if(CGlErr != kCGLNoError) {
