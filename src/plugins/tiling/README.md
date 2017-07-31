@@ -325,6 +325,8 @@
 
 #### window rules
 
+[POSIX-Extended regulars syntax grammar](https://www.gnu.org/software/findutils/manual/html_node/find_html/posix_002dextended-regular-expression-syntax.html)
+
 | filter    | short flag | type      | description                        |
 |-----------|:----------:|:---------:|:----------------------------------:|
 | --owner   | -o         | POSIX ERE | application name matches pattern   |
