@@ -327,6 +327,12 @@
 
 [POSIX-Extended regulars syntax grammar](https://www.gnu.org/software/findutils/manual/html_node/find_html/posix_002dextended-regular-expression-syntax.html)
 
+[Available window roles](https://developer.apple.com/documentation/applicationservices/carbon_accessibility/roles?language=objc)
+
+[Available window subroles](https://developer.apple.com/documentation/applicationservices/carbon_accessibility/subroles?language=objc)
+
+Remove the lowercase 'k' in front of the constant to get the string to specify in a rule. The string IS case sensitive.
+
 | filter    | short flag | type      | description                        |
 |-----------|:----------:|:---------:|:----------------------------------:|
 | --owner   | -o         | POSIX ERE | application name matches pattern   |
