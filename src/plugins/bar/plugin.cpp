@@ -130,13 +130,7 @@ PLUGIN_BOOL_FUNC(PluginInit)
 {
     API = ChunkwmAPI;
 
-    int x = 0;
-    int y = 22;
-    int width = 500;
-    int height = 500;
-    int level = kCGMaximumWindowLevelKey;
-
-    if(!cgl_window_init(&Window, x, y, width, height, level))
+    if(!cgl_window_init(&Window, 0, 22, 500, 500, kCGMaximumWindowLevelKey))
     {
         return false;
     }
