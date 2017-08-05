@@ -3,6 +3,10 @@
 #include <stdarg.h>
 #include <getopt.h>
 
+#include <execinfo.h>
+#include <signal.h>
+#include <unistd.h>
+
 #include "dispatch/carbon.h"
 #include "dispatch/workspace.h"
 #include "dispatch/display.h"
@@ -63,6 +67,18 @@ Warn(const char *Format, ...)
     va_start(Args, Format);
     vfprintf(stderr, Format, Args);
     va_end(Args);
+}
+
+void SignalHandler(int Signal)
+{
+  void *Trace[10];
+  size_t Size;
+
+  Size = backtrace(Trace, 10);
+
+  fprintf(stderr, "chunkwm: recv signal %d, printing stack trace\n", Signal);
+  backtrace_symbols_fd(Trace, Size, STDERR_FILENO);
+  exit(1);
 }
 
 inline AXUIElementRef
@@ -154,6 +170,8 @@ ParseArguments(int Count, char **Args)
 
 int main(int Count, char **Args)
 {
+    signal(SIGSEGV, SignalHandler);
+
     if(ParseArguments(Count, Args))
     {
         return EXIT_SUCCESS;
