@@ -325,7 +325,18 @@
 
 #### window rules
 
-[POSIX-Extended regulars syntax grammar](https://www.gnu.org/software/findutils/manual/html_node/find_html/posix_002dextended-regular-expression-syntax.html)
+[POSIX-Extended regular syntax grammar](https://www.gnu.org/software/findutils/manual/html_node/find_html/posix_002dextended-regular-expression-syntax.html)
+
+[Available window roles](https://developer.apple.com/documentation/applicationservices/carbon_accessibility/roles?language=objc)
+
+[Available window subroles](https://developer.apple.com/documentation/applicationservices/carbon_accessibility/subroles?language=objc)
+
+Remove the lowercase 'k' in front of the role constant to get the string to specify in a rule. The string IS case sensitive.
+
+See the following sections for how to retrieve information about an open window:
+
+ - [query list of windows on focused desktop](https://github.com/koekeishiya/chunkwm/tree/master/src/plugins/tiling#query-list-of-windows-on-focused-desktop)
+ - [query window information](https://github.com/koekeishiya/chunkwm/tree/master/src/plugins/tiling#query-window-information)
 
 | filter    | short flag | type      | description                        |
 |-----------|:----------:|:---------:|:----------------------------------:|
