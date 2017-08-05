@@ -71,10 +71,10 @@ Warn(const char *Format, ...)
 
 void SignalHandler(int Signal)
 {
-  void *Trace[10];
+  void *Trace[15];
   size_t Size;
 
-  Size = backtrace(Trace, 10);
+  Size = backtrace(Trace, 15);
 
   fprintf(stderr, "chunkwm: recv signal %d, printing stack trace\n", Signal);
   backtrace_symbols_fd(Trace, Size, STDERR_FILENO);
