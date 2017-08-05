@@ -1292,8 +1292,8 @@ void AdjustWindowRatio(char *Direction)
     }
 
     Offset = CVarFloatingPointValue(CVAR_BSP_SPLIT_RATIO);
-    if((IsRightChild(WindowNode)) ||
-       (IsNodeInTree(Ancestor->Right, WindowNode)))
+    if(!(IsLeftChild(WindowNode) ||
+         IsNodeInTree(Ancestor->Left, WindowNode)))
     {
         Offset = -Offset;
     }
