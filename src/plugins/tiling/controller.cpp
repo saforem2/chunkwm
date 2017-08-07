@@ -281,6 +281,15 @@ FindWindowUndirected(macos_space *Space, virtual_space *VirtualSpace,
     return Result;
 }
 
+void CloseWindow(char *Unused)
+{
+    macos_window *Window = GetFocusedWindow();
+    if(Window)
+    {
+        AXLibCloseWindow(Window->Ref);
+    }
+}
+
 void FocusWindow(char *Direction)
 {
     bool Success;

@@ -106,6 +106,7 @@ command_func WindowCommandDispatch(char Flag)
         case 'e': return AdjustWindowRatio;     break;
         case 'd': return SendWindowToDesktop;   break;
         case 'm': return SendWindowToMonitor;   break;
+        case 'c': return CloseWindow;           break;
 
         // NOTE(koekeishiya): silence compiler warning.
         default: return 0; break;
@@ -120,7 +121,7 @@ ParseWindowCommand(const char *Message, command *Chain)
 
     int Option;
     bool Success = true;
-    const char *Short = "f:s:i:t:w:W:r:e:d:m:";
+    const char *Short = "f:s:i:t:w:W:r:e:d:m:c";
 
     struct option Long[] =
     {
@@ -134,6 +135,7 @@ ParseWindowCommand(const char *Message, command *Chain)
         { "adjust-window-edge", required_argument, NULL, 'e' },
         { "send-to-desktop", required_argument, NULL, 'd' },
         { "send-to-monitor", required_argument, NULL, 'm' },
+        { "close", no_argument, NULL, 'c' },
         { NULL, 0, NULL, 0 }
     };
 
@@ -268,6 +270,13 @@ ParseWindowCommand(const char *Message, command *Chain)
                     FreeCommandChain(Chain);
                     goto End;
                 }
+            } break;
+            case 'c':
+            {
+                    // NOTE(koekeishiya): This option takes no arguments
+                    command *Entry = ConstructCommand(Option, NULL);
+                    Command->Next = Entry;
+                    Command = Entry;
             } break;
             case '?':
             {

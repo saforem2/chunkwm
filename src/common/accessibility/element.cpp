@@ -203,6 +203,17 @@ bool AXLibSetWindowSize(AXUIElementRef WindowRef, float Width, float Height)
     return Result;
 }
 
+/* NOTE(koekeishiya): Performs the window close action */
+void AXLibCloseWindow(AXUIElementRef WindowRef)
+{
+    AXUIElementRef Button = NULL;
+    if(AXUIElementCopyAttributeValue(WindowRef, kAXCloseButtonAttribute, (CFTypeRef*)&Button) == noErr)
+    {
+        AXUIElementPerformAction(Button, kAXPressAction);
+        CFRelease(Button);
+    }
+}
+
 /* NOTE(koekeishiya): Set native fullscreen state. */
 bool AXLibSetWindowFullscreen(AXUIElementRef WindowRef, bool Fullscreen)
 {

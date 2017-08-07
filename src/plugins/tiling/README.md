@@ -22,6 +22,7 @@
   * [set the alpha value for faded windows](#set-the-target-alpha-value-for-faded-windows)
   * [set the time in seconds the fade animation should last](#set-the-time-in-seconds-the-fade-animation-should-last)
 * [window commands](#window-commands)
+  * [close window](#close-window)
   * [focus window](#focus-window)
   * [swap window](#swap-window)
   * [warp window](#warp-window)
@@ -177,6 +178,12 @@
 ---
 
 #### window commands
+
+##### close window
+
+    chunkc tiling::window --close
+    short flag: -c
+    desc: invokes the window close button
 
 ##### focus window
 
