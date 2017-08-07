@@ -1,3 +1,3 @@
-The config file for this plugin is simply a bash script that is executed!
+*skhdrc* is a sample config for use with [**skhd**](https://github.com/koekeishiya/skhd)
 
-A sample config is also provided for use with **khd**.
+*khdrc* is a sample config for use with [**khd**](https://github.com/koekeishiya/khd)

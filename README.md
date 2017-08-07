@@ -17,7 +17,7 @@ It represents windows as the leaves of a binary tree, and supports binary space 
 
 **chunkwm** does not handle any keyboard input.
 
-A third party program (e.g: [*khd*](https://github.com/koekeishiya/khd)) is needed to map keyboard events to *chunkwm* actions.
+A third party program (e.g: [*skhd*](https://github.com/koekeishiya/skhd) or [*khd*](https://github.com/koekeishiya/khd)) is needed to map keyboard events to *chunkwm* actions.
 
 Development is happening on and primarily for macOS Sierra (10.12.6).
 
@@ -156,6 +156,8 @@ See [**sample config**](https://github.com/koekeishiya/chunkwm/blob/master/examp
 Visit [**chunkwm-tiling reference**](https://github.com/koekeishiya/chunkwm/tree/master/src/plugins/tiling/README.md).
 
 Visit [**chunkwm-border reference**](https://github.com/koekeishiya/chunkwm/tree/master/src/plugins/border/README.md).
+
+A sample keybinding config file for [**skhd**](https://github.com/koekeishiya/skhd) is available [**here**](https://github.com/koekeishiya/chunkwm/tree/master/src/plugins/tiling/examples/skhdrc).
 
 A sample keybinding config file for [**khd**](https://github.com/koekeishiya/khd) is available [**here**](https://github.com/koekeishiya/chunkwm/tree/master/src/plugins/tiling/examples/khdrc).
 
