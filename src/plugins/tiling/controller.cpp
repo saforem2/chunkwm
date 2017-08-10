@@ -2158,6 +2158,25 @@ space_free:
 }
 
 internal void
+QueryFocusedWindowFloat(int SockFD)
+{
+    char Message[512];
+    macos_window *Window;
+
+    Window = GetFocusedWindow();
+    if(Window)
+    {
+        snprintf(Message, sizeof(Message), "%d", AXLibHasFlags(Window, Window_Float));
+    }
+    else
+    {
+        snprintf(Message, sizeof(Message), "?");
+    }
+
+    WriteToSocket(Message, SockFD);
+}
+
+internal void
 QueryFocusedWindowOwner(int SockFD)
 {
     char Message[512];
@@ -2269,6 +2288,10 @@ void QueryWindow(char *Op, int SockFD)
     else if(StringEquals(Op, "tag"))
     {
         QueryFocusedWindowTag(SockFD);
+    }
+    else if(StringEquals(Op, "float"))
+    {
+        QueryFocusedWindowFloat(SockFD);
     }
     else if(sscanf(Op, "%d", &WindowId) == 1)
     {

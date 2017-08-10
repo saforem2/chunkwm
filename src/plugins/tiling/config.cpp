@@ -575,6 +575,7 @@ ParseQueryCommand(const char *Message, command *Chain)
                 if((StringEquals(optarg, "owner")) ||
                    (StringEquals(optarg, "name")) ||
                    (StringEquals(optarg, "tag")) ||
+                   (StringEquals(optarg, "float")) ||
                    (sscanf(optarg, "%d", &WindowId) == 1))
                 {
                     command *Entry = ConstructCommand(Option, optarg);
