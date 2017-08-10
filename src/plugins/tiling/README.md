@@ -53,6 +53,7 @@
       * [query focused window name](#query-focused-window-name)
       * [query focused window owner](#query-focused-window-owner)
       * [query focused window tag](#query-focused-window-tag)
+      * [query focused window float status](#query-focused-window-float-status)
       * [query window information](#query-window-information)
   * [query desktop related](#query-desktop-related)
       * [query focused desktop id](#query-focused-desktop-id)
@@ -387,6 +388,11 @@ See the following sections for how to retrieve information about an open window:
     chunkc tiling::query --window tag
     short flag: w
     desc: outputs '<window owner> - <window name>'
+
+##### query focused window float status
+
+    chunkc tiling::query --window float
+    short flag: w
 
 ##### query window information
 
