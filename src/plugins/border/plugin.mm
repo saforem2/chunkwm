@@ -228,18 +228,7 @@ SpaceChangedHandler()
 
     if(Space->Type == kCGSSpaceUser)
     {
-        AXUIElementRef WindowRef = GetFocusedWindow();
-        if(WindowRef)
-        {
-            uint32_t WindowId = AXLibGetWindowID(WindowRef);
-            if(WindowId)
-            {
-                CGPoint Position = AXLibGetWindowPosition(WindowRef);
-                CGSize Size = AXLibGetWindowSize(WindowRef);
-                CreateBorder(Position.x, Position.y, Size.width, Size.height);
-            }
-            CFRelease(WindowRef);
-        }
+        NewWindowHandler();
     }
 
     AXLibDestroySpace(Space);
