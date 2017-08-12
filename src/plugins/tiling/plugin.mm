@@ -34,6 +34,7 @@
 #include "../../common/misc/workspace.mm"
 #include "../../common/border/border.mm"
 
+#include "presel.h"
 #include "config.h"
 #include "region.h"
 #include "node.h"
@@ -44,6 +45,7 @@
 #include "constants.h"
 #include "misc.h"
 
+#include "presel.mm"
 #include "config.cpp"
 #include "region.cpp"
 #include "node.cpp"

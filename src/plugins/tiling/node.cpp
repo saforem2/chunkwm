@@ -2,9 +2,9 @@
 #include "vspace.h"
 #include "constants.h"
 
+#include "presel.h"
 #include "../../common/config/tokenize.h"
 #include "../../common/config/cvar.h"
-#include "../../common/border/border.h"
 #include "../../common/misc/assert.h"
 #include "../../common/accessibility/window.h"
 #include "../../common/accessibility/element.h"
@@ -284,7 +284,7 @@ void ConstrainWindowToRegion(macos_window *Window)
 
 void FreePreselectNode(node *Node)
 {
-    DestroyBorderWindow(Node->Preselect->Border);
+    DestroyPreselWindow(Node->Preselect->Border);
     free(Node->Preselect->Direction);
     free(Node->Preselect);
     Node->Preselect = NULL;

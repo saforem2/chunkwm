@@ -6,7 +6,7 @@
 #include "region.h"
 #include "vspace.h"
 
-struct border_window;
+struct presel_window;
 
 enum node_type
 {
@@ -48,7 +48,7 @@ struct preselect_node
     region Region;
     char *Direction;
 
-    border_window *Border;
+    presel_window *Border;
 };
 
 struct node

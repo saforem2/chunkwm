@@ -4,12 +4,12 @@
 #include "../../common/accessibility/application.h"
 #include "../../common/accessibility/window.h"
 #include "../../common/accessibility/element.h"
-#include "../../common/border/border.h"
 #include "../../common/config/cvar.h"
 #include "../../common/ipc/daemon.h"
 #include "../../common/misc/assert.h"
 #include "../../common/misc/debug.h"
 
+#include "presel.h"
 #include "region.h"
 #include "node.h"
 #include "vspace.h"
@@ -1015,7 +1015,7 @@ void UseInsertionPoint(char *Direction)
 
     unsigned PreselectBorderColor;
     int PreselectBorderWidth;
-    int PreselectBorderRadius;
+    int PreselectBorderType;
 
     Window = GetFocusedWindow();
     if(!Window)
@@ -1071,21 +1071,30 @@ void UseInsertionPoint(char *Direction)
     {
         Node->Preselect->SpawnLeft = true;
         Node->Preselect->Split = Split_Vertical;
+        PreselectBorderType = PRESEL_TYPE_WEST;
     }
     else if(StringEquals(Direction, "east"))
     {
         Node->Preselect->SpawnLeft = false;
         Node->Preselect->Split = Split_Vertical;
+        PreselectBorderType = PRESEL_TYPE_EAST;
     }
     else if(StringEquals(Direction, "north"))
     {
         Node->Preselect->SpawnLeft = true;
         Node->Preselect->Split = Split_Horizontal;
+        PreselectBorderType = PRESEL_TYPE_NORTH;
     }
     else if(StringEquals(Direction, "south"))
     {
         Node->Preselect->SpawnLeft = false;
         Node->Preselect->Split = Split_Horizontal;
+        PreselectBorderType = PRESEL_TYPE_SOUTH;
+    }
+    else
+    {
+        // NOTE(koekeishiya): this can't actually happen, silence compiler warning..
+        PreselectBorderType = PRESEL_TYPE_NORTH;
     }
 
     Node->Preselect->Node = Node;
@@ -1111,16 +1120,14 @@ void UseInsertionPoint(char *Direction)
 
     PreselectBorderColor = CVarUnsignedValue(CVAR_PRE_BORDER_COLOR);
     PreselectBorderWidth = CVarIntegerValue(CVAR_PRE_BORDER_WIDTH);
-    PreselectBorderRadius = CVarIntegerValue(CVAR_PRE_BORDER_RADIUS);
 
-    Node->Preselect->Border = CreateBorderWindow(Node->Preselect->Region.X,
+    Node->Preselect->Border = CreatePreselWindow(PreselectBorderType,
+                                                 Node->Preselect->Region.X,
                                                  Node->Preselect->Region.Y,
                                                  Node->Preselect->Region.Width,
                                                  Node->Preselect->Region.Height,
                                                  PreselectBorderWidth,
-                                                 PreselectBorderRadius,
-                                                 PreselectBorderColor,
-                                                 false);
+                                                 PreselectBorderColor);
 
 vspace_release:
     ReleaseVirtualSpace(VirtualSpace);
