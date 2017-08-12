@@ -27,6 +27,34 @@ internal bool SkipFloating;
 internal bool DrawBorder;
 internal chunkwm_api API;
 
+internal AXUIElementRef
+GetFocusedWindow()
+{
+    AXUIElementRef ApplicationRef, WindowRef;
+
+    ApplicationRef = AXLibGetFocusedApplication();
+    if(ApplicationRef)
+    {
+        WindowRef = AXLibGetFocusedWindow(ApplicationRef);
+        CFRelease(ApplicationRef);
+        if(WindowRef)
+        {
+            return WindowRef;
+        }
+    }
+
+    return NULL;;
+}
+
+internal void
+CreateBorder(int X, int Y, int W, int H)
+{
+    unsigned Color = CVarUnsignedValue("focused_border_color");
+    int Width = CVarIntegerValue("focused_border_width");
+    int Radius = CVarIntegerValue("focused_border_radius");
+    Border = CreateBorderWindow(X, Y, W, H, Width, Radius, Color, false);
+}
+
 internal inline void
 ClearBorderWindow(border_window *Border)
 {
@@ -36,7 +64,7 @@ ClearBorderWindow(border_window *Border)
 internal inline void
 UpdateWindow(AXUIElementRef WindowRef)
 {
-    if(DrawBorder)
+    if(DrawBorder && Border)
     {
         if(AXLibIsWindowFullscreen(WindowRef))
         {
@@ -54,7 +82,7 @@ UpdateWindow(AXUIElementRef WindowRef)
 internal void
 UpdateToFocusedWindow()
 {
-    AXUIElementRef WindowRef = AXLibGetFocusedWindow(Application->Ref);
+    AXUIElementRef WindowRef = GetFocusedWindow();
     if(WindowRef)
     {
         uint32_t WindowId = AXLibGetWindowID(WindowRef);
@@ -62,13 +90,13 @@ UpdateToFocusedWindow()
         {
             UpdateWindow(WindowRef);
         }
-        else
+        else if(Border)
         {
             ClearBorderWindow(Border);
         }
         CFRelease(WindowRef);
     }
-    else
+    else if(Border)
     {
         ClearBorderWindow(Border);
     }
@@ -77,12 +105,7 @@ UpdateToFocusedWindow()
 internal void
 UpdateIfFocusedWindow(AXUIElementRef Element)
 {
-    if(!Application)
-    {
-        return;
-    }
-
-    AXUIElementRef WindowRef = AXLibGetFocusedWindow(Application->Ref);
+    AXUIElementRef WindowRef = GetFocusedWindow();
     if(WindowRef)
     {
         if(CFEqual(WindowRef, Element))
@@ -107,7 +130,10 @@ ApplicationDeactivatedHandler(void *Data)
     if(Application == Context)
     {
         Application = NULL;
-        ClearBorderWindow(Border);
+        if(Border)
+        {
+            ClearBorderWindow(Border);
+        }
     }
 }
 
@@ -175,17 +201,23 @@ SpaceChangedHandler()
     bool Success = AXLibActiveSpace(&Space);
     ASSERT(Success);
 
-    if(Space->Type != kCGSSpaceUser)
+    if(Border)
     {
-        ClearBorderWindow(Border);
+        DestroyBorderWindow(Border);
+        Border = NULL;
     }
-    else if(Application)
+
+    if((Space->Type == kCGSSpaceUser) &&
+       (Application))
     {
-        UpdateToFocusedWindow();
-    }
-    else
-    {
-        ClearBorderWindow(Border);
+        AXUIElementRef WindowRef = GetFocusedWindow();
+        uint32_t WindowId = AXLibGetWindowID(WindowRef);
+        if(WindowId)
+        {
+            CGPoint Position = AXLibGetWindowPosition(WindowRef);
+            CGSize Size = AXLibGetWindowSize(WindowRef);
+            CreateBorder(Position.x, Position.y, Size.width, Size.height);
+        }
     }
 
     AXLibDestroySpace(Space);
@@ -216,7 +248,10 @@ CommandHandler(void *Data)
     }
     else if(StringEquals(Payload->Command, "clear"))
     {
-        ClearBorderWindow(Border);
+        if(Border)
+        {
+            ClearBorderWindow(Border);
+        }
     }
 }
 
@@ -227,7 +262,10 @@ TilingFocusedWindowFloatStatus(void *Data)
     if(Status)
     {
         DrawBorder = false;
-        ClearBorderWindow(Border);
+        if(Border)
+        {
+            ClearBorderWindow(Border);
+        }
     }
     else
     {
@@ -273,7 +311,8 @@ PLUGIN_MAIN_FUNC(PluginMain)
         WindowMinimizedHandler(Data);
         return true;
     }
-    else if(StringEquals(Node, "chunkwm_export_space_changed"))
+    else if((StringEquals(Node, "chunkwm_export_space_changed")) ||
+            (StringEquals(Node, "chunkwm_export_display_changed")))
     {
         SpaceChangedHandler();
         return true;
@@ -303,18 +342,18 @@ PLUGIN_BOOL_FUNC(PluginInit)
     CreateCVar("focused_border_radius", 4);
     CreateCVar("focused_border_skip_floating", 0);
 
-    unsigned Color = CVarUnsignedValue("focused_border_color");
-    int Width = CVarIntegerValue("focused_border_width");
-    int Radius = CVarIntegerValue("focused_border_radius");
     SkipFloating = CVarIntegerValue("focused_border_skip_floating");
     DrawBorder = !SkipFloating;
-    Border = CreateBorderWindow(0, 0, 0, 0, Width, Radius, Color, true);
+    CreateBorder(0, 0, 0, 0);
     return true;
 }
 
 PLUGIN_VOID_FUNC(PluginDeInit)
 {
-    DestroyBorderWindow(Border);
+    if(Border)
+    {
+        DestroyBorderWindow(Border);
+    }
 }
 
 CHUNKWM_PLUGIN_VTABLE(PluginInit, PluginDeInit, PluginMain)
@@ -330,6 +369,7 @@ chunkwm_plugin_export Subscriptions[] =
     chunkwm_export_window_minimized,
 
     chunkwm_export_space_changed,
+    chunkwm_export_display_changed,
 };
 CHUNKWM_PLUGIN_SUBSCRIBE(Subscriptions)
 CHUNKWM_PLUGIN("Border", "0.2.7")
