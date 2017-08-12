@@ -207,8 +207,7 @@ SpaceChangedHandler()
         Border = NULL;
     }
 
-    if((Space->Type == kCGSSpaceUser) &&
-       (Application))
+    if(Space->Type == kCGSSpaceUser)
     {
         AXUIElementRef WindowRef = GetFocusedWindow();
         uint32_t WindowId = AXLibGetWindowID(WindowRef);
@@ -270,7 +269,7 @@ TilingFocusedWindowFloatStatus(void *Data)
     else
     {
         DrawBorder = true;
-        if(Application) UpdateToFocusedWindow();
+        UpdateToFocusedWindow();
     }
 }
 
