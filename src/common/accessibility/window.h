@@ -17,13 +17,14 @@ enum macos_window_level
 
 enum macos_window_flags
 {
-    Window_Movable = (1 << 0),
-    Window_Resizable = (1 << 1),
-    Window_Minimized = (1 << 2),
-    Window_Float = (1 << 3),
-    Window_Sticky = (1 << 4),
-    Window_Invalid = (1 << 5),
-    Window_ForceTile = (1 << 6),
+    Window_Init_Minimized = (1 << 0),
+    Window_Movable = (1 << 1),
+    Window_Resizable = (1 << 2),
+    Window_Minimized = (1 << 3),
+    Window_Float = (1 << 4),
+    Window_Sticky = (1 << 5),
+    Window_Invalid = (1 << 6),
+    Window_ForceTile = (1 << 7),
 };
 
 struct macos_application;

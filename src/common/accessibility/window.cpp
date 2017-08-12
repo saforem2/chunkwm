@@ -42,7 +42,10 @@ macos_window *AXLibConstructWindow(macos_application *Application, AXUIElementRe
         AXLibAddFlags(Window, Window_Resizable);
 
     if(AXLibIsWindowMinimized(Window->Ref))
+    {
         AXLibAddFlags(Window, Window_Minimized);
+        AXLibAddFlags(Window, Window_Init_Minimized);
+    }
 
     return Window;
 }

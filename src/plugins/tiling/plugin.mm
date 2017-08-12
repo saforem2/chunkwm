@@ -174,6 +174,7 @@ macos_window *GetFocusedWindow()
 internal void
 AddWindowToCollection(macos_window *Window)
 {
+    if(!Window->Id) return;
     pthread_mutex_lock(&WindowsLock);
     Windows[Window->Id] = Window;
     pthread_mutex_unlock(&WindowsLock);
@@ -1329,6 +1330,22 @@ WindowDeminimizedHandler(void *Data)
     {
         macos_window *Copy = GetWindowByID(Window->Id);
         ASSERT(Copy);
+
+        if(AXLibHasFlags(Copy, Window_Init_Minimized))
+        {
+            if(Copy->Mainrole)
+            {
+                CFRelease(Copy->Mainrole);
+                AXLibGetWindowRole(Copy->Ref, &Copy->Mainrole);
+            }
+
+            if(Copy->Subrole)
+            {
+                CFRelease(Copy->Subrole);
+                AXLibGetWindowSubrole(Copy->Ref, &Copy->Subrole);
+            }
+            AXLibClearFlags(Copy, Window_Init_Minimized);
+        }
 
         TileWindow(Copy);
     }

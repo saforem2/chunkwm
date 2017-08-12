@@ -521,6 +521,22 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_WindowDeminimized)
     bool Result = __sync_bool_compare_and_swap(&Window->Flags, Flags, Flags);
     if(Result && !AXLibHasFlags(Window, Window_Invalid))
     {
+        if(AXLibHasFlags(Window, Window_Init_Minimized))
+        {
+            if(Window->Mainrole)
+            {
+                CFRelease(Window->Mainrole);
+                AXLibGetWindowRole(Window->Ref, &Window->Mainrole);
+            }
+
+            if(Window->Subrole)
+            {
+                CFRelease(Window->Subrole);
+                AXLibGetWindowSubrole(Window->Ref, &Window->Subrole);
+            }
+            AXLibClearFlags(Window, Window_Init_Minimized);
+        }
+
         printf("%s:%s:%d window deminimized\n", Window->Owner->Name, Window->Name, Window->Id);
 
         AXLibClearFlags(Window, Window_Minimized);
