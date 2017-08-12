@@ -299,7 +299,9 @@ TilingFocusedWindowFloatStatus(void *Data)
 PLUGIN_MAIN_FUNC(PluginMain)
 {
     if((StringEquals(Node, "chunkwm_export_application_launched")) ||
-       (StringEquals(Node, "chunkwm_export_window_created")))
+       (StringEquals(Node, "chunkwm_export_window_created")) ||
+       (StringEquals(Node, "chunkwm_export_application_unhidden")) ||
+       (StringEquals(Node, "chunkwm_export_window_deminimized")))
     {
         NewWindowHandler();
         return true;
@@ -388,6 +390,7 @@ CHUNKWM_PLUGIN_VTABLE(PluginInit, PluginDeInit, PluginMain)
 chunkwm_plugin_export Subscriptions[] =
 {
     chunkwm_export_application_launched,
+    chunkwm_export_application_unhidden,
     chunkwm_export_application_activated,
     chunkwm_export_application_deactivated,
 
@@ -397,6 +400,7 @@ chunkwm_plugin_export Subscriptions[] =
     chunkwm_export_window_moved,
     chunkwm_export_window_resized,
     chunkwm_export_window_minimized,
+    chunkwm_export_window_deminimized,
 
     chunkwm_export_space_changed,
     chunkwm_export_display_changed,
