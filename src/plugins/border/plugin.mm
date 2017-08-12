@@ -161,6 +161,25 @@ WindowFocusedHandler(void *Data)
 }
 
 internal inline void
+NewWindowHandler()
+{
+    if(Border) return;
+
+    AXUIElementRef WindowRef = GetFocusedWindow();
+    if(WindowRef)
+    {
+        uint32_t WindowId = AXLibGetWindowID(WindowRef);
+        if(WindowId)
+        {
+            CGPoint Position = AXLibGetWindowPosition(WindowRef);
+            CGSize Size = AXLibGetWindowSize(WindowRef);
+            CreateBorder(Position.x, Position.y, Size.width, Size.height);
+        }
+        CFRelease(WindowRef);
+    }
+}
+
+internal inline void
 WindowDestroyedHandler(void *Data)
 {
     macos_window *Window = (macos_window *) Data;
@@ -210,12 +229,16 @@ SpaceChangedHandler()
     if(Space->Type == kCGSSpaceUser)
     {
         AXUIElementRef WindowRef = GetFocusedWindow();
-        uint32_t WindowId = AXLibGetWindowID(WindowRef);
-        if(WindowId)
+        if(WindowRef)
         {
-            CGPoint Position = AXLibGetWindowPosition(WindowRef);
-            CGSize Size = AXLibGetWindowSize(WindowRef);
-            CreateBorder(Position.x, Position.y, Size.width, Size.height);
+            uint32_t WindowId = AXLibGetWindowID(WindowRef);
+            if(WindowId)
+            {
+                CGPoint Position = AXLibGetWindowPosition(WindowRef);
+                CGSize Size = AXLibGetWindowSize(WindowRef);
+                CreateBorder(Position.x, Position.y, Size.width, Size.height);
+            }
+            CFRelease(WindowRef);
         }
     }
 
@@ -275,7 +298,13 @@ TilingFocusedWindowFloatStatus(void *Data)
 
 PLUGIN_MAIN_FUNC(PluginMain)
 {
-    if(StringEquals(Node, "chunkwm_export_application_activated"))
+    if((StringEquals(Node, "chunkwm_export_application_launched")) ||
+       (StringEquals(Node, "chunkwm_export_window_created")))
+    {
+        NewWindowHandler();
+        return true;
+    }
+    else if(StringEquals(Node, "chunkwm_export_application_activated"))
     {
         ApplicationActivatedHandler(Data);
         return true;
@@ -358,9 +387,11 @@ PLUGIN_VOID_FUNC(PluginDeInit)
 CHUNKWM_PLUGIN_VTABLE(PluginInit, PluginDeInit, PluginMain)
 chunkwm_plugin_export Subscriptions[] =
 {
+    chunkwm_export_application_launched,
     chunkwm_export_application_activated,
     chunkwm_export_application_deactivated,
 
+    chunkwm_export_window_created,
     chunkwm_export_window_focused,
     chunkwm_export_window_destroyed,
     chunkwm_export_window_moved,
