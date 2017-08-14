@@ -1,6 +1,11 @@
 #import <Cocoa/Cocoa.h>
 #include "border.h"
 
+#include <AvailabilityMacros.h>
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 101200
+#define NSWindowStyleMaskBorderless NSBorderlessWindowMask
+#endif
+
 NSColor *ColorFromHex(unsigned int Color);
 
 @interface OverlayView : NSView

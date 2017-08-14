@@ -1,6 +1,11 @@
 #import <Cocoa/Cocoa.h>
 #include "presel.h"
 
+#include <AvailabilityMacros.h>
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 101200
+#define NSWindowStyleMaskBorderless NSBorderlessWindowMask
+#endif
+
 inline void
 DrawLine(int W, int X1, int Y1, int X2, int Y2)
 {
