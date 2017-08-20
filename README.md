@@ -1,4 +1,4 @@
-## Description [![Build Status](https://travis-ci.org/koekeishiya/chunkwm.svg?branch=master)](https://travis-ci.org/koekeishiya/chunkwm)
+### Description [![Build Status](https://travis-ci.org/koekeishiya/chunkwm.svg?branch=master)](https://travis-ci.org/koekeishiya/chunkwm) [Project Status](https://github.com/koekeishiya/chunkwm/issues/16)
 
 | NAME            | RELEASE | VERSION |
 |-----------------|:-------:|:-------:|
@@ -6,7 +6,6 @@
 | chunkwm-tiling  | Alpha   | 0.2.22  |
 | chunkwm-border  | Alpha   | 0.2.8   |
 | chunkwm-ffm     | Alpha   | 0.2.1   |
-
 
 **chunkwm** is a tiling window manager for macOS that uses a plugin architecture, successor to [**kwm**](https://github.com/koekeishiya/kwm).
 It represents windows as the leaves of a binary tree, and supports binary space partitioned, monocle and floating desktops.
@@ -23,9 +22,9 @@ Development is happening on and primarily for macOS Sierra (10.12.6), but OSX El
 
 Older versions may or may not be compatible and will not be officially supported.
 
-[Click here to view current project status](https://github.com/koekeishiya/chunkwm/issues/16)
+![chunkwm_img](https://user-images.githubusercontent.com/6175959/29497156-478ccdca-85e3-11e7-8acc-9610954d6fc2.png)
 
-![chunkwm_demo](https://cloud.githubusercontent.com/assets/6175959/25564481/6863954c-2db4-11e7-8332-221cecb52ce5.gif)
+Click [here](https://github.com/koekeishiya/chunkwm/issues/21) for more screenshots.
 
 ## Install
 
