@@ -67,8 +67,8 @@ NSColor *ColorFromHex(unsigned int Color)
 static int
 InvertY(int Y, int Height)
 {
-    static NSScreen *MainScreen = [NSScreen mainScreen];
-    static NSRect Rect = [MainScreen frame];
+    NSScreen *MainScreen = [NSScreen mainScreen];
+    NSRect Rect = [MainScreen frame];
     int InvertedY = Rect.size.height - (Y + Height);
     return InvertedY;
 }
