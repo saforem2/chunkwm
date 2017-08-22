@@ -64,19 +64,10 @@ NSColor *ColorFromHex(unsigned int Color)
     return [NSColor colorWithCalibratedRed:(Red) green:(Green) blue:(Blue) alpha:Alpha];
 }
 
-static int
-InvertY(int Y, int Height)
-{
-    NSScreen *MainScreen = [NSScreen mainScreen];
-    NSRect Rect = [MainScreen frame];
-    int InvertedY = Rect.size.height - (Y + Height);
-    return InvertedY;
-}
-
 static void
 InitBorderWindow(border_window_internal *Border, int X, int Y, int W, int H, int BorderWidth, int BorderRadius, unsigned int BorderColor, bool JoinAllSpaces)
 {
-    NSRect GraphicsRect = NSMakeRect(X, InvertY(Y, H), W, H);
+    NSRect GraphicsRect = NSMakeRect(X, Y, W, H);
     Border->Handle = [[NSWindow alloc] initWithContentRect: GraphicsRect
                                        styleMask: NSWindowStyleMaskBorderless
                                        backing: NSBackingStoreBuffered
@@ -139,7 +130,7 @@ void UpdateBorderWindowRect(border_window *Border, int X, int Y, int W, int H)
     if([NSThread isMainThread])
     {
         NSAutoreleasePool *Pool = [[NSAutoreleasePool alloc] init];
-        [BorderInternal->Handle setFrame:NSMakeRect(X, InvertY(Y, H), W, H) display:YES animate:NO];
+        [BorderInternal->Handle setFrame:NSMakeRect(X, Y, W, H) display:YES animate:NO];
         [Pool release];
     }
     else
@@ -147,7 +138,7 @@ void UpdateBorderWindowRect(border_window *Border, int X, int Y, int W, int H)
         dispatch_async(dispatch_get_main_queue(), ^(void)
         {
             NSAutoreleasePool *Pool = [[NSAutoreleasePool alloc] init];
-            [BorderInternal->Handle setFrame:NSMakeRect(X, InvertY(Y, H), W, H) display:YES animate:NO];
+            [BorderInternal->Handle setFrame:NSMakeRect(X, Y, W, H) display:YES animate:NO];
             [Pool release];
         });
     }

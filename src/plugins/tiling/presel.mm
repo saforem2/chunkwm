@@ -86,10 +86,23 @@ struct presel_window_internal
     PreselView *View;
 };
 
+internal inline int
+FuckingMacOSMonitorBoundsChangingBetweenPrimaryAndMainMonitor(int Y, int Height)
+{
+    CFStringRef DisplayRef = AXLibGetDisplayIdentifierForMainDisplay();
+    ASSERT(DisplayRef);
+
+    CGRect DisplayBounds = AXLibGetDisplayBounds(DisplayRef);
+    CFRelease(DisplayRef);
+
+    return DisplayBounds.size.height - (Y + Height);
+}
+
 static void
 InitPreselWindow(presel_window_internal *Window, int X, int Y, int W, int H)
 {
-    NSRect GraphicsRect = NSMakeRect(X, InvertY(Y, H), W, H);
+    int InvertY = FuckingMacOSMonitorBoundsChangingBetweenPrimaryAndMainMonitor(Y, H);
+    NSRect GraphicsRect = NSMakeRect(X, InvertY, W, H);
     Window->Handle = [[NSWindow alloc] initWithContentRect: GraphicsRect
                                        styleMask: NSWindowStyleMaskBorderless
                                        backing: NSBackingStoreBuffered
@@ -145,7 +158,8 @@ void UpdatePreselWindow(presel_window *WindowF, int X, int Y, int W, int H)
     if([NSThread isMainThread])
     {
         NSAutoreleasePool *Pool = [[NSAutoreleasePool alloc] init];
-        [Window->Handle setFrame:NSMakeRect(X, InvertY(Y, H), W, H) display:YES animate:NO];
+        int InvertY = FuckingMacOSMonitorBoundsChangingBetweenPrimaryAndMainMonitor(Y, H);
+        [Window->Handle setFrame:NSMakeRect(X, InvertY, W, H) display:YES animate:NO];
         [Pool release];
     }
     else
@@ -153,7 +167,8 @@ void UpdatePreselWindow(presel_window *WindowF, int X, int Y, int W, int H)
         dispatch_async(dispatch_get_main_queue(), ^(void)
         {
             NSAutoreleasePool *Pool = [[NSAutoreleasePool alloc] init];
-            [Window->Handle setFrame:NSMakeRect(X, InvertY(Y, H), W, H) display:YES animate:NO];
+            int InvertY = FuckingMacOSMonitorBoundsChangingBetweenPrimaryAndMainMonitor(Y, H);
+            [Window->Handle setFrame:NSMakeRect(X, InvertY, W, H) display:YES animate:NO];
             [Pool release];
         });
     }

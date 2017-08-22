@@ -62,19 +62,43 @@ ClearBorderWindow(border_window *Border)
 }
 
 internal inline void
+FuckingMacOSMonitorBoundsChangingBetweenPrimaryAndMainMonitor(AXUIElementRef WindowRef)
+{
+    CGPoint Position = AXLibGetWindowPosition(WindowRef);
+    CGSize Size = AXLibGetWindowSize(WindowRef);
+
+    CFStringRef DisplayRef = AXLibGetDisplayIdentifierForMainDisplay();
+    ASSERT(DisplayRef);
+
+    CGRect DisplayBounds = AXLibGetDisplayBounds(DisplayRef);
+    CFRelease(DisplayRef);
+
+    int InvertY = DisplayBounds.size.height - (Position.y + Size.height);
+    if(Border)
+    {
+        UpdateBorderWindowRect(Border, Position.x, InvertY, Size.width, Size.height);
+    }
+    else
+    {
+        CreateBorder(Position.x, InvertY, Size.width, Size.height);
+    }
+}
+
+internal inline void
 UpdateWindow(AXUIElementRef WindowRef)
 {
-    if(DrawBorder && Border)
+    if(DrawBorder)
     {
         if(AXLibIsWindowFullscreen(WindowRef))
         {
-            ClearBorderWindow(Border);
+            if(Border)
+            {
+                ClearBorderWindow(Border);
+            }
         }
         else
         {
-            CGPoint Position = AXLibGetWindowPosition(WindowRef);
-            CGSize Size = AXLibGetWindowSize(WindowRef);
-            UpdateBorderWindowRect(Border, Position.x, Position.y, Size.width, Size.height);
+            FuckingMacOSMonitorBoundsChangingBetweenPrimaryAndMainMonitor(WindowRef);
         }
     }
 }
@@ -88,7 +112,27 @@ UpdateToFocusedWindow()
         uint32_t WindowId = AXLibGetWindowID(WindowRef);
         if(WindowId)
         {
-            UpdateWindow(WindowRef);
+            CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromWindow(WindowId);
+            if(!DisplayRef)
+            {
+                CGPoint Position = AXLibGetWindowPosition(WindowRef);
+                CGSize Size = AXLibGetWindowSize(WindowRef);
+                DisplayRef = AXLibGetDisplayIdentifierFromWindowRect(Position, Size);
+            }
+            ASSERT(DisplayRef);
+
+            macos_space *Space = AXLibActiveSpace(DisplayRef);
+            if(AXLibSpaceHasWindow(Space->Id, WindowId))
+            {
+                UpdateWindow(WindowRef);
+            }
+            else if(Border)
+            {
+                ClearBorderWindow(Border);
+            }
+
+            AXLibDestroySpace(Space);
+            CFRelease(DisplayRef);
         }
         else if(Border)
         {
@@ -171,9 +215,7 @@ NewWindowHandler()
         uint32_t WindowId = AXLibGetWindowID(WindowRef);
         if(WindowId)
         {
-            CGPoint Position = AXLibGetWindowPosition(WindowRef);
-            CGSize Size = AXLibGetWindowSize(WindowRef);
-            CreateBorder(Position.x, Position.y, Size.width, Size.height);
+            FuckingMacOSMonitorBoundsChangingBetweenPrimaryAndMainMonitor(WindowRef);
         }
         CFRelease(WindowRef);
     }
