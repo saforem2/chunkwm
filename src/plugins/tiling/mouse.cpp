@@ -57,7 +57,8 @@ CreateResizeBorder(node *Node)
     unsigned PreselectBorderColor = CVarUnsignedValue(CVAR_PRE_BORDER_COLOR);
     int PreselectBorderWidth = CVarIntegerValue(CVAR_PRE_BORDER_WIDTH);
     int PreselectBorderRadius = CVarIntegerValue(CVAR_PRE_BORDER_RADIUS);
-    border_window *Border = CreateBorderWindow(Node->Region.X, Node->Region.Y,
+    int InvertY = FuckingMacOSMonitorBoundsChangingBetweenPrimaryAndMainMonitor(Node->Region.Y, Node->Region.Height);
+    border_window *Border = CreateBorderWindow(Node->Region.X, InvertY,
                                                Node->Region.Width, Node->Region.Height,
                                                PreselectBorderWidth, PreselectBorderRadius,
                                                PreselectBorderColor, false);
@@ -84,9 +85,10 @@ UpdateResizeBorders()
         It != ResizeBorders.end();
         ++It)
     {
+        int InvertY = FuckingMacOSMonitorBoundsChangingBetweenPrimaryAndMainMonitor(It->Node->Region.Y, It->Node->Region.Height);
         UpdateBorderWindowRect(It->Border,
                                It->Node->Region.X,
-                               It->Node->Region.Y,
+                               InvertY,
                                It->Node->Region.Width,
                                It->Node->Region.Height);
     }
@@ -149,9 +151,10 @@ LeftMouseDragged()
             if(ResizeBorders.size() == 2)
             {
                 border_window *Border = ResizeBorders.back().Border;
+                int InvertY = FuckingMacOSMonitorBoundsChangingBetweenPrimaryAndMainMonitor(NewNode->Region.Y, NewNode->Region.Height);
                 UpdateBorderWindowRect(Border,
                                        NewNode->Region.X,
-                                       NewNode->Region.Y,
+                                       InvertY,
                                        NewNode->Region.Width,
                                        NewNode->Region.Height);
             }
