@@ -68,7 +68,7 @@ FuckingMacOSMonitorBoundsChangingBetweenPrimaryAndMainMonitor(AXUIElementRef Win
     CGSize Size = AXLibGetWindowSize(WindowRef);
 
     CFStringRef DisplayRef = AXLibGetDisplayIdentifierForMainDisplay();
-    ASSERT(DisplayRef);
+    if(!DisplayRef) return;
 
     CGRect DisplayBounds = AXLibGetDisplayBounds(DisplayRef);
     CFRelease(DisplayRef);
