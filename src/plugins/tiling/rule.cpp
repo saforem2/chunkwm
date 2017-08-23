@@ -53,10 +53,13 @@ ApplyWindowRuleState(macos_window *Window, window_rule *Rule)
 {
     if(StringEquals(Rule->State, "float"))
     {
+        UntileWindow(Window);
+        AXLibClearFlags(Window, Window_ForceTile);
         FloatWindow(Window, false);
     }
     else if(StringEquals(Rule->State, "tile"))
     {
+        UnfloatWindow(Window);
         AXLibAddFlags(Window, Window_ForceTile);
 
         if(!AXLibHasFlags(Window, Window_Minimized))
