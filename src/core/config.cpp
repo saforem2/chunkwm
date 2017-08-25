@@ -8,6 +8,7 @@
 #include "cvar.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #define internal static
@@ -169,9 +170,19 @@ HandleCore(chunkwm_delegate *Delegate)
         if(PopulatePluginPath(&Delegate->Message, &PluginFS))
         {
             struct stat Buffer;
-            if(stat(PluginFS.Absolutepath, &Buffer) == 0)
+            if(lstat(PluginFS.Absolutepath, &Buffer) == 0)
             {
-                LoadPlugin(PluginFS.Absolutepath, PluginFS.Filename);
+                if(S_ISLNK(Buffer.st_mode))
+                {
+                    char *ResolvedPath = (char *) malloc(PATH_MAX);
+                    realpath(PluginFS.Absolutepath, ResolvedPath);
+                    LoadPlugin(ResolvedPath, PluginFS.Filename);
+                    free(ResolvedPath);
+                }
+                else
+                {
+                    LoadPlugin(PluginFS.Absolutepath, PluginFS.Filename);
+                }
             }
             else
             {

@@ -1,8 +1,11 @@
 BUILD_FLAGS		= -O0 -g -std=c++11 -Wall
-BUILD_PATH		= ./../../../plugins
+BIN_PATH		= ./../../../plugins
+BUILD_PATH      = ./bin
 SRC				= ./plugin.mm
-BINS			= $(BUILD_PATH)/border.so
+BINS			= $(BUILD_PATH)/border
 LINK			= -shared -fPIC -framework Carbon -framework Cocoa -framework ApplicationServices
+DIR := ${CURDIR}
+NOW := $(shell date "+%s")
 
 all: $(BINS)
 
@@ -15,7 +18,9 @@ $(BUILD_PATH):
 	mkdir -p $(BUILD_PATH)
 
 clean:
-	rm -f $(BUILD_PATH)/border.so
+	rm -rf $(BUILD_PATH)/border*
+	rm -f $(BIN_PATH)/border.so
 
-$(BUILD_PATH)/border.so: $(SRC) | $(BUILD_PATH)
-	clang++ $^ $(BUILD_FLAGS) -o $@ $(LINK)
+$(BUILD_PATH)/border: $(SRC) | $(BUILD_PATH)
+	clang++ $^ $(BUILD_FLAGS) -o $@_$(NOW).so $(LINK)
+	ln -s $(DIR)/$@_$(NOW).so $(BIN_PATH)/border.so
