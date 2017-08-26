@@ -5,14 +5,13 @@ env:
     - BUILD_DIR=./src/plugins/tiling
     - BUILD_DIR=./src/plugins/border
     - BUILD_DIR=./src/plugins/ffm
-    - BUILD_DIR=./src/plugins/transparency
 script: cd $BUILD_DIR && make install
 notifications:
-irc:
-    channels:
-        - "irc.freenode.net##kwm"
-    template:
-        - "%{author} @ %{repository_name} -> %{branch} - Build:#%{build_number} : %{message} - Commit: %{commit_message}"
-    use_notice: true
-    skip_join: true
+    irc:
+        channels:
+            - "irc.freenode.net##kwm"
+        template:
+            - "%{author} @ %{repository_name} -> %{branch} - Build:#%{build_number} : %{message} - Commit: %{commit_message}"
+        use_notice: true
+        skip_join: true
 
