@@ -48,7 +48,7 @@
   * [focus monitor](#focus-monitor)
 * [window rules](#window-rules)
   * [sample rules](#sample-rules)
-* [query commands](#window-rules)
+* [query commands](#query-commands)
   * [query window related](#query-window-related)
       * [query focused window name](#query-focused-window-name)
       * [query focused window owner](#query-focused-window-owner)
