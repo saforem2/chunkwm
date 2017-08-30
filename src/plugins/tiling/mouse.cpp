@@ -26,7 +26,8 @@ enum drag_mode
 {
     Drag_Mode_None = 0,
     Drag_Mode_Swap,
-    Drag_Mode_Resize
+    Drag_Mode_Resize,
+    Drag_Mode_Move_Floating,
 };
 
 struct resize_border_state
@@ -39,6 +40,7 @@ struct resize_border_state
     CGPoint InitialCursor;
     macos_space *Space;
     virtual_space *VirtualSpace;
+    macos_window *Window;
 };
 
 struct resize_border
@@ -105,23 +107,45 @@ FreeResizeBorders()
     }
 }
 
-internal void
-LeftMouseDown()
+internal bool
+BeginFloatingWindow(virtual_space *VirtualSpace)
 {
-    macos_space *Space;
-    bool Success = AXLibActiveSpace(&Space);
-    ASSERT(Success);
+    macos_window *Window;
+    CGPoint Cursor;
 
-    virtual_space *VirtualSpace;
+    Window = GetFocusedWindow();
+    if((VirtualSpace->Mode == Virtual_Space_Float) ||
+       (AXLibHasFlags(Window, Window_Float)))
+    {
+        Cursor = AXLibGetCursorPos();
+        if((Cursor.x >= Window->Position.x) &&
+           (Cursor.x <= Window->Position.x + Window->Size.width) &&
+           (Cursor.y >= Window->Position.y) &&
+           (Cursor.y <= Window->Position.y + Window->Size.height))
+        {
+            ResizeState.Window = Window;
+            ResizeState.InitialCursor = Cursor;
+            ResizeState.Mode = Drag_Mode_Move_Floating;
+            ResizeState.InitialRatioH = Window->Position.x;
+            ResizeState.InitialRatioV = Window->Position.y;
+            return true;
+        }
+    }
+
+    return false;
+}
+
+internal bool
+BeginTiledWindow(macos_space *Space, virtual_space *VirtualSpace)
+{
     node *Root, *NodeBelowCursor;
     CGPoint Cursor;
 
-    if(Space->Type != kCGSSpaceUser) goto free_space;
-    VirtualSpace = AcquireVirtualSpace(Space);
-    if(VirtualSpace->Mode != Virtual_Space_Bsp) goto release_vspace;
-    if(!(Root = VirtualSpace->Tree)) goto release_vspace;
+    if(VirtualSpace->Mode != Virtual_Space_Bsp) return false;
+    if(!(Root = VirtualSpace->Tree)) return false;
+
     Cursor = AXLibGetCursorPos();
-    if(!(NodeBelowCursor = GetNodeForPoint(Root, &Cursor))) goto release_vspace;
+    if(!(NodeBelowCursor = GetNodeForPoint(Root, &Cursor))) return false;
 
     ResizeState.Mode = Drag_Mode_Swap;
     ResizeState.Horizontal = NodeBelowCursor;
@@ -129,12 +153,33 @@ LeftMouseDown()
     ResizeState.VirtualSpace = VirtualSpace;
 
     ResizeBorders.push_back(CreateResizeBorder(NodeBelowCursor));
-    goto out;
+    return true;
+}
+
+internal void
+LeftMouseDown()
+{
+    macos_space *Space;
+    virtual_space *VirtualSpace;
+    bool Success = AXLibActiveSpace(&Space);
+    ASSERT(Success);
+
+    if(Space->Type != kCGSSpaceUser) goto free_space;
+    VirtualSpace = AcquireVirtualSpace(Space);
+
+    if(BeginFloatingWindow(VirtualSpace))
+    {
+        goto release_vspace;
+    }
+    else if(BeginTiledWindow(Space, VirtualSpace))
+    {
+        goto out;
+    }
 
 release_vspace:
-        ReleaseVirtualSpace(VirtualSpace);
+    ReleaseVirtualSpace(VirtualSpace);
 free_space:
-        AXLibDestroySpace(Space);
+    AXLibDestroySpace(Space);
 out:;
 }
 
@@ -164,6 +209,19 @@ LeftMouseDragged()
             }
         }
     }
+    else if(ResizeState.Mode == Drag_Mode_Move_Floating)
+    {
+        local_persist float MinDiff = 2.5f;
+        CGPoint Cursor = AXLibGetCursorPos();
+        float DeltaX = Cursor.x - ResizeState.InitialCursor.x;
+        float DeltaY = Cursor.y - ResizeState.InitialCursor.y;
+        if(fabs(DeltaX) > MinDiff || fabs(DeltaY) > MinDiff)
+        {
+            AXLibSetWindowPosition(ResizeState.Window->Ref,
+                                   ResizeState.InitialRatioH + DeltaX,
+                                   ResizeState.InitialRatioV + DeltaY);
+        }
+    }
 }
 
 internal void
@@ -187,6 +245,10 @@ LeftMouseUp()
             AXLibDestroySpace(ResizeState.Space);
         }
 
+        memset(&ResizeState, 0, sizeof(resize_border_state));
+    }
+    else if(ResizeState.Mode == Drag_Mode_Move_Floating)
+    {
         memset(&ResizeState, 0, sizeof(resize_border_state));
     }
 }
