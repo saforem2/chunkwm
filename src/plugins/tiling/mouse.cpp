@@ -113,7 +113,10 @@ BeginFloatingWindow(virtual_space *VirtualSpace)
     macos_window *Window;
     CGPoint Cursor;
 
+    // TODO(koekeishiya): Replace this call with CGSFindWindowByGeometry()
+    // so that we can mouse-drag a window without having to make it focused !!
     Window = GetFocusedWindow();
+
     if((VirtualSpace->Mode == Virtual_Space_Float) ||
        (AXLibHasFlags(Window, Window_Float)))
     {
