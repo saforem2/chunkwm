@@ -20,6 +20,7 @@
 #define internal static
 #define local_persist static
 
+extern "C" OSStatus CGSFindWindowByGeometry(int cid, int zero, int one, int zero_again, CGPoint *screen_point, CGPoint *window_coords_out, int *wid_out, int *cid_out);
 extern macos_window *GetWindowByID(uint32_t Id);
 
 enum drag_mode
@@ -112,15 +113,29 @@ BeginFloatingWindow(virtual_space *VirtualSpace)
 {
     macos_window *Window;
     CGPoint Cursor;
+    int Connection;
+    int WindowId;
+    int WindowConnection;
+    CGPoint WindowPosition;
 
-    // TODO(koekeishiya): Replace this call with CGSFindWindowByGeometry()
-    // so that we can mouse-drag a window without having to make it focused !!
-    Window = GetFocusedWindow();
+    Connection = _CGSDefaultConnection();
+    Cursor = AXLibGetCursorPos();
+    WindowId = 0;
+
+    CGSFindWindowByGeometry(Connection, 0, 1, 0, &Cursor, &WindowPosition, &WindowId, &WindowConnection);
+    if((Connection != WindowConnection) &&
+       (WindowId > 0))
+    {
+        Window = GetWindowByID(WindowId);
+    }
+    else
+    {
+        Window =  GetFocusedWindow();
+    }
 
     if((VirtualSpace->Mode == Virtual_Space_Float) ||
        (AXLibHasFlags(Window, Window_Float)))
     {
-        Cursor = AXLibGetCursorPos();
         if((Cursor.x >= Window->Position.x) &&
            (Cursor.x <= Window->Position.x + Window->Size.width) &&
            (Cursor.y >= Window->Position.y) &&
