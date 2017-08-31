@@ -113,12 +113,11 @@ BeginFloatingWindow(virtual_space *VirtualSpace)
 {
     macos_window *Window;
     CGPoint Cursor;
-    int Connection;
     int WindowId;
     int WindowConnection;
     CGPoint WindowPosition;
 
-    Connection = _CGSDefaultConnection();
+    local_persist int Connection = _CGSDefaultConnection();
     Cursor = AXLibGetCursorPos();
     WindowId = 0;
 
