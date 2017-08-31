@@ -220,9 +220,19 @@ LeftMouseDragged()
         float DeltaY = Cursor.y - ResizeState.InitialCursor.y;
         if(fabs(DeltaX) > MinDiff || fabs(DeltaY) > MinDiff)
         {
-            AXLibSetWindowPosition(ResizeState.Window->Ref,
-                                   ResizeState.InitialRatioH + DeltaX,
-                                   ResizeState.InitialRatioV + DeltaY);
+            if(CVarIntegerValue(CVAR_WINDOW_CGS_MOVE))
+            {
+                ExtendedDockSetWindowPosition(ResizeState.Window->Id,
+                                              (int)(ResizeState.InitialRatioH + DeltaX),
+                                              (int)(ResizeState.InitialRatioV + DeltaY));
+            }
+            else
+            {
+                AXLibSetWindowPosition(ResizeState.Window->Ref,
+                                       (int)(ResizeState.InitialRatioH + DeltaX),
+                                       (int)(ResizeState.InitialRatioV + DeltaY));
+            }
+
         }
     }
 }

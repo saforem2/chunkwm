@@ -50,6 +50,7 @@
 #define CVAR_WINDOW_FADE_INACTIVE   "window_fade_inactive"
 #define CVAR_WINDOW_FADE_ALPHA      "window_fade_alpha"
 #define CVAR_WINDOW_FADE_DURATION   "window_fade_duration"
+#define CVAR_WINDOW_CGS_MOVE        "window_use_cgs_move"
 
 /*   ---------------------------------------------------------   */
 

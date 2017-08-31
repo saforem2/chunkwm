@@ -1658,6 +1658,7 @@ Init(chunkwm_api ChunkwmAPI)
     CreateCVar(CVAR_WINDOW_FADE_INACTIVE, 0);
     CreateCVar(CVAR_WINDOW_FADE_ALPHA, 0.85f);
     CreateCVar(CVAR_WINDOW_FADE_DURATION, 0.5f);
+    CreateCVar(CVAR_WINDOW_CGS_MOVE, 0);
 
     /*   ---------------------------------------------------------   */
 

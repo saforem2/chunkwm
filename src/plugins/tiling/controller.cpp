@@ -652,6 +652,18 @@ void TemporaryRatio(char *Ratio)
     UpdateCVar(CVAR_BSP_SPLIT_RATIO, FloatRatio);
 }
 
+void ExtendedDockSetWindowPosition(uint32_t WindowId, int X, int Y)
+{
+    int SockFD;
+    if(ConnectToDaemon(&SockFD, 5050))
+    {
+        char Message[64];
+        sprintf(Message, "window_move %d %d %d", WindowId, X, Y);
+        WriteToSocket(Message, SockFD);
+    }
+    CloseSocket(SockFD);
+}
+
 internal void
 ExtendedDockSetWindowLevel(macos_window *Window, int WindowLevelKey)
 {
