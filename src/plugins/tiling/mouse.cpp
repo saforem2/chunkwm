@@ -229,13 +229,14 @@ LeftMouseDragged()
     }
     else if(ResizeState.Mode == Drag_Mode_Move_Floating)
     {
+        local_persist int UseCGSMove = CVarIntegerValue(CVAR_WINDOW_CGS_MOVE);
         local_persist float MinDiff = 2.5f;
         CGPoint Cursor = AXLibGetCursorPos();
         float DeltaX = Cursor.x - ResizeState.InitialCursor.x;
         float DeltaY = Cursor.y - ResizeState.InitialCursor.y;
         if(fabs(DeltaX) > MinDiff || fabs(DeltaY) > MinDiff)
         {
-            if(CVarIntegerValue(CVAR_WINDOW_CGS_MOVE))
+            if(UseCGSMove)
             {
                 ExtendedDockSetWindowPosition(ResizeState.Window->Id,
                                               (int)(ResizeState.InitialRatioH + DeltaX),
