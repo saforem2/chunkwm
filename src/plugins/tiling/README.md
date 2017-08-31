@@ -21,6 +21,7 @@
   * [signal dock to fade inactive windows](#signal-dock-to-fade-inactive-windows)
   * [set the alpha value for faded windows](#set-the-target-alpha-value-for-faded-windows)
   * [set the time in seconds the fade animation should last](#set-the-time-in-seconds-the-fade-animation-should-last)
+  * [signal dock to move window when using mouse-drag on floating windows](#signal-dock-to-move-window-when-using-mouse-drag-on-floating-windows)
 * [window commands](#window-commands)
   * [close window](#close-window)
   * [focus window](#focus-window)
@@ -175,6 +176,12 @@
 ##### set the time in seconds the fade animation should last
 
     chunkc set window_fade_duration          0.5
+
+##### signal dock to move window when using mouse-drag on floating windows
+
+    chunkc set window_use_cgs_move           <option>
+    <option>: 1 | 0
+    desc: requires chwm-sa (https://github.com/koekeishiya/chwm-sa)
 
 ---
 
