@@ -262,11 +262,13 @@ OBSERVER_CALLBACK(ApplicationCallback)
     }
 }
 
+#define OBSERVER_RETRIES 20
+#define OBSERVER_DELAY 0.1f
 #define MICROSEC_PER_SEC 1e6
 internal void
-ConstructAndAddApplicationDispatch(macos_application *Application, carbon_application_details *Info)
+ConstructAndAddApplicationDispatch(macos_application *Application, carbon_application_details *Info, float Delay)
 {
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.5 * NSEC_PER_SEC), dispatch_get_main_queue(),
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, Delay * NSEC_PER_SEC), dispatch_get_main_queue(),
     ^{
         if(Info->State == Carbon_Application_State_In_Progress)
         {
@@ -286,7 +288,7 @@ ConstructAndAddApplicationDispatch(macos_application *Application, carbon_applic
                     AXLibDestroyObserver(&Application->Observer);
                 }
 
-                if(++Info->Attempts > 10)
+                if(++Info->Attempts > OBSERVER_RETRIES)
                 {
                     if(Info->State != Carbon_Application_State_Invalid)
                     {
@@ -294,7 +296,7 @@ ConstructAndAddApplicationDispatch(macos_application *Application, carbon_applic
                     }
                 }
 
-                ConstructAndAddApplicationDispatch(Application, Info);
+                ConstructAndAddApplicationDispatch(Application, Info, OBSERVER_DELAY);
             }
         }
         else if(Info->State == Carbon_Application_State_Failed)
@@ -318,7 +320,7 @@ void ConstructAndAddApplication(carbon_application_details *Info)
     Info->State = Carbon_Application_State_In_Progress;
     Info->Attempts = 0;
 
-    ConstructAndAddApplicationDispatch(Application, Info);
+    ConstructAndAddApplicationDispatch(Application, Info, 0.0f);
 }
 
 void RemoveAndDestroyApplication(macos_application *Application)
