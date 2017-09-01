@@ -29,8 +29,19 @@ enum carbon_process_policy
     Process_Policy_CarbonBackgroundOnly = (1 << 3),
 };
 
+enum carbon_application_state
+{
+    Carbon_Application_State_None,
+    Carbon_Application_State_In_Progress,
+    Carbon_Application_State_Finished,
+    Carbon_Application_State_Failed,
+    Carbon_Application_State_Invalid,
+};
+
 struct carbon_application_details
 {
+    carbon_application_state volatile State;
+    uint32_t volatile Attempts;
     char *ProcessName;
     uint32_t ProcessPolicy;
     bool ProcessBackground;

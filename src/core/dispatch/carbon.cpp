@@ -1,5 +1,6 @@
 #include "carbon.h"
 #include "event.h"
+#include "../state.h"
 
 #include <string.h>
 #include <unordered_map>
@@ -77,6 +78,14 @@ CacheRunningProcesses()
     }
 }
 
+internal bool
+IsProcessInteractive(carbon_application_details *Info)
+{
+    bool Result = ((!Info->ProcessBackground) &&
+                   (Info->ProcessPolicy == PROCESS_POLICY_REGULAR));
+    return Result;
+}
+
 internal OSStatus
 CarbonApplicationEventHandler(EventHandlerCallRef HandlerCallRef, EventRef Event, void *Refcon)
 {
@@ -101,7 +110,11 @@ CarbonApplicationEventHandler(EventHandlerCallRef HandlerCallRef, EventRef Event
             carbon_application_details *Info = BeginCarbonApplicationDetails(PSN);
             CarbonApplicationCache[PSN] = Info;
             PrintCarbonApplicationDetails(Info);
-            ConstructEvent(ChunkWM_ApplicationLaunched, Info);
+
+            if(IsProcessInteractive(Info))
+            {
+                ConstructAndAddApplication(Info);
+            }
         } break;
         case kEventAppTerminated:
         {
@@ -109,7 +122,16 @@ CarbonApplicationEventHandler(EventHandlerCallRef HandlerCallRef, EventRef Event
             if(Info)
             {
                 CarbonApplicationCache.erase(PSN);
-                ConstructEvent(ChunkWM_ApplicationTerminated, Info);
+
+                if(Info->State == Carbon_Application_State_In_Progress)
+                {
+                    Info->State = Carbon_Application_State_Invalid;
+                }
+                else if((Info->State == Carbon_Application_State_Finished) ||
+                        (Info->State == Carbon_Application_State_Failed))
+                {
+                    ConstructEvent(ChunkWM_ApplicationTerminated, Info);
+                }
             }
         } break;
     }

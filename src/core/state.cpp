@@ -263,54 +263,62 @@ OBSERVER_CALLBACK(ApplicationCallback)
 }
 
 #define MICROSEC_PER_SEC 1e6
-macos_application *ConstructAndAddApplication(ProcessSerialNumber PSN, pid_t PID, char *ProcessName)
+internal void
+ConstructAndAddApplicationDispatch(macos_application *Application, carbon_application_details *Info)
 {
-    macos_application *Application = AXLibConstructApplication(PSN, PID, ProcessName);
-    AddApplication(Application);
-
-    /* NOTE(koekeishiya): We need to wait for some amount of time before we can try to
-     * observe the launched application. The time to wait depends on how long the
-     * application in question takes to finish. Half a second is good enough for
-     * most applications so we 'usleep()' as a temporary fix for now, but we need a way
-     * to properly defer the creation of observers for applications that require more time.
-     *
-     * We cannot simply defer the creation automatically using dispatch_after, because
-     * there is simply no way to remove a dispatched event once it has been created.
-     * We need a way to tell a dispatched event to NOT execute and be rendered invalid,
-     * because some applications only live for a very very short amount of time.
-     * The dispatched event will then be triggered after a potential 'terminated' event
-     * has been received, in which the application reference has been freed.
-     *
-     * Passing an invalid reference to the AXObserver API does not simply trigger an error,
-     * but causes a full on segmentation fault. */
-
-    int Attempts = 0;
-    bool Success = AXLibAddApplicationObserver(Application, ApplicationCallback);
-    while(!Success && Attempts < 10)
-    {
-        if(Application->Observer.Valid)
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.5 * NSEC_PER_SEC), dispatch_get_main_queue(),
+    ^{
+        if(Info->State == Carbon_Application_State_In_Progress)
         {
-            AXLibDestroyObserver(&Application->Observer);
+            bool Success = AXLibAddApplicationObserver(Application, ApplicationCallback);
+            if(Success)
+            {
+                printf("%d:%s successfully registered window notifications\n", Application->PID, Application->Name);
+                Info->State = Carbon_Application_State_Finished;
+                AddApplication(Application);
+                AddApplicationWindowsToCollection(Application);
+                ConstructEvent(ChunkWM_ApplicationLaunched, Info);
+            }
+            else
+            {
+                if(Application->Observer.Valid)
+                {
+                    AXLibDestroyObserver(&Application->Observer);
+                }
+
+                if(++Info->Attempts > 10)
+                {
+                    if(Info->State != Carbon_Application_State_Invalid)
+                    {
+                        Info->State = Carbon_Application_State_Failed;
+                    }
+                }
+
+                ConstructAndAddApplicationDispatch(Application, Info);
+            }
         }
+        else if(Info->State == Carbon_Application_State_Failed)
+        {
+            fprintf(stderr, "%d:%s could not register window notifications!!!\n", Application->PID, Application->Name);
+            AXLibDestroyApplication(Application);
+        }
+        else if(Info->State == Carbon_Application_State_Invalid)
+        {
+            fprintf(stderr, "%d:%s process terminated; cancel registration of window notifications!!!\n", Application->PID, Application->Name);
+            AXLibDestroyApplication(Application);
+            ConstructEvent(ChunkWM_ApplicationTerminated, Info);
+        }
+    });
+}
 
-        usleep(0.5 * MICROSEC_PER_SEC);
-        Success = AXLibAddApplicationObserver(Application, ApplicationCallback);
-        ++Attempts;
-    }
+void ConstructAndAddApplication(carbon_application_details *Info)
+{
+    macos_application *Application = AXLibConstructApplication(Info->PSN, Info->PID, Info->ProcessName);
 
-    if(Success)
-    {
-        printf("%d:%s successfully registered window notifications\n", Application->PID, Application->Name);
-    }
-    else
-    {
-        fprintf(stderr, "%d:%s could not register window notifications!!!\n", Application->PID, Application->Name);
-    }
+    Info->State = Carbon_Application_State_In_Progress;
+    Info->Attempts = 0;
 
-    // NOTE(koekeishiya): An application can have multiple windows when it spawns. We need to track all of these.
-    AddApplicationWindowsToCollection(Application);
-
-    return Application;
+    ConstructAndAddApplicationDispatch(Application, Info);
 }
 
 void RemoveAndDestroyApplication(macos_application *Application)

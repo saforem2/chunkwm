@@ -153,30 +153,20 @@ bool BeginCallbackThreads(int Count)
     return true;
 }
 
-internal bool
-IsProcessInteractive(carbon_application_details *Info)
-{
-    bool Result = ((!Info->ProcessBackground) &&
-                   (Info->ProcessPolicy == PROCESS_POLICY_REGULAR));
-    return Result;
-}
-
 // NOTE(koekeishiya): Application-related callbacks.
 CHUNKWM_CALLBACK(Callback_ChunkWM_ApplicationLaunched)
 {
     carbon_application_details *Info = (carbon_application_details *) Event->Context;
     ASSERT(Info);
 
-    if(IsProcessInteractive(Info))
-    {
-        printf("%d:%s launched\n", Info->PID, Info->ProcessName);
-        macos_application *Application = ConstructAndAddApplication(Info->PSN, Info->PID, Info->ProcessName);
+    printf("%d:%s launched\n", Info->PID, Info->ProcessName);
+    macos_application *Application = GetApplicationFromPID(Info->PID);
+    ASSERT(Application);
 #if 0
-        ProcessPluginList(chunkwm_export_application_launched, Application);
+    ProcessPluginList(chunkwm_export_application_launched, Application);
 #else
-        ProcessPluginListThreaded(chunkwm_export_application_launched, Application);
+    ProcessPluginListThreaded(chunkwm_export_application_launched, Application);
 #endif
-    }
 }
 
 CHUNKWM_CALLBACK(Callback_ChunkWM_ApplicationTerminated)
