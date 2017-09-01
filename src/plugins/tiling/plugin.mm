@@ -82,7 +82,7 @@ extern "C" CGError CGSGetOnScreenWindowCount(const CGSConnectionID CID, CGSConne
 extern "C" CGError CGSGetOnScreenWindowList(const CGSConnectionID CID, CGSConnectionID TID, int Count, int *List, int *OutCount);
 
 internal const char *PluginName = "Tiling";
-internal const char *PluginVersion = "0.2.23";
+internal const char *PluginVersion = "0.2.24";
 
 internal macos_application_map Applications;
 internal macos_window_map Windows;
