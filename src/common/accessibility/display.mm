@@ -21,6 +21,7 @@ extern "C" CFStringRef CGSCopyManagedDisplayForSpace(const CGSConnectionID Conne
 extern "C" CFStringRef CGSCopyManagedDisplayForWindow(const CGSConnectionID Connection, uint32_t WindowId);
 extern "C" bool CGSManagedDisplayIsAnimating(const CGSConnectionID Connection, CFStringRef DisplayRef);
 
+extern "C" void CGSGetMenuBarAutohideEnabled(CGSConnectionID Connection, int *Status);;
 extern "C" Boolean CoreDockGetAutoHideEnabled(void);
 extern "C" float CoreDockGetTileSize(void);
 extern "C" void  CoreDockGetOrientationAndPinning(macos_dock_orientation *Orientation, int *Pinning);
@@ -575,17 +576,12 @@ bool AXLibStickyWindow(uint32_t WindowId)
     return Result;
 }
 
+
 bool AXLibIsMenuBarAutoHideEnabled()
 {
-    bool Result = false;
-    CFStringRef AutoHide = (CFStringRef) [[NSUserDefaults standardUserDefaults] stringForKey:@"_HIHideMenuBar"];
-    if(AutoHide)
-    {
-        Result = CFStringCompare(AutoHide, CFSTR("1"), 0) == kCFCompareEqualTo;
-        CFRelease(AutoHide);
-    }
-
-    return Result;
+    int Status = 0;
+    CGSGetMenuBarAutohideEnabled(CGSDefaultConnection, &Status);
+    return Status == 1;
 }
 
 bool AXLibIsDockAutoHideEnabled()
