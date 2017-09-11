@@ -19,7 +19,7 @@ region CGRectToRegion(CGRect Rect)
     return Result;
 }
 
-#define OSX_MENU_BAR_HEIGHT 20.0f
+#define OSX_MENU_BAR_HEIGHT 22.0f
 void ConstrainRegion(CFStringRef DisplayRef, region *Region)
 {
     // NOTE(koekeishiya): Automatically adjust padding to account for osx menubar status.
