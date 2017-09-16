@@ -1196,7 +1196,6 @@ ApplicationLaunchedHandler(void *Data)
         }
 
         free(WindowList);
-        ApplicationActivatedHandler(Data);
     }
 }
 

@@ -167,6 +167,12 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_ApplicationLaunched)
 #else
     ProcessPluginListThreaded(chunkwm_export_application_launched, Application);
 #endif
+
+    /* NOTE(koekeishiya): When an application is launched, we incorrectly
+     * receive the applicationActivated first. We discard that notification
+     * and restore it when we have the application to work with. */
+    workspace_application_details *WSInfo = BeginWorkspaceApplicationDetails(Info->ProcessName, Info->PSN, Info->PID);
+    ConstructEvent(ChunkWM_ApplicationActivated, WSInfo);
 }
 
 CHUNKWM_CALLBACK(Callback_ChunkWM_ApplicationTerminated)

@@ -31,6 +31,18 @@ BeginWorkspaceApplicationDetails(NSNotification *Notification)
     return Info;
 }
 
+workspace_application_details *BeginWorkspaceApplicationDetails(char *ProcessName, ProcessSerialNumber PSN, pid_t PID)
+{
+    workspace_application_details *Info =
+                    (workspace_application_details *) malloc(sizeof(workspace_application_details));
+
+    Info->ProcessName = strdup(ProcessName);
+    Info->PID = PID;
+    Info->PSN = PSN;
+
+    return Info;
+}
+
 // NOTE(koekeishiya): Make sure that the correct module frees memory.
 void EndWorkspaceApplicationDetails(workspace_application_details *Info)
 {

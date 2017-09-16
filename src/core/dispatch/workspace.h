@@ -12,5 +12,6 @@ struct workspace_application_details
 
 void BeginSharedWorkspace();
 void EndWorkspaceApplicationDetails(workspace_application_details *Info);
+workspace_application_details *BeginWorkspaceApplicationDetails(char *ProcessName, ProcessSerialNumber PSN, pid_t PID);
 
 #endif
