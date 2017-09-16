@@ -15,17 +15,42 @@
 #include "../../common/config/tokenize.cpp"
 #include "../../common/dispatch/cgeventtap.cpp"
 
+#define ArrayCount(a) (sizeof(a) / sizeof((*a)))
+#define internal static
+#define local_persist static
+
 extern "C" int CGSMainConnectionID(void);
+extern "C" CGError CGSGetWindowLevel(const int cid, int wid, int *wlvl);
 extern "C" OSStatus CGSFindWindowByGeometry(int cid, int zero, int one, int zero_again, CGPoint *screen_point, CGPoint *window_coords_out, int *wid_out, int *cid_out);
 extern "C" CGError CGSConnectionGetPID(const int cid, pid_t *pid);
-
-#define internal static
 
 internal event_tap EventTap;
 internal uint32_t MouseModifier;
 internal bool volatile IsActive;
 internal uint32_t volatile FocusedWindowId;
 internal chunkwm_api API;
+
+internal bool
+IsWindowLevelAllowed(int WindowLevel)
+{
+    local_persist int ValidWindowLevels[] =
+    {
+        CGWindowLevelForKey(kCGNormalWindowLevelKey),
+        CGWindowLevelForKey(kCGFloatingWindowLevelKey),
+        CGWindowLevelForKey(kCGModalPanelWindowLevelKey),
+    };
+    local_persist int Count = ArrayCount(ValidWindowLevels);
+
+    for(int Index = 0; Index < Count; ++Index)
+    {
+        if(WindowLevel == ValidWindowLevels[Index])
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
 
 internal inline void
 FocusWindow(uint32_t WindowID, pid_t WindowPID)
@@ -49,11 +74,8 @@ FocusWindow(uint32_t WindowID, pid_t WindowPID)
         int WindowRefWID = AXLibGetWindowID(WindowRef);
         if(WindowRefWID != WindowID) continue;
 
-        if(!AXLibIsWindowMinimized(WindowRef))
-        {
-            AXLibSetFocusedWindow(WindowRef);
-            AXLibSetFocusedApplication(WindowPID);
-        }
+        AXLibSetFocusedWindow(WindowRef);
+        AXLibSetFocusedApplication(WindowPID);
         break;
     }
 
@@ -67,7 +89,9 @@ internal inline void
 FocusFollowsMouse(CGEventRef Event)
 {
     pid_t WindowPid = 0;
-    int WindowId = 0, WindowConnection = 0;
+    int WindowId = 0;
+    int WindowLevel = 0;
+    int WindowConnection = 0;
     CGPoint WindowPosition;
 
     int Connection = CGSMainConnectionID();
@@ -76,6 +100,10 @@ FocusFollowsMouse(CGEventRef Event)
 
     if(Connection == WindowConnection) return;
     if(WindowId == FocusedWindowId)    return;
+
+    CGSGetWindowLevel(Connection, WindowId, &WindowLevel);
+    // printf("FFM: Window level %d\n", WindowLevel);
+    if(!IsWindowLevelAllowed(WindowLevel)) return;
 
     CGSConnectionGetPID(WindowConnection, &WindowPid);
     FocusWindow(WindowId, WindowPid);
