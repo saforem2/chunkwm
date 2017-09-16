@@ -65,22 +65,6 @@ void CenterMouseInWindow(macos_window *Window)
     CenterMouseInRegion(&Region);
 }
 
-internal void
-GetCenterOfWindow(virtual_space *VirtualSpace, macos_window *Window, float *X, float *Y)
-{
-    node *Node = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
-    if(Node)
-    {
-        *X = Node->Region.X + Node->Region.Width / 2;
-        *Y = Node->Region.Y + Node->Region.Height / 2;
-    }
-    else
-    {
-        *X = -1;
-        *Y = -1;
-    }
-}
-
 enum directions
 {
     Dir_Unknown,
@@ -118,14 +102,9 @@ WrapMonitorEdge(macos_space *Space, int Direction,
 }
 
 internal float
-GetWindowDistance(macos_space *Space, virtual_space *VirtualSpace,
-                  macos_window *A, macos_window *B,
-                  char *Op, bool Wrap)
+GetWindowDistance(macos_space *Space, float X1, float Y1,
+                  float X2, float Y2, char *Op, bool Wrap)
 {
-    float X1, Y1, X2, Y2;
-    GetCenterOfWindow(VirtualSpace, A, &X1, &Y1);
-    GetCenterOfWindow(VirtualSpace, B, &X2, &Y2);
-
     directions Direction = DirectionFromString(Op);
     if(Wrap)
     {
@@ -167,36 +146,25 @@ GetWindowDistance(macos_space *Space, virtual_space *VirtualSpace,
 }
 
 internal bool
-WindowIsInDirection(virtual_space *VirtualSpace, char *Op,
-                    macos_window *WindowA, macos_window *WindowB)
+WindowIsInDirection(char *Op, float X1, float Y1, float W1, float H1,
+                    float X2, float Y2, float W2, float H2)
 {
     bool Result = false;
 
-    node *NodeA = GetNodeWithId(VirtualSpace->Tree, WindowA->Id, VirtualSpace->Mode);
-    node *NodeB = GetNodeWithId(VirtualSpace->Tree, WindowB->Id, VirtualSpace->Mode);
-
-    if(NodeA && NodeB && NodeA != NodeB)
+    directions Direction = DirectionFromString(Op);
+    switch(Direction)
     {
-        region *A = &NodeA->Region;
-        region *B = &NodeB->Region;
-
-        directions Direction = DirectionFromString(Op);
-        switch(Direction)
+        case Dir_North:
+        case Dir_South:
         {
-            case Dir_North:
-            case Dir_South:
-            {
-                Result = (A->Y != B->Y) &&
-                         (fmax(A->X, B->X) < fmin(B->X + B->Width, A->X + A->Width));
-            } break;
-            case Dir_East:
-            case Dir_West:
-            {
-                Result = (A->X != B->X) &&
-                         (fmax(A->Y, B->Y) < fmin(B->Y + B->Height, A->Y + A->Height));
-            } break;
-            case Dir_Unknown: { /* NOTE(koekeishiya) compiler warning.. */ } break;
-        }
+            Result = (Y1 != Y2) && (fmax(X1, X2) < fmin(X2 + W2, X1 + W1));
+        } break;
+        case Dir_East:
+        case Dir_West:
+        {
+            Result = (X1 != X2) && (fmax(Y1, Y2) < fmin(Y2 + H2, Y1 + H1));
+        } break;
+        case Dir_Unknown: { /* NOTE(koekeishiya) compiler warning.. */ } break;
     }
 
     return Result;
@@ -212,19 +180,83 @@ bool FindClosestWindow(macos_space *Space, virtual_space *VirtualSpace,
     for(int Index = 0; Index < Windows.size(); ++Index)
     {
         macos_window *Window = GetWindowByID(Windows[Index]);
-        if((Window) &&
-           (Match->Id != Window->Id) &&
-           (WindowIsInDirection(VirtualSpace, Direction, Match, Window)))
+        if((!Window) || (Match->Id == Window->Id)) continue;
+
+        node *NodeA = GetNodeWithId(VirtualSpace->Tree, Match->Id, VirtualSpace->Mode);
+        node *NodeB = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
+        if((!NodeA) || (!NodeB) || NodeA == NodeB) continue;
+
+        region *A = &NodeA->Region;
+        region *B = &NodeB->Region;
+
+        if(WindowIsInDirection(Direction,
+                               A->X, A->Y, A->Width, A->Height,
+                               B->X, B->Y, B->Width, B->Height))
         {
-            float Dist = GetWindowDistance(Space, VirtualSpace,
-                                           Match, Window,
-                                           Direction, Wrap);
+            float X1 = A->X + A->Width / 2;
+            float Y1 = A->Y + A->Height / 2;
+            float X2 = B->X + B->Width / 2;
+            float Y2 = B->Y + B->Height / 2;
+            float Dist = GetWindowDistance(Space, X1, Y1, X2, Y2, Direction, Wrap);
             if(Dist < MinDist)
             {
                 MinDist = Dist;
                 *ClosestWindow = Window;
             }
         }
+    }
+
+    return MinDist != 0xFFFFFFFF;
+}
+
+internal bool
+FindClosestFullscreenWindow(macos_space *Space, macos_window *Match,
+                            macos_window **ClosestWindow, char *Direction, bool Wrap)
+{
+    float MinDist = 0xFFFFFFFF;
+    std::vector<uint32_t> Windows = GetAllVisibleWindowsForSpace(Space, true, false);
+
+    char *OriginalDirection = NULL;
+    if(StringEquals(Direction, "prev"))
+    {
+        OriginalDirection = Direction;
+        Direction = strdup("west");
+    }
+    else if(StringEquals(Direction, "next"))
+    {
+        OriginalDirection = Direction;
+        Direction = strdup("east");
+    }
+
+    for(int Index = 0; Index < Windows.size(); ++Index)
+    {
+        macos_window *Window = GetWindowByID(Windows[Index]);
+        if((!Window) || (Match->Id == Window->Id)) continue;
+
+        macos_window *A = Match;
+        macos_window *B = Window;
+
+        if(WindowIsInDirection(Direction,
+                               A->Position.x, A->Position.y, A->Size.width, A->Size.height,
+                               B->Position.x, B->Position.y, B->Size.width, B->Size.height))
+        {
+            float X1 = A->Position.x + A->Size.width / 2;
+            float Y1 = A->Position.y + A->Size.height / 2;
+            float X2 = B->Position.x + B->Size.width / 2;
+            float Y2 = B->Position.y + B->Size.height / 2;
+            float Dist = GetWindowDistance(Space, X1, Y1, X2, Y2, Direction, Wrap);
+            if(Dist < MinDist)
+            {
+                MinDist = Dist;
+                *ClosestWindow = Window;
+            }
+        }
+    }
+
+    if(OriginalDirection)
+    {
+        free(Direction);
+        Direction = OriginalDirection;
     }
 
     return MinDist != 0xFFFFFFFF;
@@ -290,6 +322,22 @@ void CloseWindow(char *Unused)
     }
 }
 
+void FocusWindowInFullscreenSpace(macos_space *Space, char *Direction)
+{
+    macos_window *Window = GetFocusedWindow();
+    if(!Window) return;
+
+    char *FocusCycleMode = CVarStringValue(CVAR_WINDOW_FOCUS_CYCLE);
+    bool WrapMonitor = StringEquals(FocusCycleMode, Window_Focus_Cycle_Monitor);
+
+    macos_window *ClosestWindow;
+    if(FindClosestFullscreenWindow(Space, Window, &ClosestWindow, Direction, WrapMonitor))
+    {
+        AXLibSetFocusedWindow(ClosestWindow->Ref);
+        AXLibSetFocusedApplication(ClosestWindow->Owner->PSN);
+    }
+}
+
 void FocusWindow(char *Direction)
 {
     bool Success;
@@ -308,6 +356,10 @@ void FocusWindow(char *Direction)
 
     if(Space->Type != kCGSSpaceUser)
     {
+        if(Space->Type == kCGSSpaceFullscreen)
+        {
+            FocusWindowInFullscreenSpace(Space, Direction);
+        }
         goto space_free;
     }
 
