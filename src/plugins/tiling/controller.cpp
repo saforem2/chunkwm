@@ -328,7 +328,9 @@ void FocusWindowInFullscreenSpace(macos_space *Space, char *Direction)
     if(!Window) return;
 
     char *FocusCycleMode = CVarStringValue(CVAR_WINDOW_FOCUS_CYCLE);
-    bool WrapMonitor = StringEquals(FocusCycleMode, Window_Focus_Cycle_Monitor);
+    bool WrapMonitor = StringEquals(FocusCycleMode, Window_Focus_Cycle_All)
+                     ? AXLibDisplayCount() == 1
+                     : StringEquals(FocusCycleMode, Window_Focus_Cycle_Monitor);
 
     macos_window *ClosestWindow;
     if(FindClosestFullscreenWindow(Space, Window, &ClosestWindow, Direction, WrapMonitor))
