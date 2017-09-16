@@ -1106,90 +1106,6 @@ space_free:
 }
 
 internal void
-ApplicationLaunchedHandler(void *Data)
-{
-    macos_application *Application = (macos_application *) Data;
-
-    macos_window **WindowList = AXLibWindowListForApplication(Application);
-    if(WindowList)
-    {
-        macos_window **List = WindowList;
-        macos_window *Window;
-        while((Window = *List++))
-        {
-            if(GetWindowByID(Window->Id))
-            {
-                AXLibDestroyWindow(Window);
-            }
-            else
-            {
-                AddWindowToCollection(Window);
-                if(RuleChangedDesktop(Window->Flags)) continue;
-                if(RuleTiledWindow(Window->Flags))    continue;
-                TileWindow(Window);
-            }
-        }
-
-        free(WindowList);
-    }
-}
-
-internal void
-ApplicationTerminatedHandler(void *Data)
-{
-    macos_application *Application = (macos_application *) Data;
-
-    RemoveApplication(Application);
-    RebalanceWindowTree();
-}
-
-internal void
-ApplicationHiddenHandler(void *Data)
-{
-    // macos_application *Application = (macos_application *) Data;
-    RebalanceWindowTree();
-}
-
-internal void
-ApplicationUnhiddenHandler(void *Data)
-{
-    macos_application *Application = (macos_application *) Data;
-
-    macos_space *Space;
-    macos_window *Window, **List, **WindowList;
-
-    bool Success = AXLibActiveSpace(&Space);
-    ASSERT(Success);
-
-    if(Space->Type != kCGSSpaceUser)
-    {
-        goto space_free;
-    }
-
-    List = WindowList = AXLibWindowListForApplication(Application);
-    if(!WindowList)
-    {
-        goto space_free;
-    }
-
-    while((Window = *List++))
-    {
-        if((GetWindowByID(Window->Id)) &&
-           (AXLibSpaceHasWindow(Space->Id, Window->Id)))
-        {
-            TileWindow(Window);
-        }
-
-        AXLibDestroyWindow(Window);
-    }
-
-    free(WindowList);
-
-space_free:
-    AXLibDestroySpace(Space);
-}
-
-internal void
 WindowFocusedHandler(uint32_t WindowId)
 {
     uint32_t FocusedWindowId = CVarUnsignedValue(CVAR_FOCUSED_WINDOW);
@@ -1252,6 +1168,91 @@ ApplicationActivatedHandler(void *Data)
         CFRelease(WindowRef);
         WindowFocusedHandler(WindowId);
     }
+}
+
+internal void
+ApplicationLaunchedHandler(void *Data)
+{
+    macos_application *Application = (macos_application *) Data;
+
+    macos_window **WindowList = AXLibWindowListForApplication(Application);
+    if(WindowList)
+    {
+        macos_window **List = WindowList;
+        macos_window *Window;
+        while((Window = *List++))
+        {
+            if(GetWindowByID(Window->Id))
+            {
+                AXLibDestroyWindow(Window);
+            }
+            else
+            {
+                AddWindowToCollection(Window);
+                if(RuleChangedDesktop(Window->Flags)) continue;
+                if(RuleTiledWindow(Window->Flags))    continue;
+                TileWindow(Window);
+            }
+        }
+
+        free(WindowList);
+        ApplicationActivatedHandler(Data);
+    }
+}
+
+internal void
+ApplicationTerminatedHandler(void *Data)
+{
+    macos_application *Application = (macos_application *) Data;
+
+    RemoveApplication(Application);
+    RebalanceWindowTree();
+}
+
+internal void
+ApplicationHiddenHandler(void *Data)
+{
+    // macos_application *Application = (macos_application *) Data;
+    RebalanceWindowTree();
+}
+
+internal void
+ApplicationUnhiddenHandler(void *Data)
+{
+    macos_application *Application = (macos_application *) Data;
+
+    macos_space *Space;
+    macos_window *Window, **List, **WindowList;
+
+    bool Success = AXLibActiveSpace(&Space);
+    ASSERT(Success);
+
+    if(Space->Type != kCGSSpaceUser)
+    {
+        goto space_free;
+    }
+
+    List = WindowList = AXLibWindowListForApplication(Application);
+    if(!WindowList)
+    {
+        goto space_free;
+    }
+
+    while((Window = *List++))
+    {
+        if((GetWindowByID(Window->Id)) &&
+           (AXLibSpaceHasWindow(Space->Id, Window->Id)))
+        {
+            TileWindow(Window);
+        }
+
+        AXLibDestroyWindow(Window);
+    }
+
+    free(WindowList);
+
+space_free:
+    AXLibDestroySpace(Space);
 }
 
 internal void
