@@ -62,6 +62,7 @@
       * [query list of windows on focused desktop](#query-list-of-windows-on-focused-desktop)
   * [query monitor related](#query-monitor-related)
       * [query focused monitor](#query-focused-monitor-id)
+      * [query monitor count](#query-monitor-count)
 
 ---
 
@@ -434,4 +435,9 @@ See the following sections for how to retrieve information about an open window:
 ##### query focused monitor id
 
     chunkc tiling::query --monitor id
-    short flag: d
+    short flag: m
+
+##### query monitor count
+
+    chunkc tiling::query --monitor count
+    short flag: m

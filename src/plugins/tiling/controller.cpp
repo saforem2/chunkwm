@@ -2508,10 +2508,22 @@ out:
     WriteToSocket(Message, SockFD);
 }
 
+internal inline void
+QueryMonitorCount(int SockFD)
+{
+    char Message[512];
+    snprintf(Message, sizeof(Message), "%d", AXLibDisplayCount());
+    WriteToSocket(Message, SockFD);
+}
+
 void QueryMonitor(char *Op, int SockFD)
 {
     if(StringEquals(Op, "id"))
     {
         QueryFocusedMonitor(SockFD);
+    }
+    else if(StringEquals(Op, "count"))
+    {
+        QueryMonitorCount(SockFD);
     }
 }
