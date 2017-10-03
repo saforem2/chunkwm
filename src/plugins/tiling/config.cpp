@@ -541,6 +541,8 @@ query_func QueryCommandDispatch(char Flag)
         case 'w': return QueryWindow;             break;
         case 'd': return QueryDesktop;            break;
         case 'm': return QueryMonitor;            break;
+        case 'D': return QueryDesktopsForMonitor; break;
+        case 'M': return QueryMonitorForDesktop;  break;
 
         // NOTE(koekeishiya): silence compiler warning.
         default: return 0; break;
@@ -554,13 +556,15 @@ ParseQueryCommand(const char *Message, command *Chain)
 
     int Option;
     bool Success = true;
-    const char *Short = "w:d:m:";
+    const char *Short = "w:d:m:D:M:";
 
     struct option Long[] =
     {
         { "window", required_argument, NULL, 'w' },
         { "desktop", required_argument, NULL, 'd' },
         { "monitor", required_argument, NULL, 'm' },
+        { "desktops-for-monitor", required_argument, NULL, 'D' },
+        { "monitor-for-desktop", required_argument, NULL, 'M' },
         { NULL, 0, NULL, 0 }
     };
 
@@ -602,7 +606,7 @@ ParseQueryCommand(const char *Message, command *Chain)
                 }
                 else
                 {
-                    fprintf(stderr, "    invalid selector '%s' for window flag '%c'\n", optarg, Option);
+                    fprintf(stderr, "    invalid selector '%s' for desktop flag '%c'\n", optarg, Option);
                     Success = false;
                     FreeCommandChain(Chain);
                     goto End;
@@ -619,7 +623,25 @@ ParseQueryCommand(const char *Message, command *Chain)
                 }
                 else
                 {
-                    fprintf(stderr, "    invalid selector '%s' for window flag '%c'\n", optarg, Option);
+                    fprintf(stderr, "    invalid selector '%s' for monitor flag '%c'\n", optarg, Option);
+                    Success = false;
+                    FreeCommandChain(Chain);
+                    goto End;
+                }
+            } break;
+            case 'D':
+            case 'M':
+            {
+                int Integer;
+                if(sscanf(optarg, "%d", &Integer) == 1)
+                {
+                    command *Entry = ConstructCommand(Option, optarg);
+                    Command->Next = Entry;
+                    Command = Entry;
+                }
+                else
+                {
+                    fprintf(stderr, "    invalid selector '%s' for flag '%c'\n", optarg, Option);
                     Success = false;
                     FreeCommandChain(Chain);
                     goto End;

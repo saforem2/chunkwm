@@ -63,6 +63,8 @@
   * [query monitor related](#query-monitor-related)
       * [query focused monitor](#query-focused-monitor-id)
       * [query monitor count](#query-monitor-count)
+  * [query desktops for monitor](#query-desktops-for-monitor)
+  * [query monitor for desktop](#query-monitor-for-desktop)
 
 ---
 
@@ -441,3 +443,13 @@ See the following sections for how to retrieve information about an open window:
 
     chunkc tiling::query --monitor count
     short flag: m
+
+##### query desktops for monitor
+
+    chunkc tiling::query --desktops-for-monitor <monitor id>
+    short flag: D
+
+##### query monitor for desktop
+
+    chunkc tiling::query --monitor-for-desktop <desktop id>
+    short flag: M

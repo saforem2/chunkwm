@@ -491,6 +491,52 @@ void AXLibSpaceRemoveWindow(CGSSpaceID SpaceId, uint32_t WindowId)
     CGSRemoveWindowsFromSpaces(CGSDefaultConnection, (__bridge CFArrayRef)NSArrayWindow, (__bridge CFArrayRef)NSArraySourceSpace);
 }
 
+internal void
+AXLibCountSpacesForDisplay(NSDictionary *DisplayDictionary, unsigned *Count)
+{
+    NSArray *SpaceDictionaries = DisplayDictionary[@"Spaces"];
+    for(NSDictionary *SpaceDictionary in SpaceDictionaries)
+    {
+        CGSSpaceID CurrentSpaceId = [SpaceDictionary[@"id64"] intValue];
+        CGSSpaceType CurrentSpaceType = CGSSpaceGetType(CGSDefaultConnection, CurrentSpaceId);
+        if(CurrentSpaceType == kCGSSpaceUser) *Count += 1;
+    }
+}
+
+int *AXLibSpacesForDisplay(CFStringRef DisplayRef, int *Count)
+{
+    int *Result = NULL;
+    unsigned DesktopIndex = 0;
+    unsigned DesktopCount = 0;
+
+    NSString *CurrentIdentifier = (__bridge NSString *) DisplayRef;
+    CFArrayRef DisplayDictionaries = CGSCopyManagedDisplaySpaces(CGSDefaultConnection);
+    for(NSDictionary *DisplayDictionary in (__bridge NSArray *) DisplayDictionaries)
+    {
+        NSString *DisplayIdentifier = DisplayDictionary[@"Display Identifier"];
+        if([DisplayIdentifier isEqualToString:CurrentIdentifier])
+        {
+            AXLibCountSpacesForDisplay(DisplayDictionary, &DesktopCount);
+            break;
+        }
+        else
+        {
+            AXLibCountSpacesForDisplay(DisplayDictionary, &DesktopIndex);
+        }
+    }
+
+    Result = (int *) malloc(sizeof(int *) * DesktopCount);
+    *Count = DesktopCount;
+
+    for(int Index = 0; Index < DesktopCount; ++Index)
+    {
+        Result[Index] = DesktopIndex + (Index + 1);
+    }
+
+    CFRelease(DisplayDictionaries);
+    return Result;
+}
+
 /* NOTE(koekeishiya): Returns a list of macos_space * structs that show this window.
  * The list is terminated by a null-pointer and can be iterated in the following way:
  *

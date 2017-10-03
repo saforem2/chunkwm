@@ -2527,3 +2527,60 @@ void QueryMonitor(char *Op, int SockFD)
         QueryMonitorCount(SockFD);
     }
 }
+
+void QueryDesktopsForMonitor(char *Op, int SockFD)
+{
+    int MonitorId, Arrangement;
+    if(sscanf(Op, "%d", &MonitorId) != 1) return;
+
+    int DisplayCount = AXLibDisplayCount();
+    if(MonitorId > DisplayCount) return;
+
+    Arrangement = MonitorId - 1;
+    if(Arrangement < 0) return;
+
+    CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromArrangement(Arrangement);
+    ASSERT(DisplayRef);
+
+    int Count = 0;
+    int *Desktops = AXLibSpacesForDisplay(DisplayRef, &Count);
+    ASSERT(Desktops);
+
+    size_t BufferSize = 512;
+    size_t BytesWritten = 0;
+    char Message[BufferSize];
+    char *Cursor = Message;
+    char *EndOfBuffer = Cursor + BufferSize;
+
+    for(int Index = 0; Index < Count; ++Index)
+    {
+        ASSERT(Cursor < EndOfBuffer);
+        BytesWritten = snprintf(Cursor, BufferSize, "%d ", Desktops[Index]);
+        ASSERT(BytesWritten >= 0);
+        Cursor += BytesWritten;
+        BufferSize -= BytesWritten;
+    }
+
+    // NOTE(koekeishiya): Overwrite trailing whitespace
+    Cursor[-1] = '\0';
+    WriteToSocket(Message, SockFD);
+
+    free(Desktops);
+    CFRelease(DisplayRef);
+}
+
+void QueryMonitorForDesktop(char *Op, int SockFD)
+{
+    int DesktopId;
+    if(sscanf(Op, "%d", &DesktopId) != 1) return;
+
+    CGSSpaceID SpaceId;
+    unsigned Arrangement;
+    bool Success = AXLibCGSSpaceIDFromDesktopID(DesktopId, &Arrangement, &SpaceId);
+    if(Success)
+    {
+        char Message[32];
+        snprintf(Message, sizeof(Message), "%d", Arrangement + 1);
+        WriteToSocket(Message, SockFD);
+    }
+}
