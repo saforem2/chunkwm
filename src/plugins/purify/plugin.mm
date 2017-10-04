@@ -89,6 +89,9 @@ PLUGIN_BOOL_FUNC(PluginInit)
 {
     API = ChunkwmAPI;
 
+    /* NOTE(koekeishiya): Disable shadows for existing windows.
+     * This only works for windows on the currently active desktop !!!
+     */
     uint32_t ProcessPolicy = Process_Policy_Regular;
     std::vector<macos_application *> Applications = AXLibRunningProcesses(ProcessPolicy);
     for(size_t Index = 0; Index < Applications.size(); ++Index)
