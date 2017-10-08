@@ -264,50 +264,52 @@ FindClosestFullscreenWindow(macos_space *Space, macos_window *Match,
 
 internal bool
 FindWindowUndirected(macos_space *Space, virtual_space *VirtualSpace,
-                     macos_window *Window, macos_window **ClosestWindow,
+                     node *WindowNode, macos_window **ClosestWindow,
                      char *Direction, bool WrapMonitor)
 {
     bool Result = false;
     if(StringEquals(Direction, "prev"))
     {
-        node *WindowNode = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
-        if(WindowNode)
+        node *PrevNode = GetPrevLeafNode(WindowNode);
+        if(PrevNode)
         {
-            node *PrevNode = GetPrevLeafNode(WindowNode);
-            if(PrevNode)
-            {
-                *ClosestWindow = GetWindowByID(PrevNode->WindowId);
-                ASSERT(*ClosestWindow);
-                Result = true;
-            }
-            else if(WrapMonitor)
-            {
-                PrevNode = GetLastLeafNode(VirtualSpace->Tree);
-                *ClosestWindow = GetWindowByID(PrevNode->WindowId);
-                ASSERT(*ClosestWindow);
-                Result = true;
-            }
+            *ClosestWindow = GetWindowByID(PrevNode->WindowId);
+            ASSERT(*ClosestWindow);
+            Result = true;
+        }
+        else if(WrapMonitor)
+        {
+            PrevNode = GetLastLeafNode(VirtualSpace->Tree);
+            *ClosestWindow = GetWindowByID(PrevNode->WindowId);
+            ASSERT(*ClosestWindow);
+            Result = true;
         }
     }
     else if(StringEquals(Direction, "next"))
     {
-        node *WindowNode = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
-        if(WindowNode)
+        node *NextNode = GetNextLeafNode(WindowNode);
+        if(NextNode)
         {
-            node *NextNode = GetNextLeafNode(WindowNode);
-            if(NextNode)
-            {
-                *ClosestWindow = GetWindowByID(NextNode->WindowId);
-                ASSERT(*ClosestWindow);
-                Result = true;
-            }
-            else if(WrapMonitor)
-            {
-                NextNode = GetFirstLeafNode(VirtualSpace->Tree);
-                *ClosestWindow = GetWindowByID(NextNode->WindowId);
-                ASSERT(*ClosestWindow);
-                Result = true;
-            }
+            *ClosestWindow = GetWindowByID(NextNode->WindowId);
+            ASSERT(*ClosestWindow);
+            Result = true;
+        }
+        else if(WrapMonitor)
+        {
+            NextNode = GetFirstLeafNode(VirtualSpace->Tree);
+            *ClosestWindow = GetWindowByID(NextNode->WindowId);
+            ASSERT(*ClosestWindow);
+            Result = true;
+        }
+    }
+    else if(StringEquals(Direction, "biggest"))
+    {
+        node *BiggestNode = GetBiggestLeafNode(VirtualSpace->Tree);
+        if(BiggestNode)
+        {
+            *ClosestWindow = GetWindowByID(BiggestNode->WindowId);
+            ASSERT(*ClosestWindow);
+            Result = true;
         }
     }
     return Result;
@@ -377,11 +379,14 @@ void FocusWindow(char *Direction)
         char *FocusCycleMode = CVarStringValue(CVAR_WINDOW_FOCUS_CYCLE);
         ASSERT(FocusCycleMode);
 
+        node *WindowNode = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
+        ASSERT(WindowNode);
+
         if(StringEquals(FocusCycleMode, Window_Focus_Cycle_All))
         {
             bool WrapMonitor = AXLibDisplayCount() == 1;
             macos_window *ClosestWindow;
-            if((FindWindowUndirected(Space, VirtualSpace, Window, &ClosestWindow, Direction, WrapMonitor)) ||
+            if((FindWindowUndirected(Space, VirtualSpace, WindowNode, &ClosestWindow, Direction, WrapMonitor)) ||
                (FindClosestWindow(Space, VirtualSpace, Window, &ClosestWindow, Direction, WrapMonitor)))
             {
                 AXLibSetFocusedWindow(ClosestWindow->Ref);
@@ -402,7 +407,7 @@ void FocusWindow(char *Direction)
         {
             bool WrapMonitor = StringEquals(FocusCycleMode, Window_Focus_Cycle_Monitor);
             macos_window *ClosestWindow;
-            if((FindWindowUndirected(Space, VirtualSpace, Window, &ClosestWindow, Direction, WrapMonitor)) ||
+            if((FindWindowUndirected(Space, VirtualSpace, WindowNode, &ClosestWindow, Direction, WrapMonitor)) ||
                (FindClosestWindow(Space, VirtualSpace, Window, &ClosestWindow, Direction, WrapMonitor)))
             {
                 AXLibSetFocusedWindow(ClosestWindow->Ref);
@@ -523,7 +528,7 @@ void SwapWindow(char *Direction)
             goto vspace_release;
         }
 
-        if(!FindWindowUndirected(Space, VirtualSpace, Window, &ClosestWindow, Direction, false))
+        if(!FindWindowUndirected(Space, VirtualSpace, WindowNode, &ClosestWindow, Direction, false))
         {
             if(!FindClosestWindow(Space, VirtualSpace, Window, &ClosestWindow, Direction, false))
             {
@@ -617,7 +622,10 @@ void WarpWindow(char *Direction)
 
     if(VirtualSpace->Mode == Virtual_Space_Bsp)
     {
-        if(!FindWindowUndirected(Space, VirtualSpace, Window, &ClosestWindow, Direction, false))
+        WindowNode = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
+        ASSERT(WindowNode);
+
+        if(!FindWindowUndirected(Space, VirtualSpace, WindowNode, &ClosestWindow, Direction, false))
         {
             if(!FindClosestWindow(Space, VirtualSpace, Window, &ClosestWindow, Direction, false))
             {
@@ -625,8 +633,6 @@ void WarpWindow(char *Direction)
             }
         }
 
-        WindowNode = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
-        ASSERT(WindowNode);
         ClosestNode = GetNodeWithId(VirtualSpace->Tree, ClosestWindow->Id, VirtualSpace->Mode);
         ASSERT(ClosestNode);
 
@@ -1356,7 +1362,7 @@ void AdjustWindowRatio(char *Direction)
         goto vspace_release;
     }
 
-    if(!FindWindowUndirected(Space, VirtualSpace, Window, &ClosestWindow, Direction, false))
+    if(!FindWindowUndirected(Space, VirtualSpace, WindowNode, &ClosestWindow, Direction, false))
     {
         if(!FindClosestWindow(Space, VirtualSpace, Window, &ClosestWindow, Direction, false))
         {

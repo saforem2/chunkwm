@@ -110,6 +110,7 @@ bool IsNodeInTree(node *Tree, node *Node);
 
 node *GetFirstLeafNode(node *Tree);
 node *GetLastLeafNode(node *Tree);
+node *GetBiggestLeafNode(node *Tree);
 node *GetFirstMinDepthLeafNode(node *Root);
 node *GetFirstMinDepthPseudoLeafNode(node *Root);
 node *GetLowestCommonAncestor(node *A, node *B);

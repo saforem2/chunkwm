@@ -370,6 +370,24 @@ node *GetLastLeafNode(node *Tree)
     return Node;
 }
 
+node *GetBiggestLeafNode(node *Tree)
+{
+    node *Result = NULL;
+    unsigned int BestArea = 0;
+    for(node *Node = GetFirstLeafNode(Tree);
+        Node != NULL;
+        Node = GetNextLeafNode(Node))
+    {
+        unsigned int Area = Node->Region.Width * Node->Region.Height;
+        if(Area > BestArea)
+        {
+            Result = Node;
+            BestArea = Area;
+        }
+    }
+    return Result;
+}
+
 node *GetFirstMinDepthLeafNode(node *Tree)
 {
     std::queue<node *> Queue;
