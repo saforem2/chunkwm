@@ -1999,7 +1999,8 @@ void FocusMonitor(char *Op)
             {
                 char *FocusCycleMode = CVarStringValue(CVAR_WINDOW_FOCUS_CYCLE);
                 ASSERT(FocusCycleMode);
-                if(StringEquals(FocusCycleMode, Window_Focus_Cycle_All))
+                if((StringEquals(FocusCycleMode, Window_Focus_Cycle_All)) ||
+                   (CVarIntegerValue(CVAR_MONITOR_FOCUS_CYCLE)))
                 {
                     DestinationMonitor = AXLibDisplayCount() - 1;
                     FocusMonitor(DestinationMonitor);
@@ -2016,7 +2017,8 @@ void FocusMonitor(char *Op)
             {
                 char *FocusCycleMode = CVarStringValue(CVAR_WINDOW_FOCUS_CYCLE);
                 ASSERT(FocusCycleMode);
-                if(StringEquals(FocusCycleMode, Window_Focus_Cycle_All))
+                if((StringEquals(FocusCycleMode, Window_Focus_Cycle_All)) ||
+                   (CVarIntegerValue(CVAR_MONITOR_FOCUS_CYCLE)))
                 {
                     DestinationMonitor = 0;
                     FocusMonitor(DestinationMonitor);

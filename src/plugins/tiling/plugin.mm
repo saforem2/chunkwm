@@ -1638,6 +1638,7 @@ Init(chunkwm_api ChunkwmAPI)
     CreateCVar(CVAR_BSP_SPLIT_RATIO, 0.5f);
     CreateCVar(CVAR_BSP_SPLIT_MODE, node_split_str[Split_Optimal]);
 
+    CreateCVar(CVAR_MONITOR_FOCUS_CYCLE, 0);
     CreateCVar(CVAR_WINDOW_FOCUS_CYCLE, "none");
 
     CreateCVar(CVAR_MOUSE_FOLLOWS_FOCUS, 1);

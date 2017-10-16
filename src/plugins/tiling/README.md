@@ -11,6 +11,7 @@
   * [set optimal ratio used by bsp_split_mode optimal](#set-optimal-ratio-used-by-bsp_split_mode-optimal)
   * [configure how regions are split](#configure-how-regions-are-split)
   * [configure ratio used when regions are split](#configure-ratio-used-when-regions-are-split)
+  * [set wrap behaviour for monitor focus command](#set-wrap-behaviour-for-monitor-focus-command)
   * [set wrap behaviour for window focus command](#set-wrap-behaviour-for-window-focus-command)
   * [set state of mouse follows focus](#set-state-of-mouse-follows-focus)
   * [set modifier used for mouse interaction](#set-modifier-used-for-mouse-interaction)
@@ -127,6 +128,11 @@
 
     chunkc set bsp_split_ratio               <option>
     <option>: 0 < value < 1
+
+##### set wrap behaviour for monitor focus command
+
+    chunkc set monitor_focus_cycle           <option>
+    <option>: 1 | 0
 
 ##### set wrap behaviour for window focus command
 
