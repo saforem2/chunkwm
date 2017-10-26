@@ -1239,13 +1239,13 @@ ApplicationUnhiddenHandler(void *Data)
 
     while((Window = *List++))
     {
-        if((GetWindowByID(Window->Id)) &&
-           (AXLibSpaceHasWindow(Space->Id, Window->Id)))
-        {
-            TileWindow(Window);
-        }
-
+        macos_window *Copy = GetWindowByID(Window->Id);
         AXLibDestroyWindow(Window);
+
+        if(Copy && AXLibSpaceHasWindow(Space->Id, Copy->Id))
+        {
+            TileWindow(Copy);
+        }
     }
 
     free(WindowList);
