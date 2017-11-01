@@ -64,7 +64,7 @@ CreateResizeBorder(node *Node)
     border_window *Border = CreateBorderWindow(Node->Region.X, InvertY,
                                                Node->Region.Width, Node->Region.Height,
                                                PreselectBorderWidth, PreselectBorderRadius,
-                                               PreselectBorderColor, false);
+                                               PreselectBorderColor);
     return (resize_border) { Border, Node };
 }
 

@@ -65,7 +65,7 @@ NSColor *ColorFromHex(unsigned int Color)
 }
 
 static void
-InitBorderWindow(border_window_internal *Border, int X, int Y, int W, int H, int BorderWidth, int BorderRadius, unsigned int BorderColor, bool JoinAllSpaces)
+InitBorderWindow(border_window_internal *Border, int X, int Y, int W, int H, int BorderWidth, int BorderRadius, unsigned int BorderColor)
 {
     NSRect GraphicsRect = NSMakeRect(X, Y, W, H);
     Border->Handle = [[NSWindow alloc] initWithContentRect: GraphicsRect
@@ -83,20 +83,13 @@ InitBorderWindow(border_window_internal *Border, int X, int Y, int W, int H, int
     [Border->Handle setHasShadow:NO];
     [Border->Handle setOpaque:NO];
     [Border->Handle setBackgroundColor: [NSColor clearColor]];
-    if(JoinAllSpaces)
-    {
-        [Border->Handle setCollectionBehavior:NSWindowCollectionBehaviorCanJoinAllSpaces];
-    }
-    else
-    {
-        [Border->Handle setCollectionBehavior:NSWindowCollectionBehaviorDefault];
-    }
+    [Border->Handle setCollectionBehavior:NSWindowCollectionBehaviorDefault];
     [Border->Handle setLevel:NSFloatingWindowLevel];
     [Border->Handle makeKeyAndOrderFront:nil];
     [Border->Handle setReleasedWhenClosed:YES];
 }
 
-border_window *CreateBorderWindow(int X, int Y, int W, int H, int BorderWidth, int BorderRadius, unsigned int BorderColor, bool JoinAllSpaces)
+border_window *CreateBorderWindow(int X, int Y, int W, int H, int BorderWidth, int BorderRadius, unsigned int BorderColor)
 {
     border_window_internal *Border = (border_window_internal *) malloc(sizeof(border_window_internal));
 
@@ -107,7 +100,7 @@ border_window *CreateBorderWindow(int X, int Y, int W, int H, int BorderWidth, i
     if([NSThread isMainThread])
     {
         NSAutoreleasePool *Pool = [[NSAutoreleasePool alloc] init];
-        InitBorderWindow(Border, X, Y, W, H, BorderWidth, BorderRadius, BorderColor, JoinAllSpaces);
+        InitBorderWindow(Border, X, Y, W, H, BorderWidth, BorderRadius, BorderColor);
         [Pool release];
     }
     else
@@ -115,7 +108,7 @@ border_window *CreateBorderWindow(int X, int Y, int W, int H, int BorderWidth, i
         dispatch_async(dispatch_get_main_queue(), ^(void)
         {
             NSAutoreleasePool *Pool = [[NSAutoreleasePool alloc] init];
-            InitBorderWindow(Border, X, Y, W, H, BorderWidth, BorderRadius, BorderColor, JoinAllSpaces);
+            InitBorderWindow(Border, X, Y, W, H, BorderWidth, BorderRadius, BorderColor);
             [Pool release];
         });
     }
