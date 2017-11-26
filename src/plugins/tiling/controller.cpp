@@ -350,11 +350,6 @@ void FocusWindow(char *Direction)
     virtual_space *VirtualSpace;
 
     Window = GetWindowByID(CVarUnsignedValue(CVAR_BSP_INSERTION_POINT));
-    if(!Window)
-    {
-        return; // TODO(koekeishiya): Focus first or last leaf ?
-    }
-
     Success = AXLibActiveSpace(&Space);
     ASSERT(Success);
 
@@ -374,7 +369,32 @@ void FocusWindow(char *Direction)
         goto vspace_release;
     }
 
-    if(VirtualSpace->Mode == Virtual_Space_Bsp)
+    if(!Window)
+    {
+        node *Node = NULL;
+        if((StringEquals(Direction, "prev")) ||
+           (StringEquals(Direction, "west")) ||
+           (StringEquals(Direction, "north")))
+        {
+            Node = GetLastLeafNode(VirtualSpace->Tree);
+        }
+        else if((StringEquals(Direction, "next")) ||
+                (StringEquals(Direction, "east")) ||
+                (StringEquals(Direction, "south")))
+        {
+            Node = GetFirstLeafNode(VirtualSpace->Tree);
+        }
+
+        if(Node)
+        {
+            Window = GetWindowByID(Node->WindowId);
+            ASSERT(Window);
+
+            AXLibSetFocusedWindow(Window->Ref);
+            AXLibSetFocusedApplication(Window->Owner->PSN);
+        }
+    }
+    else if(VirtualSpace->Mode == Virtual_Space_Bsp)
     {
         char *FocusCycleMode = CVarStringValue(CVAR_WINDOW_FOCUS_CYCLE);
         ASSERT(FocusCycleMode);
