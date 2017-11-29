@@ -27,8 +27,7 @@ extern "C" float CoreDockGetTileSize(void);
 extern "C" void  CoreDockGetOrientationAndPinning(macos_dock_orientation *Orientation, int *Pinning);
 
 /* NOTE(koekeishiya): Find the UUID associated with a CGDirectDisplayID. */
-internal CFStringRef
-AXLibDisplayIdentifier(CGDirectDisplayID Id)
+CFStringRef AXLibGetDisplayIdentifier(CGDirectDisplayID Id)
 {
     CFUUIDRef UUIDRef = CGDisplayCreateUUIDFromDisplayID(Id);
     if(UUIDRef)
@@ -46,7 +45,7 @@ macos_display *AXLibConstructDisplay(CGDirectDisplayID Id, unsigned Arrangement)
 {
     macos_display *Display = (macos_display *) malloc(sizeof(macos_display));
 
-    Display->Ref = AXLibDisplayIdentifier(Id);
+    Display->Ref = AXLibGetDisplayIdentifier(Id);
     Display->Id = Id;
     Display->Arrangement = Arrangement;
 
@@ -120,7 +119,7 @@ CGRect AXLibGetDisplayBounds(CFStringRef DisplayRef)
         ++Index)
     {
         CGDirectDisplayID Id = CGDisplayList[Index];
-        CFStringRef UUID = AXLibDisplayIdentifier(Id);
+        CFStringRef UUID = AXLibGetDisplayIdentifier(Id);
         if(UUID)
         {
             if(CFStringCompare(DisplayRef, UUID, 0) == kCFCompareEqualTo)
@@ -158,7 +157,7 @@ CFStringRef AXLibGetDisplayIdentifierFromArrangement(unsigned Arrangement)
 
     if(Arrangement < Count)
     {
-        Result = AXLibDisplayIdentifier(CGDisplayList[Arrangement]);
+        Result = AXLibGetDisplayIdentifier(CGDisplayList[Arrangement]);
     }
 
     free(CGDisplayList);
@@ -204,7 +203,7 @@ AXLibGetDisplayIdentifierForEdgeDisplay(int Side)
         }
     }
 
-    Result = AXLibDisplayIdentifier(BestResult);
+    Result = AXLibGetDisplayIdentifier(BestResult);
 
     free(CGDisplayList);
     return Result;
@@ -272,7 +271,7 @@ CFStringRef AXLibGetDisplayIdentifierFromWindowRect(CGPoint Position, CGSize Siz
         }
     }
 
-    Result = AXLibDisplayIdentifier(BestResult);
+    Result = AXLibGetDisplayIdentifier(BestResult);
 
     free(CGDisplayList);
     return Result;
@@ -534,6 +533,46 @@ int *AXLibSpacesForDisplay(CFStringRef DisplayRef, int *Count)
     }
 
     CFRelease(DisplayDictionaries);
+    return Result;
+}
+
+/* NOTE(koekeishiya): Returns a list of macos_space * structs for all spaces on the given display.
+ * The list is terminated by a null-pointer and can be iterated in the following way:
+ *
+ *     macos_space *Space, **List, **Spaces;
+ *     List = Spaces = AXLibSpacesForDisplay(DisplayRef);
+ *     while((Space = *List++)) { ..; AXLibDestroySpace(Space); }
+ *     free(Spaces);
+ */
+macos_space **AXLibSpacesForDisplay(CFStringRef DisplayRef)
+{
+    macos_space **Result = NULL;
+
+    NSString *CurrentIdentifier = (__bridge NSString *) DisplayRef;
+    CFArrayRef DisplayDictionaries = CGSCopyManagedDisplaySpaces(CGSDefaultConnection);
+    for(NSDictionary *DisplayDictionary in (__bridge NSArray *) DisplayDictionaries)
+    {
+        NSString *DisplayIdentifier = DisplayDictionary[@"Display Identifier"];
+        if([DisplayIdentifier isEqualToString:CurrentIdentifier])
+        {
+            NSArray *SpaceDictionaries = DisplayDictionary[@"Spaces"];
+            int SpaceCount = [SpaceDictionaries count] + 1;
+            Result = (macos_space **) malloc(SpaceCount * sizeof(macos_space *));
+
+            int SpaceIndex = 0;
+            for(NSDictionary *SpaceDictionary in SpaceDictionaries)
+            {
+                CGSSpaceID SpaceId = [SpaceDictionary[@"id64"] intValue];
+                CGSSpaceType SpaceType = [SpaceDictionary[@"type"] intValue];
+                CFStringRef SpaceRef = (__bridge CFStringRef) [[NSString alloc] initWithString:SpaceDictionary[@"uuid"]];
+                macos_space *Space = AXLibConstructSpace(SpaceRef, SpaceId, SpaceType);
+                Result[SpaceIndex++] = Space;
+            }
+
+            Result[SpaceIndex] = NULL;
+        }
+    }
+
     return Result;
 }
 

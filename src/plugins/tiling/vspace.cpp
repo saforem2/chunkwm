@@ -102,6 +102,22 @@ bool ShouldDeserializeVirtualSpace(virtual_space *VirtualSpace)
     return Result;
 }
 
+bool VirtualSpaceHasFlags(virtual_space *VirtualSpace, uint32_t Flag)
+{
+    bool Result = ((VirtualSpace->Flags & Flag) != 0);
+    return Result;
+}
+
+void VirtualSpaceAddFlags(virtual_space *VirtualSpace, uint32_t Flag)
+{
+    VirtualSpace->Flags |= Flag;
+}
+
+void VirtualSpaceClearFlags(virtual_space *VirtualSpace, uint32_t Flag)
+{
+    VirtualSpace->Flags &= ~Flag;
+}
+
 // NOTE(koekeishiya): If the requested space does not exist, we create it.
 virtual_space *AcquireVirtualSpace(macos_space *Space)
 {

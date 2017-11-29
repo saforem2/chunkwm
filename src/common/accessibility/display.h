@@ -60,6 +60,7 @@ macos_space *AXLibActiveSpace(CFStringRef DisplayRef);
 bool AXLibActiveSpace(macos_space **Space);
 void AXLibDestroySpace(macos_space *Space);
 
+CFStringRef AXLibGetDisplayIdentifier(CGDirectDisplayID Id);
 CFStringRef AXLibGetDisplayIdentifierFromArrangement(unsigned Arrangement);
 CFStringRef AXLibGetDisplayIdentifierFromSpace(CGSSpaceID Space);
 CFStringRef AXLibGetDisplayIdentifierFromWindow(uint32_t WindowId);
@@ -75,6 +76,7 @@ bool AXLibCGSSpaceIDToDesktopID(CGSSpaceID SpaceId, unsigned *OutArrangement, un
 bool AXLibCGSSpaceIDFromDesktopID(unsigned DesktopId, unsigned *OutArrangement, CGSSpaceID *OutSpaceId);
 
 int *AXLibSpacesForDisplay(CFStringRef DisplayRef, int *Count);
+macos_space **AXLibSpacesForDisplay(CFStringRef DisplayRef);
 macos_space **AXLibSpacesForWindow(uint32_t WindowId);
 void AXLibSpaceAddWindow(CGSSpaceID SpaceId, uint32_t WindowId);
 void AXLibSpaceRemoveWindow(CGSSpaceID SpaceId, uint32_t WindowId);

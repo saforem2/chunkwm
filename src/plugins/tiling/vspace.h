@@ -4,7 +4,7 @@
 #include "region.h"
 
 #include "../../common/misc/string.h"
-
+#include <stdint.h>
 #include <pthread.h>
 #include <map>
 
@@ -28,6 +28,11 @@ struct virtual_space_config
     char *TreeLayout;
 };
 
+enum virtual_space_flags
+{
+    Virtual_Space_Require_Resize = 1 << 0,
+};
+
 struct virtual_space
 {
     virtual_space_mode Mode;
@@ -36,6 +41,7 @@ struct virtual_space
     region_offset *Offset;
     char *TreeLayout;
     node *Tree;
+    uint32_t Flags;
 
     pthread_mutex_t Lock;
 };
@@ -45,6 +51,9 @@ typedef virtual_space_map::iterator virtual_space_map_it;
 
 struct macos_space;
 bool ShouldDeserializeVirtualSpace(virtual_space *VirtualSpace);
+bool VirtualSpaceHasFlags(virtual_space *VirtualSpace, uint32_t Flag);
+void VirtualSpaceAddFlags(virtual_space *VirtualSpace, uint32_t Flag);
+void VirtualSpaceClearFlags(virtual_space *VirtualSpace, uint32_t Flag);
 virtual_space *AcquireVirtualSpace(macos_space *Space);
 void ReleaseVirtualSpace(virtual_space *VirtualSpace);
 

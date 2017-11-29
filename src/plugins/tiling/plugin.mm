@@ -1461,6 +1461,19 @@ SpaceAndDisplayChangedHandler(void *Data)
     {
         if(VirtualSpace->Tree)
         {
+            //
+            // NOTE(koekeishiya): If the activated virtual_space is flagged for resize,
+            // we update the dimensions of all existing nodes in our window-tree.
+            //
+
+            if(VirtualSpaceHasFlags(VirtualSpace, Virtual_Space_Require_Resize))
+            {
+                CreateNodeRegion(VirtualSpace->Tree, Region_Full, Space, VirtualSpace);
+                CreateNodeRegionRecursive(VirtualSpace->Tree, false, Space, VirtualSpace);
+                ApplyNodeRegion(VirtualSpace->Tree, VirtualSpace->Mode, false);
+                VirtualSpaceClearFlags(VirtualSpace, Virtual_Space_Require_Resize);
+            }
+
             RebalanceWindowTreeForSpaceWithWindows(Space, VirtualSpace, Windows);
         }
         else if(ShouldDeserializeVirtualSpace(VirtualSpace))
@@ -1483,6 +1496,58 @@ space_free:
     {
         WindowFocusedHandler(WindowId);
     }
+}
+
+internal void
+DisplayResizedHandler(void *Data)
+{
+    CGDirectDisplayID DisplayId = *(CGDirectDisplayID *) Data;
+
+    //
+    // NOTE(koekeishiya): Update dimensions of the currently active desktop
+    // for the monitor that triggered a resolution change.
+    //
+
+    CFStringRef DisplayRef = AXLibGetDisplayIdentifier(DisplayId);
+    ASSERT(DisplayRef);
+
+    macos_space *Space = AXLibActiveSpace(DisplayRef);
+    ASSERT(Space);
+
+    virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
+    ASSERT(VirtualSpace);
+
+    if(VirtualSpace->Tree)
+    {
+        CreateNodeRegion(VirtualSpace->Tree, Region_Full, Space, VirtualSpace);
+        CreateNodeRegionRecursive(VirtualSpace->Tree, false, Space, VirtualSpace);
+        ApplyNodeRegion(VirtualSpace->Tree, VirtualSpace->Mode, false);
+    }
+
+    ReleaseVirtualSpace(VirtualSpace);
+    AXLibDestroySpace(Space);
+
+    //
+    // NOTE(koekeishiya): We can not update dimensions of windows that are on inactive desktops,
+    // so we flag them for change upon next activation instead
+    //
+
+    macos_space **List, **Spaces;
+    List = Spaces = AXLibSpacesForDisplay(DisplayRef);
+    ASSERT(Spaces);
+
+    while((Space = *List++))
+    {
+        VirtualSpace = AcquireVirtualSpace(Space);
+        ASSERT(VirtualSpace);
+
+        VirtualSpaceAddFlags(VirtualSpace, Virtual_Space_Require_Resize);
+
+        ReleaseVirtualSpace(VirtualSpace);
+        AXLibDestroySpace(Space);
+    }
+
+    free(Spaces);
 }
 
 internal void
@@ -1570,6 +1635,11 @@ PLUGIN_MAIN_FUNC(PluginMain)
             (StringEquals(Node, "chunkwm_export_display_changed")))
     {
         SpaceAndDisplayChangedHandler(Data);
+        return true;
+    }
+    else if(StringEquals(Node, "chunkwm_export_display_resized"))
+    {
+        DisplayResizedHandler(Data);
         return true;
     }
     else if(StringEquals(Node, "chunkwm_daemon_command"))
@@ -1757,6 +1827,8 @@ chunkwm_plugin_export Subscriptions[] =
 
     chunkwm_export_space_changed,
     chunkwm_export_display_changed,
+
+    chunkwm_export_display_resized,
 };
 CHUNKWM_PLUGIN_SUBSCRIBE(Subscriptions)
 
