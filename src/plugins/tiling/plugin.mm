@@ -1502,51 +1502,48 @@ internal void
 DisplayResizedHandler(void *Data)
 {
     CGDirectDisplayID DisplayId = *(CGDirectDisplayID *) Data;
-
-    //
-    // NOTE(koekeishiya): Update dimensions of the currently active desktop
-    // for the monitor that triggered a resolution change.
-    //
-
     CFStringRef DisplayRef = AXLibGetDisplayIdentifier(DisplayId);
     ASSERT(DisplayRef);
 
-    macos_space *Space = AXLibActiveSpace(DisplayRef);
-    ASSERT(Space);
+    macos_space *ActiveSpace = AXLibActiveSpace(DisplayRef);
+    ASSERT(ActiveSpace);
 
-    virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
-    ASSERT(VirtualSpace);
-
-    if(VirtualSpace->Tree)
-    {
-        CreateNodeRegion(VirtualSpace->Tree, Region_Full, Space, VirtualSpace);
-        CreateNodeRegionRecursive(VirtualSpace->Tree, false, Space, VirtualSpace);
-        ApplyNodeRegion(VirtualSpace->Tree, VirtualSpace->Mode, false);
-    }
-
-    ReleaseVirtualSpace(VirtualSpace);
-    AXLibDestroySpace(Space);
-
-    //
-    // NOTE(koekeishiya): We can not update dimensions of windows that are on inactive desktops,
-    // so we flag them for change upon next activation instead
-    //
-
-    macos_space **List, **Spaces;
+    macos_space *Space, **List, **Spaces;
     List = Spaces = AXLibSpacesForDisplay(DisplayRef);
     ASSERT(Spaces);
 
     while((Space = *List++))
     {
-        VirtualSpace = AcquireVirtualSpace(Space);
+        virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
         ASSERT(VirtualSpace);
 
-        VirtualSpaceAddFlags(VirtualSpace, Virtual_Space_Require_Resize);
+        if(VirtualSpace->Tree)
+        {
+            if(Space->Id == ActiveSpace->Id)
+            {
+                //
+                // NOTE(koekeishiya): Update dimensions of the currently active desktop
+                // for the monitor that triggered a resolution change.
+                //
+                CreateNodeRegion(VirtualSpace->Tree, Region_Full, Space, VirtualSpace);
+                CreateNodeRegionRecursive(VirtualSpace->Tree, false, Space, VirtualSpace);
+                ApplyNodeRegion(VirtualSpace->Tree, VirtualSpace->Mode, false);
+            }
+            else
+            {
+                //
+                // NOTE(koekeishiya): We can not update dimensions of windows that are on inactive desktops,
+                // so we flag them for change upon next activation instead
+                //
+                VirtualSpaceAddFlags(VirtualSpace, Virtual_Space_Require_Resize);
+            }
+        }
 
         ReleaseVirtualSpace(VirtualSpace);
         AXLibDestroySpace(Space);
     }
 
+    AXLibDestroySpace(ActiveSpace);
     free(Spaces);
 }
 
