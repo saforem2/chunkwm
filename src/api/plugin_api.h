@@ -65,8 +65,7 @@ struct plugin_details
           {                                                      \
               static plugin Singleton;                           \
               static bool Initialized = false;                   \
-              if(!Initialized)                                   \
-              {                                                  \
+              if (!Initialized) {                                \
                   InitPluginVTable(&Singleton);                  \
                   InitPluginSubscriptions(&Singleton);           \
                   Initialized = true;                            \
