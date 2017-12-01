@@ -25,13 +25,10 @@ StringsAreEqual(const char *A, const char *B)
  * */
 PLUGIN_MAIN_FUNC(PluginMain)
 {
-    if(StringsAreEqual(Node, "chunkwm_export_application_launched"))
-    {
+    if (StringsAreEqual(Node, "chunkwm_export_application_launched")) {
         macos_application *Application = (macos_application *) Data;
         return true;
-    }
-    else if(StringsAreEqual(Node, "chunkwm_export_application_terminated"))
-    {
+    } else if (StringsAreEqual(Node, "chunkwm_export_application_terminated")) {
         macos_application *Application = (macos_application *) Data;
         return true;
     }
