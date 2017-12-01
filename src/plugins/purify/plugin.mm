@@ -29,8 +29,7 @@ internal void
 ExtendedDockDisableWindowShadow(uint32_t WindowId)
 {
     int SockFD;
-    if(ConnectToDaemon(&SockFD, 5050))
-    {
+    if (ConnectToDaemon(&SockFD, 5050)) {
         char Message[64];
         sprintf(Message, "window_shadow %d 0", WindowId);
         WriteToSocket(Message, SockFD);
@@ -52,16 +51,13 @@ StringsAreEqual(const char *A, const char *B)
  * */
 PLUGIN_MAIN_FUNC(PluginMain)
 {
-    if(StringsAreEqual(Node, "chunkwm_export_application_launched"))
-    {
+    if (StringsAreEqual(Node, "chunkwm_export_application_launched")) {
         macos_application *Application = (macos_application *) Data;
         macos_window **WindowList = AXLibWindowListForApplication(Application);
-        if(WindowList)
-        {
+        if (WindowList) {
             macos_window **List = WindowList;
             macos_window *Window;
-            while((Window = *List++))
-            {
+            while ((Window = *List++)) {
                 ExtendedDockDisableWindowShadow(Window->Id);
                 AXLibDestroyWindow(Window);
             }
@@ -69,9 +65,7 @@ PLUGIN_MAIN_FUNC(PluginMain)
             free(WindowList);
         }
         return true;
-    }
-    else if(StringsAreEqual(Node, "chunkwm_export_window_created"))
-    {
+    } else if (StringsAreEqual(Node, "chunkwm_export_window_created")) {
         macos_window *Window = (macos_window *) Data;
         ExtendedDockDisableWindowShadow(Window->Id);
         return true;
@@ -94,16 +88,14 @@ PLUGIN_BOOL_FUNC(PluginInit)
      */
     uint32_t ProcessPolicy = Process_Policy_Regular;
     std::vector<macos_application *> Applications = AXLibRunningProcesses(ProcessPolicy);
-    for(size_t Index = 0; Index < Applications.size(); ++Index)
-    {
+    for (size_t Index = 0; Index < Applications.size(); ++Index) {
         macos_application *Application = Applications[Index];
         macos_window **WindowList = AXLibWindowListForApplication(Application);
-        if(!WindowList) continue;
+        if (!WindowList) continue;
 
         macos_window **List = WindowList;
         macos_window *Window;
-        while((Window = *List++))
-        {
+        while ((Window = *List++)) {
             ExtendedDockDisableWindowShadow(Window->Id);
             AXLibDestroyWindow(Window);
         }

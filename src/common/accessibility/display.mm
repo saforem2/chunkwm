@@ -30,8 +30,7 @@ extern "C" void  CoreDockGetOrientationAndPinning(macos_dock_orientation *Orient
 CFStringRef AXLibGetDisplayIdentifier(CGDirectDisplayID Id)
 {
     CFUUIDRef UUIDRef = CGDisplayCreateUUIDFromDisplayID(Id);
-    if(UUIDRef)
-    {
+    if (UUIDRef) {
         CFStringRef Ref = CFUUIDCreateString(NULL, UUIDRef);
         CFRelease(UUIDRef);
         return Ref;
@@ -82,10 +81,7 @@ macos_display **AXLibDisplayList(unsigned *Count)
     macos_display **DisplayList =
         (macos_display **) malloc(*Count * sizeof(macos_display *));
 
-    for(size_t Index = 0;
-        Index < *Count;
-        ++Index)
-    {
+    for (size_t Index = 0; Index < *Count; ++Index) {
         CGDirectDisplayID Id = CGDisplayList[Index];
         DisplayList[Index] = AXLibConstructDisplay(Id, Index);
     }
@@ -114,22 +110,15 @@ CGRect AXLibGetDisplayBounds(CFStringRef DisplayRef)
     unsigned Count = 0;
     CGGetActiveDisplayList(MAX_DISPLAY_COUNT, CGDisplayList, &Count);
 
-    for(size_t Index = 0;
-        Index < Count;
-        ++Index)
-    {
+    for (size_t Index = 0; Index < Count; ++Index) {
         CGDirectDisplayID Id = CGDisplayList[Index];
         CFStringRef UUID = AXLibGetDisplayIdentifier(Id);
-        if(UUID)
-        {
-            if(CFStringCompare(DisplayRef, UUID, 0) == kCFCompareEqualTo)
-            {
+        if (UUID) {
+            if (CFStringCompare(DisplayRef, UUID, 0) == kCFCompareEqualTo) {
                 Result = CGDisplayBounds(Id);
                 CFRelease(UUID);
                 break;
-            }
-            else
-            {
+            } else {
                 CFRelease(UUID);
             }
         }
@@ -155,8 +144,7 @@ CFStringRef AXLibGetDisplayIdentifierFromArrangement(unsigned Arrangement)
     unsigned Count = 0;
     CGGetActiveDisplayList(MAX_DISPLAY_COUNT, CGDisplayList, &Count);
 
-    if(Arrangement < Count)
-    {
+    if (Arrangement < Count) {
         Result = AXLibGetDisplayIdentifier(CGDisplayList[Arrangement]);
     }
 
@@ -178,25 +166,17 @@ AXLibGetDisplayIdentifierForEdgeDisplay(int Side)
     CGPoint Position = {};
     CGDirectDisplayID BestResult = 0;
 
-    for(unsigned Index = 0;
-        Index < Count;
-        ++Index)
-    {
+    for (unsigned Index = 0; Index < Count; ++Index) {
         CGDirectDisplayID DisplayId = CGDisplayList[Index];
         CGRect DisplayFrame = CGDisplayBounds(DisplayId);
 
-        if(Side == -1)
-        {
-            if(DisplayFrame.origin.x < Position.x)
-            {
+        if (Side == -1) {
+            if (DisplayFrame.origin.x < Position.x) {
                 Position = DisplayFrame.origin;
                 BestResult = DisplayId;
             }
-        }
-        else if(Side == 1)
-        {
-            if(DisplayFrame.origin.x > Position.x)
-            {
+        } else if (Side == 1) {
+            if (DisplayFrame.origin.x > Position.x) {
                 Position = DisplayFrame.origin;
                 BestResult = DisplayId;
             }
@@ -255,17 +235,13 @@ CFStringRef AXLibGetDisplayIdentifierFromWindowRect(CGPoint Position, CGSize Siz
     CGFloat HighestVolume = 0;
     CGDirectDisplayID BestResult = 0;
 
-    for(unsigned Index = 0;
-        Index < Count;
-        ++Index)
-    {
+    for (unsigned Index = 0; Index < Count; ++Index) {
         CGDirectDisplayID DisplayId = CGDisplayList[Index];
         CGRect DisplayFrame = CGDisplayBounds(DisplayId);
         CGRect Intersection = CGRectIntersection(WindowFrame, DisplayFrame);
         CGFloat Volume = Intersection.size.width * Intersection.size.height;
 
-        if(Volume > HighestVolume)
-        {
+        if (Volume > HighestVolume) {
             HighestVolume = Volume;
             BestResult = DisplayId;
         }
@@ -284,11 +260,9 @@ AXLibActiveSpaceIdentifier(CFStringRef DisplayRef, CFStringRef *SpaceRef)
     NSString *CurrentIdentifier = (__bridge NSString *) DisplayRef;
 
     CFArrayRef DisplayDictionaries = CGSCopyManagedDisplaySpaces(CGSDefaultConnection);
-    for(NSDictionary *DisplayDictionary in (__bridge NSArray *) DisplayDictionaries)
-    {
+    for (NSDictionary *DisplayDictionary in (__bridge NSArray *) DisplayDictionaries) {
         NSString *DisplayIdentifier = DisplayDictionary[@"Display Identifier"];
-        if([DisplayIdentifier isEqualToString:CurrentIdentifier])
-        {
+        if ([DisplayIdentifier isEqualToString:CurrentIdentifier]) {
             *SpaceRef = (__bridge CFStringRef) [[NSString alloc] initWithString:DisplayDictionary[@"Current Space"][@"uuid"]];
             ActiveSpaceId = [DisplayDictionary[@"Current Space"][@"id64"] intValue];
             break;
@@ -342,8 +316,7 @@ bool AXLibActiveSpace(macos_space **Space)
     CGDirectDisplayID DisplayID = [ScreenID unsignedIntValue];
 
     CFUUIDRef DisplayUUID = CGDisplayCreateUUIDFromDisplayID(DisplayID);
-    if(DisplayUUID)
-    {
+    if (DisplayUUID) {
         CFStringRef Identifier = CFUUIDCreateString(NULL, DisplayUUID);
         *Space = AXLibActiveSpace(Identifier);
 
@@ -380,24 +353,20 @@ bool AXLibCGSSpaceIDToDesktopID(CGSSpaceID SpaceId, unsigned *OutArrangement, un
 
     unsigned SpaceIndex = 1;
     CFArrayRef ScreenDictionaries = CGSCopyManagedDisplaySpaces(CGSDefaultConnection);
-    for(NSDictionary *ScreenDictionary in (__bridge NSArray *) ScreenDictionaries)
-    {
+    for (NSDictionary *ScreenDictionary in (__bridge NSArray *) ScreenDictionaries) {
         NSArray *SpaceDictionaries = ScreenDictionary[@"Spaces"];
-        for(NSDictionary *SpaceDictionary in (__bridge NSArray *) SpaceDictionaries)
-        {
+        for (NSDictionary *SpaceDictionary in (__bridge NSArray *) SpaceDictionaries) {
             CGSSpaceID CurrentSpaceId = [SpaceDictionary[@"id64"] intValue];
             CGSSpaceType CurrentSpaceType = CGSSpaceGetType(CGSDefaultConnection, CurrentSpaceId);
             bool UserCreatedSpace = (CurrentSpaceType == kCGSSpaceUser);
 
-            if(SpaceId == CurrentSpaceId)
-            {
+            if (SpaceId == CurrentSpaceId) {
                 DesktopId = UserCreatedSpace ? SpaceIndex : 0;
                 Result = true;
                 goto End;
             }
 
-            if(UserCreatedSpace)
-            {
+            if (UserCreatedSpace) {
                 ++SpaceIndex;
             }
         }
@@ -406,13 +375,11 @@ bool AXLibCGSSpaceIDToDesktopID(CGSSpaceID SpaceId, unsigned *OutArrangement, un
     }
 
 End:
-    if(OutArrangement)
-    {
+    if (OutArrangement) {
         *OutArrangement = Arrangement;
     }
 
-    if(OutDesktopId)
-    {
+    if (OutDesktopId) {
         *OutDesktopId = DesktopId;
     }
 
@@ -435,21 +402,17 @@ bool AXLibCGSSpaceIDFromDesktopID(unsigned DesktopId, unsigned *OutArrangement, 
     unsigned SpaceIndex = 1;
 
     CFArrayRef ScreenDictionaries = CGSCopyManagedDisplaySpaces(CGSDefaultConnection);
-    for(NSDictionary *ScreenDictionary in (__bridge NSArray *) ScreenDictionaries)
-    {
+    for (NSDictionary *ScreenDictionary in (__bridge NSArray *) ScreenDictionaries) {
         NSArray *SpaceDictionaries = ScreenDictionary[@"Spaces"];
-        for(NSDictionary *SpaceDictionary in (__bridge NSArray *) SpaceDictionaries)
-        {
+        for (NSDictionary *SpaceDictionary in (__bridge NSArray *) SpaceDictionaries) {
             CGSSpaceID CurrentSpaceId = [SpaceDictionary[@"id64"] intValue];
             CGSSpaceType CurrentSpaceType = CGSSpaceGetType(CGSDefaultConnection, CurrentSpaceId);
 
-            if(CurrentSpaceType != kCGSSpaceUser)
-            {
+            if (CurrentSpaceType != kCGSSpaceUser) {
                 continue;
             }
 
-            if(SpaceIndex == DesktopId)
-            {
+            if (SpaceIndex == DesktopId) {
                 SpaceId = CurrentSpaceId;
                 Result = true;
                 goto End;
@@ -462,13 +425,11 @@ bool AXLibCGSSpaceIDFromDesktopID(unsigned DesktopId, unsigned *OutArrangement, 
     }
 
 End:
-    if(OutArrangement)
-    {
+    if (OutArrangement) {
         *OutArrangement = Arrangement;
     }
 
-    if(OutSpaceId)
-    {
+    if (OutSpaceId) {
         *OutSpaceId = SpaceId;
     }
 
@@ -494,11 +455,10 @@ internal void
 AXLibCountSpacesForDisplay(NSDictionary *DisplayDictionary, unsigned *Count)
 {
     NSArray *SpaceDictionaries = DisplayDictionary[@"Spaces"];
-    for(NSDictionary *SpaceDictionary in SpaceDictionaries)
-    {
+    for (NSDictionary *SpaceDictionary in SpaceDictionaries) {
         CGSSpaceID CurrentSpaceId = [SpaceDictionary[@"id64"] intValue];
         CGSSpaceType CurrentSpaceType = CGSSpaceGetType(CGSDefaultConnection, CurrentSpaceId);
-        if(CurrentSpaceType == kCGSSpaceUser) *Count += 1;
+        if (CurrentSpaceType == kCGSSpaceUser) *Count += 1;
     }
 }
 
@@ -510,16 +470,12 @@ int *AXLibSpacesForDisplay(CFStringRef DisplayRef, int *Count)
 
     NSString *CurrentIdentifier = (__bridge NSString *) DisplayRef;
     CFArrayRef DisplayDictionaries = CGSCopyManagedDisplaySpaces(CGSDefaultConnection);
-    for(NSDictionary *DisplayDictionary in (__bridge NSArray *) DisplayDictionaries)
-    {
+    for (NSDictionary *DisplayDictionary in (__bridge NSArray *) DisplayDictionaries) {
         NSString *DisplayIdentifier = DisplayDictionary[@"Display Identifier"];
-        if([DisplayIdentifier isEqualToString:CurrentIdentifier])
-        {
+        if ([DisplayIdentifier isEqualToString:CurrentIdentifier]) {
             AXLibCountSpacesForDisplay(DisplayDictionary, &DesktopCount);
             break;
-        }
-        else
-        {
+        } else {
             AXLibCountSpacesForDisplay(DisplayDictionary, &DesktopIndex);
         }
     }
@@ -527,8 +483,7 @@ int *AXLibSpacesForDisplay(CFStringRef DisplayRef, int *Count)
     Result = (int *) malloc(sizeof(int *) * DesktopCount);
     *Count = DesktopCount;
 
-    for(int Index = 0; Index < DesktopCount; ++Index)
-    {
+    for (int Index = 0; Index < DesktopCount; ++Index) {
         Result[Index] = DesktopIndex + (Index + 1);
     }
 
@@ -550,18 +505,15 @@ macos_space **AXLibSpacesForDisplay(CFStringRef DisplayRef)
 
     NSString *CurrentIdentifier = (__bridge NSString *) DisplayRef;
     CFArrayRef DisplayDictionaries = CGSCopyManagedDisplaySpaces(CGSDefaultConnection);
-    for(NSDictionary *DisplayDictionary in (__bridge NSArray *) DisplayDictionaries)
-    {
+    for (NSDictionary *DisplayDictionary in (__bridge NSArray *) DisplayDictionaries) {
         NSString *DisplayIdentifier = DisplayDictionary[@"Display Identifier"];
-        if([DisplayIdentifier isEqualToString:CurrentIdentifier])
-        {
+        if ([DisplayIdentifier isEqualToString:CurrentIdentifier]) {
             NSArray *SpaceDictionaries = DisplayDictionary[@"Spaces"];
             int SpaceCount = [SpaceDictionaries count] + 1;
             Result = (macos_space **) malloc(SpaceCount * sizeof(macos_space *));
 
             int SpaceIndex = 0;
-            for(NSDictionary *SpaceDictionary in SpaceDictionaries)
-            {
+            for (NSDictionary *SpaceDictionary in SpaceDictionaries) {
                 CGSSpaceID SpaceId = [SpaceDictionary[@"id64"] intValue];
                 CGSSpaceType SpaceType = [SpaceDictionary[@"type"] intValue];
                 CFStringRef SpaceRef = (__bridge CFStringRef) [[NSString alloc] initWithString:SpaceDictionary[@"uuid"]];
@@ -593,14 +545,10 @@ AXLibSpacesForWindow(uint32_t WindowId)
     CFArrayRef Spaces = CGSCopySpacesForWindows(CGSDefaultConnection, kCGSSpaceAll, (__bridge CFArrayRef) NSArrayWindow);
     int NumberOfSpaces = CFArrayGetCount(Spaces);
 
-    if(NumberOfSpaces)
-    {
+    if (NumberOfSpaces) {
         Result = (macos_space **) malloc(sizeof(macos_space *) * (NumberOfSpaces + 1));
 
-        for(int Index = 0;
-            Index < NumberOfSpaces;
-            ++Index)
-        {
+        for (int Index = 0; Index < NumberOfSpaces; ++Index) {
             NSNumber *Id = (__bridge NSNumber *) CFArrayGetValueAtIndex(Spaces, Index);
             CGSSpaceID SpaceId = [Id intValue];
 
@@ -631,13 +579,9 @@ bool AXLibSpaceHasWindow(CGSSpaceID SpaceId, uint32_t WindowId)
     CFArrayRef Spaces = CGSCopySpacesForWindows(CGSDefaultConnection, kCGSSpaceAll, (__bridge CFArrayRef) NSArrayWindow);
     int NumberOfSpaces = CFArrayGetCount(Spaces);
 
-    for(int Index = 0;
-        Index < NumberOfSpaces;
-        ++Index)
-    {
+    for (int Index = 0; Index < NumberOfSpaces; ++Index) {
         NSNumber *Id = (__bridge NSNumber *) CFArrayGetValueAtIndex(Spaces, Index);
-        if(SpaceId == [Id intValue])
-        {
+        if (SpaceId == [Id intValue]) {
             Result = true;
             break;
         }

@@ -48,8 +48,7 @@ void EndWorkspaceApplicationDetails(workspace_application_details *Info)
 {
     ASSERT(Info);
 
-    if(Info->ProcessName)
-    {
+    if (Info->ProcessName) {
         free(Info->ProcessName);
     }
 
@@ -60,8 +59,7 @@ void EndWorkspaceApplicationDetails(workspace_application_details *Info)
 @implementation WorkspaceWatcher
 - (id)init
 {
-    if ((self = [super init]))
-    {
+    if ((self = [super init])) {
        [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver:self
                 selector:@selector(activeDisplayDidChange:)
                 name:@"NSWorkspaceActiveDisplayDidChangeNotification"

@@ -48,8 +48,7 @@ IsCursorInRegion(region *Region)
 internal void
 CenterMouseInRegion(region *Region)
 {
-    if(!IsCursorInRegion(Region))
-    {
+    if (!IsCursorInRegion(Region)) {
         CGPoint Center = CGPointMake(Region->X + Region->Width / 2,
                                      Region->Y + Region->Height / 2);
         CGWarpMouseCursorPosition(Center);
@@ -77,10 +76,10 @@ enum directions
 internal directions
 DirectionFromString(char *Direction)
 {
-    if     (StringEquals(Direction, "north"))   return Dir_North;
-    else if(StringEquals(Direction, "east"))    return Dir_East;
-    else if(StringEquals(Direction, "south"))   return Dir_South;
-    else if(StringEquals(Direction, "west"))    return Dir_West;
+    if      (StringEquals(Direction, "north"))  return Dir_North;
+    else if (StringEquals(Direction, "east"))   return Dir_East;
+    else if (StringEquals(Direction, "south"))  return Dir_South;
+    else if (StringEquals(Direction, "west"))   return Dir_West;
     else                                        return Dir_Unknown;
 }
 
@@ -92,12 +91,11 @@ WrapMonitorEdge(macos_space *Space, int Direction,
     CGRect Display = AXLibGetDisplayBounds(DisplayRef);
     CFRelease(DisplayRef);
 
-    switch(Direction)
-    {
-        case Dir_North: { if(*Y1 < *Y2) *Y2 -= Display.size.height; } break;
-        case Dir_East:  { if(*X1 > *X2) *X2 += Display.size.width;  } break;
-        case Dir_South: { if(*Y1 > *Y2) *Y2 += Display.size.height; } break;
-        case Dir_West:  { if(*X1 < *X2) *X2 -= Display.size.width;  } break;
+    switch (Direction) {
+    case Dir_North: { if(*Y1 < *Y2) *Y2 -= Display.size.height; } break;
+    case Dir_East:  { if(*X1 > *X2) *X2 += Display.size.width;  } break;
+    case Dir_South: { if(*Y1 > *Y2) *Y2 += Display.size.height; } break;
+    case Dir_West:  { if(*X1 < *X2) *X2 -= Display.size.width;  } break;
     }
 }
 
@@ -106,8 +104,7 @@ GetWindowDistance(macos_space *Space, float X1, float Y1,
                   float X2, float Y2, char *Op, bool Wrap)
 {
     directions Direction = DirectionFromString(Op);
-    if(Wrap)
-    {
+    if (Wrap) {
         WrapMonitorEdge(Space, Direction, &X1, &X2, &Y1, &Y2);
     }
 
@@ -117,29 +114,24 @@ GetWindowDistance(macos_space *Space, float X1, float Y1,
     float Distance  = hypot(DeltaX, DeltaY);
     float DeltaA    = 0;
 
-    switch(Direction)
-    {
-        case Dir_North:
-        {
-            if(DeltaY >= 0) return 0xFFFFFFFF;
-            DeltaA = -M_PI_2 - Angle;
-        } break;
-        case Dir_East:
-        {
-            if(DeltaX <= 0) return 0xFFFFFFFF;
-            DeltaA = 0.0 - Angle;
-        } break;
-        case Dir_South:
-        {
-            if(DeltaY <= 0) return 0xFFFFFFFF;
-            DeltaA = M_PI_2 - Angle;
-        } break;
-        case Dir_West:
-        {
-            if(DeltaX >= 0) return 0xFFFFFFFF;
-            DeltaA = M_PI - fabs(Angle);
-        } break;
-        case Dir_Unknown: { /* NOTE(koekeishiya) compiler warning.. */ } break;
+    switch (Direction) {
+    case Dir_North: {
+        if (DeltaY >= 0) return 0xFFFFFFFF;
+        DeltaA = -M_PI_2 - Angle;
+    } break;
+    case Dir_East: {
+        if (DeltaX <= 0) return 0xFFFFFFFF;
+        DeltaA = 0.0 - Angle;
+    } break;
+    case Dir_South: {
+        if (DeltaY <= 0) return 0xFFFFFFFF;
+        DeltaA = M_PI_2 - Angle;
+    } break;
+    case Dir_West: {
+        if (DeltaX >= 0) return 0xFFFFFFFF;
+        DeltaA = M_PI - fabs(Angle);
+    } break;
+    case Dir_Unknown: { /* NOTE(koekeishiya) compiler warning.. */ } break;
     }
 
     return (Distance / cos(DeltaA / 2.0));
@@ -152,19 +144,16 @@ WindowIsInDirection(char *Op, float X1, float Y1, float W1, float H1,
     bool Result = false;
 
     directions Direction = DirectionFromString(Op);
-    switch(Direction)
-    {
-        case Dir_North:
-        case Dir_South:
-        {
-            Result = (Y1 != Y2) && (fmax(X1, X2) < fmin(X2 + W2, X1 + W1));
-        } break;
-        case Dir_East:
-        case Dir_West:
-        {
-            Result = (X1 != X2) && (fmax(Y1, Y2) < fmin(Y2 + H2, Y1 + H1));
-        } break;
-        case Dir_Unknown: { /* NOTE(koekeishiya) compiler warning.. */ } break;
+    switch (Direction) {
+    case Dir_North:
+    case Dir_South: {
+        Result = (Y1 != Y2) && (fmax(X1, X2) < fmin(X2 + W2, X1 + W1));
+    } break;
+    case Dir_East:
+    case Dir_West: {
+        Result = (X1 != X2) && (fmax(Y1, Y2) < fmin(Y2 + H2, Y1 + H1));
+    } break;
+    case Dir_Unknown: { /* NOTE(koekeishiya) compiler warning.. */ } break;
     }
 
     return Result;
@@ -177,29 +166,26 @@ bool FindClosestWindow(macos_space *Space, virtual_space *VirtualSpace,
     float MinDist = 0xFFFFFFFF;
     std::vector<uint32_t> Windows = GetAllVisibleWindowsForSpace(Space);
 
-    for(int Index = 0; Index < Windows.size(); ++Index)
-    {
+    for (int Index = 0; Index < Windows.size(); ++Index) {
         macos_window *Window = GetWindowByID(Windows[Index]);
-        if((!Window) || (Match->Id == Window->Id)) continue;
+        if ((!Window) || (Match->Id == Window->Id)) continue;
 
         node *NodeA = GetNodeWithId(VirtualSpace->Tree, Match->Id, VirtualSpace->Mode);
         node *NodeB = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
-        if((!NodeA) || (!NodeB) || NodeA == NodeB) continue;
+        if ((!NodeA) || (!NodeB) || NodeA == NodeB) continue;
 
         region *A = &NodeA->Region;
         region *B = &NodeB->Region;
 
-        if(WindowIsInDirection(Direction,
+        if (WindowIsInDirection(Direction,
                                A->X, A->Y, A->Width, A->Height,
-                               B->X, B->Y, B->Width, B->Height))
-        {
+                               B->X, B->Y, B->Width, B->Height)) {
             float X1 = A->X + A->Width / 2;
             float Y1 = A->Y + A->Height / 2;
             float X2 = B->X + B->Width / 2;
             float Y2 = B->Y + B->Height / 2;
             float Dist = GetWindowDistance(Space, X1, Y1, X2, Y2, Direction, Wrap);
-            if(Dist < MinDist)
-            {
+            if (Dist < MinDist) {
                 MinDist = Dist;
                 *ClosestWindow = Window;
             }
@@ -217,44 +203,37 @@ FindClosestFullscreenWindow(macos_space *Space, macos_window *Match,
     std::vector<uint32_t> Windows = GetAllVisibleWindowsForSpace(Space, true, false);
 
     char *OriginalDirection = NULL;
-    if(StringEquals(Direction, "prev"))
-    {
+    if (StringEquals(Direction, "prev")) {
         OriginalDirection = Direction;
         Direction = strdup("west");
-    }
-    else if(StringEquals(Direction, "next"))
-    {
+    } else if (StringEquals(Direction, "next")) {
         OriginalDirection = Direction;
         Direction = strdup("east");
     }
 
-    for(int Index = 0; Index < Windows.size(); ++Index)
-    {
+    for (int Index = 0; Index < Windows.size(); ++Index) {
         macos_window *Window = GetWindowByID(Windows[Index]);
-        if((!Window) || (Match->Id == Window->Id)) continue;
+        if ((!Window) || (Match->Id == Window->Id)) continue;
 
         macos_window *A = Match;
         macos_window *B = Window;
 
-        if(WindowIsInDirection(Direction,
-                               A->Position.x, A->Position.y, A->Size.width, A->Size.height,
-                               B->Position.x, B->Position.y, B->Size.width, B->Size.height))
-        {
+        if (WindowIsInDirection(Direction,
+                                A->Position.x, A->Position.y, A->Size.width, A->Size.height,
+                                B->Position.x, B->Position.y, B->Size.width, B->Size.height)) {
             float X1 = A->Position.x + A->Size.width / 2;
             float Y1 = A->Position.y + A->Size.height / 2;
             float X2 = B->Position.x + B->Size.width / 2;
             float Y2 = B->Position.y + B->Size.height / 2;
             float Dist = GetWindowDistance(Space, X1, Y1, X2, Y2, Direction, Wrap);
-            if(Dist < MinDist)
-            {
+            if (Dist < MinDist) {
                 MinDist = Dist;
                 *ClosestWindow = Window;
             }
         }
     }
 
-    if(OriginalDirection)
-    {
+    if (OriginalDirection) {
         free(Direction);
         Direction = OriginalDirection;
     }
@@ -268,45 +247,33 @@ FindWindowUndirected(macos_space *Space, virtual_space *VirtualSpace,
                      char *Direction, bool WrapMonitor)
 {
     bool Result = false;
-    if(StringEquals(Direction, "prev"))
-    {
+    if (StringEquals(Direction, "prev")) {
         node *PrevNode = GetPrevLeafNode(WindowNode);
-        if(PrevNode)
-        {
+        if (PrevNode) {
             *ClosestWindow = GetWindowByID(PrevNode->WindowId);
             ASSERT(*ClosestWindow);
             Result = true;
-        }
-        else if(WrapMonitor)
-        {
+        } else if (WrapMonitor) {
             PrevNode = GetLastLeafNode(VirtualSpace->Tree);
             *ClosestWindow = GetWindowByID(PrevNode->WindowId);
             ASSERT(*ClosestWindow);
             Result = true;
         }
-    }
-    else if(StringEquals(Direction, "next"))
-    {
+    } else if (StringEquals(Direction, "next")) {
         node *NextNode = GetNextLeafNode(WindowNode);
-        if(NextNode)
-        {
+        if (NextNode) {
             *ClosestWindow = GetWindowByID(NextNode->WindowId);
             ASSERT(*ClosestWindow);
             Result = true;
-        }
-        else if(WrapMonitor)
-        {
+        } else if (WrapMonitor) {
             NextNode = GetFirstLeafNode(VirtualSpace->Tree);
             *ClosestWindow = GetWindowByID(NextNode->WindowId);
             ASSERT(*ClosestWindow);
             Result = true;
         }
-    }
-    else if(StringEquals(Direction, "biggest"))
-    {
+    } else if (StringEquals(Direction, "biggest")) {
         node *BiggestNode = GetBiggestLeafNode(VirtualSpace->Tree);
-        if(BiggestNode)
-        {
+        if (BiggestNode) {
             *ClosestWindow = GetWindowByID(BiggestNode->WindowId);
             ASSERT(*ClosestWindow);
             Result = true;
@@ -318,8 +285,7 @@ FindWindowUndirected(macos_space *Space, virtual_space *VirtualSpace,
 void CloseWindow(char *Unused)
 {
     macos_window *Window = GetFocusedWindow();
-    if(Window)
-    {
+    if (Window) {
         AXLibCloseWindow(Window->Ref);
     }
 }
@@ -327,7 +293,7 @@ void CloseWindow(char *Unused)
 void FocusWindowInFullscreenSpace(macos_space *Space, char *Direction)
 {
     macos_window *Window = GetFocusedWindow();
-    if(!Window) return;
+    if (!Window) return;
 
     char *FocusCycleMode = CVarStringValue(CVAR_WINDOW_FOCUS_CYCLE);
     bool WrapMonitor = StringEquals(FocusCycleMode, Window_Focus_Cycle_All)
@@ -335,8 +301,7 @@ void FocusWindowInFullscreenSpace(macos_space *Space, char *Direction)
                      : StringEquals(FocusCycleMode, Window_Focus_Cycle_Monitor);
 
     macos_window *ClosestWindow;
-    if(FindClosestFullscreenWindow(Space, Window, &ClosestWindow, Direction, WrapMonitor))
-    {
+    if (FindClosestFullscreenWindow(Space, Window, &ClosestWindow, Direction, WrapMonitor)) {
         AXLibSetFocusedWindow(ClosestWindow->Ref);
         AXLibSetFocusedApplication(ClosestWindow->Owner->PSN);
     }
@@ -353,148 +318,105 @@ void FocusWindow(char *Direction)
     Success = AXLibActiveSpace(&Space);
     ASSERT(Success);
 
-    if(Space->Type != kCGSSpaceUser)
-    {
-        if(Space->Type == kCGSSpaceFullscreen)
-        {
+    if (Space->Type != kCGSSpaceUser) {
+        if (Space->Type == kCGSSpaceFullscreen) {
             FocusWindowInFullscreenSpace(Space, Direction);
         }
         goto space_free;
     }
 
     VirtualSpace = AcquireVirtualSpace(Space);
-    if((!VirtualSpace->Tree) ||
-       (VirtualSpace->Mode == Virtual_Space_Float))
-    {
+    if ((!VirtualSpace->Tree) || (VirtualSpace->Mode == Virtual_Space_Float)) {
         goto vspace_release;
     }
 
-    if(!Window)
-    {
+    if (!Window) {
         node *Node = NULL;
-        if((StringEquals(Direction, "prev")) ||
-           (StringEquals(Direction, "west")) ||
-           (StringEquals(Direction, "north")))
-        {
+        if ((StringEquals(Direction, "prev")) ||
+            (StringEquals(Direction, "west")) ||
+            (StringEquals(Direction, "north"))) {
             Node = GetLastLeafNode(VirtualSpace->Tree);
-        }
-        else if((StringEquals(Direction, "next")) ||
-                (StringEquals(Direction, "east")) ||
-                (StringEquals(Direction, "south")))
-        {
+        } else if ((StringEquals(Direction, "next")) ||
+                   (StringEquals(Direction, "east")) ||
+                   (StringEquals(Direction, "south"))) {
             Node = GetFirstLeafNode(VirtualSpace->Tree);
         }
 
-        if(Node)
-        {
+        if (Node) {
             Window = GetWindowByID(Node->WindowId);
             ASSERT(Window);
 
             AXLibSetFocusedWindow(Window->Ref);
             AXLibSetFocusedApplication(Window->Owner->PSN);
         }
-    }
-    else if(VirtualSpace->Mode == Virtual_Space_Bsp)
-    {
+    } else if (VirtualSpace->Mode == Virtual_Space_Bsp) {
         char *FocusCycleMode = CVarStringValue(CVAR_WINDOW_FOCUS_CYCLE);
         ASSERT(FocusCycleMode);
 
         node *WindowNode = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
         ASSERT(WindowNode);
 
-        if(StringEquals(FocusCycleMode, Window_Focus_Cycle_All))
-        {
+        if (StringEquals(FocusCycleMode, Window_Focus_Cycle_All)) {
             bool WrapMonitor = AXLibDisplayCount() == 1;
             macos_window *ClosestWindow;
-            if((FindWindowUndirected(Space, VirtualSpace, WindowNode, &ClosestWindow, Direction, WrapMonitor)) ||
-               (FindClosestWindow(Space, VirtualSpace, Window, &ClosestWindow, Direction, WrapMonitor)))
-            {
+            if ((FindWindowUndirected(Space, VirtualSpace, WindowNode, &ClosestWindow, Direction, WrapMonitor)) ||
+                (FindClosestWindow(Space, VirtualSpace, Window, &ClosestWindow, Direction, WrapMonitor))) {
                 AXLibSetFocusedWindow(ClosestWindow->Ref);
                 AXLibSetFocusedApplication(ClosestWindow->Owner->PSN);
-            }
-            else if((StringEquals(Direction, "east")) ||
-                    (StringEquals(Direction, "next")))
-            {
+            } else if ((StringEquals(Direction, "east")) ||
+                       (StringEquals(Direction, "next"))) {
                 FocusMonitor("next");
-            }
-            else if((StringEquals(Direction, "west")) ||
-                    (StringEquals(Direction, "prev")))
-            {
+            } else if ((StringEquals(Direction, "west")) ||
+                       (StringEquals(Direction, "prev"))) {
                 FocusMonitor("prev");
             }
-        }
-        else
-        {
+        } else {
             bool WrapMonitor = StringEquals(FocusCycleMode, Window_Focus_Cycle_Monitor);
             macos_window *ClosestWindow;
-            if((FindWindowUndirected(Space, VirtualSpace, WindowNode, &ClosestWindow, Direction, WrapMonitor)) ||
-               (FindClosestWindow(Space, VirtualSpace, Window, &ClosestWindow, Direction, WrapMonitor)))
-            {
+            if ((FindWindowUndirected(Space, VirtualSpace, WindowNode, &ClosestWindow, Direction, WrapMonitor)) ||
+                (FindClosestWindow(Space, VirtualSpace, Window, &ClosestWindow, Direction, WrapMonitor))) {
                 AXLibSetFocusedWindow(ClosestWindow->Ref);
                 AXLibSetFocusedApplication(ClosestWindow->Owner->PSN);
             }
         }
-    }
-    else if(VirtualSpace->Mode == Virtual_Space_Monocle)
-    {
+    } else if (VirtualSpace->Mode == Virtual_Space_Monocle) {
         char *FocusCycleMode = CVarStringValue(CVAR_WINDOW_FOCUS_CYCLE);
         ASSERT(FocusCycleMode);
 
         node *WindowNode = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
-        if(WindowNode)
-        {
+        if (WindowNode) {
             node *Node = NULL;
-            if((StringEquals(Direction, "west")) ||
-               (StringEquals(Direction, "prev")))
-            {
-                if(WindowNode->Left)
-                {
+            if ((StringEquals(Direction, "west")) ||
+                (StringEquals(Direction, "prev"))) {
+                if (WindowNode->Left) {
                     Node = WindowNode->Left;
-                }
-                else if(StringEquals(FocusCycleMode, Window_Focus_Cycle_All))
-                {
+                } else if (StringEquals(FocusCycleMode, Window_Focus_Cycle_All)) {
                     bool WrapMonitor = AXLibDisplayCount() == 1;
-                    if(WrapMonitor)
-                    {
+                    if (WrapMonitor) {
                         Node = GetLastLeafNode(VirtualSpace->Tree);
-                    }
-                    else
-                    {
+                    } else {
                         FocusMonitor("prev");
                     }
-                }
-                else if(StringEquals(FocusCycleMode, Window_Focus_Cycle_Monitor))
-                {
+                } else if (StringEquals(FocusCycleMode, Window_Focus_Cycle_Monitor)) {
                     Node = GetLastLeafNode(VirtualSpace->Tree);
                 }
-            }
-            else if((StringEquals(Direction, "east")) ||
-                    (StringEquals(Direction, "next")))
-            {
-                if(WindowNode->Right)
-                {
+            } else if ((StringEquals(Direction, "east")) ||
+                       (StringEquals(Direction, "next"))) {
+                if (WindowNode->Right) {
                     Node = WindowNode->Right;
-                }
-                else if(StringEquals(FocusCycleMode, Window_Focus_Cycle_All))
-                {
+                } else if (StringEquals(FocusCycleMode, Window_Focus_Cycle_All)) {
                     bool WrapMonitor = AXLibDisplayCount() == 1;
-                    if(WrapMonitor)
-                    {
+                    if (WrapMonitor) {
                         Node = GetFirstLeafNode(VirtualSpace->Tree);
-                    }
-                    else
-                    {
+                    } else {
                         FocusMonitor("next");
                     }
-                }
-                else if(StringEquals(FocusCycleMode, Window_Focus_Cycle_Monitor))
-                {
+                } else if (StringEquals(FocusCycleMode, Window_Focus_Cycle_Monitor)) {
                     Node = GetFirstLeafNode(VirtualSpace->Tree);
                 }
             }
 
-            if(Node)
-            {
+            if (Node) {
                 macos_window *FocusWindow = GetWindowByID(Node->WindowId);
                 ASSERT(FocusWindow);
 
@@ -520,38 +442,30 @@ void SwapWindow(char *Direction)
     macos_window *Window, *ClosestWindow;
 
     Window = GetWindowByID(CVarUnsignedValue(CVAR_BSP_INSERTION_POINT));
-    if(!Window)
-    {
+    if (!Window) {
         goto out;
     }
 
     Success = AXLibActiveSpace(&Space);
     ASSERT(Success);
 
-    if(Space->Type != kCGSSpaceUser)
-    {
+    if (Space->Type != kCGSSpaceUser) {
         goto space_free;
     }
 
     VirtualSpace = AcquireVirtualSpace(Space);
-    if((!VirtualSpace->Tree) ||
-       (VirtualSpace->Mode == Virtual_Space_Float))
-    {
+    if ((!VirtualSpace->Tree) || (VirtualSpace->Mode == Virtual_Space_Float)) {
         goto vspace_release;
     }
 
-    if(VirtualSpace->Mode == Virtual_Space_Bsp)
-    {
+    if (VirtualSpace->Mode == Virtual_Space_Bsp) {
         WindowNode = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
-        if(!WindowNode)
-        {
+        if (!WindowNode) {
             goto vspace_release;
         }
 
-        if(!FindWindowUndirected(Space, VirtualSpace, WindowNode, &ClosestWindow, Direction, false))
-        {
-            if(!FindClosestWindow(Space, VirtualSpace, Window, &ClosestWindow, Direction, false))
-            {
+        if (!FindWindowUndirected(Space, VirtualSpace, WindowNode, &ClosestWindow, Direction, false)) {
+            if (!FindClosestWindow(Space, VirtualSpace, Window, &ClosestWindow, Direction, false)) {
                 goto vspace_release;
             }
         }
@@ -563,40 +477,28 @@ void SwapWindow(char *Direction)
         ResizeWindowToRegionSize(WindowNode);
         ResizeWindowToRegionSize(ClosestNode);
 
-        if(CVarIntegerValue(CVAR_MOUSE_FOLLOWS_FOCUS))
-        {
+        if (CVarIntegerValue(CVAR_MOUSE_FOLLOWS_FOCUS)) {
             CenterMouseInRegion(&ClosestNode->Region);
         }
-    }
-    else if(VirtualSpace->Mode == Virtual_Space_Monocle)
-    {
+    } else if (VirtualSpace->Mode == Virtual_Space_Monocle) {
         WindowNode = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
-        if(!WindowNode)
-        {
+        if (!WindowNode) {
             goto vspace_release;
         }
 
-        if((StringEquals(Direction, "west")) ||
-           (StringEquals(Direction, "prev")))
-        {
+        if ((StringEquals(Direction, "west")) || (StringEquals(Direction, "prev"))) {
             ClosestNode = WindowNode->Left
                         ? WindowNode->Left
                         : GetLastLeafNode(VirtualSpace->Tree);
-        }
-        else if((StringEquals(Direction, "east")) ||
-                (StringEquals(Direction, "next")))
-        {
+        } else if((StringEquals(Direction, "east")) || (StringEquals(Direction, "next"))) {
             ClosestNode = WindowNode->Right
                         ? WindowNode->Right
                         : GetFirstLeafNode(VirtualSpace->Tree);
-        }
-        else
-        {
+        } else {
             ClosestNode = NULL;
         }
 
-        if(ClosestNode && ClosestNode != WindowNode)
-        {
+        if (ClosestNode && ClosestNode != WindowNode) {
             // NOTE(koekeishiya): Swapping windows in monocle mode
             // should not trigger mouse_follows_focus.
             SwapNodeIds(WindowNode, ClosestNode);
@@ -620,35 +522,28 @@ void WarpWindow(char *Direction)
     node *WindowNode, *ClosestNode, *FocusedNode;
 
     Window = GetWindowByID(CVarUnsignedValue(CVAR_BSP_INSERTION_POINT));
-    if(!Window)
-    {
+    if (!Window) {
         goto out;
     }
 
     Success = AXLibActiveSpace(&Space);
     ASSERT(Success);
 
-    if(Space->Type != kCGSSpaceUser)
-    {
+    if (Space->Type != kCGSSpaceUser) {
         goto space_free;
     }
 
     VirtualSpace = AcquireVirtualSpace(Space);
-    if((!VirtualSpace->Tree) ||
-       (VirtualSpace->Mode == Virtual_Space_Float))
-    {
+    if ((!VirtualSpace->Tree) || (VirtualSpace->Mode == Virtual_Space_Float)) {
         goto vspace_release;
     }
 
-    if(VirtualSpace->Mode == Virtual_Space_Bsp)
-    {
+    if (VirtualSpace->Mode == Virtual_Space_Bsp) {
         WindowNode = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
         ASSERT(WindowNode);
 
-        if(!FindWindowUndirected(Space, VirtualSpace, WindowNode, &ClosestWindow, Direction, false))
-        {
-            if(!FindClosestWindow(Space, VirtualSpace, Window, &ClosestWindow, Direction, false))
-            {
+        if (!FindWindowUndirected(Space, VirtualSpace, WindowNode, &ClosestWindow, Direction, false)) {
+            if (!FindClosestWindow(Space, VirtualSpace, Window, &ClosestWindow, Direction, false)) {
                 goto vspace_release;
             }
         }
@@ -656,16 +551,13 @@ void WarpWindow(char *Direction)
         ClosestNode = GetNodeWithId(VirtualSpace->Tree, ClosestWindow->Id, VirtualSpace->Mode);
         ASSERT(ClosestNode);
 
-        if(WindowNode->Parent == ClosestNode->Parent)
-        {
+        if (WindowNode->Parent == ClosestNode->Parent) {
             // NOTE(koekeishiya): Windows have the same parent, perform a regular swap.
             SwapNodeIds(WindowNode, ClosestNode);
             ResizeWindowToRegionSize(WindowNode);
             ResizeWindowToRegionSize(ClosestNode);
             FocusedNode = ClosestNode;
-        }
-        else
-        {
+        } else {
             // NOTE(koekeishiya): Modify tree layout.
             UntileWindowFromSpace(Window, Space, VirtualSpace);
             UpdateCVar(CVAR_BSP_INSERTION_POINT, ClosestWindow->Id);
@@ -677,40 +569,28 @@ void WarpWindow(char *Direction)
 
         ASSERT(FocusedNode);
 
-        if(CVarIntegerValue(CVAR_MOUSE_FOLLOWS_FOCUS))
-        {
+        if (CVarIntegerValue(CVAR_MOUSE_FOLLOWS_FOCUS)) {
             CenterMouseInRegion(&FocusedNode->Region);
         }
-    }
-    else if(VirtualSpace->Mode == Virtual_Space_Monocle)
-    {
+    } else if (VirtualSpace->Mode == Virtual_Space_Monocle) {
         WindowNode = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
-        if(!WindowNode)
-        {
+        if (!WindowNode) {
             goto vspace_release;
         }
 
-        if((StringEquals(Direction, "west")) ||
-           (StringEquals(Direction, "prev")))
-        {
+        if ((StringEquals(Direction, "west")) || (StringEquals(Direction, "prev"))) {
             ClosestNode = WindowNode->Left
                         ? WindowNode->Left
                         : GetLastLeafNode(VirtualSpace->Tree);
-        }
-        else if((StringEquals(Direction, "east")) ||
-                (StringEquals(Direction, "next")))
-        {
+        } else if ((StringEquals(Direction, "east")) || (StringEquals(Direction, "next"))) {
             ClosestNode = WindowNode->Right
                         ? WindowNode->Right
                         : GetFirstLeafNode(VirtualSpace->Tree);
-        }
-        else
-        {
+        } else {
             ClosestNode = NULL;
         }
 
-        if(ClosestNode && ClosestNode != WindowNode)
-        {
+        if (ClosestNode && ClosestNode != WindowNode) {
             // NOTE(koekeishiya): Swapping windows in monocle mode
             // should not trigger mouse_follows_focus.
             SwapNodeIds(WindowNode, ClosestNode);
@@ -735,8 +615,7 @@ void TemporaryRatio(char *Ratio)
 void ExtendedDockSetWindowPosition(uint32_t WindowId, int X, int Y)
 {
     int SockFD;
-    if(ConnectToDaemon(&SockFD, 5050))
-    {
+    if (ConnectToDaemon(&SockFD, 5050)) {
         char Message[64];
         sprintf(Message, "window_move %d %d %d", WindowId, X, Y);
         WriteToSocket(Message, SockFD);
@@ -748,8 +627,7 @@ internal void
 ExtendedDockSetWindowLevel(macos_window *Window, int WindowLevelKey)
 {
     int SockFD;
-    if(ConnectToDaemon(&SockFD, 5050))
-    {
+    if (ConnectToDaemon(&SockFD, 5050)) {
         char Message[64];
         sprintf(Message, "window_level %d %d", Window->Id, WindowLevelKey);
         WriteToSocket(Message, SockFD);
@@ -761,8 +639,7 @@ internal void
 ExtendedDockSetWindowSticky(macos_window *Window, int Value)
 {
     int SockFD;
-    if(ConnectToDaemon(&SockFD, 5050))
-    {
+    if (ConnectToDaemon(&SockFD, 5050)) {
         char Message[64];
         sprintf(Message, "window_sticky %d %d", Window->Id, Value);
         WriteToSocket(Message, SockFD);
@@ -794,14 +671,11 @@ void FloatWindow(macos_window *Window, bool UserInitiated)
     AXLibAddFlags(Window, Window_Float);
     BroadcastFocusedWindowFloating(1);
 
-    if(CVarIntegerValue(CVAR_WINDOW_FLOAT_TOPMOST))
-    {
+    if (CVarIntegerValue(CVAR_WINDOW_FLOAT_TOPMOST)) {
         ExtendedDockSetWindowLevel(Window, kCGFloatingWindowLevelKey);
     }
 
-    if((UserInitiated) &&
-       (CVarIntegerValue(CVAR_WINDOW_FLOAT_CENTER)))
-    {
+    if ((UserInitiated) && (CVarIntegerValue(CVAR_WINDOW_FLOAT_CENTER))) {
         CenterWindow(Window);
     }
 }
@@ -812,8 +686,7 @@ UnfloatWindow(macos_window *Window)
     AXLibClearFlags(Window, Window_Float);
     BroadcastFocusedWindowFloating(0);
 
-    if(CVarIntegerValue(CVAR_WINDOW_FLOAT_TOPMOST))
-    {
+    if (CVarIntegerValue(CVAR_WINDOW_FLOAT_TOPMOST)) {
         ExtendedDockSetWindowLevel(Window, kCGNormalWindowLevelKey);
     }
 }
@@ -822,18 +695,14 @@ internal void
 ToggleWindowFloat()
 {
     macos_window *Window = GetFocusedWindow();
-    if(!Window)
-    {
+    if (!Window) {
         return;
     }
 
-    if(AXLibHasFlags(Window, Window_Float))
-    {
+    if (AXLibHasFlags(Window, Window_Float)) {
         UnfloatWindow(Window);
         TileWindow(Window);
-    }
-    else
-    {
+    } else {
         UntileWindow(Window);
         FloatWindow(Window, true);
     }
@@ -843,29 +712,23 @@ internal void
 ToggleWindowSticky()
 {
     macos_window *Window = GetFocusedWindow();
-    if(!Window)
-    {
+    if (!Window) {
         return;
     }
 
-    if(AXLibHasFlags(Window, Window_Sticky))
-    {
+    if (AXLibHasFlags(Window, Window_Sticky)) {
         ExtendedDockSetWindowSticky(Window, 0);
         AXLibClearFlags(Window, Window_Sticky);
 
-        if(AXLibHasFlags(Window, Window_Float))
-        {
+        if (AXLibHasFlags(Window, Window_Float)) {
             UnfloatWindow(Window);
             TileWindow(Window);
         }
-    }
-    else
-    {
+    } else {
         ExtendedDockSetWindowSticky(Window, 1);
         AXLibAddFlags(Window, Window_Sticky);
 
-        if(!AXLibHasFlags(Window, Window_Float))
-        {
+        if (!AXLibHasFlags(Window, Window_Float)) {
             UntileWindow(Window);
             FloatWindow(Window, true);
         }
@@ -876,23 +739,19 @@ internal void
 ToggleWindowNativeFullscreen()
 {
     macos_window *Window = GetFocusedWindow();
-    if(!Window)
-    {
+    if (!Window) {
         return;
     }
 
     bool Fullscreen = AXLibIsWindowFullscreen(Window->Ref);
-    if(Fullscreen)
-    {
+    if (Fullscreen) {
         AXLibSetWindowFullscreen(Window->Ref, !Fullscreen);
 
-        if(AXLibIsWindowMovable(Window->Ref))   AXLibAddFlags(Window, Window_Movable);
-        if(AXLibIsWindowResizable(Window->Ref)) AXLibAddFlags(Window, Window_Resizable);
+        if (AXLibIsWindowMovable(Window->Ref))   AXLibAddFlags(Window, Window_Movable);
+        if (AXLibIsWindowResizable(Window->Ref)) AXLibAddFlags(Window, Window_Resizable);
 
         TileWindow(Window);
-    }
-    else
-    {
+    } else {
         UntileWindow(Window);
         AXLibSetWindowFullscreen(Window->Ref, !Fullscreen);
     }
@@ -910,48 +769,38 @@ ToggleWindowFullscreenZoom()
     Success = AXLibActiveSpace(&Space);
     ASSERT(Success);
 
-    if(Space->Type != kCGSSpaceUser)
-    {
+    if (Space->Type != kCGSSpaceUser) {
         goto space_free;
     }
 
     VirtualSpace = AcquireVirtualSpace(Space);
-    if((!VirtualSpace->Tree) ||
-       (VirtualSpace->Mode != Virtual_Space_Bsp))
-    {
+    if ((!VirtualSpace->Tree) || (VirtualSpace->Mode != Virtual_Space_Bsp)) {
         goto vspace_release;
     }
 
     Window = GetFocusedWindow();
-    if(!Window)
-    {
+    if (!Window) {
         goto vspace_release;
     }
 
     Node = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
-    if(!Node)
-    {
+    if (!Node) {
         goto vspace_release;
     }
 
     // NOTE(koekeishiya): Window is already in fullscreen-zoom, unzoom it..
-    if(VirtualSpace->Tree->Zoom == Node)
-    {
+    if (VirtualSpace->Tree->Zoom == Node) {
         ResizeWindowToRegionSize(Node);
         VirtualSpace->Tree->Zoom = NULL;
-    }
-    else
-    {
+    } else {
         // NOTE(koekeishiya): Window is in parent-zoom, reset state.
-        if(Node->Parent && Node->Parent->Zoom == Node)
-        {
+        if (Node->Parent && Node->Parent->Zoom == Node) {
             Node->Parent->Zoom = NULL;
         }
 
         /* NOTE(koekeishiya): Some other window is in
          * fullscreen zoom, unzoom the existing window. */
-        if(VirtualSpace->Tree->Zoom)
-        {
+        if (VirtualSpace->Tree->Zoom) {
             ResizeWindowToRegionSize(VirtualSpace->Tree->Zoom);
         }
 
@@ -978,48 +827,38 @@ ToggleWindowParentZoom()
     Success = AXLibActiveSpace(&Space);
     ASSERT(Success);
 
-    if(Space->Type != kCGSSpaceUser)
-    {
+    if (Space->Type != kCGSSpaceUser) {
         goto space_free;
     }
 
     VirtualSpace = AcquireVirtualSpace(Space);
-    if((!VirtualSpace->Tree) ||
-       (VirtualSpace->Mode != Virtual_Space_Bsp))
-    {
+    if ((!VirtualSpace->Tree) || (VirtualSpace->Mode != Virtual_Space_Bsp)) {
         goto vspace_release;
     }
 
     Window = GetFocusedWindow();
-    if(!Window)
-    {
+    if (!Window) {
         goto vspace_release;
     }
 
     Node = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
-    if(!Node || !Node->Parent)
-    {
+    if (!Node || !Node->Parent) {
         goto vspace_release;
     }
 
     // NOTE(koekeishiya): Window is already in parent-zoom, unzoom it..
-    if(Node->Parent->Zoom == Node)
-    {
+    if (Node->Parent->Zoom == Node) {
         ResizeWindowToRegionSize(Node);
         Node->Parent->Zoom = NULL;
-    }
-    else
-    {
+    } else {
         // NOTE(koekeishiya): Window is in fullscreen zoom, reset state.
-        if(VirtualSpace->Tree->Zoom == Node)
-        {
+        if (VirtualSpace->Tree->Zoom == Node) {
             VirtualSpace->Tree->Zoom = NULL;
         }
 
         /* NOTE(koekeishiya): Some other window is in
          * parent zoom, unzoom the existing window. */
-        if(Node->Parent->Zoom)
-        {
+        if (Node->Parent->Zoom) {
             ResizeWindowToRegionSize(Node->Parent->Zoom);
         }
 
@@ -1046,31 +885,24 @@ ToggleWindowSplitMode()
     Success = AXLibActiveSpace(&Space);
     ASSERT(Success);
 
-    if(Space->Type != kCGSSpaceUser)
-    {
+    if (Space->Type != kCGSSpaceUser) {
         goto space_free;
     }
 
     VirtualSpace = AcquireVirtualSpace(Space);
-    if((!VirtualSpace->Tree) ||
-       (VirtualSpace->Mode != Virtual_Space_Bsp))
-    {
+    if ((!VirtualSpace->Tree) || (VirtualSpace->Mode != Virtual_Space_Bsp)) {
         goto vspace_release;
     }
 
     WindowId = CVarUnsignedValue(CVAR_BSP_INSERTION_POINT);
     Node = GetNodeWithId(VirtualSpace->Tree, WindowId, VirtualSpace->Mode);
-    if(!Node || !Node->Parent)
-    {
+    if (!Node || !Node->Parent) {
         goto vspace_release;
     }
 
-    if(Node->Parent->Split == Split_Horizontal)
-    {
+    if (Node->Parent->Split == Split_Horizontal) {
         Node->Parent->Split = Split_Vertical;
-    }
-    else if(Node->Parent->Split == Split_Vertical)
-    {
+    } else if (Node->Parent->Split == Split_Vertical) {
         Node->Parent->Split = Split_Horizontal;
     }
 
@@ -1089,12 +921,12 @@ void ToggleWindow(char *Type)
     // NOTE(koekeishiya): We cannot use our CVAR_BSP_INSERTION_POINT here
     // because the window that we toggle options for may not be in a tree,
     // and we will not be able to perform an operation in that case.
-    if     (StringEquals(Type, "float"))               ToggleWindowFloat();
-    else if(StringEquals(Type, "sticky"))              ToggleWindowSticky();
-    else if(StringEquals(Type, "native-fullscreen"))   ToggleWindowNativeFullscreen();
-    else if(StringEquals(Type, "fullscreen"))          ToggleWindowFullscreenZoom();
-    else if(StringEquals(Type, "parent"))              ToggleWindowParentZoom();
-    else if(StringEquals(Type, "split"))               ToggleWindowSplitMode();
+    if      (StringEquals(Type, "float"))               ToggleWindowFloat();
+    else if (StringEquals(Type, "sticky"))              ToggleWindowSticky();
+    else if (StringEquals(Type, "native-fullscreen"))   ToggleWindowNativeFullscreen();
+    else if (StringEquals(Type, "fullscreen"))          ToggleWindowFullscreenZoom();
+    else if (StringEquals(Type, "parent"))              ToggleWindowParentZoom();
+    else if (StringEquals(Type, "split"))               ToggleWindowSplitMode();
 }
 
 void UseInsertionPoint(char *Direction)
@@ -1110,47 +942,37 @@ void UseInsertionPoint(char *Direction)
     int PreselectBorderType;
 
     Window = GetFocusedWindow();
-    if(!Window)
-    {
+    if (!Window) {
         goto out;
     }
 
     Success = AXLibActiveSpace(&Space);
     ASSERT(Success);
 
-    if(Space->Type != kCGSSpaceUser)
-    {
+    if (Space->Type != kCGSSpaceUser) {
         goto space_free;
     }
 
     VirtualSpace = AcquireVirtualSpace(Space);
-    if((!VirtualSpace->Tree) ||
-       (VirtualSpace->Mode != Virtual_Space_Bsp))
-    {
+    if ((!VirtualSpace->Tree) || (VirtualSpace->Mode != Virtual_Space_Bsp)) {
         goto vspace_release;
     }
 
     Node = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
-    if(!Node)
-    {
+    if (!Node) {
         goto vspace_release;
     }
 
-    if(Node->Preselect)
-    {
-        if(StringEquals(Direction, Node->Preselect->Direction))
-        {
+    if (Node->Preselect) {
+        if (StringEquals(Direction, Node->Preselect->Direction)) {
             FreePreselectNode(Node);
             goto vspace_release;
-        }
-        else
-        {
+        } else {
             FreePreselectNode(Node);
         }
     }
 
-    if(StringEquals(Direction, "cancel"))
-    {
+    if (StringEquals(Direction, "cancel")) {
         goto vspace_release;
     }
 
@@ -1159,32 +981,23 @@ void UseInsertionPoint(char *Direction)
 
     Node->Preselect->Direction = strdup(Direction);
 
-    if(StringEquals(Direction, "west"))
-    {
+    if (StringEquals(Direction, "west")) {
         Node->Preselect->SpawnLeft = true;
         Node->Preselect->Split = Split_Vertical;
         PreselectBorderType = PRESEL_TYPE_WEST;
-    }
-    else if(StringEquals(Direction, "east"))
-    {
+    } else if (StringEquals(Direction, "east")) {
         Node->Preselect->SpawnLeft = false;
         Node->Preselect->Split = Split_Vertical;
         PreselectBorderType = PRESEL_TYPE_EAST;
-    }
-    else if(StringEquals(Direction, "north"))
-    {
+    } else if (StringEquals(Direction, "north")) {
         Node->Preselect->SpawnLeft = true;
         Node->Preselect->Split = Split_Horizontal;
         PreselectBorderType = PRESEL_TYPE_NORTH;
-    }
-    else if(StringEquals(Direction, "south"))
-    {
+    } else if (StringEquals(Direction, "south")) {
         Node->Preselect->SpawnLeft = false;
         Node->Preselect->Split = Split_Horizontal;
         PreselectBorderType = PRESEL_TYPE_SOUTH;
-    }
-    else
-    {
+    } else {
         // NOTE(koekeishiya): this can't actually happen, silence compiler warning..
         PreselectBorderType = PRESEL_TYPE_NORTH;
     }
@@ -1195,15 +1008,12 @@ void UseInsertionPoint(char *Direction)
                            : 1 - CVarFloatingPointValue(CVAR_BSP_SPLIT_RATIO);
 
 
-    if(Node->Preselect->Split == Split_Vertical)
-    {
+    if (Node->Preselect->Split == Split_Vertical) {
         CreatePreselectRegion(Node->Preselect,
                               Node->Preselect->SpawnLeft ? Region_Left : Region_Right,
                               Space,
                               VirtualSpace);
-    }
-    else if(Node->Preselect->Split == Split_Horizontal)
-    {
+    } else if (Node->Preselect->Split == Split_Horizontal) {
         CreatePreselectRegion(Node->Preselect,
                               Node->Preselect->SpawnLeft ? Region_Upper : Region_Lower,
                               Space,
@@ -1232,24 +1042,21 @@ out:;
 internal void
 RotateBSPTree(node *Node, char *Degrees)
 {
-    if((StringEquals(Degrees, "90") && Node->Split == Split_Vertical) ||
-       (StringEquals(Degrees, "270") && Node->Split == Split_Horizontal) ||
-       (StringEquals(Degrees, "180")))
-    {
+    if ((StringEquals(Degrees, "90") && Node->Split == Split_Vertical) ||
+        (StringEquals(Degrees, "270") && Node->Split == Split_Horizontal) ||
+        (StringEquals(Degrees, "180"))) {
         node *Temp = Node->Left;
         Node->Left = Node->Right;
         Node->Right = Temp;
         Node->Ratio = 1 - Node->Ratio;
     }
 
-    if(!StringEquals(Degrees, "180"))
-    {
-        if     (Node->Split == Split_Horizontal)   Node->Split = Split_Vertical;
-        else if(Node->Split == Split_Vertical)     Node->Split = Split_Horizontal;
+    if (!StringEquals(Degrees, "180")) {
+        if      (Node->Split == Split_Horizontal)   Node->Split = Split_Vertical;
+        else if (Node->Split == Split_Vertical)     Node->Split = Split_Horizontal;
     }
 
-    if(!IsLeafNode(Node))
-    {
+    if (!IsLeafNode(Node)) {
         RotateBSPTree(Node->Left, Degrees);
         RotateBSPTree(Node->Right, Degrees);
     }
@@ -1264,15 +1071,12 @@ void RotateWindowTree(char *Degrees)
     Success = AXLibActiveSpace(&Space);
     ASSERT(Success);
 
-    if(Space->Type != kCGSSpaceUser)
-    {
+    if (Space->Type != kCGSSpaceUser) {
         goto space_free;
     }
 
     VirtualSpace = AcquireVirtualSpace(Space);
-    if((!VirtualSpace->Tree) ||
-       (VirtualSpace->Mode != Virtual_Space_Bsp))
-    {
+    if ((!VirtualSpace->Tree) || (VirtualSpace->Mode != Virtual_Space_Bsp)) {
         goto vspace_release;
     }
 
@@ -1290,13 +1094,11 @@ space_free:
 internal node *
 MirrorBSPTree(node *Tree, node_split Axis)
 {
-    if(!IsLeafNode(Tree))
-    {
+    if (!IsLeafNode(Tree)) {
         node *Left = MirrorBSPTree(Tree->Left, Axis);
         node *Right = MirrorBSPTree(Tree->Right, Axis);
 
-        if(Tree->Split == Axis)
-        {
+        if (Tree->Split == Axis) {
             Tree->Left = Right;
             Tree->Right = Left;
         }
@@ -1314,24 +1116,18 @@ void MirrorWindowTree(char *Direction)
     Success = AXLibActiveSpace(&Space);
     ASSERT(Success);
 
-    if(Space->Type != kCGSSpaceUser)
-    {
+    if (Space->Type != kCGSSpaceUser) {
         goto space_free;
     }
 
     VirtualSpace = AcquireVirtualSpace(Space);
-    if((!VirtualSpace->Tree) ||
-       (VirtualSpace->Mode != Virtual_Space_Bsp))
-    {
+    if ((!VirtualSpace->Tree) || (VirtualSpace->Mode != Virtual_Space_Bsp)) {
         goto vspace_release;
     }
 
-    if(StringEquals(Direction, "vertical"))
-    {
+    if (StringEquals(Direction, "vertical")) {
         VirtualSpace->Tree = MirrorBSPTree(VirtualSpace->Tree, Split_Vertical);
-    }
-    else if(StringEquals(Direction, "horizontal"))
-    {
+    } else if (StringEquals(Direction, "horizontal")) {
         VirtualSpace->Tree = MirrorBSPTree(VirtualSpace->Tree, Split_Horizontal);
     }
 
@@ -1355,37 +1151,31 @@ void AdjustWindowRatio(char *Direction)
     node *WindowNode, *ClosestNode, *Ancestor;
 
     Window = GetWindowByID(CVarUnsignedValue(CVAR_BSP_INSERTION_POINT));
-    if(!Window)
-    {
+    if (!Window) {
         goto out;
     }
 
     Success = AXLibActiveSpace(&Space);
     ASSERT(Success);
 
-    if(Space->Type != kCGSSpaceUser)
-    {
+    if (Space->Type != kCGSSpaceUser) {
         goto space_free;
     }
 
     VirtualSpace = AcquireVirtualSpace(Space);
-    if((!VirtualSpace->Tree) ||
-       (VirtualSpace->Mode != Virtual_Space_Bsp) ||
-       (IsLeafNode(VirtualSpace->Tree)))
-    {
+    if ((!VirtualSpace->Tree) ||
+        (VirtualSpace->Mode != Virtual_Space_Bsp) ||
+        (IsLeafNode(VirtualSpace->Tree))) {
         goto vspace_release;
     }
 
     WindowNode = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
-    if(!WindowNode)
-    {
+    if (!WindowNode) {
         goto vspace_release;
     }
 
-    if(!FindWindowUndirected(Space, VirtualSpace, WindowNode, &ClosestWindow, Direction, false))
-    {
-        if(!FindClosestWindow(Space, VirtualSpace, Window, &ClosestWindow, Direction, false))
-        {
+    if (!FindWindowUndirected(Space, VirtualSpace, WindowNode, &ClosestWindow, Direction, false)) {
+        if (!FindClosestWindow(Space, VirtualSpace, Window, &ClosestWindow, Direction, false)) {
             goto vspace_release;
         }
     }
@@ -1394,21 +1184,17 @@ void AdjustWindowRatio(char *Direction)
     ASSERT(ClosestNode);
 
     Ancestor = GetLowestCommonAncestor(WindowNode, ClosestNode);
-    if(!Ancestor)
-    {
+    if (!Ancestor) {
         goto vspace_release;
     }
 
     Offset = CVarFloatingPointValue(CVAR_BSP_SPLIT_RATIO);
-    if(!(WindowNode == Ancestor->Left ||
-         IsNodeInTree(Ancestor->Left, WindowNode)))
-    {
+    if (!(WindowNode == Ancestor->Left || IsNodeInTree(Ancestor->Left, WindowNode))) {
         Offset = -Offset;
     }
 
     Ratio = Ancestor->Ratio + Offset;
-    if(Ratio >= 0.1 && Ratio <= 0.9)
-    {
+    if (Ratio >= 0.1 && Ratio <= 0.9) {
         Ancestor->Ratio = Ratio;
         ResizeNodeRegion(Ancestor, Space, VirtualSpace);
         ApplyNodeRegion(Ancestor, VirtualSpace->Mode);
@@ -1432,35 +1218,29 @@ void ActivateSpaceLayout(char *Layout)
     Success = AXLibActiveSpace(&Space);
     ASSERT(Success);
 
-    if(Space->Type != kCGSSpaceUser)
-    {
+    if (Space->Type != kCGSSpaceUser) {
         goto space_free;
     }
 
-    if     (StringEquals(Layout, "bsp"))       NewLayout = Virtual_Space_Bsp;
-    else if(StringEquals(Layout, "monocle"))   NewLayout = Virtual_Space_Monocle;
-    else if(StringEquals(Layout, "float"))     NewLayout = Virtual_Space_Float;
-    else                                       goto space_free;
+    if      (StringEquals(Layout, "bsp"))       NewLayout = Virtual_Space_Bsp;
+    else if (StringEquals(Layout, "monocle"))   NewLayout = Virtual_Space_Monocle;
+    else if (StringEquals(Layout, "float"))     NewLayout = Virtual_Space_Float;
+    else                                        goto space_free;
 
     VirtualSpace = AcquireVirtualSpace(Space);
-    if(VirtualSpace->Mode == NewLayout)
-    {
+    if (VirtualSpace->Mode == NewLayout) {
         goto vspace_release;
     }
 
-    if(VirtualSpace->Tree)
-    {
+    if (VirtualSpace->Tree) {
         FreeNodeTree(VirtualSpace->Tree, VirtualSpace->Mode);
         VirtualSpace->Tree = NULL;
     }
 
     VirtualSpace->Mode = NewLayout;
-    if(ShouldDeserializeVirtualSpace(VirtualSpace))
-    {
+    if (ShouldDeserializeVirtualSpace(VirtualSpace)) {
         CreateDeserializedWindowTreeForSpace(Space, VirtualSpace);
-    }
-    else
-    {
+    } else {
         CreateWindowTreeForSpace(Space, VirtualSpace);
     }
 
@@ -1480,25 +1260,21 @@ void ToggleSpace(char *Op)
     Success = AXLibActiveSpace(&Space);
     ASSERT(Success);
 
-    if(Space->Type != kCGSSpaceUser)
-    {
+    if (Space->Type != kCGSSpaceUser) {
         goto space_free;
     }
 
     VirtualSpace = AcquireVirtualSpace(Space);
-    if(VirtualSpace->Mode == Virtual_Space_Float)
-    {
+    if (VirtualSpace->Mode == Virtual_Space_Float) {
         goto vspace_release;
     }
 
-    if(StringEquals(Op, "offset"))
-    {
+    if (StringEquals(Op, "offset")) {
         VirtualSpace->Offset = VirtualSpace->Offset
                              ? NULL
                              : &VirtualSpace->_Offset;
 
-        if(VirtualSpace->Tree)
-        {
+        if (VirtualSpace->Tree) {
             CreateNodeRegion(VirtualSpace->Tree, Region_Full, Space, VirtualSpace);
             CreateNodeRegionRecursive(VirtualSpace->Tree, false, Space, VirtualSpace);
             ApplyNodeRegion(VirtualSpace->Tree, VirtualSpace->Mode, false);
@@ -1522,20 +1298,17 @@ void AdjustSpacePadding(char *Op)
     Success = AXLibActiveSpace(&Space);
     ASSERT(Success);
 
-    if(Space->Type != kCGSSpaceUser)
-    {
+    if (Space->Type != kCGSSpaceUser) {
         goto space_free;
     }
 
     VirtualSpace = AcquireVirtualSpace(Space);
-    if(VirtualSpace->Mode == Virtual_Space_Float)
-    {
+    if (VirtualSpace->Mode == Virtual_Space_Float) {
         goto vspace_release;
     }
 
     Delta = CVarFloatingPointValue(CVAR_PADDING_STEP_SIZE);
-    if(StringEquals(Op, "dec"))
-    {
+    if (StringEquals(Op, "dec")) {
         Delta = -Delta;
     }
 
@@ -1544,19 +1317,15 @@ void AdjustSpacePadding(char *Op)
     NewLeft = VirtualSpace->_Offset.Left + Delta;
     NewRight = VirtualSpace->_Offset.Right + Delta;
 
-    if((NewTop >= 0) &&
-       (NewBottom >= 0) &&
-       (NewLeft >= 0) &&
-       (NewRight >= 0))
-    {
+    if ((NewTop >= 0) && (NewBottom >= 0) &&
+        (NewLeft >= 0) && (NewRight >= 0)) {
         VirtualSpace->_Offset.Top = NewTop;
         VirtualSpace->_Offset.Bottom = NewBottom;
         VirtualSpace->_Offset.Left = NewLeft;
         VirtualSpace->_Offset.Right = NewRight;
     }
 
-    if(VirtualSpace->Tree)
-    {
+    if (VirtualSpace->Tree) {
         CreateNodeRegion(VirtualSpace->Tree, Region_Full, Space, VirtualSpace);
         CreateNodeRegionRecursive(VirtualSpace->Tree, false, Space, VirtualSpace);
         ApplyNodeRegion(VirtualSpace->Tree, VirtualSpace->Mode, false);
@@ -1579,31 +1348,26 @@ void AdjustSpaceGap(char *Op)
     Success = AXLibActiveSpace(&Space);
     ASSERT(Success);
 
-    if(Space->Type != kCGSSpaceUser)
-    {
+    if (Space->Type != kCGSSpaceUser) {
         goto space_free;
     }
 
     VirtualSpace = AcquireVirtualSpace(Space);
-    if(VirtualSpace->Mode == Virtual_Space_Float)
-    {
+    if (VirtualSpace->Mode == Virtual_Space_Float) {
         goto vspace_release;
     }
 
     Delta = CVarFloatingPointValue(CVAR_GAP_STEP_SIZE);
-    if(StringEquals(Op, "dec"))
-    {
+    if (StringEquals(Op, "dec")) {
         Delta = -Delta;
     }
 
     NewGap = VirtualSpace->_Offset.Gap + Delta;
-    if(NewGap >= 0)
-    {
+    if (NewGap >= 0) {
         VirtualSpace->_Offset.Gap = NewGap;
     }
 
-    if(VirtualSpace->Tree)
-    {
+    if (VirtualSpace->Tree) {
         CreateNodeRegion(VirtualSpace->Tree, Region_Full, Space, VirtualSpace);
         CreateNodeRegionRecursive(VirtualSpace->Tree, false, Space, VirtualSpace);
         ApplyNodeRegion(VirtualSpace->Tree, VirtualSpace->Mode, false);
@@ -1665,31 +1429,24 @@ bool SendWindowToDesktop(macos_window *Window, char *Op)
     ASSERT(!(*List));
     free(SpacesForWindow);
 
-    if(Space->Type != kCGSSpaceUser)
-    {
+    if (Space->Type != kCGSSpaceUser) {
         goto space_free;
     }
 
     Success = AXLibCGSSpaceIDToDesktopID(Space->Id, &SourceMonitor, &SourceDesktopId);
     ASSERT(Success);
 
-    if(StringEquals(Op, "prev"))
-    {
+    if (StringEquals(Op, "prev")) {
         DestinationDesktopId = SourceDesktopId - 1;
-    }
-    else if(StringEquals(Op, "next"))
-    {
+    } else if (StringEquals(Op, "next")) {
         DestinationDesktopId = SourceDesktopId + 1;
-    }
-    else if(sscanf(Op, "%d", &DestinationDesktopId) != 1)
-    {
+    } else if (sscanf(Op, "%d", &DestinationDesktopId) != 1) {
         fprintf(stderr, "invalid destination desktop specified '%s'!\n", Op);
         Success = false;
         goto space_free;
     }
 
-    if(SourceDesktopId == DestinationDesktopId)
-    {
+    if (SourceDesktopId == DestinationDesktopId) {
         fprintf(stderr,
                 "invalid destination desktop specified, source desktop and destination '%d' are the same!\n",
                 DestinationDesktopId);
@@ -1698,8 +1455,7 @@ bool SendWindowToDesktop(macos_window *Window, char *Op)
     }
 
     Success = AXLibCGSSpaceIDFromDesktopID(DestinationDesktopId, &DestinationMonitor, &DestinationSpaceId);
-    if(!Success)
-    {
+    if (!Success) {
         fprintf(stderr,
                 "invalid destination desktop specified, desktop '%d' does not exist!\n",
                 DestinationDesktopId);
@@ -1707,8 +1463,7 @@ bool SendWindowToDesktop(macos_window *Window, char *Op)
     }
 
     ValidWindow = ((!AXLibHasFlags(Window, Window_Float)) && (IsWindowValid(Window)));
-    if(ValidWindow)
-    {
+    if (ValidWindow) {
         virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
         UntileWindowFromSpace(Window, Space, VirtualSpace);
         ReleaseVirtualSpace(VirtualSpace);
@@ -1725,19 +1480,15 @@ bool SendWindowToDesktop(macos_window *Window, char *Op)
     // priority as reported by MacOS. If there are no windows left on the source space,
     // we still experience desync. Not exactly sure what can be done about that.
     WindowIds = GetAllVisibleWindowsForSpace(Space, false, true);
-    for(int Index = 0;
-        Index < WindowIds.size();
-        ++Index)
-    {
-        if(WindowIds[Index] == Window->Id) continue;
+    for (int Index = 0; Index < WindowIds.size(); ++Index) {
+        if (WindowIds[Index] == Window->Id) continue;
         macos_window *Window = GetWindowByID(WindowIds[Index]);
         AXLibSetFocusedWindow(Window->Ref);
         AXLibSetFocusedApplication(Window->Owner->PSN);
         break;
     }
 
-    if(DestinationMonitor == SourceMonitor)
-    {
+    if (DestinationMonitor == SourceMonitor) {
         goto space_free;
     }
 
@@ -1753,14 +1504,12 @@ bool SendWindowToDesktop(macos_window *Window, char *Op)
     AXLibSetWindowPosition(Window->Ref, NormalizedWindow.origin.x, NormalizedWindow.origin.y);
     AXLibSetWindowSize(Window->Ref, NormalizedWindow.size.width, NormalizedWindow.size.height);
 
-    if(!ValidWindow)
-    {
+    if (!ValidWindow) {
         goto monitor_free;
     }
 
     DestinationMonitorActiveSpace = AXLibActiveSpace(DestinationMonitorRef);
-    if(DestinationMonitorActiveSpace->Id == DestinationSpaceId)
-    {
+    if (DestinationMonitorActiveSpace->Id == DestinationSpaceId) {
         virtual_space *DestinationMonitorVirtualSpace = AcquireVirtualSpace(DestinationMonitorActiveSpace);
         TileWindowOnSpace(Window, DestinationMonitorActiveSpace, DestinationMonitorVirtualSpace);
         ReleaseVirtualSpace(DestinationMonitorVirtualSpace);
@@ -1781,8 +1530,7 @@ space_free:
 void SendWindowToDesktop(char *Op)
 {
     macos_window *Window = GetFocusedWindow();
-    if(Window)
-    {
+    if (Window) {
         SendWindowToDesktop(Window, Op);
     }
 }
@@ -1798,43 +1546,33 @@ void SendWindowToMonitor(char *Op)
     CFStringRef SourceMonitorRef, DestinationMonitorRef;
 
     Window = GetFocusedWindow();
-    if(!Window)
-    {
+    if (!Window) {
         goto out;
     }
 
     Success = AXLibActiveSpace(&Space);
     ASSERT(Success);
 
-    if(Space->Type != kCGSSpaceUser)
-    {
+    if (Space->Type != kCGSSpaceUser) {
         goto space_free;
     }
 
     Success = AXLibCGSSpaceIDToDesktopID(Space->Id, &SourceMonitor, NULL);
     ASSERT(Success);
 
-    if(StringEquals(Op, "prev"))
-    {
+    if (StringEquals(Op, "prev")) {
         DestinationMonitor = SourceMonitor - 1;
-    }
-    else if(StringEquals(Op, "next"))
-    {
+    } else if (StringEquals(Op, "next")) {
         DestinationMonitor = SourceMonitor + 1;
-    }
-    else if(sscanf(Op, "%d", &DestinationMonitor) == 1)
-    {
+    } else if (sscanf(Op, "%d", &DestinationMonitor) == 1) {
         // NOTE(koekeishiya): Convert 1-indexed back to 0-index expected by the system.
         --DestinationMonitor;
-    }
-    else
-    {
+    } else {
         fprintf(stderr, "invalid destination monitor specified '%s'!\n", Op);
         goto space_free;
     }
 
-    if(DestinationMonitor == SourceMonitor)
-    {
+    if (DestinationMonitor == SourceMonitor) {
         // NOTE(koekeishiya): Convert 0-indexed back to 1-index when printng error to user.
         fprintf(stderr,
                 "invalid destination monitor specified, source monitor and destination '%d' are the same!\n",
@@ -1843,8 +1581,7 @@ void SendWindowToMonitor(char *Op)
     }
 
     DestinationMonitorRef = AXLibGetDisplayIdentifierFromArrangement(DestinationMonitor);
-    if(!DestinationMonitorRef)
-    {
+    if (!DestinationMonitorRef) {
         // NOTE(koekeishiya): Convert 0-indexed back to 1-index when printng error to user.
         fprintf(stderr,
                 "invalid destination monitor specified, monitor '%d' does not exist!\n",
@@ -1855,14 +1592,12 @@ void SendWindowToMonitor(char *Op)
     DestinationSpace = AXLibActiveSpace(DestinationMonitorRef);
     ASSERT(DestinationSpace);
 
-    if(DestinationSpace->Type != kCGSSpaceUser)
-    {
+    if (DestinationSpace->Type != kCGSSpaceUser) {
         goto dest_space_free;
     }
 
     ValidWindow = ((!AXLibHasFlags(Window, Window_Float)) && (IsWindowValid(Window)));
-    if(ValidWindow)
-    {
+    if (ValidWindow) {
         virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
         UntileWindowFromSpace(Window, Space, VirtualSpace);
         ReleaseVirtualSpace(VirtualSpace);
@@ -1879,11 +1614,8 @@ void SendWindowToMonitor(char *Op)
     // priority as reported by MacOS. If there are no windows left on the source monitor,
     // we still experience desync. Not exactly sure what can be done about that.
     WindowIds = GetAllVisibleWindowsForSpace(Space, false, true);
-    for(int Index = 0;
-        Index < WindowIds.size();
-        ++Index)
-    {
-        if(WindowIds[Index] == Window->Id) continue;
+    for (int Index = 0; Index < WindowIds.size(); ++Index) {
+        if (WindowIds[Index] == Window->Id) continue;
         macos_window *Window = GetWindowByID(WindowIds[Index]);
         AXLibSetFocusedWindow(Window->Ref);
         AXLibSetFocusedApplication(Window->Owner->PSN);
@@ -1905,8 +1637,7 @@ void SendWindowToMonitor(char *Op)
     Window->Position = NormalizedWindow.origin;
     Window->Size = NormalizedWindow.size;
 
-    if(ValidWindow)
-    {
+    if (ValidWindow) {
         virtual_space *DestinationVirtualSpace = AcquireVirtualSpace(DestinationSpace);
         TileWindowOnSpace(Window, DestinationSpace, DestinationVirtualSpace);
         ReleaseVirtualSpace(DestinationVirtualSpace);
@@ -1933,8 +1664,7 @@ FocusMonitor(unsigned MonitorId)
     macos_space *Space;
 
     MonitorRef = AXLibGetDisplayIdentifierFromArrangement(MonitorId);
-    if(!MonitorRef)
-    {
+    if (!MonitorRef) {
         // NOTE(koekeishiya): Convert 0-indexed back to 1-index when printng error to user.
         fprintf(stderr,
                 "invalid destination monitor specified, monitor '%d' does not exist!\n",
@@ -1944,14 +1674,12 @@ FocusMonitor(unsigned MonitorId)
 
     Space = AXLibActiveSpace(MonitorRef);
     ASSERT(Space);
-    if(Space->Type != kCGSSpaceUser)
-    {
+    if (Space->Type != kCGSSpaceUser) {
         goto space_free;
     }
 
     WindowIds = GetAllVisibleWindowsForSpace(Space, false, true);
-    if(WindowIds.empty())
-    {
+    if (WindowIds.empty()) {
         goto space_free;
     }
 
@@ -1981,70 +1709,54 @@ void FocusMonitor(char *Op)
     Success = AXLibCGSSpaceIDToDesktopID(Space->Id, &SourceMonitor, NULL);
     ASSERT(Success);
 
-    if(StringEquals(Op, "prev"))
-    {
+    if (StringEquals(Op, "prev")) {
         DestinationMonitor = SourceMonitor - 1;
         Operation = -1;
-    }
-    else if(StringEquals(Op, "next"))
-    {
+    } else if (StringEquals(Op, "next")) {
         DestinationMonitor = SourceMonitor + 1;
         Operation = 1;
-    }
-    else if(sscanf(Op, "%d", &DestinationMonitor) == 1)
-    {
+    } else if (sscanf(Op, "%d", &DestinationMonitor) == 1) {
         // NOTE(koekeishiya): Convert 1-indexed back to 0-index expected by the system.
         --DestinationMonitor;
         Operation = 0;
-    }
-    else
-    {
+    } else {
         fprintf(stderr, "invalid destination monitor specified '%s'!\n", Op);
         goto space_free;
     }
 
-    if(DestinationMonitor == SourceMonitor)
-    {
+    if (DestinationMonitor == SourceMonitor) {
         fprintf(stderr,
                 "invalid destination monitor specified, source monitor and destination '%d' are the same!\n",
                 DestinationMonitor + 1);
         goto space_free;
     }
 
-    switch(Operation)
-    {
-        case -1:
-        {
-            if(!FocusMonitor(DestinationMonitor))
-            {
-                char *FocusCycleMode = CVarStringValue(CVAR_WINDOW_FOCUS_CYCLE);
-                ASSERT(FocusCycleMode);
-                if((StringEquals(FocusCycleMode, Window_Focus_Cycle_All)) ||
-                   (CVarIntegerValue(CVAR_MONITOR_FOCUS_CYCLE)))
-                {
-                    DestinationMonitor = AXLibDisplayCount() - 1;
-                    FocusMonitor(DestinationMonitor);
-                }
+    switch (Operation) {
+    case -1: {
+        if (!FocusMonitor(DestinationMonitor)) {
+            char *FocusCycleMode = CVarStringValue(CVAR_WINDOW_FOCUS_CYCLE);
+            ASSERT(FocusCycleMode);
+            if ((StringEquals(FocusCycleMode, Window_Focus_Cycle_All)) ||
+                (CVarIntegerValue(CVAR_MONITOR_FOCUS_CYCLE))) {
+                DestinationMonitor = AXLibDisplayCount() - 1;
+                FocusMonitor(DestinationMonitor);
             }
-        } break;
-        case 0:
-        {
-            FocusMonitor(DestinationMonitor);
-        } break;
-        case 1:
-        {
-            if(!FocusMonitor(DestinationMonitor))
-            {
-                char *FocusCycleMode = CVarStringValue(CVAR_WINDOW_FOCUS_CYCLE);
-                ASSERT(FocusCycleMode);
-                if((StringEquals(FocusCycleMode, Window_Focus_Cycle_All)) ||
-                   (CVarIntegerValue(CVAR_MONITOR_FOCUS_CYCLE)))
-                {
-                    DestinationMonitor = 0;
-                    FocusMonitor(DestinationMonitor);
-                }
+        }
+    } break;
+    case 0: {
+        FocusMonitor(DestinationMonitor);
+    } break;
+    case 1: {
+        if (!FocusMonitor(DestinationMonitor)) {
+            char *FocusCycleMode = CVarStringValue(CVAR_WINDOW_FOCUS_CYCLE);
+            ASSERT(FocusCycleMode);
+            if ((StringEquals(FocusCycleMode, Window_Focus_Cycle_All)) ||
+                (CVarIntegerValue(CVAR_MONITOR_FOCUS_CYCLE))) {
+                DestinationMonitor = 0;
+                FocusMonitor(DestinationMonitor);
             }
-        } break;
+        }
+    } break;
     }
 
 space_free:
@@ -2060,8 +1772,7 @@ void WarpFloatingWindow(char *Op)
     virtual_space *VirtualSpace;
 
     Window = GetFocusedWindow();
-    if(!Window)
-    {
+    if (!Window) {
         goto out;
     }
 
@@ -2073,57 +1784,39 @@ void WarpFloatingWindow(char *Op)
 
     VirtualSpace = AcquireVirtualSpace(Space);
 
-    if((!AXLibHasFlags(Window, Window_Float)) &&
-       (VirtualSpace->Mode != Virtual_Space_Float))
-    {
+    if ((!AXLibHasFlags(Window, Window_Float)) &&
+        (VirtualSpace->Mode != Virtual_Space_Float)) {
         goto space_free;
     }
 
     Region = CGRectToRegion(AXLibGetDisplayBounds(DisplayRef));
     ConstrainRegion(DisplayRef, &Region);
 
-    if(StringEquals(Op, "fullscreen"))
-    {
+    if (StringEquals(Op, "fullscreen")) {
         AXLibSetWindowPosition(Window->Ref, Region.X, Region.Y);
         AXLibSetWindowSize(Window->Ref, Region.Width, Region.Height);
-    }
-    else if(StringEquals(Op, "left"))
-    {
+    } else if (StringEquals(Op, "left")) {
         AXLibSetWindowPosition(Window->Ref, Region.X, Region.Y);
         AXLibSetWindowSize(Window->Ref, Region.Width / 2, Region.Height);
-    }
-    else if(StringEquals(Op, "right"))
-    {
+    } else if (StringEquals(Op, "right")) {
         AXLibSetWindowPosition(Window->Ref, Region.X + Region.Width / 2, Region.Y);
         AXLibSetWindowSize(Window->Ref, Region.Width / 2, Region.Height);
-    }
-    else if(StringEquals(Op, "top-left"))
-    {
+    } else if (StringEquals(Op, "top-left")) {
         AXLibSetWindowPosition(Window->Ref, Region.X, Region.Y);
         AXLibSetWindowSize(Window->Ref, Region.Width / 2, Region.Height / 2);
-    }
-    else if(StringEquals(Op, "top-right"))
-    {
+    } else if (StringEquals(Op, "top-right")) {
         AXLibSetWindowPosition(Window->Ref, Region.X + Region.Width / 2, Region.Y);
         AXLibSetWindowSize(Window->Ref, Region.Width / 2, Region.Height / 2);
-    }
-    else if(StringEquals(Op, "bottom-left"))
-    {
+    } else if (StringEquals(Op, "bottom-left")) {
         AXLibSetWindowPosition(Window->Ref, Region.X, Region.Y + Region.Height / 2);
         AXLibSetWindowSize(Window->Ref, Region.Width / 2, Region.Height / 2);
-    }
-    else if(StringEquals(Op, "bottom-right"))
-    {
+    } else if (StringEquals(Op, "bottom-right")) {
         AXLibSetWindowPosition(Window->Ref, Region.X + Region.Width / 2, Region.Y + Region.Height / 2);
         AXLibSetWindowSize(Window->Ref, Region.Width / 2, Region.Height / 2);
-    }
-    else if(StringEquals(Op, "pip-left"))
-    {
+    } else if (StringEquals(Op, "pip-left")) {
         AXLibSetWindowPosition(Window->Ref, Region.X, Region.Y);
         AXLibSetWindowSize(Window->Ref, Region.Width / 5, Region.Height / 5);
-    }
-    else if(StringEquals(Op, "pip-right"))
-    {
+    } else if (StringEquals(Op, "pip-right")) {
         AXLibSetWindowPosition(Window->Ref, (Region.X + Region.Width) -  (Region.Width / 5), Region.Y);
         AXLibSetWindowSize(Window->Ref, Region.Width / 5, Region.Height / 5);
     }
@@ -2144,15 +1837,12 @@ void EqualizeWindowTree(char *Unused)
     Success = AXLibActiveSpace(&Space);
     ASSERT(Success);
 
-    if(Space->Type != kCGSSpaceUser)
-    {
+    if (Space->Type != kCGSSpaceUser) {
         goto space_free;
     }
 
     VirtualSpace = AcquireVirtualSpace(Space);
-    if((!VirtualSpace->Tree) ||
-       (VirtualSpace->Mode != Virtual_Space_Bsp))
-    {
+    if ((!VirtualSpace->Tree) || (VirtualSpace->Mode != Virtual_Space_Bsp)) {
         goto vspace_release;
     }
 
@@ -2178,29 +1868,23 @@ void SerializeDesktop(char *Op)
     Success = AXLibActiveSpace(&Space);
     ASSERT(Success);
 
-    if(Space->Type != kCGSSpaceUser)
-    {
+    if (Space->Type != kCGSSpaceUser) {
         goto space_free;
     }
 
     VirtualSpace = AcquireVirtualSpace(Space);
-    if((!VirtualSpace->Tree) ||
-       (VirtualSpace->Mode != Virtual_Space_Bsp))
-    {
+    if ((!VirtualSpace->Tree) || (VirtualSpace->Mode != Virtual_Space_Bsp)) {
         goto vspace_release;
     }
 
     Buffer = SerializeNodeToBuffer(VirtualSpace->Tree);
 
     Handle = fopen(Op, "w");
-    if(Handle)
-    {
+    if (Handle) {
         size_t Length = strlen(Buffer);
         fwrite(Buffer, sizeof(char), Length, Handle);
         fclose(Handle);
-    }
-    else
-    {
+    } else {
         fprintf(stderr, "failed to open '%s' for writing!\n", Op);
     }
 
@@ -2223,31 +1907,25 @@ void DeserializeDesktop(char *Op)
     Success = AXLibActiveSpace(&Space);
     ASSERT(Success);
 
-    if(Space->Type != kCGSSpaceUser)
-    {
+    if (Space->Type != kCGSSpaceUser) {
         goto space_free;
     }
 
     VirtualSpace = AcquireVirtualSpace(Space);
-    if(VirtualSpace->Mode != Virtual_Space_Bsp)
-    {
+    if (VirtualSpace->Mode != Virtual_Space_Bsp) {
         goto vspace_release;
     }
 
     Buffer = ReadFile(Op);
-    if(Buffer)
-    {
-        if(VirtualSpace->Tree)
-        {
+    if (Buffer) {
+        if (VirtualSpace->Tree) {
             FreeNodeTree(VirtualSpace->Tree, VirtualSpace->Mode);
         }
 
         VirtualSpace->Tree = DeserializeNodeFromBuffer(Buffer);
         CreateDeserializedWindowTreeForSpace(Space, VirtualSpace);
         free(Buffer);
-    }
-    else
-    {
+    } else {
         fprintf(stderr, "failed to open '%s' for reading!\n", Op);
     }
 
@@ -2265,12 +1943,9 @@ QueryFocusedWindowFloat(int SockFD)
     macos_window *Window;
 
     Window = GetFocusedWindow();
-    if(Window)
-    {
+    if (Window) {
         snprintf(Message, sizeof(Message), "%d", AXLibHasFlags(Window, Window_Float));
-    }
-    else
-    {
+    } else {
         snprintf(Message, sizeof(Message), "?");
     }
 
@@ -2284,12 +1959,9 @@ QueryFocusedWindowOwner(int SockFD)
     macos_window *Window;
 
     Window = GetFocusedWindow();
-    if(Window)
-    {
+    if (Window) {
         snprintf(Message, sizeof(Message), "%s", Window->Owner->Name);
-    }
-    else
-    {
+    } else {
         snprintf(Message, sizeof(Message), "?");
     }
 
@@ -2303,12 +1975,9 @@ QueryFocusedWindowName(int SockFD)
     macos_window *Window;
 
     Window = GetFocusedWindow();
-    if(Window)
-    {
+    if (Window) {
         snprintf(Message, sizeof(Message), "%s", Window->Name);
-    }
-    else
-    {
+    } else {
         snprintf(Message, sizeof(Message), "?");
     }
 
@@ -2322,12 +1991,9 @@ QueryFocusedWindowTag(int SockFD)
     macos_window *Window;
 
     Window = GetFocusedWindow();
-    if(Window)
-    {
+    if (Window) {
         snprintf(Message, sizeof(Message), "%s - %s", Window->Owner->Name, Window->Name);
-    }
-    else
-    {
+    } else {
         snprintf(Message, sizeof(Message), "?");
     }
 
@@ -2339,8 +2005,7 @@ QueryWindowDetails(uint32_t WindowId, int SockFD)
 {
     char Buffer[1024];
     macos_window *Window = GetWindowByID(WindowId);
-    if(Window)
-    {
+    if (Window) {
         char *Mainrole = Window->Mainrole ? CopyCFStringToC(Window->Mainrole) : NULL;
         char *Subrole = Window->Subrole ? CopyCFStringToC(Window->Subrole) : NULL;
         char *Name = AXLibGetWindowTitle(Window->Ref);
@@ -2363,12 +2028,10 @@ QueryWindowDetails(uint32_t WindowId, int SockFD)
                 AXLibHasFlags(Window, Window_Movable),
                 AXLibHasFlags(Window, Window_Resizable));
 
-        if(Name) { free(Name); }
-        if(Subrole) { free(Subrole); }
-        if(Mainrole) { free(Mainrole); }
-    }
-    else
-    {
+        if (Name)     { free(Name); }
+        if (Subrole)  { free(Subrole); }
+        if (Mainrole) { free(Mainrole); }
+    } else {
         snprintf(Buffer, sizeof(Buffer), "window not found..\n");
     }
 
@@ -2378,24 +2041,15 @@ QueryWindowDetails(uint32_t WindowId, int SockFD)
 void QueryWindow(char *Op, int SockFD)
 {
     uint32_t WindowId;
-    if(StringEquals(Op, "owner"))
-    {
+    if (StringEquals(Op, "owner")) {
         QueryFocusedWindowOwner(SockFD);
-    }
-    else if(StringEquals(Op, "name"))
-    {
+    } else if (StringEquals(Op, "name")) {
         QueryFocusedWindowName(SockFD);
-    }
-    else if(StringEquals(Op, "tag"))
-    {
+    } else if (StringEquals(Op, "tag")) {
         QueryFocusedWindowTag(SockFD);
-    }
-    else if(StringEquals(Op, "float"))
-    {
+    } else if (StringEquals(Op, "float")) {
         QueryFocusedWindowFloat(SockFD);
-    }
-    else if(sscanf(Op, "%d", &WindowId) == 1)
-    {
+    } else if (sscanf(Op, "%d", &WindowId) == 1) {
         QueryWindowDetails(WindowId, SockFD);
     }
 }
@@ -2409,8 +2063,7 @@ QueryFocusedDesktop(int SockFD)
     bool Success;
 
     Success = AXLibActiveSpace(&Space);
-    if(!Success)
-    {
+    if (!Success) {
         snprintf(Message, sizeof(Message), "?");
         goto out;
     }
@@ -2434,8 +2087,7 @@ QueryFocusedVirtualSpaceMode(int SockFD)
     bool Success;
 
     Success = AXLibActiveSpace(&Space);
-    if(!Success)
-    {
+    if (!Success) {
         snprintf(Message, sizeof(Message), "?");
         goto out;
     }
@@ -2465,19 +2117,15 @@ QueryWindowsForActiveSpace(int SockFD)
     EndOfBuffer = Buffer + BufferSize;
 
     std::vector<uint32_t> Windows = GetAllVisibleWindowsForSpace(Space, true, true);
-    for(int Index = 0; Index < Windows.size(); ++Index)
-    {
+    for (int Index = 0; Index < Windows.size(); ++Index) {
         ASSERT(Cursor < EndOfBuffer);
 
         macos_window *Window = GetWindowByID(Windows[Index]);
         ASSERT(Window);
 
-        if(IsWindowValid(Window))
-        {
+        if (IsWindowValid(Window)) {
             BytesWritten = snprintf(Cursor, BufferSize, "%d, %s, %s\n", Window->Id, Window->Owner->Name, Window->Name);
-        }
-        else
-        {
+        } else {
             BytesWritten = snprintf(Cursor, BufferSize, "%d, %s, %s (invalid)\n", Window->Id, Window->Owner->Name, Window->Name);
         }
 
@@ -2486,8 +2134,7 @@ QueryWindowsForActiveSpace(int SockFD)
         BufferSize -= BytesWritten;
     }
 
-    if(Windows.empty())
-    {
+    if (Windows.empty()) {
         snprintf(Buffer, sizeof(Buffer), "desktop is empty..\n");
     }
 
@@ -2497,16 +2144,11 @@ QueryWindowsForActiveSpace(int SockFD)
 
 void QueryDesktop(char *Op, int SockFD)
 {
-    if(StringEquals(Op, "id"))
-    {
+    if (StringEquals(Op, "id")) {
         QueryFocusedDesktop(SockFD);
-    }
-    else if(StringEquals(Op, "mode"))
-    {
+    } else if (StringEquals(Op, "mode")) {
         QueryFocusedVirtualSpaceMode(SockFD);
-    }
-    else if(StringEquals(Op, "windows"))
-    {
+    } else if (StringEquals(Op, "windows")) {
         QueryWindowsForActiveSpace(SockFD);
     }
 }
@@ -2520,8 +2162,7 @@ QueryFocusedMonitor(int SockFD)
     bool Success;
 
     Success = AXLibActiveSpace(&Space);
-    if(!Success)
-    {
+    if (!Success) {
         snprintf(Message, sizeof(Message), "?");
         goto out;
     }
@@ -2546,12 +2187,9 @@ QueryMonitorCount(int SockFD)
 
 void QueryMonitor(char *Op, int SockFD)
 {
-    if(StringEquals(Op, "id"))
-    {
+    if (StringEquals(Op, "id")) {
         QueryFocusedMonitor(SockFD);
-    }
-    else if(StringEquals(Op, "count"))
-    {
+    } else if (StringEquals(Op, "count")) {
         QueryMonitorCount(SockFD);
     }
 }
@@ -2559,13 +2197,13 @@ void QueryMonitor(char *Op, int SockFD)
 void QueryDesktopsForMonitor(char *Op, int SockFD)
 {
     int MonitorId, Arrangement;
-    if(sscanf(Op, "%d", &MonitorId) != 1) return;
+    if (sscanf(Op, "%d", &MonitorId) != 1) return;
 
     int DisplayCount = AXLibDisplayCount();
-    if(MonitorId > DisplayCount) return;
+    if (MonitorId > DisplayCount) return;
 
     Arrangement = MonitorId - 1;
-    if(Arrangement < 0) return;
+    if (Arrangement < 0) return;
 
     CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromArrangement(Arrangement);
     ASSERT(DisplayRef);
@@ -2580,8 +2218,7 @@ void QueryDesktopsForMonitor(char *Op, int SockFD)
     char *Cursor = Message;
     char *EndOfBuffer = Cursor + BufferSize;
 
-    for(int Index = 0; Index < Count; ++Index)
-    {
+    for (int Index = 0; Index < Count; ++Index) {
         ASSERT(Cursor < EndOfBuffer);
         BytesWritten = snprintf(Cursor, BufferSize, "%d ", Desktops[Index]);
         ASSERT(BytesWritten >= 0);
@@ -2600,13 +2237,12 @@ void QueryDesktopsForMonitor(char *Op, int SockFD)
 void QueryMonitorForDesktop(char *Op, int SockFD)
 {
     int DesktopId;
-    if(sscanf(Op, "%d", &DesktopId) != 1) return;
+    if (sscanf(Op, "%d", &DesktopId) != 1) return;
 
     CGSSpaceID SpaceId;
     unsigned Arrangement;
     bool Success = AXLibCGSSpaceIDFromDesktopID(DesktopId, &Arrangement, &SpaceId);
-    if(Success)
-    {
+    if (Success) {
         char Message[32];
         snprintf(Message, sizeof(Message), "%d", Arrangement + 1);
         WriteToSocket(Message, SockFD);

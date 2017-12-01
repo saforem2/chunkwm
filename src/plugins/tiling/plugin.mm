@@ -94,8 +94,7 @@ internal void
 ExtendedDockSetWindowAlpha(uint32_t WindowId, float Value, float Duration)
 {
     int SockFD;
-    if(ConnectToDaemon(&SockFD, 5050))
-    {
+    if (ConnectToDaemon(&SockFD, 5050)) {
         char Message[64];
         sprintf(Message, "window_alpha_fade %d %f %f", WindowId, Value, Duration);
         WriteToSocket(Message, SockFD);
@@ -108,12 +107,9 @@ FadeAllWindows(float Value, float Duration)
 {
     uint32_t FocusedWindowId = CVarUnsignedValue(CVAR_FOCUSED_WINDOW);
     macos_window_map Copy = CopyWindowCache();
-    for(macos_window_map_it It = Copy.begin();
-        It != Copy.end();
-        ++It)
-    {
+    for (macos_window_map_it It = Copy.begin(); It != Copy.end(); ++It) {
         macos_window *Window = It->second;
-        if(Window->Id == FocusedWindowId) continue;
+        if (Window->Id == FocusedWindowId) continue;
         ExtendedDockSetWindowAlpha(Window->Id, Value, Duration);
     }
 }
@@ -151,10 +147,10 @@ GetFocusedWindowId()
     uint32_t WindowId = 0;
 
     ApplicationRef = AXLibGetFocusedApplication();
-    if(!ApplicationRef) goto out;
+    if (!ApplicationRef) goto out;
 
     WindowRef = AXLibGetFocusedWindow(ApplicationRef);
-    if(!WindowRef) goto err;
+    if (!WindowRef) goto err;
 
     WindowId = AXLibGetWindowID(WindowRef);
     CFRelease(WindowRef);
@@ -176,7 +172,7 @@ macos_window *GetFocusedWindow()
 internal void
 AddWindowToCollection(macos_window *Window)
 {
-    if(!Window->Id) return;
+    if (!Window->Id) return;
     pthread_mutex_lock(&WindowsLock);
     Windows[Window->Id] = Window;
     pthread_mutex_unlock(&WindowsLock);
@@ -188,8 +184,7 @@ RemoveWindowFromCollection(macos_window *Window)
 {
     pthread_mutex_lock(&WindowsLock);
     macos_window *Result = _GetWindowByID(Window->Id);
-    if(Result)
-    {
+    if (Result) {
         Windows.erase(Window->Id);
     }
     pthread_mutex_unlock(&WindowsLock);
@@ -200,10 +195,7 @@ internal void
 ClearWindowCache()
 {
     pthread_mutex_lock(&WindowsLock);
-    for(macos_window_map_it It = Windows.begin();
-        It != Windows.end();
-        ++It)
-    {
+    for (macos_window_map_it It = Windows.begin(); It != Windows.end(); ++It) {
         macos_window *Window = It->second;
         AXLibDestroyWindow(Window);
     }
@@ -215,21 +207,16 @@ internal void
 AddApplicationWindowList(macos_application *Application)
 {
     macos_window **WindowList = AXLibWindowListForApplication(Application);
-    if(!WindowList)
-    {
+    if (!WindowList) {
         return;
     }
 
     macos_window **List = WindowList;
     macos_window *Window;
-    while((Window = *List++))
-    {
-        if(GetWindowByID(Window->Id))
-        {
+    while ((Window = *List++)) {
+        if (GetWindowByID(Window->Id)) {
             AXLibDestroyWindow(Window);
-        }
-        else
-        {
+        } else {
             AddWindowToCollection(Window);
         }
     }
@@ -240,10 +227,7 @@ AddApplicationWindowList(macos_application *Application)
 internal void
 UpdateWindowCollection()
 {
-    for(macos_application_map_it It = Applications.begin();
-        It != Applications.end();
-        ++It)
-    {
+    for (macos_application_map_it It = Applications.begin(); It != Applications.end(); ++It) {
         macos_application *Application = It->second;
         AddApplicationWindowList(Application);
     }
@@ -259,11 +243,9 @@ internal void
 RemoveApplication(macos_application *Application)
 {
     macos_application_map_it It = Applications.find(Application->PID);
-    if(It != Applications.end())
-    {
+    if (It != Applications.end()) {
         macos_application *Copy = It->second;
         AXLibDestroyApplication(Copy);
-
         Applications.erase(Application->PID);
     }
 }
@@ -271,10 +253,7 @@ RemoveApplication(macos_application *Application)
 internal void
 ClearApplicationCache()
 {
-    for(macos_application_map_it It = Applications.begin();
-        It != Applications.end();
-        ++It)
-    {
+    for (macos_application_map_it It = Applications.begin(); It != Applications.end(); ++It) {
         macos_application *Application = It->second;
         AXLibDestroyApplication(Application);
     }
@@ -295,16 +274,11 @@ BroadcastFocusedWindowFloating(macos_window *Window)
 bool IsWindowValid(macos_window *Window)
 {
     bool Result;
-    if(AXLibHasFlags(Window, Window_Invalid))
-    {
+    if (AXLibHasFlags(Window, Window_Invalid)) {
         Result = false;
-    }
-    else if(AXLibHasFlags(Window, Window_ForceTile))
-    {
+    } else if (AXLibHasFlags(Window, Window_ForceTile)) {
         Result = true;
-    }
-    else
-    {
+    } else {
         Result = ((AXLibIsWindowStandard(Window)) &&
                   (AXLibHasFlags(Window, Window_Movable)) &&
                   (AXLibHasFlags(Window, Window_Resizable)));
@@ -324,19 +298,16 @@ IsWindowFocusable(macos_window *Window)
 internal bool
 TileWindowPreValidation(macos_window *Window)
 {
-    if(AXLibHasFlags(Window, Window_Float))
-    {
+    if (AXLibHasFlags(Window, Window_Float)) {
         return false;
     }
 
-    if(!IsWindowValid(Window))
-    {
+    if (!IsWindowValid(Window)) {
         FloatWindow(Window, false);
         return false;
     }
 
-    if(CVarIntegerValue(CVAR_WINDOW_FLOAT_NEXT))
-    {
+    if (CVarIntegerValue(CVAR_WINDOW_FLOAT_NEXT)) {
         FloatWindow(Window, true);
         UpdateCVar(CVAR_WINDOW_FLOAT_NEXT, 0);
         return false;
@@ -352,8 +323,7 @@ void TileWindowOnSpace(macos_window *Window, macos_space *Space, virtual_space *
 {
     CFStringRef DisplayRef;
 
-    if(VirtualSpace->Mode == Virtual_Space_Float)
-    {
+    if (VirtualSpace->Mode == Virtual_Space_Float) {
         goto out;
     }
 
@@ -363,29 +333,23 @@ void TileWindowOnSpace(macos_window *Window, macos_space *Space, virtual_space *
     DisplayRef = AXLibGetDisplayIdentifierFromSpace(Space->Id);
     ASSERT(DisplayRef);
 
-    if(AXLibIsDisplayChangingSpaces(DisplayRef))
-    {
+    if (AXLibIsDisplayChangingSpaces(DisplayRef)) {
         goto display_free;
     }
 
-    if(VirtualSpace->Tree)
-    {
+    if (VirtualSpace->Tree) {
         node *Exists = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
-        if(Exists)
-        {
+        if (Exists) {
             goto display_free;
         }
 
         node *Node = NULL;
         uint32_t InsertionPoint = CVarUnsignedValue(CVAR_BSP_INSERTION_POINT);
 
-        if(VirtualSpace->Mode == Virtual_Space_Bsp)
-        {
+        if (VirtualSpace->Mode == Virtual_Space_Bsp) {
             Node = GetFirstMinDepthPseudoLeafNode(VirtualSpace->Tree);
-            if(Node)
-            {
-                if(Node->Parent)
-                {
+            if (Node) {
+                if (Node->Parent) {
                     int SpawnLeft = CVarIntegerValue(CVAR_BSP_SPAWN_LEFT);
                     node_ids NodeIds = AssignNodeIds(Node->Parent->WindowId, Window->Id, SpawnLeft);
                     Node->Parent->WindowId = Node_Root;
@@ -393,9 +357,7 @@ void TileWindowOnSpace(macos_window *Window, macos_space *Space, virtual_space *
                     Node->Parent->Right->WindowId = NodeIds.Right;
                     CreateNodeRegionRecursive(Node->Parent, false, Space, VirtualSpace);
                     ApplyNodeRegion(Node->Parent, VirtualSpace->Mode);
-                }
-                else
-                {
+                } else {
                     Node->WindowId = Window->Id;
                     CreateNodeRegion(Node, Region_Full, Space, VirtualSpace);
                     ApplyNodeRegion(Node, VirtualSpace->Mode);
@@ -403,28 +365,22 @@ void TileWindowOnSpace(macos_window *Window, macos_space *Space, virtual_space *
                 goto display_free;
             }
 
-            if(InsertionPoint)
-            {
+            if (InsertionPoint) {
                 Node = GetNodeWithId(VirtualSpace->Tree, InsertionPoint, VirtualSpace->Mode);
             }
 
-            if(!Node)
-            {
+            if (!Node) {
                 Node = GetFirstMinDepthLeafNode(VirtualSpace->Tree);
                 ASSERT(Node != NULL);
             }
 
-            if(Node->Preselect)
-            {
+            if (Node->Preselect) {
                 CreateLeafNodePairPreselect(Node, Node->WindowId, Window->Id, Space, VirtualSpace);
                 ApplyNodeRegion(Node, VirtualSpace->Mode);
                 FreePreselectNode(Node);
-            }
-            else
-            {
+            } else {
                 node_split Split = NodeSplitFromString(CVarStringValue(CVAR_BSP_SPLIT_MODE));
-                if(Split == Split_Optimal)
-                {
+                if (Split == Split_Optimal) {
                     Split = OptimalSplitMode(Node);
                 }
 
@@ -433,28 +389,22 @@ void TileWindowOnSpace(macos_window *Window, macos_space *Space, virtual_space *
             }
 
             // NOTE(koekeishiya): Reset fullscreen-zoom state.
-            if(VirtualSpace->Tree->Zoom)
-            {
+            if (VirtualSpace->Tree->Zoom) {
                 VirtualSpace->Tree->Zoom = NULL;
             }
-        }
-        else if(VirtualSpace->Mode == Virtual_Space_Monocle)
-        {
-            if(InsertionPoint)
-            {
+        } else if (VirtualSpace->Mode == Virtual_Space_Monocle) {
+            if (InsertionPoint) {
                 Node = GetNodeWithId(VirtualSpace->Tree, InsertionPoint, VirtualSpace->Mode);
             }
 
-            if(!Node)
-            {
+            if (!Node) {
                 Node = GetLastLeafNode(VirtualSpace->Tree);
                 ASSERT(Node != NULL);
             }
 
             node *NewNode = CreateRootNode(Window->Id, Space, VirtualSpace);
 
-            if(Node->Right)
-            {
+            if (Node->Right) {
                 node *Next = Node->Right;
                 Next->Left = NewNode;
                 NewNode->Right = Next;
@@ -464,22 +414,17 @@ void TileWindowOnSpace(macos_window *Window, macos_space *Space, virtual_space *
             Node->Right = NewNode;
             ResizeWindowToRegionSize(NewNode);
         }
-    }
-    else
-    {
+    } else {
         char *Buffer;
-        if((ShouldDeserializeVirtualSpace(VirtualSpace)) &&
-           ((Buffer = ReadFile(VirtualSpace->TreeLayout))))
-        {
+        if ((ShouldDeserializeVirtualSpace(VirtualSpace)) &&
+            ((Buffer = ReadFile(VirtualSpace->TreeLayout)))) {
             VirtualSpace->Tree = DeserializeNodeFromBuffer(Buffer);
             VirtualSpace->Tree->WindowId = Window->Id;
             CreateNodeRegion(VirtualSpace->Tree, Region_Full, Space, VirtualSpace);
             CreateNodeRegionRecursive(VirtualSpace->Tree, false, Space, VirtualSpace);
             ResizeWindowToRegionSize(VirtualSpace->Tree);
             free(Buffer);
-        }
-        else
-        {
+        } else {
             // NOTE(koekeishiya): This path is equal for both bsp and monocle spaces!
             VirtualSpace->Tree = CreateRootNode(Window->Id, Space, VirtualSpace);
             ResizeWindowToRegionSize(VirtualSpace->Tree);
@@ -493,14 +438,12 @@ out:;
 
 void TileWindow(macos_window *Window)
 {
-    if(TileWindowPreValidation(Window))
-    {
+    if (TileWindowPreValidation(Window)) {
         macos_space *Space;
         bool Success = AXLibActiveSpace(&Space);
         ASSERT(Success);
 
-        if(Space->Type == kCGSSpaceUser)
-        {
+        if (Space->Type == kCGSSpaceUser) {
             virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
             TileWindowOnSpace(Window, Space, VirtualSpace);
             ReleaseVirtualSpace(VirtualSpace);
@@ -513,13 +456,11 @@ void TileWindow(macos_window *Window)
 internal bool
 UntileWindowPreValidation(macos_window *Window)
 {
-    if(AXLibHasFlags(Window, Window_Float))
-    {
+    if (AXLibHasFlags(Window, Window_Float)) {
         return false;
     }
 
-    if(!IsWindowValid(Window))
-    {
+    if (!IsWindowValid(Window)) {
         return false;
     }
 
@@ -532,33 +473,26 @@ UntileWindowPreValidation(macos_window *Window)
 internal void
 UntileWindowFromSpace(uint32_t WindowId, macos_space *Space, virtual_space *VirtualSpace)
 {
-    if((!VirtualSpace->Tree) ||
-       (VirtualSpace->Mode == Virtual_Space_Float))
-    {
+    if ((!VirtualSpace->Tree) || (VirtualSpace->Mode == Virtual_Space_Float)) {
         return;
     }
 
     node *Node = GetNodeWithId(VirtualSpace->Tree, WindowId, VirtualSpace->Mode);
-    if(!Node)
-    {
+    if (!Node) {
         return;
     }
 
-    if(VirtualSpace->Mode == Virtual_Space_Bsp)
-    {
+    if (VirtualSpace->Mode == Virtual_Space_Bsp) {
         /* NOTE(koekeishiya): The window was in fullscreen-zoom.
          * We need to null the pointer to prevent a potential bug. */
-        if(VirtualSpace->Tree->Zoom == Node)
-        {
+        if (VirtualSpace->Tree->Zoom == Node) {
             VirtualSpace->Tree->Zoom = NULL;
         }
 
-        if(Node->Parent && Node->Parent->Left && Node->Parent->Right)
-        {
+        if (Node->Parent && Node->Parent->Left && Node->Parent->Right) {
             /* NOTE(koekeishiya): The window was in parent-zoom.
              * We need to null the pointer to prevent a potential bug. */
-            if(Node->Parent->Zoom == Node)
-            {
+            if (Node->Parent->Zoom == Node) {
                 Node->Parent->Zoom = NULL;
             }
 
@@ -570,8 +504,7 @@ UntileWindowFromSpace(uint32_t WindowId, macos_space *Space, virtual_space *Virt
             NewLeaf->Zoom = NULL;
 
             NewLeaf->WindowId = RemainingLeaf->WindowId;
-            if(RemainingLeaf->Left && RemainingLeaf->Right)
-            {
+            if (RemainingLeaf->Left && RemainingLeaf->Right) {
                 NewLeaf->Left = RemainingLeaf->Left;
                 NewLeaf->Left->Parent = NewLeaf;
 
@@ -584,38 +517,30 @@ UntileWindowFromSpace(uint32_t WindowId, macos_space *Space, virtual_space *Virt
             /* NOTE(koekeishiya): Re-zoom window after spawned window closes.
              * see reference: https://github.com/koekeishiya/chunkwm/issues/20 */
             ApplyNodeRegion(NewLeaf, VirtualSpace->Mode);
-            if(NewLeaf->Parent && NewLeaf->Parent->Zoom)
-            {
+            if (NewLeaf->Parent && NewLeaf->Parent->Zoom) {
                 ResizeWindowToExternalRegionSize(NewLeaf->Parent->Zoom,
                                                  NewLeaf->Parent->Region);
             }
 
             FreeNode(RemainingLeaf);
             FreeNode(Node);
-        }
-        else if(!Node->Parent)
-        {
+        } else if (!Node->Parent) {
             FreeNode(VirtualSpace->Tree);
             VirtualSpace->Tree = NULL;
         }
-    }
-    else if(VirtualSpace->Mode == Virtual_Space_Monocle)
-    {
+    } else if (VirtualSpace->Mode == Virtual_Space_Monocle) {
         node *Prev = Node->Left;
         node *Next = Node->Right;
 
-        if(Prev)
-        {
+        if (Prev) {
             Prev->Right = Next;
         }
 
-        if(Next)
-        {
+        if (Next) {
             Next->Left = Prev;
         }
 
-        if(Node == VirtualSpace->Tree)
-        {
+        if (Node == VirtualSpace->Tree) {
             VirtualSpace->Tree = Next;
         }
 
@@ -633,17 +558,15 @@ void UntileWindowFromSpace(macos_window *Window, macos_space *Space, virtual_spa
 
 void UntileWindow(macos_window *Window)
 {
-    if(UntileWindowPreValidation(Window))
-    {
+    if (UntileWindowPreValidation(Window)) {
         CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromWindow(Window->Id);
-        if(!DisplayRef) DisplayRef = AXLibGetDisplayIdentifierFromWindowRect(Window->Position, Window->Size);
+        if (!DisplayRef) DisplayRef = AXLibGetDisplayIdentifierFromWindowRect(Window->Position, Window->Size);
         ASSERT(DisplayRef);
 
         macos_space *Space = AXLibActiveSpace(DisplayRef);
         ASSERT(Space);
 
-        if(Space->Type == kCGSSpaceUser)
-        {
+        if (Space->Type == kCGSSpaceUser) {
             virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
             UntileWindowFromSpace(Window, Space, VirtualSpace);
             ReleaseVirtualSpace(VirtualSpace);
@@ -663,8 +586,7 @@ std::vector<uint32_t> GetAllVisibleWindowsForSpace(macos_space *Space, bool Incl
     std::vector<uint32_t> Result;
 
     Error = CGSGetOnScreenWindowCount(CGSDefaultConnection, 0, &WindowCount);
-    if(Error != kCGErrorSuccess)
-    {
+    if (Error != kCGErrorSuccess) {
         fprintf(stderr, "CGSGetOnScreenWindowCount failed..\n");
         goto out;
     }
@@ -673,8 +595,7 @@ std::vector<uint32_t> GetAllVisibleWindowsForSpace(macos_space *Space, bool Incl
     ASSERT(WindowList);
 
     Error = CGSGetOnScreenWindowList(CGSDefaultConnection, 0, WindowCount, WindowList, &WindowCount);
-    if(Error != kCGErrorSuccess)
-    {
+    if (Error != kCGErrorSuccess) {
         fprintf(stderr, "CGSGetOnScreenWindowList failed..\n");
         goto windowlist_free;
     }
@@ -683,12 +604,10 @@ std::vector<uint32_t> GetAllVisibleWindowsForSpace(macos_space *Space, bool Incl
     Success = AXLibCGSSpaceIDToDesktopID(Space->Id, NULL, &DesktopId);
     ASSERT(Success);
 
-    for(int Index = 0; Index < WindowCount; ++Index)
-    {
+    for (int Index = 0; Index < WindowCount; ++Index) {
         uint32_t WindowId = WindowList[Index];
 
-        if(!AXLibSpaceHasWindow(Space->Id, WindowId))
-        {
+        if (!AXLibSpaceHasWindow(Space->Id, WindowId)) {
             /* NOTE(koekeishiya): The onscreenwindowlist can contain windowids
              * that we do not care about. Check that the window in question is
              * in our cache and on the correct monitor. */
@@ -696,30 +615,24 @@ std::vector<uint32_t> GetAllVisibleWindowsForSpace(macos_space *Space, bool Incl
         }
 
         macos_window *Window = GetWindowByID(WindowId);
-        if(!Window)
-        {
+        if (!Window) {
             // NOTE(koekeishiya): The chunkwm core does not report these windows to
             // plugins, and they are therefore never cached, we simply ignore them.
             // DEBUG_PRINT("   %d:window not cached\n", WindowId);
             continue;
         }
 
-        if(IsWindowValid(Window) || IncludeInvalidWindows)
-        {
+        if (IsWindowValid(Window) || IncludeInvalidWindows) {
             printf("%d:desktop   %d:%d:%s:%s\n",
                     DesktopId,
                     Window->Id,
                     Window->Level,
                     Window->Owner->Name,
                     Window->Name);
-            if((!AXLibHasFlags(Window, Window_Float)) ||
-               (IncludeFloatingWindows))
-            {
+            if ((!AXLibHasFlags(Window, Window_Float)) || (IncludeFloatingWindows)) {
                 Result.push_back(Window->Id);
             }
-        }
-        else
-        {
+        } else {
             printf("%d:desktop   %d:%d:invalid window:%s:%s\n",
                     DesktopId,
                     Window->Id,
@@ -747,19 +660,14 @@ GetAllWindowsInTree(node *Tree, virtual_space_mode VirtualSpaceMode)
     std::vector<uint32_t> Windows;
 
     node *Node = GetFirstLeafNode(Tree);
-    while(Node)
-    {
-        if(IsLeafNode(Node))
-        {
+    while (Node) {
+        if (IsLeafNode(Node)) {
             Windows.push_back(Node->WindowId);
         }
 
-        if(VirtualSpaceMode == Virtual_Space_Bsp)
-        {
+        if (VirtualSpaceMode == Virtual_Space_Bsp) {
             Node = GetNextLeafNode(Node);
-        }
-        else if(VirtualSpaceMode == Virtual_Space_Monocle)
-        {
+        } else if (VirtualSpaceMode == Virtual_Space_Monocle) {
             Node = Node->Right;
         }
     }
@@ -771,26 +679,18 @@ internal std::vector<uint32_t>
 GetAllWindowsToAddToTree(std::vector<uint32_t> &VisibleWindows, std::vector<uint32_t> &WindowsInTree)
 {
     std::vector<uint32_t> Windows;
-    for(size_t WindowIndex = 0;
-        WindowIndex < VisibleWindows.size();
-        ++WindowIndex)
-    {
+    for (size_t WindowIndex = 0; WindowIndex < VisibleWindows.size(); ++WindowIndex) {
         bool Found = false;
         uint32_t WindowId = VisibleWindows[WindowIndex];
 
-        for(size_t Index = 0;
-            Index < WindowsInTree.size();
-            ++Index)
-        {
-            if(WindowId == WindowsInTree[Index])
-            {
+        for (size_t Index = 0; Index < WindowsInTree.size(); ++Index) {
+            if (WindowId == WindowsInTree[Index]) {
                 Found = true;
                 break;
             }
         }
 
-        if((!Found) && (!AXLibStickyWindow(WindowId)))
-        {
+        if ((!Found) && (!AXLibStickyWindow(WindowId))) {
             Windows.push_back(WindowId);
         }
     }
@@ -802,26 +702,18 @@ internal std::vector<uint32_t>
 GetAllWindowsToRemoveFromTree(std::vector<uint32_t> &VisibleWindows, std::vector<uint32_t> &WindowsInTree)
 {
     std::vector<uint32_t> Windows;
-    for(size_t Index = 0;
-        Index < WindowsInTree.size();
-        ++Index)
-    {
+    for (size_t Index = 0; Index < WindowsInTree.size(); ++Index) {
         bool Found = false;
         uint32_t WindowId = WindowsInTree[Index];
 
-        for(size_t WindowIndex = 0;
-            WindowIndex < VisibleWindows.size();
-            ++WindowIndex)
-        {
-            if(VisibleWindows[WindowIndex] == WindowId)
-            {
+        for (size_t WindowIndex = 0; WindowIndex < VisibleWindows.size(); ++WindowIndex) {
+            if (VisibleWindows[WindowIndex] == WindowId) {
                 Found = true;
                 break;
             }
         }
 
-        if(!Found)
-        {
+        if (!Found) {
             Windows.push_back(WindowsInTree[Index]);
         }
     }
@@ -839,30 +731,20 @@ CreateWindowTreeForSpaceWithWindows(macos_space *Space, virtual_space *VirtualSp
     node *New, *Root = CreateRootNode(Windows[0], Space, VirtualSpace);
     VirtualSpace->Tree = Root;
 
-    if(VirtualSpace->Mode == Virtual_Space_Bsp)
-    {
-        for(size_t Index = 1;
-            Index < Windows.size();
-            ++Index)
-        {
+    if (VirtualSpace->Mode == Virtual_Space_Bsp) {
+        for (size_t Index = 1; Index < Windows.size(); ++Index) {
             New = GetFirstMinDepthLeafNode(Root);
             ASSERT(New != NULL);
 
             node_split Split = NodeSplitFromString(CVarStringValue(CVAR_BSP_SPLIT_MODE));
-            if(Split == Split_Optimal)
-            {
+            if (Split == Split_Optimal) {
                 Split = OptimalSplitMode(New);
             }
 
             CreateLeafNodePair(New, New->WindowId, Windows[Index], Split, Space, VirtualSpace);
         }
-    }
-    else if(VirtualSpace->Mode == Virtual_Space_Monocle)
-    {
-        for(size_t Index = 1;
-            Index < Windows.size();
-            ++Index)
-        {
+    } else if (VirtualSpace->Mode == Virtual_Space_Monocle) {
+        for (size_t Index = 1; Index < Windows.size(); ++Index) {
             New = CreateRootNode(Windows[Index], Space, VirtualSpace);
             Root->Right = New;
             New->Left = Root;
@@ -879,16 +761,12 @@ CreateWindowTreeForSpaceWithWindows(macos_space *Space, virtual_space *VirtualSp
 internal void
 CreateDeserializedWindowTreeForSpaceWithWindows(macos_space *Space, virtual_space *VirtualSpace, std::vector<uint32_t> Windows)
 {
-    if(!VirtualSpace->Tree)
-    {
+    if (!VirtualSpace->Tree) {
         char *Buffer = ReadFile(VirtualSpace->TreeLayout);
-        if(Buffer)
-        {
+        if (Buffer) {
             VirtualSpace->Tree = DeserializeNodeFromBuffer(Buffer);
             free(Buffer);
-        }
-        else
-        {
+        } else {
             fprintf(stderr, "failed to open '%s' for reading!\n", VirtualSpace->TreeLayout);
             CreateWindowTreeForSpaceWithWindows(Space, VirtualSpace, Windows);
             return;
@@ -896,13 +774,10 @@ CreateDeserializedWindowTreeForSpaceWithWindows(macos_space *Space, virtual_spac
     }
 
     node *Root = VirtualSpace->Tree;
-    for(size_t Index = 0; Index < Windows.size(); ++Index)
-    {
+    for (size_t Index = 0; Index < Windows.size(); ++Index) {
         node *Node = GetFirstMinDepthPseudoLeafNode(Root);
-        if(Node)
-        {
-            if(Node->Parent)
-            {
+        if (Node) {
+            if (Node->Parent) {
                 // NOTE(koekeishiya): This is an intermediate leaf node in the tree.
                 // We simulate the process of performing a new split, but use the
                 // existing node configuration.
@@ -911,24 +786,19 @@ CreateDeserializedWindowTreeForSpaceWithWindows(macos_space *Space, virtual_spac
                 Node->Parent->WindowId = Node_Root;
                 Node->Parent->Left->WindowId = NodeIds.Left;
                 Node->Parent->Right->WindowId = NodeIds.Right;
-            }
-            else
-            {
+            } else {
                 // NOTE(koekeishiya): This is the root node, we temporarily
                 // use it as a leaf node, even though it really isn't.
                 Node->WindowId = Windows[Index];
             }
-        }
-        else
-        {
+        } else {
             // NOTE(koekeishiya): There are more windows than containers in the layout
             // We perform a regular split with node creation.
             Node = GetFirstMinDepthLeafNode(Root);
             ASSERT(Node != NULL);
 
             node_split Split = NodeSplitFromString(CVarStringValue(CVAR_BSP_SPLIT_MODE));
-            if(Split == Split_Optimal)
-            {
+            if (Split == Split_Optimal) {
                 Split = OptimalSplitMode(Node);
             }
 
@@ -945,15 +815,13 @@ void CreateWindowTreeForSpace(macos_space *Space, virtual_space *VirtualSpace)
 {
     std::vector<uint32_t> Windows;
 
-    if((VirtualSpace->Tree) ||
-       (VirtualSpace->Mode == Virtual_Space_Float))
-    {
+    if ((VirtualSpace->Tree) ||
+        (VirtualSpace->Mode == Virtual_Space_Float)) {
         return;
     }
 
     Windows = GetAllVisibleWindowsForSpace(Space);
-    if(Windows.empty())
-    {
+    if (Windows.empty()) {
         return;
     }
 
@@ -962,14 +830,12 @@ void CreateWindowTreeForSpace(macos_space *Space, virtual_space *VirtualSpace)
 
 void CreateDeserializedWindowTreeForSpace(macos_space *Space, virtual_space *VirtualSpace)
 {
-    if(VirtualSpace->Mode != Virtual_Space_Bsp)
-    {
+    if (VirtualSpace->Mode != Virtual_Space_Bsp) {
         return;
     }
 
     std::vector<uint32_t> Windows = GetAllVisibleWindowsForSpace(Space);
-    if(Windows.empty())
-    {
+    if (Windows.empty()) {
         return;
     }
 
@@ -988,20 +854,15 @@ void CreateWindowTree()
     CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromSpace(Space->Id);
     ASSERT(DisplayRef);
 
-    if(AXLibIsDisplayChangingSpaces(DisplayRef))
-    {
+    if (AXLibIsDisplayChangingSpaces(DisplayRef)) {
         goto space_free;
     }
 
-    if(Space->Type == kCGSSpaceUser)
-    {
+    if (Space->Type == kCGSSpaceUser) {
         virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
-        if(ShouldDeserializeVirtualSpace(VirtualSpace))
-        {
+        if (ShouldDeserializeVirtualSpace(VirtualSpace)) {
             CreateDeserializedWindowTreeForSpace(Space, VirtualSpace);
-        }
-        else
-        {
+        } else {
             CreateWindowTreeForSpace(Space, VirtualSpace);
         }
         ReleaseVirtualSpace(VirtualSpace);
@@ -1023,28 +884,18 @@ RebalanceWindowTreeForSpaceWithWindows(macos_space *Space, virtual_space *Virtua
     std::vector<uint32_t> WindowsToAdd = GetAllWindowsToAddToTree(Windows, WindowsInTree);
     std::vector<uint32_t> WindowsToRemove = GetAllWindowsToRemoveFromTree(Windows, WindowsInTree);
 
-    for(size_t Index = 0;
-        Index < WindowsToRemove.size();
-        ++Index)
-    {
+    for (size_t Index = 0; Index < WindowsToRemove.size(); ++Index) {
         macos_window *Window = GetWindowByID(WindowsToRemove[Index]);
-        if((Window) && (UntileWindowPreValidation(Window)))
-        {
+        if ((Window) && (UntileWindowPreValidation(Window))) {
             UntileWindowFromSpace(Window, Space, VirtualSpace);
-        }
-        else
-        {
+        } else {
             UntileWindowFromSpace(WindowsToRemove[Index], Space, VirtualSpace);
         }
     }
 
-    for(size_t Index = 0;
-        Index < WindowsToAdd.size();
-        ++Index)
-    {
+    for (size_t Index = 0; Index < WindowsToAdd.size(); ++Index) {
         macos_window *Window = GetWindowByID(WindowsToAdd[Index]);
-        if((Window) && (TileWindowPreValidation(Window)))
-        {
+        if ((Window) && (TileWindowPreValidation(Window))) {
             TileWindowOnSpace(Window, Space, VirtualSpace);
         }
     }
@@ -1055,9 +906,8 @@ RebalanceWindowTreeForSpace(macos_space *Space, virtual_space *VirtualSpace)
 {
     std::vector<uint32_t> Windows;
 
-    if((!VirtualSpace->Tree) ||
-       (VirtualSpace->Mode == Virtual_Space_Float))
-    {
+    if ((!VirtualSpace->Tree) ||
+        (VirtualSpace->Mode == Virtual_Space_Float)) {
         return;
     }
 
@@ -1088,13 +938,11 @@ RebalanceWindowTree()
     CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromSpace(Space->Id);
     ASSERT(DisplayRef);
 
-    if(AXLibIsDisplayChangingSpaces(DisplayRef))
-    {
+    if (AXLibIsDisplayChangingSpaces(DisplayRef)) {
         goto space_free;
     }
 
-    if(Space->Type == kCGSSpaceUser)
-    {
+    if (Space->Type == kCGSSpaceUser) {
         virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
         RebalanceWindowTreeForSpace(Space, VirtualSpace);
         ReleaseVirtualSpace(VirtualSpace);
@@ -1111,28 +959,24 @@ WindowFocusedHandler(uint32_t WindowId)
     uint32_t FocusedWindowId = CVarUnsignedValue(CVAR_FOCUSED_WINDOW);
     UpdateCVar(CVAR_FOCUSED_WINDOW, WindowId);
     macos_window *Window = GetWindowByID(WindowId);
-    if(Window && IsWindowFocusable(Window))
-    {
+    if (Window && IsWindowFocusable(Window)) {
         CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromWindow(Window->Id);
-        if(!DisplayRef) DisplayRef = AXLibGetDisplayIdentifierFromWindowRect(Window->Position, Window->Size);
+        if (!DisplayRef) DisplayRef = AXLibGetDisplayIdentifierFromWindowRect(Window->Position, Window->Size);
         ASSERT(DisplayRef);
 
         macos_space *Space = AXLibActiveSpace(DisplayRef);
         ASSERT(Space);
 
-        if(!AXLibSpaceHasWindow(Space->Id, Window->Id))
-        {
+        if (!AXLibSpaceHasWindow(Space->Id, Window->Id)) {
             goto space_free;
         }
 
-        if(RuleChangedDesktop(Window->Flags))
-        {
+        if (RuleChangedDesktop(Window->Flags)) {
             AXLibClearFlags(Window, Rule_Desktop_Changed);
             goto space_free;
         }
 
-        if(CVarIntegerValue(CVAR_WINDOW_FADE_INACTIVE))
-        {
+        if (CVarIntegerValue(CVAR_WINDOW_FADE_INACTIVE)) {
             float Alpha = CVarFloatingPointValue(CVAR_WINDOW_FADE_ALPHA);
             float Duration = CVarFloatingPointValue(CVAR_WINDOW_FADE_DURATION);
             ExtendedDockSetWindowAlpha(WindowId, 1.0f, Duration);
@@ -1140,14 +984,12 @@ WindowFocusedHandler(uint32_t WindowId)
         }
 
         BroadcastFocusedWindowFloating(Window);
-        if(!AXLibHasFlags(Window, Window_Float))
-        {
+        if (!AXLibHasFlags(Window, Window_Float)) {
             UpdateCVar(CVAR_BSP_INSERTION_POINT, Window->Id);
         }
 
-        if((FocusedWindowId != WindowId) &&
-           (CVarIntegerValue(CVAR_MOUSE_FOLLOWS_FOCUS)))
-        {
+        if ((FocusedWindowId != WindowId) &&
+            (CVarIntegerValue(CVAR_MOUSE_FOLLOWS_FOCUS))) {
             CenterMouseInWindow(Window);
         }
 
@@ -1162,8 +1004,7 @@ ApplicationActivatedHandler(void *Data)
 {
     macos_application *Application = (macos_application *) Data;
     AXUIElementRef WindowRef = AXLibGetFocusedWindow(Application->Ref);
-    if(WindowRef)
-    {
+    if (WindowRef) {
         uint32_t WindowId = AXLibGetWindowID(WindowRef);
         CFRelease(WindowRef);
         WindowFocusedHandler(WindowId);
@@ -1176,21 +1017,16 @@ ApplicationLaunchedHandler(void *Data)
     macos_application *Application = (macos_application *) Data;
 
     macos_window **WindowList = AXLibWindowListForApplication(Application);
-    if(WindowList)
-    {
+    if (WindowList) {
         macos_window **List = WindowList;
         macos_window *Window;
-        while((Window = *List++))
-        {
-            if(GetWindowByID(Window->Id))
-            {
+        while ((Window = *List++)) {
+            if (GetWindowByID(Window->Id)) {
                 AXLibDestroyWindow(Window);
-            }
-            else
-            {
+            } else {
                 AddWindowToCollection(Window);
-                if(RuleChangedDesktop(Window->Flags)) continue;
-                if(RuleTiledWindow(Window->Flags))    continue;
+                if (RuleChangedDesktop(Window->Flags)) continue;
+                if (RuleTiledWindow(Window->Flags))    continue;
                 TileWindow(Window);
             }
         }
@@ -1203,7 +1039,6 @@ internal void
 ApplicationTerminatedHandler(void *Data)
 {
     macos_application *Application = (macos_application *) Data;
-
     RemoveApplication(Application);
     RebalanceWindowTree();
 }
@@ -1226,24 +1061,20 @@ ApplicationUnhiddenHandler(void *Data)
     bool Success = AXLibActiveSpace(&Space);
     ASSERT(Success);
 
-    if(Space->Type != kCGSSpaceUser)
-    {
+    if (Space->Type != kCGSSpaceUser) {
         goto space_free;
     }
 
     List = WindowList = AXLibWindowListForApplication(Application);
-    if(!WindowList)
-    {
+    if (!WindowList) {
         goto space_free;
     }
 
-    while((Window = *List++))
-    {
+    while ((Window = *List++)) {
         macos_window *Copy = GetWindowByID(Window->Id);
         AXLibDestroyWindow(Window);
 
-        if(Copy && AXLibSpaceHasWindow(Space->Id, Copy->Id))
-        {
+        if (Copy && AXLibSpaceHasWindow(Space->Id, Copy->Id)) {
             TileWindow(Copy);
         }
     }
@@ -1260,8 +1091,8 @@ WindowCreatedHandler(void *Data)
     macos_window *Window = (macos_window *) Data;
     macos_window *Copy = AXLibCopyWindow(Window);
     AddWindowToCollection(Copy);
-    if(RuleChangedDesktop(Copy->Flags)) return;
-    if(RuleTiledWindow(Copy->Flags))    return;
+    if (RuleChangedDesktop(Copy->Flags)) return;
+    if (RuleTiledWindow(Copy->Flags))    return;
     TileWindow(Copy);
 }
 
@@ -1271,35 +1102,26 @@ WindowDestroyedHandler(void *Data)
     macos_window *Window = (macos_window *) Data;
 
     macos_window *Copy = RemoveWindowFromCollection(Window);
-    if(Copy)
-    {
-        if(AXLibHasFlags(Copy, Window_Float))
-        {
+    if (Copy) {
+        if (AXLibHasFlags(Copy, Window_Float)) {
             unsigned FocusedWindowId = CVarUnsignedValue(CVAR_FOCUSED_WINDOW);
-            if(Copy->Id == FocusedWindowId)
-            {
+            if (Copy->Id == FocusedWindowId) {
                 BroadcastFocusedWindowFloating(0);
             }
         }
 
-        if(IsWindowValid(Copy))
-        {
+        if (IsWindowValid(Copy)) {
             UntileWindow(Copy);
-        }
-        else
-        {
+        } else {
             RebalanceWindowTree();
             uint32_t FocusedWindow = GetFocusedWindowId();
-            if(FocusedWindow)
-            {
+            if (FocusedWindow) {
                 UpdateCVar(CVAR_FOCUSED_WINDOW, FocusedWindow);
             }
         }
 
         AXLibDestroyWindow(Copy);
-    }
-    else
-    {
+    } else {
         // NOTE(koekeishiya): Due to unknown reasons, copy returns null for
         // some windows that we receive a destroyed event for, in particular
         // this happens a lot with Steam, what the.. ??
@@ -1327,22 +1149,18 @@ WindowDeminimizedHandler(void *Data)
     bool Success = AXLibActiveSpace(&Space);
     ASSERT(Success);
 
-    if((Space->Type == kCGSSpaceUser) &&
-       (AXLibSpaceHasWindow(Space->Id, Window->Id)))
-    {
+    if ((Space->Type == kCGSSpaceUser) &&
+        (AXLibSpaceHasWindow(Space->Id, Window->Id))) {
         macos_window *Copy = GetWindowByID(Window->Id);
         ASSERT(Copy);
 
-        if(AXLibHasFlags(Copy, Window_Init_Minimized))
-        {
-            if(Copy->Mainrole)
-            {
+        if (AXLibHasFlags(Copy, Window_Init_Minimized)) {
+            if (Copy->Mainrole) {
                 CFRelease(Copy->Mainrole);
                 AXLibGetWindowRole(Copy->Ref, &Copy->Mainrole);
             }
 
-            if(Copy->Subrole)
-            {
+            if (Copy->Subrole) {
                 CFRelease(Copy->Subrole);
                 AXLibGetWindowSubrole(Copy->Ref, &Copy->Subrole);
             }
@@ -1368,14 +1186,11 @@ WindowMovedHandler(void *Data)
     macos_window *Window = (macos_window *) Data;
 
     macos_window *Copy = GetWindowByID(Window->Id);
-    if(Copy)
-    {
-        if(Copy->Position != Window->Position)
-        {
+    if (Copy) {
+        if (Copy->Position != Window->Position) {
             Copy->Position = Window->Position;
 
-            if(CVarIntegerValue(CVAR_WINDOW_REGION_LOCKED))
-            {
+            if (CVarIntegerValue(CVAR_WINDOW_REGION_LOCKED)) {
                 ConstrainWindowToRegion(Copy);
             }
         }
@@ -1388,16 +1203,13 @@ WindowResizedHandler(void *Data)
     macos_window *Window = (macos_window *) Data;
 
     macos_window *Copy = GetWindowByID(Window->Id);
-    if(Copy)
-    {
-        if((Copy->Position != Window->Position) ||
-           (Copy->Size != Window->Size))
-        {
+    if (Copy) {
+        if ((Copy->Position != Window->Position) ||
+            (Copy->Size != Window->Size)) {
             Copy->Position = Window->Position;
             Copy->Size = Window->Size;
 
-            if(CVarIntegerValue(CVAR_WINDOW_REGION_LOCKED))
-            {
+            if (CVarIntegerValue(CVAR_WINDOW_REGION_LOCKED)) {
                 ConstrainWindowToRegion(Copy);
             }
         }
@@ -1410,10 +1222,8 @@ WindowTitleChangedHandler(void *Data)
     macos_window *Window = (macos_window *) Data;
 
     macos_window *Copy = GetWindowByID(Window->Id);
-    if(Copy)
-    {
-        if(Copy->Name)
-        {
+    if (Copy) {
+        if (Copy->Name) {
             free(Copy->Name);
         }
 
@@ -1433,8 +1243,7 @@ SpaceAndDisplayChangedHandler(void *Data)
     bool Success = AXLibActiveSpace(&Space);
     ASSERT(Success);
 
-    if(Space->Type != kCGSSpaceUser)
-    {
+    if (Space->Type != kCGSSpaceUser) {
         goto space_free;
     }
 
@@ -1443,31 +1252,26 @@ SpaceAndDisplayChangedHandler(void *Data)
     ASSERT(Success);
 
     CachedDesktopId = CVarIntegerValue(CVAR_ACTIVE_DESKTOP);
-    if(CachedDesktopId != DesktopId)
-    {
+    if (CachedDesktopId != DesktopId) {
         UpdateCVar(CVAR_LAST_ACTIVE_DESKTOP, (int)CachedDesktopId);
         UpdateCVar(CVAR_ACTIVE_DESKTOP, (int)DesktopId);
     }
 
     Windows = GetAllVisibleWindowsForSpace(Space);
-    if(Windows.empty())
-    {
+    if (Windows.empty()) {
         goto space_free;
     }
 
     virtual_space *VirtualSpace;
     VirtualSpace = AcquireVirtualSpace(Space);
-    if(VirtualSpace->Mode != Virtual_Space_Float)
-    {
-        if(VirtualSpace->Tree)
-        {
+    if (VirtualSpace->Mode != Virtual_Space_Float) {
+        if (VirtualSpace->Tree) {
             //
             // NOTE(koekeishiya): If the activated virtual_space is flagged for resize,
             // we update the dimensions of all existing nodes in our window-tree.
             //
 
-            if(VirtualSpaceHasFlags(VirtualSpace, Virtual_Space_Require_Resize))
-            {
+            if (VirtualSpaceHasFlags(VirtualSpace, Virtual_Space_Require_Resize)) {
                 CreateNodeRegion(VirtualSpace->Tree, Region_Full, Space, VirtualSpace);
                 CreateNodeRegionRecursive(VirtualSpace->Tree, false, Space, VirtualSpace);
                 ApplyNodeRegion(VirtualSpace->Tree, VirtualSpace->Mode, false);
@@ -1475,13 +1279,9 @@ SpaceAndDisplayChangedHandler(void *Data)
             }
 
             RebalanceWindowTreeForSpaceWithWindows(Space, VirtualSpace, Windows);
-        }
-        else if(ShouldDeserializeVirtualSpace(VirtualSpace))
-        {
+        } else if (ShouldDeserializeVirtualSpace(VirtualSpace)) {
             CreateDeserializedWindowTreeForSpaceWithWindows(Space, VirtualSpace, Windows);
-        }
-        else
-        {
+        } else {
             CreateWindowTreeForSpaceWithWindows(Space, VirtualSpace, Windows);
         }
     }
@@ -1492,8 +1292,7 @@ space_free:
     AXLibDestroySpace(Space);
 
     uint32_t WindowId = GetFocusedWindowId();
-    if(WindowId)
-    {
+    if (WindowId) {
         WindowFocusedHandler(WindowId);
     }
 }
@@ -1512,15 +1311,12 @@ DisplayResizedHandler(void *Data)
     List = Spaces = AXLibSpacesForDisplay(DisplayRef);
     ASSERT(Spaces);
 
-    while((Space = *List++))
-    {
+    while ((Space = *List++)) {
         virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
         ASSERT(VirtualSpace);
 
-        if(VirtualSpace->Tree)
-        {
-            if(Space->Id == ActiveSpace->Id)
-            {
+        if (VirtualSpace->Tree) {
+            if (Space->Id == ActiveSpace->Id) {
                 //
                 // NOTE(koekeishiya): Update dimensions of the currently active desktop
                 // for the monitor that triggered a resolution change.
@@ -1528,9 +1324,7 @@ DisplayResizedHandler(void *Data)
                 CreateNodeRegion(VirtualSpace->Tree, Region_Full, Space, VirtualSpace);
                 CreateNodeRegionRecursive(VirtualSpace->Tree, false, Space, VirtualSpace);
                 ApplyNodeRegion(VirtualSpace->Tree, VirtualSpace->Mode, false);
-            }
-            else
-            {
+            } else {
                 //
                 // NOTE(koekeishiya): We can not update dimensions of windows that are on inactive desktops,
                 // so we flag them for change upon next activation instead
@@ -1563,95 +1357,62 @@ ChunkwmDaemonCommandHandler(void *Data)
  * */
 PLUGIN_MAIN_FUNC(PluginMain)
 {
-    if(StringEquals(Node, "chunkwm_export_application_launched"))
-    {
+    if (StringEquals(Node, "chunkwm_export_application_launched")) {
         ApplicationLaunchedHandler(Data);
         return true;
-    }
-    else if(StringEquals(Node, "chunkwm_export_application_terminated"))
-    {
+    } else if (StringEquals(Node, "chunkwm_export_application_terminated")) {
         ApplicationTerminatedHandler(Data);
         return true;
-    }
-    else if(StringEquals(Node, "chunkwm_export_application_hidden"))
-    {
+    } else if (StringEquals(Node, "chunkwm_export_application_hidden")) {
         ApplicationHiddenHandler(Data);
         return true;
-    }
-    else if(StringEquals(Node, "chunkwm_export_application_unhidden"))
-    {
+    } else if (StringEquals(Node, "chunkwm_export_application_unhidden")) {
         ApplicationUnhiddenHandler(Data);
         return true;
-    }
-    else if(StringEquals(Node, "chunkwm_export_application_activated"))
-    {
+    } else if (StringEquals(Node, "chunkwm_export_application_activated")) {
         ApplicationActivatedHandler(Data);
         return true;
-    }
-    else if(StringEquals(Node, "chunkwm_export_window_created"))
-    {
+    } else if (StringEquals(Node, "chunkwm_export_window_created")) {
         WindowCreatedHandler(Data);
         return true;
-    }
-    else if(StringEquals(Node, "chunkwm_export_window_destroyed"))
-    {
+    } else if (StringEquals(Node, "chunkwm_export_window_destroyed")) {
         WindowDestroyedHandler(Data);
         return true;
-    }
-    else if(StringEquals(Node, "chunkwm_export_window_minimized"))
-    {
+    } else if(StringEquals(Node, "chunkwm_export_window_minimized")) {
         WindowMinimizedHandler(Data);
         return true;
-    }
-    else if(StringEquals(Node, "chunkwm_export_window_deminimized"))
-    {
+    } else if (StringEquals(Node, "chunkwm_export_window_deminimized")) {
         WindowDeminimizedHandler(Data);
         return true;
-    }
-    else if(StringEquals(Node, "chunkwm_export_window_focused"))
-    {
+    } else if (StringEquals(Node, "chunkwm_export_window_focused")) {
         WindowFocusedHandler(Data);
         return true;
-    }
-    else if(StringEquals(Node, "chunkwm_export_window_moved"))
-    {
+    } else if (StringEquals(Node, "chunkwm_export_window_moved")) {
         WindowMovedHandler(Data);
         return true;
-    }
-    else if(StringEquals(Node, "chunkwm_export_window_resized"))
-    {
+    } else if (StringEquals(Node, "chunkwm_export_window_resized")) {
         WindowResizedHandler(Data);
         return true;
-    }
-    else if(StringEquals(Node, "chunkwm_export_window_title_changed"))
-    {
+    } else if (StringEquals(Node, "chunkwm_export_window_title_changed")) {
         WindowTitleChangedHandler(Data);
         return true;
-    }
-    else if((StringEquals(Node, "chunkwm_export_space_changed")) ||
-            (StringEquals(Node, "chunkwm_export_display_changed")))
-    {
+    } else if ((StringEquals(Node, "chunkwm_export_space_changed")) ||
+               (StringEquals(Node, "chunkwm_export_display_changed"))) {
         SpaceAndDisplayChangedHandler(Data);
         return true;
-    }
-    else if(StringEquals(Node, "chunkwm_export_display_resized"))
-    {
+    } else if (StringEquals(Node, "chunkwm_export_display_resized")) {
         DisplayResizedHandler(Data);
         return true;
-    }
-    else if(StringEquals(Node, "chunkwm_daemon_command"))
-    {
+    } else if (StringEquals(Node, "chunkwm_daemon_command")) {
         ChunkwmDaemonCommandHandler(Data);
         return true;
-    }
-    else if(StringEquals(Node, "chunkwm_events_subscribed"))
-    {
+    } else if (StringEquals(Node, "chunkwm_events_subscribed")) {
         /* NOTE(koekeishiya): Tile windows visible on the current space using configured mode */
         CreateWindowTree();
 
         /* NOTE(koekeishiya): Set our initial insertion-point on launch. */
         uint32_t WindowId = GetFocusedWindowId();
-        if(WindowId) WindowFocusedHandler(WindowId);
+        if (WindowId) WindowFocusedHandler(WindowId);
         return true;
     }
 
@@ -1672,7 +1433,7 @@ Init(chunkwm_api ChunkwmAPI)
     BeginCVars(&API);
 
     Success = (pthread_mutex_init(&WindowsLock, NULL) == 0);
-    if(!Success) goto out;
+    if (!Success) goto out;
 
 
     EventTap.Mask = ((1 << kCGEventLeftMouseDown) |
@@ -1732,8 +1493,7 @@ Init(chunkwm_api ChunkwmAPI)
 
     ProcessPolicy = Process_Policy_Regular;
     Applications = AXLibRunningProcesses(ProcessPolicy);
-    for(size_t Index = 0; Index < Applications.size(); ++Index)
-    {
+    for (size_t Index = 0; Index < Applications.size(); ++Index) {
         macos_application *Application = Applications[Index];
         AddApplication(Application);
         AddApplicationWindowList(Application);
@@ -1751,8 +1511,7 @@ Init(chunkwm_api ChunkwmAPI)
     UpdateCVar(CVAR_LAST_ACTIVE_DESKTOP, (int)DesktopId);
 
     Success = BeginVirtualSpaces();
-    if(Success)
-    {
+    if (Success) {
         SetMouseModifier(CVarStringValue(CVAR_MOUSE_MODIFIER));
         goto out;
     }

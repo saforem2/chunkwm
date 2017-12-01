@@ -33,18 +33,15 @@ internal chunkwm_api API;
 internal bool
 IsWindowLevelAllowed(int WindowLevel)
 {
-    local_persist int ValidWindowLevels[] =
-    {
+    local_persist int ValidWindowLevels[] = {
         CGWindowLevelForKey(kCGNormalWindowLevelKey),
         CGWindowLevelForKey(kCGFloatingWindowLevelKey),
         CGWindowLevelForKey(kCGModalPanelWindowLevelKey),
     };
     local_persist int Count = ArrayCount(ValidWindowLevels);
 
-    for(int Index = 0; Index < Count; ++Index)
-    {
-        if(WindowLevel == ValidWindowLevels[Index])
-        {
+    for (int Index = 0; Index < Count; ++Index) {
+        if (WindowLevel == ValidWindowLevels[Index]) {
             return true;
         }
     }
@@ -60,19 +57,18 @@ FocusWindow(uint32_t WindowID, pid_t WindowPID)
     CFIndex WindowCount;
 
     ApplicationRef = AXUIElementCreateApplication(WindowPID);
-    if(!ApplicationRef) goto out;
+    if (!ApplicationRef) goto out;
 
     WindowList = (CFArrayRef) AXLibGetWindowProperty(ApplicationRef, kAXWindowsAttribute);
-    if(!WindowList) goto app_release;
+    if (!WindowList) goto app_release;
 
     WindowCount = CFArrayGetCount(WindowList);
-    for(CFIndex Index = 0; Index < WindowCount; ++Index)
-    {
+    for (CFIndex Index = 0; Index < WindowCount; ++Index) {
         AXUIElementRef WindowRef = (AXUIElementRef) CFArrayGetValueAtIndex(WindowList, Index);
-        if(!WindowRef) continue;
+        if (!WindowRef) continue;
 
         int WindowRefWID = AXLibGetWindowID(WindowRef);
-        if(WindowRefWID != WindowID) continue;
+        if (WindowRefWID != WindowID) continue;
 
         AXLibSetFocusedWindow(WindowRef);
         AXLibSetFocusedApplication(WindowPID);
@@ -98,12 +94,12 @@ FocusFollowsMouse(CGEventRef Event)
     CGPoint CursorPosition = CGEventGetLocation(Event);
     CGSFindWindowByGeometry(Connection, 0, 1, 0, &CursorPosition, &WindowPosition, &WindowId, &WindowConnection);
 
-    if(Connection == WindowConnection) return;
-    if(WindowId == FocusedWindowId)    return;
+    if (Connection == WindowConnection) return;
+    if (WindowId == FocusedWindowId)    return;
 
     CGSGetWindowLevel(Connection, WindowId, &WindowLevel);
     // printf("FFM: Window level %d\n", WindowLevel);
-    if(!IsWindowLevelAllowed(WindowLevel)) return;
+    if (!IsWindowLevelAllowed(WindowLevel)) return;
 
     CGSConnectionGetPID(WindowConnection, &WindowPid);
     FocusWindow(WindowId, WindowPid);
@@ -112,23 +108,20 @@ FocusFollowsMouse(CGEventRef Event)
 EVENTTAP_CALLBACK(EventTapCallback)
 {
     event_tap *EventTap = (event_tap *) Reference;
-    switch(Type)
-    {
-        case kCGEventTapDisabledByTimeout:
-        case kCGEventTapDisabledByUserInput:
-        {
-            CGEventTapEnable(EventTap->Handle, true);
-        } break;
-        case kCGEventMouseMoved:
-        {
-            if(!IsActive) break;
+    switch (Type) {
+    case kCGEventTapDisabledByTimeout:
+    case kCGEventTapDisabledByUserInput: {
+        CGEventTapEnable(EventTap->Handle, true);
+    } break;
+    case kCGEventMouseMoved: {
+        if (!IsActive) break;
 
-            CGEventFlags Flags = CGEventGetFlags(Event);
-            if((Flags & MouseModifier) == MouseModifier) break;
+        CGEventFlags Flags = CGEventGetFlags(Event);
+        if ((Flags & MouseModifier) == MouseModifier) break;
 
-            FocusFollowsMouse(Event);
-        } break;
-        default: {} break;
+        FocusFollowsMouse(Event);
+    } break;
+    default: {} break;
     }
 
     return Event;
@@ -139,8 +132,7 @@ ApplicationActivatedHandler(void *Data)
 {
     macos_application *Application = (macos_application *) Data;
     AXUIElementRef WindowRef = AXLibGetFocusedWindow(Application->Ref);
-    if(WindowRef)
-    {
+    if (WindowRef) {
         uint32_t WindowId = AXLibGetWindowID(WindowRef);
         FocusedWindowId = WindowId;
         CFRelease(WindowRef);
@@ -164,49 +156,34 @@ TilingWindowFloatHandler(void *Data)
 internal inline void
 SetMouseModifier(const char *Mod)
 {
-    while(Mod && *Mod)
-    {
+    while (Mod && *Mod) {
         token ModToken = GetToken(&Mod);
-        if(TokenEquals(ModToken, "fn"))
-        {
+        if (TokenEquals(ModToken, "fn")) {
             MouseModifier |= Event_Mask_Fn;
-        }
-        else if(TokenEquals(ModToken, "shift"))
-        {
+        } else if (TokenEquals(ModToken, "shift")) {
             MouseModifier |= Event_Mask_Shift;
-        }
-        else if(TokenEquals(ModToken, "alt"))
-        {
+        } else if (TokenEquals(ModToken, "alt")) {
             MouseModifier |= Event_Mask_Alt;
-        }
-        else if(TokenEquals(ModToken, "cmd"))
-        {
+        } else if (TokenEquals(ModToken, "cmd")) {
             MouseModifier |= Event_Mask_Cmd;
-        }
-        else if(TokenEquals(ModToken, "ctrl"))
-        {
+        } else if (TokenEquals(ModToken, "ctrl")) {
             MouseModifier |= Event_Mask_Control;
         }
     }
 
     // NOTE(koekeishiya): If no matches were found, we default to FN
-    if(MouseModifier == 0) MouseModifier |= Event_Mask_Fn;
+    if (MouseModifier == 0) MouseModifier |= Event_Mask_Fn;
 }
 
 PLUGIN_MAIN_FUNC(PluginMain)
 {
-    if(strcmp(Node, "chunkwm_export_application_activated") == 0)
-    {
+    if (strcmp(Node, "chunkwm_export_application_activated") == 0) {
         ApplicationActivatedHandler(Data);
         return true;
-    }
-    else if(strcmp(Node, "chunkwm_export_window_focused") == 0)
-    {
+    } else if (strcmp(Node, "chunkwm_export_window_focused") == 0) {
         WindowFocusedHandler(Data);
         return true;
-    }
-    else if(strcmp(Node, "Tiling_focused_window_float") == 0)
-    {
+    } else if (strcmp(Node, "Tiling_focused_window_float") == 0) {
         TilingWindowFloatHandler(Data);
         return true;
     }
