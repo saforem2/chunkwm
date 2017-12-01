@@ -20,12 +20,8 @@ internal pthread_mutex_t VirtualSpacesLock;
 internal virtual_space_mode
 VirtualSpaceModeFromString(char *Value)
 {
-    for(int Index = Virtual_Space_Bsp;
-        Index <= Virtual_Space_Float;
-        ++Index)
-    {
-        if(strcmp(Value, virtual_space_mode_str[Index]) == 0)
-        {
+    for (int Index = Virtual_Space_Bsp; Index <= Virtual_Space_Float; ++Index) {
+        if (strcmp(Value, virtual_space_mode_str[Index]) == 0) {
             return (virtual_space_mode) Index;
         }
     }
@@ -128,13 +124,10 @@ virtual_space *AcquireVirtualSpace(macos_space *Space)
 
     pthread_mutex_lock(&VirtualSpacesLock);
     virtual_space_map_it It = VirtualSpaces.find(SpaceCRef);
-    if(It != VirtualSpaces.end())
-    {
+    if (It != VirtualSpaces.end()) {
         VirtualSpace = It->second;
         free(SpaceCRef);
-    }
-    else
-    {
+    } else {
         VirtualSpace = CreateAndInitVirtualSpace(Space);
         VirtualSpaces[SpaceCRef] = VirtualSpace;
     }
@@ -156,14 +149,10 @@ bool BeginVirtualSpaces()
 
 void EndVirtualSpaces()
 {
-    for(virtual_space_map_it It = VirtualSpaces.begin();
-        It != VirtualSpaces.end();
-        ++It)
-    {
+    for (virtual_space_map_it It = VirtualSpaces.begin(); It != VirtualSpaces.end(); ++It) {
         virtual_space *VirtualSpace = It->second;
 
-        if(VirtualSpace->Tree)
-        {
+        if (VirtualSpace->Tree) {
             FreeNodeTree(VirtualSpace->Tree, VirtualSpace->Mode);
         }
 

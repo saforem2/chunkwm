@@ -27,8 +27,7 @@ ReadFile(const char *Absolutepath)
     char *Contents = NULL;
     FILE *Descriptor = fopen(Absolutepath, "r");
 
-    if(Descriptor)
-    {
+    if (Descriptor) {
         fseek(Descriptor, 0, SEEK_END);
         unsigned Length = ftell(Descriptor);
         fseek(Descriptor, 0, SEEK_SET);

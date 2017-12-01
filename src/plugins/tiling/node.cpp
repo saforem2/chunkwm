@@ -20,13 +20,10 @@ extern macos_window *GetWindowByID(uint32_t Id);
 node_ids AssignNodeIds(uint32_t ExistingId, uint32_t NewId, bool SpawnLeft)
 {
     node_ids NodeIds;
-    if(SpawnLeft)
-    {
+    if (SpawnLeft) {
         NodeIds.Left = NewId;
         NodeIds.Right = ExistingId;
-    }
-    else
-    {
+    } else {
         NodeIds.Left = ExistingId;
         NodeIds.Right = NewId;
     }
@@ -36,23 +33,17 @@ node_ids AssignNodeIds(uint32_t ExistingId, uint32_t NewId, bool SpawnLeft)
 node_split OptimalSplitMode(node *Node)
 {
     float OptimalRatio = CVarFloatingPointValue(CVAR_BSP_OPTIMAL_RATIO);
-
     float NodeRatio = Node->Region.Width / Node->Region.Height;
     return NodeRatio >= OptimalRatio ? Split_Vertical : Split_Horizontal;
 }
 
 node_split NodeSplitFromString(char *Value)
 {
-    for(int Index = Split_None;
-        Index <= Split_Horizontal;
-        ++Index)
-    {
-        if(strcmp(Value, node_split_str[Index]) == 0)
-        {
+    for (int Index = Split_None; Index <= Split_Horizontal; ++Index) {
+        if (strcmp(Value, node_split_str[Index]) == 0) {
             return (node_split) Index;
         }
     }
-
     return Split_None;
 }
 
@@ -95,13 +86,10 @@ void CreateLeafNodePair(node *Parent, uint32_t ExistingWindowId, uint32_t Spawne
     node_ids NodeIds = AssignNodeIds(ExistingWindowId, SpawnedWindowId, SpawnLeft);
 
     ASSERT(Split == Split_Vertical || Split == Split_Horizontal);
-    if(Split == Split_Vertical)
-    {
+    if (Split == Split_Vertical) {
         Parent->Left = CreateLeafNode(Parent, NodeIds.Left, Region_Left, Space, VirtualSpace);
         Parent->Right = CreateLeafNode(Parent, NodeIds.Right, Region_Right, Space, VirtualSpace);
-    }
-    else if(Split == Split_Horizontal)
-    {
+    } else if (Split == Split_Horizontal) {
         Parent->Left = CreateLeafNode(Parent, NodeIds.Left, Region_Upper, Space, VirtualSpace);
         Parent->Right = CreateLeafNode(Parent, NodeIds.Right, Region_Lower, Space, VirtualSpace);
     }
@@ -117,13 +105,10 @@ void CreateLeafNodePairPreselect(node *Parent, uint32_t ExistingWindowId, uint32
     node_ids NodeIds = AssignNodeIds(ExistingWindowId, SpawnedWindowId, Parent->Preselect->SpawnLeft);
 
     ASSERT(Parent->Split == Split_Vertical || Parent->Split == Split_Horizontal);
-    if(Parent->Split == Split_Vertical)
-    {
+    if (Parent->Split == Split_Vertical) {
         Parent->Left = CreateLeafNode(Parent, NodeIds.Left, Region_Left, Space, VirtualSpace);
         Parent->Right = CreateLeafNode(Parent, NodeIds.Right, Region_Right, Space, VirtualSpace);
-    }
-    else if(Parent->Split == Split_Horizontal)
-    {
+    } else if (Parent->Split == Split_Horizontal) {
         Parent->Left = CreateLeafNode(Parent, NodeIds.Left, Region_Upper, Space, VirtualSpace);
         Parent->Right = CreateLeafNode(Parent, NodeIds.Right, Region_Lower, Space, VirtualSpace);
     }
@@ -138,9 +123,7 @@ CenterWindowInRegion(macos_window *Window, region Region)
     float DiffX = (Region.X + Region.Width) - (Position.x + Size.width);
     float DiffY = (Region.Y + Region.Height) - (Position.y + Size.height);
 
-    if((DiffX > 0.0f) ||
-       (DiffY > 0.0f))
-    {
+    if ((DiffX > 0.0f) || (DiffY > 0.0f)) {
         float OffsetX = DiffX / 2.0f;
         Region.X += OffsetX;
         Region.Width -= OffsetX;
@@ -163,10 +146,8 @@ void ResizeWindowToRegionSize(node *Node, bool Center)
     bool WindowMoved  = AXLibSetWindowPosition(Window->Ref, Node->Region.X, Node->Region.Y);
     bool WindowResized = AXLibSetWindowSize(Window->Ref, Node->Region.Width, Node->Region.Height);
 
-    if(Center)
-    {
-        if(WindowMoved || WindowResized)
-        {
+    if (Center) {
+        if (WindowMoved || WindowResized) {
             CenterWindowInRegion(Window, Node->Region);
         }
     }
@@ -187,10 +168,8 @@ void ResizeWindowToExternalRegionSize(node *Node, region Region, bool Center)
     bool WindowMoved  = AXLibSetWindowPosition(Window->Ref, Region.X, Region.Y);
     bool WindowResized = AXLibSetWindowSize(Window->Ref, Region.Width, Region.Height);
 
-    if(Center)
-    {
-        if(WindowMoved || WindowResized)
-        {
+    if (Center) {
+        if (WindowMoved || WindowResized) {
             CenterWindowInRegion(Window, Region);
         }
     }
@@ -204,18 +183,15 @@ void ResizeWindowToExternalRegionSize(node *Node, region Region)
 
 void ApplyNodeRegion(node *Node, virtual_space_mode VirtualSpaceMode, bool Center)
 {
-    if(Node->WindowId && Node->WindowId != Node_PseudoLeaf)
-    {
+    if (Node->WindowId && Node->WindowId != Node_PseudoLeaf) {
         ResizeWindowToRegionSize(Node, Center);
     }
 
-    if(Node->Left && VirtualSpaceMode == Virtual_Space_Bsp)
-    {
+    if (Node->Left && VirtualSpaceMode == Virtual_Space_Bsp) {
         ApplyNodeRegion(Node->Left, VirtualSpaceMode, Center);
     }
 
-    if(Node->Right)
-    {
+    if (Node->Right) {
         ApplyNodeRegion(Node->Right, VirtualSpaceMode, Center);
     }
 }
@@ -228,9 +204,7 @@ void ApplyNodeRegion(node *Node, virtual_space_mode VirtualSpaceMode)
 
 void ConstrainWindowToRegion(macos_window *Window)
 {
-    if(AXLibHasFlags(Window, Window_Float) ||
-       AXLibIsWindowFullscreen(Window->Ref))
-    {
+    if (AXLibHasFlags(Window, Window_Float) || AXLibIsWindowFullscreen(Window->Ref)) {
         return;
     }
 
@@ -246,32 +220,16 @@ void ConstrainWindowToRegion(macos_window *Window)
     //    updated, fullscreen flag will be already set
     // 2- when an app exits native fullscreen, fullscreen flag is removed
     //    immediatly, but we may still be in a fullscreen space
-    if(Space->Type == kCGSSpaceUser)
-    {
+    if (Space->Type == kCGSSpaceUser) {
         virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
-        if((VirtualSpace->Tree) &&
-           (VirtualSpace->Mode != Virtual_Space_Float))
-        {
-            node *WindowNode = GetNodeWithId(VirtualSpace->Tree,
-                                             Window->Id,
-                                             VirtualSpace->Mode);
-            if(WindowNode)
-            {
-                // window is fullscreen zoomed
-                if(WindowNode == VirtualSpace->Tree->Zoom)
-                {
-                    ResizeWindowToExternalRegionSize(WindowNode,
-                                                     VirtualSpace->Tree->Region);
-                }
-                // window is parent zoomed
-                else if(WindowNode->Parent &&
-                        WindowNode == WindowNode->Parent->Zoom)
-                {
-                    ResizeWindowToExternalRegionSize(WindowNode,
-                                                     WindowNode->Parent->Region);
-                }
-                else
-                {
+        if ((VirtualSpace->Tree) && (VirtualSpace->Mode != Virtual_Space_Float)) {
+            node *WindowNode = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
+            if (WindowNode) {
+                if (WindowNode == VirtualSpace->Tree->Zoom) {
+                    ResizeWindowToExternalRegionSize(WindowNode, VirtualSpace->Tree->Region);
+                } else if (WindowNode->Parent && WindowNode == WindowNode->Parent->Zoom) {
+                    ResizeWindowToExternalRegionSize(WindowNode, WindowNode->Parent->Region);
+                } else {
                     ResizeWindowToRegionSize(WindowNode, true);
                 }
             }
@@ -292,18 +250,15 @@ void FreePreselectNode(node *Node)
 
 void FreeNodeTree(node *Node, virtual_space_mode VirtualSpaceMode)
 {
-    if(Node->Preselect)
-    {
+    if (Node->Preselect) {
         FreePreselectNode(Node);
     }
 
-    if(Node->Left && VirtualSpaceMode == Virtual_Space_Bsp)
-    {
+    if (Node->Left && VirtualSpaceMode == Virtual_Space_Bsp) {
         FreeNodeTree(Node->Left, VirtualSpaceMode);
     }
 
-    if(Node->Right)
-    {
+    if (Node->Right) {
         FreeNodeTree(Node->Right, VirtualSpaceMode);
     }
 
@@ -312,8 +267,7 @@ void FreeNodeTree(node *Node, virtual_space_mode VirtualSpaceMode)
 
 void FreeNode(node *Node)
 {
-    if(Node->Preselect)
-    {
+    if (Node->Preselect) {
         FreePreselectNode(Node);
     }
 
@@ -349,9 +303,7 @@ bool IsLeafNode(node *Node)
 node *GetFirstLeafNode(node *Tree)
 {
     node *Node = Tree;
-    while((!IsLeafNode(Node)) &&
-          (Node->Left))
-    {
+    while ((!IsLeafNode(Node)) && (Node->Left)) {
         Node = Node->Left;
     }
 
@@ -361,9 +313,7 @@ node *GetFirstLeafNode(node *Tree)
 node *GetLastLeafNode(node *Tree)
 {
     node *Node = Tree;
-    while((Node->Right) &&
-          (Node->Right->WindowId != Node_PseudoLeaf))
-    {
+    while ((Node->Right) && (Node->Right->WindowId != Node_PseudoLeaf)) {
         Node = Node->Right;
     }
 
@@ -374,13 +324,9 @@ node *GetBiggestLeafNode(node *Tree)
 {
     node *Result = NULL;
     unsigned int BestArea = 0;
-    for(node *Node = GetFirstLeafNode(Tree);
-        Node != NULL;
-        Node = GetNextLeafNode(Node))
-    {
+    for (node *Node = GetFirstLeafNode(Tree); Node != NULL; Node = GetNextLeafNode(Node)) {
         unsigned int Area = Node->Region.Width * Node->Region.Height;
-        if(Area > BestArea)
-        {
+        if (Area > BestArea) {
             Result = Node;
             BestArea = Area;
         }
@@ -393,13 +339,11 @@ node *GetFirstMinDepthLeafNode(node *Tree)
     std::queue<node *> Queue;
     Queue.push(Tree);
 
-    while(!Queue.empty())
-    {
+    while (!Queue.empty()) {
         node *Node = Queue.front();
         Queue.pop();
 
-        if(IsLeafNode(Node))
-        {
+        if (IsLeafNode(Node)) {
             return Node;
         }
 
@@ -418,14 +362,11 @@ node *GetFirstMinDepthPseudoLeafNode(node *Tree)
     std::queue<node *> Queue;
     Queue.push(Tree);
 
-    while(!Queue.empty())
-    {
+    while (!Queue.empty()) {
         node *Node = Queue.front();
         Queue.pop();
 
-        if((IsLeafNode(Node)) &&
-           (Node->WindowId == Node_PseudoLeaf))
-        {
+        if ((IsLeafNode(Node)) && (Node->WindowId == Node_PseudoLeaf)) {
             return Node;
         }
 
@@ -439,21 +380,17 @@ node *GetFirstMinDepthPseudoLeafNode(node *Tree)
 node *GetPrevLeafNode(node *Node)
 {
     node *Parent = Node->Parent;
-    if(Parent)
-    {
-        if(Parent->Left == Node)
-        {
+    if (Parent) {
+        if (Parent->Left == Node) {
             return GetPrevLeafNode(Parent);
         }
 
-        if(IsLeafNode(Parent->Left))
-        {
+        if (IsLeafNode(Parent->Left)) {
             return Parent->Left;
         }
 
         Parent = Parent->Left;
-        while(!IsLeafNode(Parent->Right))
-        {
+        while (!IsLeafNode(Parent->Right)) {
             Parent = Parent->Right;
         }
 
@@ -466,21 +403,17 @@ node *GetPrevLeafNode(node *Node)
 node *GetNextLeafNode(node *Node)
 {
     node *Parent = Node->Parent;
-    if(Parent)
-    {
-        if(Parent->Right == Node)
-        {
+    if (Parent) {
+        if (Parent->Right == Node) {
             return GetNextLeafNode(Parent);
         }
 
-        if(IsLeafNode(Parent->Right))
-        {
+        if (IsLeafNode(Parent->Right)) {
             return Parent->Right;
         }
 
         Parent = Parent->Right;
-        while(!IsLeafNode(Parent->Left))
-        {
+        while (!IsLeafNode(Parent->Left)) {
             Parent = Parent->Left;
         }
 
@@ -494,16 +427,13 @@ node *GetLowestCommonAncestor(node *A, node *B)
 {
     std::map<node *, bool> Ancestors;
 
-    while(A)
-    {
+    while (A) {
         Ancestors[A] = true;
         A = A->Parent;
     }
 
-    while(B)
-    {
-        if(Ancestors.find(B) != Ancestors.end())
-        {
+    while (B) {
+        if (Ancestors.find(B) != Ancestors.end()) {
             return B;
         }
 
@@ -515,8 +445,7 @@ node *GetLowestCommonAncestor(node *A, node *B)
 
 equalize_node EqualizeNodeTree(node *Tree)
 {
-    if(IsLeafNode(Tree))
-    {
+    if (IsLeafNode(Tree)) {
         return { Tree->Parent ? Tree->Parent->Split == Split_Vertical   : 0,
                  Tree->Parent ? Tree->Parent->Split == Split_Horizontal : 0 };
     }
@@ -525,19 +454,15 @@ equalize_node EqualizeNodeTree(node *Tree)
     equalize_node RightLeafs = EqualizeNodeTree(Tree->Right);
     equalize_node TotalLeafs = LeftLeafs + RightLeafs;
 
-    if(Tree->Split == Split_Vertical)
-    {
+    if (Tree->Split == Split_Vertical) {
         Tree->Ratio = (float) LeftLeafs.VerticalCount / TotalLeafs.VerticalCount;
         --TotalLeafs.VerticalCount;
-    }
-    else if(Tree->Split == Split_Horizontal)
-    {
+    } else if (Tree->Split == Split_Horizontal) {
         Tree->Ratio = (float) LeftLeafs.HorizontalCount / TotalLeafs.HorizontalCount;
         --TotalLeafs.HorizontalCount;
     }
 
-    if(Tree->Parent)
-    {
+    if (Tree->Parent) {
         TotalLeafs.VerticalCount += Tree->Parent->Split == Split_Vertical;
         TotalLeafs.HorizontalCount += Tree->Parent->Split == Split_Horizontal;
     }
@@ -548,18 +473,12 @@ equalize_node EqualizeNodeTree(node *Tree)
 node *GetNodeWithId(node *Tree, uint32_t WindowId, virtual_space_mode VirtualSpaceMode)
 {
     node *Node = GetFirstLeafNode(Tree);
-    while(Node)
-    {
-        if(Node->WindowId == WindowId)
-        {
+    while (Node) {
+        if (Node->WindowId == WindowId) {
             return Node;
-        }
-        else if(VirtualSpaceMode == Virtual_Space_Bsp)
-        {
+        } else if (VirtualSpaceMode == Virtual_Space_Bsp) {
             Node = GetNextLeafNode(Node);
-        }
-        else if(VirtualSpaceMode == Virtual_Space_Monocle)
-        {
+        } else if (VirtualSpaceMode == Virtual_Space_Monocle) {
             Node = Node->Right;
         }
     }
@@ -577,13 +496,11 @@ void SwapNodeIds(node *A, node *B)
 node *GetNodeForPoint(node *Node, CGPoint *Point)
 {
     node *Current = GetFirstLeafNode(Node);
-    while(Current)
-    {
-        if((Point->x >= Current->Region.X) &&
-           (Point->x <= Current->Region.X + Current->Region.Width) &&
-           (Point->y >= Current->Region.Y) &&
-           (Point->y <= Current->Region.Y + Current->Region.Height))
-        {
+    while (Current) {
+        if ((Point->x >= Current->Region.X) &&
+            (Point->x <= Current->Region.X + Current->Region.Width) &&
+            (Point->y >= Current->Region.Y) &&
+            (Point->y <= Current->Region.Y + Current->Region.Height)) {
             return Current;
         }
 
@@ -639,7 +556,7 @@ DestroySerializedNode(serialized_node *Node)
     free(Node->Type);
     free(Node);
 
-    if(Next) DestroySerializedNode(Next);
+    if (Next) DestroySerializedNode(Next);
 }
 
 internal serialized_node *
@@ -673,10 +590,8 @@ char *SerializeNodeToBuffer(node *Node)
     Cursor = Buffer = (char *) malloc(BufferSize);
     EndOfBuffer = Buffer + BufferSize;
 
-    while(Current)
-    {
-        if(Current->TypeId == Node_Serialized_Root)
-        {
+    while (Current) {
+        if (Current->TypeId == Node_Serialized_Root) {
             ASSERT(Cursor < EndOfBuffer);
             BytesWritten = snprintf(Cursor, BufferSize,
                                     "%s %s %.3f\n",
@@ -686,9 +601,7 @@ char *SerializeNodeToBuffer(node *Node)
             ASSERT(BytesWritten >= 0);
             Cursor += BytesWritten;
             BufferSize -= BytesWritten;
-        }
-        else if(Current->TypeId == Node_Serialized_Leaf)
-        {
+        } else if (Current->TypeId == Node_Serialized_Leaf) {
             ASSERT(Cursor < EndOfBuffer);
             BytesWritten = snprintf(Cursor, BufferSize,
                                     "%s\n", Current->Type);
@@ -725,10 +638,8 @@ node *DeserializeNodeFromBuffer(char *Buffer)
     Tree->Ratio = TokenToFloat(Ratio);
 
     Token = GetToken(&Cursor);
-    while(Token.Length > 0)
-    {
-        if(TokenEquals(Token, "left_root"))
-        {
+    while (Token.Length > 0) {
+        if (TokenEquals(Token, "left_root")) {
             node *Left = (node *) malloc(sizeof(node));
             memset(Left, 0, sizeof(node));
 
@@ -744,9 +655,7 @@ node *DeserializeNodeFromBuffer(char *Buffer)
 
             Current->Left = Left;
             Current = Left;
-        }
-        else if(TokenEquals(Token, "right_root"))
-        {
+        } else if (TokenEquals(Token, "right_root")) {
             node *Right = (node *) malloc(sizeof(node));
             memset(Right, 0, sizeof(node));
 
@@ -762,9 +671,7 @@ node *DeserializeNodeFromBuffer(char *Buffer)
 
             Current->Right = Right;
             Current = Right;
-        }
-        else if(TokenEquals(Token, "left_leaf"))
-        {
+        } else if (TokenEquals(Token, "left_leaf")) {
             node *Leaf = (node *) malloc(sizeof(node));
             memset(Leaf, 0, sizeof(node));
 
@@ -772,9 +679,7 @@ node *DeserializeNodeFromBuffer(char *Buffer)
             Leaf->Parent = Current;
             Leaf->Ratio = CVarFloatingPointValue(CVAR_BSP_SPLIT_RATIO);
             Current->Left = Leaf;
-        }
-        else if(TokenEquals(Token, "right_leaf"))
-        {
+        } else if (TokenEquals(Token, "right_leaf")) {
             node *Leaf = (node *) malloc(sizeof(node));
             memset(Leaf, 0, sizeof(node));
 

@@ -26,18 +26,14 @@ BuildArguments(const char *Message, int *Count)
     char **Args = (char **) malloc(16 * sizeof(char *));
     *Count = 1;
 
-    while(*Message)
-    {
+    while (*Message) {
         token ArgToken = GetToken(&Message);
         char *Arg = TokenToString(ArgToken);
         Args[(*Count)++] = Arg;
     }
 
 #if 0
-    for(int Index = 1;
-        Index < *Count;
-        ++Index)
-    {
+    for (int Index = 1; Index < *Count; ++Index) {
         DEBUG_PRINT("%d arg '%s'\n", Index, Args[Index]);
     }
 #endif
@@ -48,13 +44,9 @@ BuildArguments(const char *Message, int *Count)
 inline void
 FreeArguments(int Count, char **Args)
 {
-    for(int Index = 1;
-        Index < Count;
-        ++Index)
-    {
+    for (int Index = 1; Index < Count; ++Index) {
         free(Args[Index]);
     }
-
     free(Args);
 }
 
@@ -69,8 +61,7 @@ inline void
 FreeCommandChain(command *Chain)
 {
     command *Command = Chain->Next;
-    while(Command)
-    {
+    while (Command) {
         command *Next = Command->Next;
         free(Command->Arg);
         free(Command);
@@ -94,22 +85,21 @@ typedef void (*query_func)(char *, int);
 typedef void (*command_func)(char *);
 command_func WindowCommandDispatch(char Flag)
 {
-    switch(Flag)
-    {
-        case 'f': return FocusWindow;           break;
-        case 's': return SwapWindow;            break;
-        case 'i': return UseInsertionPoint;     break;
-        case 't': return ToggleWindow;          break;
-        case 'w': return WarpWindow;            break;
-        case 'W': return WarpFloatingWindow;    break;
-        case 'r': return TemporaryRatio;        break;
-        case 'e': return AdjustWindowRatio;     break;
-        case 'd': return SendWindowToDesktop;   break;
-        case 'm': return SendWindowToMonitor;   break;
-        case 'c': return CloseWindow;           break;
+    switch (Flag) {
+    case 'f': return FocusWindow;           break;
+    case 's': return SwapWindow;            break;
+    case 'i': return UseInsertionPoint;     break;
+    case 't': return ToggleWindow;          break;
+    case 'w': return WarpWindow;            break;
+    case 'W': return WarpFloatingWindow;    break;
+    case 'r': return TemporaryRatio;        break;
+    case 'e': return AdjustWindowRatio;     break;
+    case 'd': return SendWindowToDesktop;   break;
+    case 'm': return SendWindowToMonitor;   break;
+    case 'c': return CloseWindow;           break;
 
-        // NOTE(koekeishiya): silence compiler warning.
-        default: return 0; break;
+    // NOTE(koekeishiya): silence compiler warning.
+    default: return 0; break;
     }
 }
 
@@ -123,8 +113,7 @@ ParseWindowCommand(const char *Message, command *Chain)
     bool Success = true;
     const char *Short = "f:s:i:t:w:W:r:e:d:m:c";
 
-    struct option Long[] =
-    {
+    struct option Long[] = {
         { "focus", required_argument, NULL, 'f' },
         { "swap", required_argument, NULL, 's' },
         { "use-insertion-point", required_argument, NULL, 'i' },
@@ -140,169 +129,137 @@ ParseWindowCommand(const char *Message, command *Chain)
     };
 
     command *Command = Chain;
-    while((Option = getopt_long(Count, Args, Short, Long, NULL)) != -1)
-    {
-        switch(Option)
-        {
-            // NOTE(koekeishiya): The '-f', '-s', '-w' flag support the same arguments.
-            case 'f':
-            case 's':
-            case 'w':
-            {
-                if((StringEquals(optarg, "biggest")) ||
-                   (StringEquals(optarg, "west")) ||
-                   (StringEquals(optarg, "east")) ||
-                   (StringEquals(optarg, "north")) ||
-                   (StringEquals(optarg, "south")) ||
-                   (StringEquals(optarg, "prev")) ||
-                   (StringEquals(optarg, "next")))
-                {
-                    command *Entry = ConstructCommand(Option, optarg);
-                    Command->Next = Entry;
-                    Command = Entry;
-                }
-                else
-                {
-                    fprintf(stderr, "    invalid selector '%s' for window flag '%c'\n", optarg, Option);
-                    Success = false;
-                    FreeCommandChain(Chain);
-                    goto End;
-                }
-            } break;
-            case 'e':
-            {
-                if((StringEquals(optarg, "west")) ||
-                   (StringEquals(optarg, "east")) ||
-                   (StringEquals(optarg, "north")) ||
-                   (StringEquals(optarg, "south")))
-                {
-                    command *Entry = ConstructCommand(Option, optarg);
-                    Command->Next = Entry;
-                    Command = Entry;
-                }
-                else
-                {
-                    fprintf(stderr, "    invalid selector '%s' for window flag '%c'\n", optarg, Option);
-                    Success = false;
-                    FreeCommandChain(Chain);
-                    goto End;
-                }
-            } break;
-            case 'i':
-            {
-                if((StringEquals(optarg, "west")) ||
-                   (StringEquals(optarg, "east")) ||
-                   (StringEquals(optarg, "north")) ||
-                   (StringEquals(optarg, "south")) ||
-                   (StringEquals(optarg, "cancel")))
-                {
-                    command *Entry = ConstructCommand(Option, optarg);
-                    Command->Next = Entry;
-                    Command = Entry;
-                }
-                else
-                {
-                    fprintf(stderr, "    invalid selector '%s' for window flag '%c'\n", optarg, Option);
-                    Success = false;
-                    FreeCommandChain(Chain);
-                    goto End;
-                }
-            } break;
-            case 'r':
-            {
-                float Float;
-                if(sscanf(optarg, "%f", &Float) == 1)
-                {
-                    command *Entry = ConstructCommand(Option, optarg);
-                    Command->Next = Entry;
-                    Command = Entry;
-                }
-                else
-                {
-                    fprintf(stderr, "    invalid selector '%s' for window flag '%c'\n", optarg, Option);
-                    Success = false;
-                    FreeCommandChain(Chain);
-                    goto End;
-                }
-            } break;
-            case 't':
-            {
-                if((StringEquals(optarg, "float")) ||
-                   (StringEquals(optarg, "split")) ||
-                   (StringEquals(optarg, "sticky")) ||
-                   (StringEquals(optarg, "fullscreen")) ||
-                   (StringEquals(optarg, "native-fullscreen")) ||
-                   (StringEquals(optarg, "parent")))
-                {
-                    command *Entry = ConstructCommand(Option, optarg);
-                    Command->Next = Entry;
-                    Command = Entry;
-                }
-                else
-                {
-                    fprintf(stderr, "    invalid selector '%s' for window flag '%c'\n", optarg, Option);
-                    Success = false;
-                    FreeCommandChain(Chain);
-                    goto End;
-                }
-            } break;
-            case 'd':
-            case 'm':
-            {
-                unsigned Unsigned;
-                if((StringEquals(optarg, "prev")) ||
-                   (StringEquals(optarg, "next")) ||
-                   (sscanf(optarg, "%d", &Unsigned) == 1))
-                {
-                    command *Entry = ConstructCommand(Option, optarg);
-                    Command->Next = Entry;
-                    Command = Entry;
-                }
-                else
-                {
-                    fprintf(stderr, "    invalid selector '%s' for window flag '%c'\n", optarg, Option);
-                    Success = false;
-                    FreeCommandChain(Chain);
-                    goto End;
-                }
-            } break;
-            case 'W':
-            {
-                if((StringEquals(optarg, "fullscreen")) ||
-                   (StringEquals(optarg, "left")) ||
-                   (StringEquals(optarg, "right")) ||
-                   (StringEquals(optarg, "top-left")) ||
-                   (StringEquals(optarg, "top-right")) ||
-                   (StringEquals(optarg, "bottom-left")) ||
-                   (StringEquals(optarg, "bottom-right")) ||
-                   (StringEquals(optarg, "pip-left")) ||
-                   (StringEquals(optarg, "pip-right")))
-                {
-                    command *Entry = ConstructCommand(Option, optarg);
-                    Command->Next = Entry;
-                    Command = Entry;
-                }
-                else
-                {
-                    fprintf(stderr, "    invalid selector '%s' for window flag '%c'\n", optarg, Option);
-                    Success = false;
-                    FreeCommandChain(Chain);
-                    goto End;
-                }
-            } break;
-            case 'c':
-            {
-                    // NOTE(koekeishiya): This option takes no arguments
-                    command *Entry = ConstructCommand(Option, NULL);
-                    Command->Next = Entry;
-                    Command = Entry;
-            } break;
-            case '?':
-            {
+    while ((Option = getopt_long(Count, Args, Short, Long, NULL)) != -1) {
+        switch (Option) {
+        // NOTE(koekeishiya): The '-f', '-s', '-w' flag support the same arguments.
+        case 'f':
+        case 's':
+        case 'w': {
+            if ((StringEquals(optarg, "biggest")) ||
+                (StringEquals(optarg, "west")) ||
+                (StringEquals(optarg, "east")) ||
+                (StringEquals(optarg, "north")) ||
+                (StringEquals(optarg, "south")) ||
+                (StringEquals(optarg, "prev")) ||
+                (StringEquals(optarg, "next"))) {
+                command *Entry = ConstructCommand(Option, optarg);
+                Command->Next = Entry;
+                Command = Entry;
+            } else {
+                fprintf(stderr, "    invalid selector '%s' for window flag '%c'\n", optarg, Option);
                 Success = false;
                 FreeCommandChain(Chain);
                 goto End;
-            } break;
+            }
+        } break;
+        case 'e': {
+            if ((StringEquals(optarg, "west")) ||
+                (StringEquals(optarg, "east")) ||
+                (StringEquals(optarg, "north")) ||
+                (StringEquals(optarg, "south"))) {
+                command *Entry = ConstructCommand(Option, optarg);
+                Command->Next = Entry;
+                Command = Entry;
+            } else {
+                fprintf(stderr, "    invalid selector '%s' for window flag '%c'\n", optarg, Option);
+                Success = false;
+                FreeCommandChain(Chain);
+                goto End;
+            }
+        } break;
+        case 'i': {
+            if ((StringEquals(optarg, "west")) ||
+                (StringEquals(optarg, "east")) ||
+                (StringEquals(optarg, "north")) ||
+                (StringEquals(optarg, "south")) ||
+                (StringEquals(optarg, "cancel"))) {
+                command *Entry = ConstructCommand(Option, optarg);
+                Command->Next = Entry;
+                Command = Entry;
+            } else {
+                fprintf(stderr, "    invalid selector '%s' for window flag '%c'\n", optarg, Option);
+                Success = false;
+                FreeCommandChain(Chain);
+                goto End;
+            }
+        } break;
+        case 'r': {
+            float Float;
+            if (sscanf(optarg, "%f", &Float) == 1) {
+                command *Entry = ConstructCommand(Option, optarg);
+                Command->Next = Entry;
+                Command = Entry;
+            } else {
+                fprintf(stderr, "    invalid selector '%s' for window flag '%c'\n", optarg, Option);
+                Success = false;
+                FreeCommandChain(Chain);
+                goto End;
+            }
+        } break;
+        case 't': {
+            if ((StringEquals(optarg, "float")) ||
+                (StringEquals(optarg, "split")) ||
+                (StringEquals(optarg, "sticky")) ||
+                (StringEquals(optarg, "fullscreen")) ||
+                (StringEquals(optarg, "native-fullscreen")) ||
+                (StringEquals(optarg, "parent"))) {
+                command *Entry = ConstructCommand(Option, optarg);
+                Command->Next = Entry;
+                Command = Entry;
+            } else {
+                fprintf(stderr, "    invalid selector '%s' for window flag '%c'\n", optarg, Option);
+                Success = false;
+                FreeCommandChain(Chain);
+                goto End;
+            }
+        } break;
+        case 'd':
+        case 'm': {
+            unsigned Unsigned;
+            if ((StringEquals(optarg, "prev")) ||
+                (StringEquals(optarg, "next")) ||
+                (sscanf(optarg, "%d", &Unsigned) == 1)) {
+                command *Entry = ConstructCommand(Option, optarg);
+                Command->Next = Entry;
+                Command = Entry;
+            } else {
+                fprintf(stderr, "    invalid selector '%s' for window flag '%c'\n", optarg, Option);
+                Success = false;
+                FreeCommandChain(Chain);
+                goto End;
+            }
+        } break;
+        case 'W': {
+            if ((StringEquals(optarg, "fullscreen")) ||
+                (StringEquals(optarg, "left")) ||
+                (StringEquals(optarg, "right")) ||
+                (StringEquals(optarg, "top-left")) ||
+                (StringEquals(optarg, "top-right")) ||
+                (StringEquals(optarg, "bottom-left")) ||
+                (StringEquals(optarg, "bottom-right")) ||
+                (StringEquals(optarg, "pip-left")) ||
+                (StringEquals(optarg, "pip-right"))) {
+                command *Entry = ConstructCommand(Option, optarg);
+                Command->Next = Entry;
+                Command = Entry;
+            } else {
+                fprintf(stderr, "    invalid selector '%s' for window flag '%c'\n", optarg, Option);
+                Success = false;
+                FreeCommandChain(Chain);
+                goto End;
+            }
+        } break;
+        case 'c': {
+                // NOTE(koekeishiya): This option takes no arguments
+                command *Entry = ConstructCommand(Option, NULL);
+                Command->Next = Entry;
+                Command = Entry;
+        } break;
+        case '?': {
+            Success = false;
+            FreeCommandChain(Chain);
+            goto End;
+        } break;
         }
     }
 
@@ -316,20 +273,19 @@ End:
 
 command_func SpaceCommandDispatch(char Flag)
 {
-    switch(Flag)
-    {
-        case 'r': return RotateWindowTree;       break;
-        case 'l': return ActivateSpaceLayout;    break;
-        case 't': return ToggleSpace;            break;
-        case 'm': return MirrorWindowTree;       break;
-        case 'p': return AdjustSpacePadding;     break;
-        case 'g': return AdjustSpaceGap;         break;
-        case 'e': return EqualizeWindowTree;     break;
-        case 's': return SerializeDesktop;       break;
-        case 'd': return DeserializeDesktop;     break;
+    switch (Flag) {
+    case 'r': return RotateWindowTree;       break;
+    case 'l': return ActivateSpaceLayout;    break;
+    case 't': return ToggleSpace;            break;
+    case 'm': return MirrorWindowTree;       break;
+    case 'p': return AdjustSpacePadding;     break;
+    case 'g': return AdjustSpaceGap;         break;
+    case 'e': return EqualizeWindowTree;     break;
+    case 's': return SerializeDesktop;       break;
+    case 'd': return DeserializeDesktop;     break;
 
-        // NOTE(koekeishiya): silence compiler warning.
-        default: return 0; break;
+    // NOTE(koekeishiya): silence compiler warning.
+    default: return 0; break;
     }
 }
 
@@ -343,8 +299,7 @@ ParseSpaceCommand(const char *Message, command *Chain)
     bool Success = true;
     const char *Short = "r:l:t:m:p:g:e";
 
-    struct option Long[] =
-    {
+    struct option Long[] = {
         { "rotate", required_argument, NULL, 'r' },
         { "layout", required_argument, NULL, 'l' },
         { "toggle", required_argument, NULL, 't' },
@@ -358,128 +313,100 @@ ParseSpaceCommand(const char *Message, command *Chain)
     };
 
     command *Command = Chain;
-    while((Option = getopt_long(Count, Args, Short, Long, NULL)) != -1)
-    {
-        switch(Option)
-        {
-            case 'r':
-            {
-                if((StringEquals(optarg, "90")) ||
-                   (StringEquals(optarg, "180")) ||
-                   (StringEquals(optarg, "270")))
-                {
-                    command *Entry = ConstructCommand(Option, optarg);
-                    Command->Next = Entry;
-                    Command = Entry;
-                }
-                else
-                {
-                    fprintf(stderr, "    invalid selector '%s' for desktop flag '%c'\n", optarg, Option);
-                    Success = false;
-                    FreeCommandChain(Chain);
-                    goto End;
-                }
-            } break;
-            case 'l':
-            {
-                if((StringEquals(optarg, "bsp")) ||
-                   (StringEquals(optarg, "monocle")) ||
-                   (StringEquals(optarg, "float")))
-                {
-                    command *Entry = ConstructCommand(Option, optarg);
-                    Command->Next = Entry;
-                    Command = Entry;
-                }
-                else
-                {
-                    fprintf(stderr, "    invalid selector '%s' for desktop flag '%c'\n", optarg, Option);
-                    Success = false;
-                    FreeCommandChain(Chain);
-                    goto End;
-                }
-            } break;
-            case 't':
-            {
-                if((StringEquals(optarg, "offset")))
-                {
-                    command *Entry = ConstructCommand(Option, optarg);
-                    Command->Next = Entry;
-                    Command = Entry;
-                }
-                else
-                {
-                    fprintf(stderr, "    invalid selector '%s' for desktop flag '%c'\n", optarg, Option);
-                    Success = false;
-                    FreeCommandChain(Chain);
-                    goto End;
-                }
-            } break;
-            case 'm':
-            {
-                if((StringEquals(optarg, "vertical")) ||
-                   (StringEquals(optarg, "horizontal")))
-                {
-                    command *Entry = ConstructCommand(Option, optarg);
-                    Command->Next = Entry;
-                    Command = Entry;
-                }
-                else
-                {
-                    fprintf(stderr, "    invalid selector '%s' for desktop flag '%c'\n", optarg, Option);
-                    Success = false;
-                    FreeCommandChain(Chain);
-                    goto End;
-                }
-            } break;
-            case 'p':
-            case 'g':
-            {
-                if((StringEquals(optarg, "inc")) ||
-                   (StringEquals(optarg, "dec")))
-                {
-                    command *Entry = ConstructCommand(Option, optarg);
-                    Command->Next = Entry;
-                    Command = Entry;
-                }
-                else
-                {
-                    fprintf(stderr, "    invalid selector '%s' for desktop flag '%c'\n", optarg, Option);
-                    Success = false;
-                    FreeCommandChain(Chain);
-                    goto End;
-                }
-            } break;
-            case 'e':
-            {
-                // NOTE(koekeishiya): This option takes no arguments
-                command *Entry = ConstructCommand(Option, NULL);
+    while ((Option = getopt_long(Count, Args, Short, Long, NULL)) != -1) {
+        switch (Option) {
+        case 'r': {
+            if ((StringEquals(optarg, "90")) ||
+                (StringEquals(optarg, "180")) ||
+                (StringEquals(optarg, "270"))) {
+                command *Entry = ConstructCommand(Option, optarg);
                 Command->Next = Entry;
                 Command = Entry;
-            } break;
-            case 's':
-            case 'd':
-            {
-                // NOTE(koekeishiya): This option takes a filepath as argument
-                if(optarg)
-                {
-                    command *Entry = ConstructCommand(Option, optarg);
-                    Command->Next = Entry;
-                    Command = Entry;
-                }
-                else
-                {
-                    fprintf(stderr, "    missing selector for desktop flag '%c'\n", Option);
-                    Success = false;
-                    FreeCommandChain(Chain);
-                    goto End;
-                }
-            } break;
-            case '?':
-            {
+            } else {
+                fprintf(stderr, "    invalid selector '%s' for desktop flag '%c'\n", optarg, Option);
                 Success = false;
                 FreeCommandChain(Chain);
                 goto End;
-            } break;
+            }
+        } break;
+        case 'l': {
+            if ((StringEquals(optarg, "bsp")) ||
+                (StringEquals(optarg, "monocle")) ||
+                (StringEquals(optarg, "float"))) {
+                command *Entry = ConstructCommand(Option, optarg);
+                Command->Next = Entry;
+                Command = Entry;
+            } else {
+                fprintf(stderr, "    invalid selector '%s' for desktop flag '%c'\n", optarg, Option);
+                Success = false;
+                FreeCommandChain(Chain);
+                goto End;
+            }
+        } break;
+        case 't': {
+            if ((StringEquals(optarg, "offset"))) {
+                command *Entry = ConstructCommand(Option, optarg);
+                Command->Next = Entry;
+                Command = Entry;
+            } else {
+                fprintf(stderr, "    invalid selector '%s' for desktop flag '%c'\n", optarg, Option);
+                Success = false;
+                FreeCommandChain(Chain);
+                goto End;
+            }
+        } break;
+        case 'm': {
+            if ((StringEquals(optarg, "vertical")) ||
+                (StringEquals(optarg, "horizontal"))) {
+                command *Entry = ConstructCommand(Option, optarg);
+                Command->Next = Entry;
+                Command = Entry;
+            } else {
+                fprintf(stderr, "    invalid selector '%s' for desktop flag '%c'\n", optarg, Option);
+                Success = false;
+                FreeCommandChain(Chain);
+                goto End;
+            }
+        } break;
+        case 'p':
+        case 'g': {
+            if ((StringEquals(optarg, "inc")) ||
+                (StringEquals(optarg, "dec"))) {
+                command *Entry = ConstructCommand(Option, optarg);
+                Command->Next = Entry;
+                Command = Entry;
+            } else {
+                fprintf(stderr, "    invalid selector '%s' for desktop flag '%c'\n", optarg, Option);
+                Success = false;
+                FreeCommandChain(Chain);
+                goto End;
+            }
+        } break;
+        case 'e': {
+            // NOTE(koekeishiya): This option takes no arguments
+            command *Entry = ConstructCommand(Option, NULL);
+            Command->Next = Entry;
+            Command = Entry;
+        } break;
+        case 's':
+        case 'd': {
+            // NOTE(koekeishiya): This option takes a filepath as argument
+            if (optarg) {
+                command *Entry = ConstructCommand(Option, optarg);
+                Command->Next = Entry;
+                Command = Entry;
+            } else {
+                fprintf(stderr, "    missing selector for desktop flag '%c'\n", Option);
+                Success = false;
+                FreeCommandChain(Chain);
+                goto End;
+            }
+        } break;
+        case '?': {
+            Success = false;
+            FreeCommandChain(Chain);
+            goto End;
+        } break;
         }
     }
 
@@ -493,12 +420,11 @@ End:
 
 command_func MonitorCommandDispatch(char Flag)
 {
-    switch(Flag)
-    {
-        case 'f': return FocusMonitor; break;
+    switch (Flag) {
+    case 'f': return FocusMonitor; break;
 
-        // NOTE(koekeishiya): silence compiler warning.
-        default: return 0; break;
+    // NOTE(koekeishiya): silence compiler warning.
+    default: return 0; break;
     }
 }
 
@@ -513,35 +439,28 @@ ParseMonitorCommand(const char *Message, command *Chain)
     const char *Short = "f:";
 
     command *Command = Chain;
-    while((Option = getopt_long(Count, Args, Short, NULL, NULL)) != -1)
-    {
-        switch(Option)
-        {
-            case 'f':
-            {
-                unsigned Unsigned;
-                if((StringEquals(optarg, "prev")) ||
-                   (StringEquals(optarg, "next")) ||
-                   (sscanf(optarg, "%d", &Unsigned) == 1))
-                {
-                    command *Entry = ConstructCommand(Option, optarg);
-                    Command->Next = Entry;
-                    Command = Entry;
-                }
-                else
-                {
-                    fprintf(stderr, "    invalid selector '%s' for monitor flag '%c'\n", optarg, Option);
-                    Success = false;
-                    FreeCommandChain(Chain);
-                    goto End;
-                }
-            } break;
-            case '?':
-            {
+    while ((Option = getopt_long(Count, Args, Short, NULL, NULL)) != -1) {
+        switch (Option) {
+        case 'f': {
+            unsigned Unsigned;
+            if ((StringEquals(optarg, "prev")) ||
+                (StringEquals(optarg, "next")) ||
+                (sscanf(optarg, "%d", &Unsigned) == 1)) {
+                command *Entry = ConstructCommand(Option, optarg);
+                Command->Next = Entry;
+                Command = Entry;
+            } else {
+                fprintf(stderr, "    invalid selector '%s' for monitor flag '%c'\n", optarg, Option);
                 Success = false;
                 FreeCommandChain(Chain);
                 goto End;
-            } break;
+            }
+        } break;
+        case '?': {
+            Success = false;
+            FreeCommandChain(Chain);
+            goto End;
+        } break;
         }
     }
 
@@ -555,16 +474,15 @@ End:
 
 query_func QueryCommandDispatch(char Flag)
 {
-    switch(Flag)
-    {
-        case 'w': return QueryWindow;             break;
-        case 'd': return QueryDesktop;            break;
-        case 'm': return QueryMonitor;            break;
-        case 'D': return QueryDesktopsForMonitor; break;
-        case 'M': return QueryMonitorForDesktop;  break;
+    switch (Flag) {
+    case 'w': return QueryWindow;             break;
+    case 'd': return QueryDesktop;            break;
+    case 'm': return QueryMonitor;            break;
+    case 'D': return QueryDesktopsForMonitor; break;
+    case 'M': return QueryMonitorForDesktop;  break;
 
-        // NOTE(koekeishiya): silence compiler warning.
-        default: return 0; break;
+    // NOTE(koekeishiya): silence compiler warning.
+    default: return 0; break;
     }
 }
 inline bool
@@ -577,8 +495,7 @@ ParseQueryCommand(const char *Message, command *Chain)
     bool Success = true;
     const char *Short = "w:d:m:D:M:";
 
-    struct option Long[] =
-    {
+    struct option Long[] = {
         { "window", required_argument, NULL, 'w' },
         { "desktop", required_argument, NULL, 'd' },
         { "monitor", required_argument, NULL, 'm' },
@@ -588,90 +505,71 @@ ParseQueryCommand(const char *Message, command *Chain)
     };
 
     command *Command = Chain;
-    while((Option = getopt_long(Count, Args, Short, Long, NULL)) != -1)
-    {
-        switch(Option)
-        {
-            case 'w':
-            {
-                uint32_t WindowId;
-                if((StringEquals(optarg, "owner")) ||
-                   (StringEquals(optarg, "name")) ||
-                   (StringEquals(optarg, "tag")) ||
-                   (StringEquals(optarg, "float")) ||
-                   (sscanf(optarg, "%d", &WindowId) == 1))
-                {
-                    command *Entry = ConstructCommand(Option, optarg);
-                    Command->Next = Entry;
-                    Command = Entry;
-                }
-                else
-                {
-                    fprintf(stderr, "    invalid selector '%s' for window flag '%c'\n", optarg, Option);
-                    Success = false;
-                    FreeCommandChain(Chain);
-                    goto End;
-                }
-            } break;
-            case 'd':
-            {
-                if((StringEquals(optarg, "id")) ||
-                   (StringEquals(optarg, "mode")) ||
-                   (StringEquals(optarg, "windows")))
-                {
-                    command *Entry = ConstructCommand(Option, optarg);
-                    Command->Next = Entry;
-                    Command = Entry;
-                }
-                else
-                {
-                    fprintf(stderr, "    invalid selector '%s' for desktop flag '%c'\n", optarg, Option);
-                    Success = false;
-                    FreeCommandChain(Chain);
-                    goto End;
-                }
-            } break;
-            case 'm':
-            {
-                if((StringEquals(optarg, "id")) ||
-                   (StringEquals(optarg, "count")))
-                {
-                    command *Entry = ConstructCommand(Option, optarg);
-                    Command->Next = Entry;
-                    Command = Entry;
-                }
-                else
-                {
-                    fprintf(stderr, "    invalid selector '%s' for monitor flag '%c'\n", optarg, Option);
-                    Success = false;
-                    FreeCommandChain(Chain);
-                    goto End;
-                }
-            } break;
-            case 'D':
-            case 'M':
-            {
-                int Integer;
-                if(sscanf(optarg, "%d", &Integer) == 1)
-                {
-                    command *Entry = ConstructCommand(Option, optarg);
-                    Command->Next = Entry;
-                    Command = Entry;
-                }
-                else
-                {
-                    fprintf(stderr, "    invalid selector '%s' for flag '%c'\n", optarg, Option);
-                    Success = false;
-                    FreeCommandChain(Chain);
-                    goto End;
-                }
-            } break;
-            case '?':
-            {
+    while ((Option = getopt_long(Count, Args, Short, Long, NULL)) != -1) {
+        switch (Option) {
+        case 'w': {
+            uint32_t WindowId;
+            if ((StringEquals(optarg, "owner")) ||
+                (StringEquals(optarg, "name")) ||
+                (StringEquals(optarg, "tag")) ||
+                (StringEquals(optarg, "float")) ||
+                (sscanf(optarg, "%d", &WindowId) == 1)) {
+                command *Entry = ConstructCommand(Option, optarg);
+                Command->Next = Entry;
+                Command = Entry;
+            } else {
+                fprintf(stderr, "    invalid selector '%s' for window flag '%c'\n", optarg, Option);
                 Success = false;
                 FreeCommandChain(Chain);
                 goto End;
-            } break;
+            }
+        } break;
+        case 'd': {
+            if ((StringEquals(optarg, "id")) ||
+                (StringEquals(optarg, "mode")) ||
+                (StringEquals(optarg, "windows"))) {
+                command *Entry = ConstructCommand(Option, optarg);
+                Command->Next = Entry;
+                Command = Entry;
+            } else {
+                fprintf(stderr, "    invalid selector '%s' for desktop flag '%c'\n", optarg, Option);
+                Success = false;
+                FreeCommandChain(Chain);
+                goto End;
+            }
+        } break;
+        case 'm': {
+            if ((StringEquals(optarg, "id")) ||
+                (StringEquals(optarg, "count"))) {
+                command *Entry = ConstructCommand(Option, optarg);
+                Command->Next = Entry;
+                Command = Entry;
+            } else {
+                fprintf(stderr, "    invalid selector '%s' for monitor flag '%c'\n", optarg, Option);
+                Success = false;
+                FreeCommandChain(Chain);
+                goto End;
+            }
+        } break;
+        case 'D':
+        case 'M': {
+            int Integer;
+            if (sscanf(optarg, "%d", &Integer) == 1) {
+                command *Entry = ConstructCommand(Option, optarg);
+                Command->Next = Entry;
+                Command = Entry;
+            } else {
+                fprintf(stderr, "    invalid selector '%s' for flag '%c'\n", optarg, Option);
+                Success = false;
+                FreeCommandChain(Chain);
+                goto End;
+            }
+        } break;
+        case '?': {
+            Success = false;
+            FreeCommandChain(Chain);
+            goto End;
+        } break;
         }
     }
 
@@ -693,8 +591,7 @@ ParseRuleCommand(const char *Message, window_rule *Rule)
     bool Success = true;
     const char *Short = "o:n:r:R:e:s:d:";
 
-    struct option Long[] =
-    {
+    struct option Long[] = {
         { "owner", required_argument, NULL, 'o' },
         { "name", required_argument, NULL, 'n' },
         { "role", required_argument, NULL, 'r' },
@@ -708,50 +605,40 @@ ParseRuleCommand(const char *Message, window_rule *Rule)
     bool HasFilter = false;
     bool HasProperty = false;
 
-    while((Option = getopt_long(Count, Args, Short, Long, NULL)) != -1)
-    {
-        switch(Option)
-        {
-            case 'o':
-            {
-                Rule->Owner = strdup(optarg);
-                HasFilter = true;
-            } break;
-            case 'n':
-            {
-                Rule->Name = strdup(optarg);
-                HasFilter = true;
-            } break;
-            case 'r':
-            {
-                Rule->Role = CFStringCreateWithCString(NULL, optarg, kCFStringEncodingMacRoman);
-                HasFilter = true;
-            } break;
-            case 'R':
-            {
-                Rule->Subrole = CFStringCreateWithCString(NULL, optarg, kCFStringEncodingMacRoman);
-                HasFilter = true;
-            } break;
-            case 'e':
-            {
-                Rule->Except = strdup(optarg);
-                HasFilter = true;
-            } break;
-            case 's':
-            {
-                Rule->State = strdup(optarg);
-                HasProperty = true;
-            } break;
-            case 'd':
-            {
-                Rule->Desktop = strdup(optarg);
-                HasProperty = true;
-            } break;
-            case '?':
-            {
-                Success = false;
-                goto End;
-            } break;
+    while ((Option = getopt_long(Count, Args, Short, Long, NULL)) != -1) {
+        switch (Option) {
+        case 'o': {
+            Rule->Owner = strdup(optarg);
+            HasFilter = true;
+        } break;
+        case 'n': {
+            Rule->Name = strdup(optarg);
+            HasFilter = true;
+        } break;
+        case 'r': {
+            Rule->Role = CFStringCreateWithCString(NULL, optarg, kCFStringEncodingMacRoman);
+            HasFilter = true;
+        } break;
+        case 'R': {
+            Rule->Subrole = CFStringCreateWithCString(NULL, optarg, kCFStringEncodingMacRoman);
+            HasFilter = true;
+        } break;
+        case 'e': {
+            Rule->Except = strdup(optarg);
+            HasFilter = true;
+        } break;
+        case 's': {
+            Rule->State = strdup(optarg);
+            HasProperty = true;
+        } break;
+        case 'd': {
+            Rule->Desktop = strdup(optarg);
+            HasProperty = true;
+        } break;
+        case '?': {
+            Success = false;
+            goto End;
+        } break;
         }
     }
 
@@ -759,14 +646,12 @@ End:
     // NOTE(koekeishiya): Reset getopt.
     optind = 1;
 
-    if(!HasFilter)
-    {
+    if (!HasFilter) {
         fprintf(stderr, "chunkwm-tiling: window rule - no filter specified, ignored..\n");
         Success = false;
     }
 
-    if(!HasProperty)
-    {
+    if (!HasProperty) {
         fprintf(stderr, "chunkwm-tiling: window rule - missing value for state, ignored..\n");
         Success = false;
     }
@@ -777,86 +662,65 @@ End:
 
 void CommandCallback(int SockFD, const char *Type, const char *Message)
 {
-    if(StringEquals(Type, "query"))
-    {
+    if (StringEquals(Type, "query")) {
         command Chain = {};
         bool Success = ParseQueryCommand(Message, &Chain);
-        if(Success)
-        {
+        if (Success) {
             command *Command = &Chain;
-            while((Command = Command->Next))
-            {
+            while ((Command = Command->Next)) {
                 DEBUG_PRINT("    command: '%c', arg: '%s'\n", Command->Flag, Command->Arg);
                 (*QueryCommandDispatch(Command->Flag))(Command->Arg, SockFD);
             }
 
             FreeCommandChain(&Chain);
         }
-    }
-    else if(StringEquals(Type, "rule"))
-    {
+    } else if (StringEquals(Type, "rule")) {
         window_rule Rule = {};
-        if(ParseRuleCommand(Message, &Rule))
-        {
+        if (ParseRuleCommand(Message, &Rule)) {
             AddWindowRule(&Rule);
         }
-    }
-    else if(StringEquals(Type, "window"))
-    {
+    } else if (StringEquals(Type, "window")) {
         command Chain = {};
         bool Success = ParseWindowCommand(Message, &Chain);
-        if(Success)
-        {
+        if (Success) {
             float Ratio = CVarFloatingPointValue(CVAR_BSP_SPLIT_RATIO);
             command *Command = &Chain;
-            while((Command = Command->Next))
-            {
+            while ((Command = Command->Next)) {
                 DEBUG_PRINT("    command: '%c', arg: '%s'\n", Command->Flag, Command->Arg);
                 (*WindowCommandDispatch(Command->Flag))(Command->Arg);
             }
 
-            if(Ratio != CVarFloatingPointValue(CVAR_BSP_SPLIT_RATIO))
-            {
+            if (Ratio != CVarFloatingPointValue(CVAR_BSP_SPLIT_RATIO)) {
                 UpdateCVar(CVAR_BSP_SPLIT_RATIO, Ratio);
             }
 
             FreeCommandChain(&Chain);
         }
-    }
-    else if(StringEquals(Type, "desktop"))
-    {
+    } else if (StringEquals(Type, "desktop")) {
         command Chain = {};
         bool Success = ParseSpaceCommand(Message, &Chain);
-        if(Success)
-        {
+        if (Success) {
             command *Command = &Chain;
-            while((Command = Command->Next))
-            {
+            while ((Command = Command->Next)) {
                 DEBUG_PRINT("    command: '%c', arg: '%s'\n", Command->Flag, Command->Arg);
                 (*SpaceCommandDispatch(Command->Flag))(Command->Arg);
             }
 
             FreeCommandChain(&Chain);
         }
-    }
-    else if(StringEquals(Type, "monitor"))
-    {
+    } else if (StringEquals(Type, "monitor")) {
         command Chain = {};
         bool Success = ParseMonitorCommand(Message, &Chain);
-        if(Success)
-        {
+        if (Success) {
             command *Command = &Chain;
-            while((Command = Command->Next))
-            {
+            while ((Command = Command->Next)) {
                 DEBUG_PRINT("    command: '%c', arg: '%s'\n", Command->Flag, Command->Arg);
                 (*MonitorCommandDispatch(Command->Flag))(Command->Arg);
             }
 
             FreeCommandChain(&Chain);
         }
-    }
-    else
-    {
+    } else {
         fprintf(stderr, "chunkwm-tiling: no match for '%s %s'\n", Type, Message);
     }
 }
