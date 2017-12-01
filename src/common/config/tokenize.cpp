@@ -11,12 +11,8 @@
 bool TokenEquals(token Token, const char *Match)
 {
     const char *At = Match;
-    for(int Index = 0;
-        Index < Token.Length;
-        ++Index, ++At)
-    {
-        if((*At == 0) || (Token.Text[Index] != *At))
-        {
+    for (int Index = 0; Index < Token.Length; ++Index, ++At) {
+        if ((*At == 0) || (Token.Text[Index] != *At)) {
             return false;
         }
     }
@@ -75,36 +71,28 @@ token GetToken(const char **Data)
     token Token;
 
     // NOTE(koekeishiya): Allow quoted strings to contain whitespace
-    if(**Data == '"')
-    {
+    if (**Data == '"') {
         ++(*Data);
 
         Token.Text = *Data;
-        while(**Data && **Data != '"')
-        {
+        while (**Data && **Data != '"') {
             ++(*Data);
         }
         Token.Length = *Data - Token.Text;
 
         ++(*Data);
-    }
-    else
-    {
+    } else {
         Token.Text = *Data;
-        while(**Data && !IsWhiteSpace(**Data))
-        {
+        while (**Data && !IsWhiteSpace(**Data)) {
             ++(*Data);
         }
         Token.Length = *Data - Token.Text;
     }
 
     ASSERT(IsWhiteSpace(**Data) || **Data == '\0');
-    if(IsWhiteSpace(**Data))
-    {
+    if (IsWhiteSpace(**Data)) {
         ++(*Data);
-    }
-    else
-    {
+    } else {
         // NOTE(koekeishiya): Do not go past the null-terminator!
     }
 

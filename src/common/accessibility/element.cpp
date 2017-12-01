@@ -13,8 +13,7 @@ char *CopyCFStringToC(CFStringRef String)
 
     // NOTE(koekeishiya): Boolean: typedef -> unsigned char; false = 0, true != 0
     Boolean Success = CFStringGetCString(String, Result, Bytes + 1, Encoding);
-    if(!Success)
-    {
+    if (!Success) {
         free(Result);
         Result = NULL;
     }
@@ -40,8 +39,7 @@ CFTypeRef AXLibGetWindowProperty(AXUIElementRef WindowRef, CFStringRef Property)
     AXError Error = AXUIElementCopyAttributeValue(WindowRef, Property, &TypeRef);
     bool Result = (Error == kAXErrorSuccess);
 
-    if(!Result && TypeRef)
-    {
+    if (!Result && TypeRef) {
         CFRelease(TypeRef);
     }
 
@@ -109,8 +107,7 @@ bool AXLibIsWindowMinimized(AXUIElementRef WindowRef)
     Boolean Result = 0;
 
     CFBooleanRef Value = (CFBooleanRef) AXLibGetWindowProperty(WindowRef, kAXMinimizedAttribute);
-    if(Value)
-    {
+    if (Value) {
         Result = CFBooleanGetValue(Value);
         CFRelease(Value);
     }
@@ -126,8 +123,7 @@ bool AXLibIsWindowMovable(AXUIElementRef WindowRef)
     Boolean Result;
 
     AXError Error = AXUIElementIsAttributeSettable(WindowRef, kAXPositionAttribute, &Result);
-    if(Error != kAXErrorSuccess)
-    {
+    if (Error != kAXErrorSuccess) {
         Result = 0;
     }
 
@@ -142,8 +138,7 @@ bool AXLibIsWindowFullscreen(AXUIElementRef WindowRef)
     Boolean Result = 0;
 
     CFBooleanRef Value = (CFBooleanRef) AXLibGetWindowProperty(WindowRef, kAXFullscreenAttribute);
-    if(Value)
-    {
+    if (Value) {
         Result = CFBooleanGetValue(Value);
         CFRelease(Value);
     }
@@ -159,8 +154,7 @@ bool AXLibIsWindowResizable(AXUIElementRef WindowRef)
     Boolean Result;
 
     AXError Error = AXUIElementIsAttributeSettable(WindowRef, kAXSizeAttribute, &Result);
-    if(Error != kAXErrorSuccess)
-    {
+    if (Error != kAXErrorSuccess) {
         Result = 0;
     }
 
@@ -175,8 +169,7 @@ bool AXLibSetWindowPosition(AXUIElementRef WindowRef, float X, float Y)
     CGPoint WindowPos = CGPointMake(X, Y);
 
     CFTypeRef WindowPosRef = (CFTypeRef)AXValueCreate(kAXValueTypeCGPoint, (void *)&WindowPos);
-    if(WindowPosRef)
-    {
+    if (WindowPosRef) {
         AXError Error = AXLibSetWindowProperty(WindowRef, kAXPositionAttribute, WindowPosRef);
         Result = (Error == kAXErrorSuccess);
         CFRelease(WindowPosRef);
@@ -193,8 +186,7 @@ bool AXLibSetWindowSize(AXUIElementRef WindowRef, float Width, float Height)
     CGSize WindowSize = CGSizeMake(Width, Height);
 
     CFTypeRef WindowSizeRef = (CFTypeRef)AXValueCreate(kAXValueTypeCGSize, (void *)&WindowSize);
-    if(WindowSizeRef)
-    {
+    if (WindowSizeRef) {
         AXError Error = AXLibSetWindowProperty(WindowRef, kAXSizeAttribute, WindowSizeRef);
         Result = (Error == kAXErrorSuccess);
         CFRelease(WindowSizeRef);
@@ -207,8 +199,7 @@ bool AXLibSetWindowSize(AXUIElementRef WindowRef, float Width, float Height)
 void AXLibCloseWindow(AXUIElementRef WindowRef)
 {
     AXUIElementRef Button = NULL;
-    if(AXUIElementCopyAttributeValue(WindowRef, kAXCloseButtonAttribute, (CFTypeRef*)&Button) == noErr)
-    {
+    if (AXUIElementCopyAttributeValue(WindowRef, kAXCloseButtonAttribute, (CFTypeRef*)&Button) == noErr) {
         AXUIElementPerformAction(Button, kAXPressAction);
         CFRelease(Button);
     }
@@ -244,19 +235,16 @@ char *AXLibGetWindowTitle(AXUIElementRef WindowRef)
     char *Result = NULL;
     CFStringRef WindowTitleRef = (CFStringRef) AXLibGetWindowProperty(WindowRef, kAXTitleAttribute);
 
-    if(WindowTitleRef)
-    {
+    if (WindowTitleRef) {
         char *WindowTitle = CopyCFStringToC(WindowTitleRef);
-        if(WindowTitle)
-        {
+        if (WindowTitle) {
             Result = WindowTitle;
         }
 
         CFRelease(WindowTitleRef);
     }
 
-    if(!Result)
-    {
+    if (!Result) {
         Result = strdup("<unknown>");
     }
 
@@ -270,8 +258,7 @@ CGPoint AXLibGetWindowPosition(AXUIElementRef WindowRef)
     CGPoint WindowPos = {};
     AXValueRef WindowPosRef = (AXValueRef) AXLibGetWindowProperty(WindowRef, kAXPositionAttribute);
 
-    if(WindowPosRef)
-    {
+    if (WindowPosRef) {
         AXValueGetValue(WindowPosRef, kAXValueTypeCGPoint, &WindowPos);
         CFRelease(WindowPosRef);
     }
@@ -286,8 +273,7 @@ CGSize AXLibGetWindowSize(AXUIElementRef WindowRef)
     CGSize WindowSize = {};
     AXValueRef WindowSizeRef = (AXValueRef) AXLibGetWindowProperty(WindowRef, kAXSizeAttribute);
 
-    if(WindowSizeRef)
-    {
+    if (WindowSizeRef) {
         AXValueGetValue(WindowSizeRef, kAXValueTypeCGSize, &WindowSize);
         CFRelease(WindowSizeRef);
     }

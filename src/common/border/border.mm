@@ -23,16 +23,14 @@ NSColor *ColorFromHex(unsigned int Color);
 {
     NSAutoreleasePool *Pool = [[NSAutoreleasePool alloc] init];
 
-    if(self.wantsLayer != YES)
-    {
+    if (self.wantsLayer != YES) {
         self.wantsLayer = YES;
         self.layer.masksToBounds = YES;
         self.layer.cornerRadius = self->Radius;
     }
 
     NSRect Frame = [self bounds];
-    if(Rect.size.height >= Frame.size.height)
-    {
+    if (Rect.size.height >= Frame.size.height) {
         NSBezierPath *Border = [NSBezierPath bezierPathWithRoundedRect:Frame xRadius:self->Radius yRadius:self->Radius];
         [Border setLineWidth:self->Width];
         NSColor *Color = ColorFromHex(self->Color);
@@ -97,14 +95,11 @@ border_window *CreateBorderWindow(int X, int Y, int W, int H, int BorderWidth, i
     Border->Radius = BorderRadius;
     Border->Color = BorderColor;
 
-    if([NSThread isMainThread])
-    {
+    if ([NSThread isMainThread]) {
         NSAutoreleasePool *Pool = [[NSAutoreleasePool alloc] init];
         InitBorderWindow(Border, X, Y, W, H, BorderWidth, BorderRadius, BorderColor);
         [Pool release];
-    }
-    else
-    {
+    } else {
         dispatch_async(dispatch_get_main_queue(), ^(void)
         {
             NSAutoreleasePool *Pool = [[NSAutoreleasePool alloc] init];
@@ -120,14 +115,11 @@ void UpdateBorderWindowRect(border_window *Border, int X, int Y, int W, int H)
 {
     border_window_internal *BorderInternal = (border_window_internal *) Border;
 
-    if([NSThread isMainThread])
-    {
+    if ([NSThread isMainThread]) {
         NSAutoreleasePool *Pool = [[NSAutoreleasePool alloc] init];
         [BorderInternal->Handle setFrame:NSMakeRect(X, Y, W, H) display:YES animate:NO];
         [Pool release];
-    }
-    else
-    {
+    } else {
         dispatch_async(dispatch_get_main_queue(), ^(void)
         {
             NSAutoreleasePool *Pool = [[NSAutoreleasePool alloc] init];
@@ -143,12 +135,9 @@ void UpdateBorderWindowColor(border_window *Border, unsigned Color)
     BorderInternal->Color = Color;
     BorderInternal->View->Color = BorderInternal->Color;
 
-    if([NSThread isMainThread])
-    {
+    if ([NSThread isMainThread]) {
         [BorderInternal->View setNeedsDisplay:YES];
-    }
-    else
-    {
+    } else {
         dispatch_async(dispatch_get_main_queue(), ^(void)
         {
             [BorderInternal->View setNeedsDisplay:YES];
@@ -160,15 +149,12 @@ void DestroyBorderWindow(border_window *Border)
 {
     border_window_internal *BorderInternal = (border_window_internal *) Border;
 
-    if([NSThread isMainThread])
-    {
+    if ([NSThread isMainThread]) {
         NSAutoreleasePool *Pool = [[NSAutoreleasePool alloc] init];
         [BorderInternal->Handle close];
         [Pool release];
         free(BorderInternal);
-    }
-    else
-    {
+    } else {
         dispatch_async(dispatch_get_main_queue(), ^(void)
         {
             NSAutoreleasePool *Pool = [[NSAutoreleasePool alloc] init];

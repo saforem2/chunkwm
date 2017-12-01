@@ -31,8 +31,7 @@ void EndCarbonApplicationDetails(carbon_application_details *Info)
 {
     ASSERT(Info);
 
-    if(Info->ProcessName)
-    {
+    if (Info->ProcessName) {
         free(Info->ProcessName);
     }
 
