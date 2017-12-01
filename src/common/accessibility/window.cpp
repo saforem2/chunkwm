@@ -39,7 +39,7 @@ macos_window *AXLibConstructWindow(macos_application *Application, AXUIElementRe
         AXLibAddFlags(Window, Window_Movable);
     }
 
-    if (AXLibIsWindowResizable(Window->Ref)) {
+    if (AXLibIsWindowResizable(Window->Ref)) {
         AXLibAddFlags(Window, Window_Resizable);
     }
 
