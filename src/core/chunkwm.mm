@@ -116,15 +116,11 @@ CheckAccessibilityPrivileges()
 inline void
 SetConfigFile(char *ConfigFile, size_t Size)
 {
-    if(ConfigAbsolutePath)
-    {
+    if (ConfigAbsolutePath) {
         snprintf(ConfigFile, Size, "%s", ConfigAbsolutePath);
-    }
-    else
-    {
+    } else {
         const char *HomeEnv = getenv("HOME");
-        if(!HomeEnv)
-        {
+        if (!HomeEnv) {
             Fail("chunkwm: 'env HOME' not set! abort..\n");
         }
 
@@ -138,30 +134,25 @@ ParseArguments(int Count, char **Args)
 {
     int Option;
     const char *Short = "vc:";
-    struct option Long[] =
-    {
+    struct option Long[] = {
         { "version", no_argument, NULL, 'v' },
         { "config", required_argument, NULL, 'c' },
         { NULL, 0, NULL, 0 }
     };
 
-    while((Option = getopt_long(Count, Args, Short, Long, NULL)) != -1)
-    {
-        switch(Option)
-        {
-            case 'v':
-            {
-                printf("chunkwm %d.%d.%d\n",
-                        CHUNKWM_MAJOR,
-                        CHUNKWM_MINOR,
-                        CHUNKWM_PATCH);
-                return true;
-            } break;
-            case 'c':
-            {
-                ConfigAbsolutePath = strdup(optarg);
-                return false;
-            } break;
+    while ((Option = getopt_long(Count, Args, Short, Long, NULL)) != -1) {
+        switch (Option) {
+        case 'v': {
+            printf("chunkwm %d.%d.%d\n",
+                    CHUNKWM_MAJOR,
+                    CHUNKWM_MINOR,
+                    CHUNKWM_PATCH);
+            return true;
+        } break;
+        case 'c': {
+            ConfigAbsolutePath = strdup(optarg);
+            return false;
+        } break;
         }
     }
 
@@ -172,23 +163,19 @@ int main(int Count, char **Args)
 {
     signal(SIGSEGV, SignalHandler);
 
-    if(ParseArguments(Count, Args))
-    {
+    if (ParseArguments(Count, Args)) {
         return EXIT_SUCCESS;
     }
 
-    if(!CheckAccessibilityPrivileges())
-    {
+    if (!CheckAccessibilityPrivileges()) {
         Fail("chunkwm: could not access accessibility features! abort..\n");
     }
 
-    if(!BeginCVars())
-    {
+    if (!BeginCVars()) {
         Fail("chunkwm: failed to initialize cvars! abort..\n");
     }
 
-    if(!StartDaemon(CHUNKWM_PORT, DaemonCallback))
-    {
+    if (!StartDaemon(CHUNKWM_PORT, DaemonCallback)) {
         Fail("chunkwm: failed to initialize daemon! abort..\n");
     }
 
@@ -197,13 +184,11 @@ int main(int Count, char **Args)
     SetConfigFile(ConfigFile, MAX_LEN);
 
     struct stat Buffer;
-    if(stat(ConfigFile, &Buffer) != 0)
-    {
+    if (stat(ConfigFile, &Buffer) != 0) {
         Fail("chunkwm: config '%s' not found!\n", ConfigFile);
     }
 
-    if(!BeginPlugins())
-    {
+    if (!BeginPlugins()) {
         Fail("chunkwm: failed to initialize critical mutex! abort..\n");
     }
 
@@ -211,23 +196,19 @@ int main(int Count, char **Args)
     AXUIElementSetMessagingTimeout(SystemWideElement(), 1.0);
 
     carbon_event_handler Carbon = {};
-    if(!BeginCarbonEventHandler(&Carbon))
-    {
+    if (!BeginCarbonEventHandler(&Carbon)) {
         Fail("chunkwm: failed to install carbon eventhandler! abort..\n");
     }
 
-    if(!InitState())
-    {
+    if (!InitState()) {
         Fail("chunkwm: failed to initialize critical mutex! abort..\n");
     }
 
-    if(!BeginDisplayHandler())
-    {
+    if (!BeginDisplayHandler()) {
         Warn("chunkwm: could not register for display notifications..\n");
     }
 
-    if(!BeginCallbackThreads(CHUNKWM_THREAD_COUNT))
-    {
+    if (!BeginCallbackThreads(CHUNKWM_THREAD_COUNT)) {
         Warn("chunkwm: could not get semaphore, callback multi-threading disabled..\n");
     }
 
@@ -240,14 +221,12 @@ int main(int Count, char **Args)
 
     // NOTE(koekeishiya): Read plugin directory from cvar.
     char *PluginDirectory = CVarStringValue(CVAR_PLUGIN_DIR);
-    if(PluginDirectory && CVarIntegerValue(CVAR_PLUGIN_HOTLOAD))
-    {
+    if (PluginDirectory && CVarIntegerValue(CVAR_PLUGIN_HOTLOAD)) {
         HotloaderAddPath(PluginDirectory);
         HotloaderInit();
     }
 
-    if(!StartEventLoop())
-    {
+    if (!StartEventLoop()) {
         Fail("chunkwm: failed to start eventloop! abort..\n");
     }
 

@@ -7,8 +7,7 @@ internal event_loop EventLoop = {};
 /* NOTE(koekeishiya): Must be thread-safe! Called through ConstructEvent macro */
 void AddEvent(chunk_event Event)
 {
-    if(EventLoop.Running && Event.Handle)
-    {
+    if (EventLoop.Running && Event.Handle) {
         pthread_mutex_lock(&EventLoop.Lock);
         EventLoop.Queue.push(Event);
         pthread_mutex_unlock(&EventLoop.Lock);
@@ -19,14 +18,12 @@ void AddEvent(chunk_event Event)
 internal void *
 ProcessEventQueue(void *)
 {
-    while(EventLoop.Running)
-    {
+    while (EventLoop.Running) {
         pthread_mutex_lock(&EventLoop.Lock);
         bool HasWork = !EventLoop.Queue.empty();
         pthread_mutex_unlock(&EventLoop.Lock);
 
-        while(HasWork)
-        {
+        while (HasWork) {
             pthread_mutex_lock(&EventLoop.Lock);
             chunk_event Event = EventLoop.Queue.front();
             EventLoop.Queue.pop();
@@ -38,8 +35,7 @@ ProcessEventQueue(void *)
         }
 
         int Result = sem_wait(EventLoop.Semaphore);
-        if(Result)
-        {
+        if (Result) {
             uint64_t ID;
             pthread_threadid_np(NULL, &ID);
             fprintf(stderr, "%lld: sem_wait(..) failed\n", ID);
@@ -55,14 +51,12 @@ BeginEventLoop()
 {
     bool Result = true;
 
-    if((EventLoop.Semaphore = sem_open("eventloop_semaphore", O_CREAT, 0644, 0)) == SEM_FAILED)
-    {
+    if ((EventLoop.Semaphore = sem_open("eventloop_semaphore", O_CREAT, 0644, 0)) == SEM_FAILED) {
         fprintf(stderr, "chunkwm: could not initialize semaphore!");
         goto sem_err;
     }
 
-    if(pthread_mutex_init(&EventLoop.Lock, NULL) != 0)
-    {
+    if (pthread_mutex_init(&EventLoop.Lock, NULL) != 0) {
         fprintf(stderr, "chunkwm: could not initialize work mutex!");
         goto work_err;
     }
@@ -99,9 +93,7 @@ void ResumeEventLoop()
 
 bool StartEventLoop()
 {
-    if((!EventLoop.Running) &&
-       (BeginEventLoop()))
-    {
+    if ((!EventLoop.Running) && (BeginEventLoop())) {
         EventLoop.Running = true;
         pthread_create(&EventLoop.Thread, NULL, &ProcessEventQueue, NULL);
         return true;
@@ -112,8 +104,7 @@ bool StartEventLoop()
 
 void StopEventLoop()
 {
-    if(EventLoop.Running)
-    {
+    if (EventLoop.Running) {
         EventLoop.Running = false;
         pthread_join(EventLoop.Thread, NULL);
         EndEventLoop();

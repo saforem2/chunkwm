@@ -47,13 +47,13 @@ bool AddWindowToCollection(macos_window *Window)
     AXError Success;
 
     // NOTE(koekeishiya): A window with id 0 is never valid!
-    if(!Window->Id) goto err;
+    if (!Window->Id) goto err;
 
     Success = AXLibAddObserverNotification(&Window->Owner->Observer,
                                            Window->Ref,
                                            kAXUIElementDestroyedNotification,
                                            (void *)(uintptr_t)Window->Id);
-    if(Success != kAXErrorSuccess) goto err;
+    if (Success != kAXErrorSuccess) goto err;
 
     AXLibAddObserverNotification(&Window->Owner->Observer,
                                  Window->Ref,
@@ -91,8 +91,7 @@ void RemoveWindowFromCollection(macos_window *Window)
 // NOTE(koekeishiya): Caller is responsible for passing a valid window!
 void UpdateWindowTitle(macos_window *Window)
 {
-    if(Window->Name)
-    {
+    if (Window->Name) {
         free(Window->Name);
     }
 
@@ -105,13 +104,11 @@ internal void
 AddApplicationWindowsToCollection(macos_application *Application)
 {
     macos_window **WindowList = AXLibWindowListForApplication(Application);
-    if(WindowList)
-    {
+    if (WindowList) {
         macos_window *Window = NULL;
         macos_window **List = WindowList;
 
-        while((Window = *List++))
-        {
+        while ((Window = *List++)) {
             if(GetWindowByID(Window->Id))      goto win_dupe;
             if(!AddWindowToCollection(Window)) goto win_invalid;
             goto success;
@@ -136,8 +133,7 @@ macos_application *GetApplicationFromPID(pid_t PID)
     macos_application *Result = NULL;
 
     macos_application_map_it It = Applications.find(PID);
-    if(It != Applications.end())
-    {
+    if (It != Applications.end()) {
         Result = It->second;
     }
 
@@ -148,8 +144,7 @@ internal void
 AddApplication(macos_application *Application)
 {
     macos_application_map_it It = Applications.find(Application->PID);
-    if(It == Applications.end())
-    {
+    if (It == Applications.end()) {
         Applications[Application->PID] = Application;
     }
 }
@@ -159,13 +154,10 @@ OBSERVER_CALLBACK(ApplicationCallback)
 {
     macos_application *Application = (macos_application *) Reference;
 
-    if(CFEqual(Notification, kAXWindowCreatedNotification))
-    {
+    if (CFEqual(Notification, kAXWindowCreatedNotification)) {
         macos_window *Window = AXLibConstructWindow(Application, Element);
         ConstructEvent(ChunkWM_WindowCreated, Window);
-    }
-    else if(CFEqual(Notification, kAXUIElementDestroyedNotification))
-    {
+    } else if (CFEqual(Notification, kAXUIElementDestroyedNotification)) {
         /* NOTE(koekeishiya): If this is an actual window, it should be associated
          * with a valid CGWindowID. HOWEVER, because the window in question has been
          * destroyed. We are unable to utilize this window reference with the AX API.
@@ -189,15 +181,12 @@ OBSERVER_CALLBACK(ApplicationCallback)
 
         uint32_t WindowId = (uintptr_t) Reference;
         macos_window *Window = GetWindowByID(WindowId);
-        if(Window)
-        {
+        if (Window) {
             RemoveWindowFromCollection(Window);
             __sync_or_and_fetch(&Window->Flags, Window_Invalid);
             ConstructEvent(ChunkWM_WindowDestroyed, Window);
         }
-    }
-    else if(CFEqual(Notification, kAXFocusedWindowChangedNotification))
-    {
+    } else if (CFEqual(Notification, kAXFocusedWindowChangedNotification)) {
         /* NOTE(koekeishiya): We have to make sure that we can actually interact with the window.
          * When a window is created, we receive this notification before kAXWindowCreatedNotification.
          * When a window is deminimized, we receive this notification before the window is visible. */
@@ -207,31 +196,22 @@ OBSERVER_CALLBACK(ApplicationCallback)
 
         uint32_t WindowId = AXLibGetWindowID(Element);
         macos_window *Window = GetWindowByID(WindowId);
-        if(Window)
-        {
+        if (Window) {
             ConstructEvent(ChunkWM_WindowFocused, Window);
         }
-    }
-    else if(CFEqual(Notification, kAXWindowMovedNotification))
-    {
+    } else if (CFEqual(Notification, kAXWindowMovedNotification)) {
         uint32_t WindowId = AXLibGetWindowID(Element);
         macos_window *Window = GetWindowByID(WindowId);
-        if(Window)
-        {
+        if (Window) {
             ConstructEvent(ChunkWM_WindowMoved, Window);
         }
-    }
-    else if(CFEqual(Notification, kAXWindowResizedNotification))
-    {
+    } else if (CFEqual(Notification, kAXWindowResizedNotification)) {
         uint32_t WindowId = AXLibGetWindowID(Element);
         macos_window *Window = GetWindowByID(WindowId);
-        if(Window)
-        {
+        if (Window) {
             ConstructEvent(ChunkWM_WindowResized, Window);
         }
-    }
-    else if(CFEqual(Notification, kAXWindowMiniaturizedNotification))
-    {
+    } else if (CFEqual(Notification, kAXWindowMiniaturizedNotification)) {
         /* NOTE(koekeishiya): We cannot register this notification globally for an application.
          * The AXUIElementRef 'Element' we receive cannot be used with 'AXLibGetWindowID', because
          * a window that is minimized often return a CGWindowID of 0. We have to register this
@@ -239,9 +219,7 @@ OBSERVER_CALLBACK(ApplicationCallback)
 
         macos_window *Window = (macos_window *) Reference;
         ConstructEvent(ChunkWM_WindowMinimized, Window);
-    }
-    else if(CFEqual(Notification, kAXWindowDeminiaturizedNotification))
-    {
+    } else if (CFEqual(Notification, kAXWindowDeminiaturizedNotification)) {
         /* NOTE(koekeishiya): when a deminimized window pulls the user to the space of that window,
          * we receive this notification before 'didActiveSpaceChangeNotification'.
          *
@@ -250,13 +228,10 @@ OBSERVER_CALLBACK(ApplicationCallback)
 
         macos_window *Window = (macos_window *) Reference;
         ConstructEvent(ChunkWM_WindowDeminimized, Window);
-    }
-    else if(CFEqual(Notification, kAXTitleChangedNotification))
-    {
+    } else if (CFEqual(Notification, kAXTitleChangedNotification)) {
         uint32_t WindowId = AXLibGetWindowID(Element);
         macos_window *Window = GetWindowByID(WindowId);
-        if(Window)
-        {
+        if (Window) {
             ConstructEvent(ChunkWM_WindowTitleChanged, Window);
         }
     }
@@ -270,42 +245,31 @@ ConstructAndAddApplicationDispatch(macos_application *Application, carbon_applic
 {
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, Delay * NSEC_PER_SEC), dispatch_get_main_queue(),
     ^{
-        if(Info->State == Carbon_Application_State_In_Progress)
-        {
+        if (Info->State == Carbon_Application_State_In_Progress) {
             bool Success = AXLibAddApplicationObserver(Application, ApplicationCallback);
-            if(Success)
-            {
+            if (Success) {
                 printf("%d:%s successfully registered window notifications\n", Application->PID, Application->Name);
                 Info->State = Carbon_Application_State_Finished;
                 AddApplication(Application);
                 AddApplicationWindowsToCollection(Application);
                 ConstructEvent(ChunkWM_ApplicationLaunched, Info);
-            }
-            else
-            {
-                if(Application->Observer.Valid)
-                {
+            } else {
+                if (Application->Observer.Valid) {
                     AXLibDestroyObserver(&Application->Observer);
                 }
 
-                if(++Info->Attempts > OBSERVER_RETRIES)
-                {
-                    if(Info->State != Carbon_Application_State_Invalid)
-                    {
+                if (++Info->Attempts > OBSERVER_RETRIES) {
+                    if (Info->State != Carbon_Application_State_Invalid) {
                         Info->State = Carbon_Application_State_Failed;
                     }
                 }
 
                 ConstructAndAddApplicationDispatch(Application, Info, OBSERVER_DELAY);
             }
-        }
-        else if(Info->State == Carbon_Application_State_Failed)
-        {
+        } else if (Info->State == Carbon_Application_State_Failed) {
             fprintf(stderr, "%d:%s could not register window notifications!!!\n", Application->PID, Application->Name);
             AXLibDestroyApplication(Application);
-        }
-        else if(Info->State == Carbon_Application_State_Invalid)
-        {
+        } else if (Info->State == Carbon_Application_State_Invalid) {
             fprintf(stderr, "%d:%s process terminated; cancel registration of window notifications!!!\n", Application->PID, Application->Name);
             AXLibDestroyApplication(Application);
             ConstructEvent(ChunkWM_ApplicationTerminated, Info);
@@ -326,8 +290,7 @@ void ConstructAndAddApplication(carbon_application_details *Info)
 void RemoveAndDestroyApplication(macos_application *Application)
 {
     macos_application_map_it It = Applications.find(Application->PID);
-    if(It != Applications.end())
-    {
+    if (It != Applications.end()) {
         Applications.erase(It);
     }
 
@@ -336,10 +299,7 @@ void RemoveAndDestroyApplication(macos_application *Application)
 
 void UpdateWindowCollection()
 {
-    for(macos_application_map_it It = Applications.begin();
-        It != Applications.end();
-        ++It)
-    {
+    for (macos_application_map_it It = Applications.begin(); It != Applications.end(); ++It) {
         macos_application *Application = It->second;
         AddApplicationWindowsToCollection(Application);
     }
@@ -349,15 +309,11 @@ void UpdateWindowCollection()
 bool InitState()
 {
     bool Result = pthread_mutex_init(&WindowsLock, NULL) == 0;
-    if(Result)
-    {
+    if (Result) {
         uint32_t ProcessPolicy = Process_Policy_Regular;
         std::vector<macos_application *> RunningApplications = AXLibRunningProcesses(ProcessPolicy);
 
-        for(size_t Index = 0;
-            Index < RunningApplications.size();
-            ++Index)
-        {
+        for (size_t Index = 0; Index < RunningApplications.size(); ++Index) {
             macos_application *Application = RunningApplications[Index];
             AddApplication(Application);
             AXLibAddApplicationObserver(Application, ApplicationCallback);

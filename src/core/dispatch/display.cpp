@@ -12,24 +12,15 @@ DisplayCallback(CGDirectDisplayID DisplayId, CGDisplayChangeSummaryFlags Flags, 
     CGDirectDisplayID *Context = (CGDirectDisplayID *) malloc(sizeof(CGDirectDisplayID));
     *Context = DisplayId;
 
-    if(Flags & kCGDisplayAddFlag)
-    {
+    if (Flags & kCGDisplayAddFlag) {
         ConstructEvent(ChunkWM_DisplayAdded, Context);
-    }
-    else if(Flags & kCGDisplayRemoveFlag)
-    {
+    } else if (Flags & kCGDisplayRemoveFlag) {
         ConstructEvent(ChunkWM_DisplayRemoved, Context);
-    }
-    else if(Flags & kCGDisplayMovedFlag)
-    {
+    } else if (Flags & kCGDisplayMovedFlag) {
         ConstructEvent(ChunkWM_DisplayMoved, Context);
-    }
-    else if(Flags & kCGDisplayDesktopShapeChangedFlag)
-    {
+    } else if (Flags & kCGDisplayDesktopShapeChangedFlag) {
         ConstructEvent(ChunkWM_DisplayResized, Context);
-    }
-    else
-    {
+    } else {
         free(Context);
     }
 }

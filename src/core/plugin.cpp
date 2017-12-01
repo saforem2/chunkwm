@@ -59,8 +59,7 @@ SubscribeToEvent(plugin *Plugin, chunkwm_plugin_export Export)
     plugin_list *List = BeginPluginList(Export);
 
     plugin_list_iter It = List->find(Plugin);
-    if(It == List->end())
-    {
+    if (It == List->end()) {
        (*List)[Plugin] = true;
     }
 
@@ -73,8 +72,7 @@ UnsubscribeFromEvent(plugin *Plugin, chunkwm_plugin_export Export)
     plugin_list *List = BeginPluginList(Export);
 
     plugin_list_iter It = List->find(Plugin);
-    if(It != List->end())
-    {
+    if (It != List->end()) {
         List->erase(It);
     }
 
@@ -85,12 +83,8 @@ internal void
 HookPlugin(loaded_plugin *LoadedPlugin)
 {
     plugin *Plugin = LoadedPlugin->Plugin;
-    if(Plugin->Subscriptions)
-    {
-        for(int Index = 0;
-            Index < Plugin->SubscriptionCount;
-            ++Index)
-        {
+    if (Plugin->Subscriptions) {
+        for (int Index = 0; Index < Plugin->SubscriptionCount; ++Index) {
             chunkwm_plugin_export *Export = Plugin->Subscriptions + Index;
             printf("Plugin '%s' subscribed to '%s'\n",
                    LoadedPlugin->Info->PluginName,
@@ -105,12 +99,8 @@ internal void
 UnhookPlugin(loaded_plugin *LoadedPlugin)
 {
     plugin *Plugin = LoadedPlugin->Plugin;
-    if(Plugin->Subscriptions)
-    {
-        for(int Index = 0;
-            Index < Plugin->SubscriptionCount;
-            ++Index)
-        {
+    if (Plugin->Subscriptions) {
+        for (int Index = 0; Index < Plugin->SubscriptionCount; ++Index) {
             chunkwm_plugin_export *Export = Plugin->Subscriptions + Index;
             printf("Plugin '%s' unsubscribed from '%s'\n",
                    LoadedPlugin->Info->PluginName,
@@ -134,13 +124,10 @@ RemoveLoadedPlugin(const char *Filename)
     BeginLoadedPluginList();
 
     loaded_plugin *Result;
-    if(LoadedPlugins.find(Filename) != LoadedPlugins.end())
-    {
+    if (LoadedPlugins.find(Filename) != LoadedPlugins.end()) {
         Result = LoadedPlugins[Filename];
         LoadedPlugins.erase(Filename);
-    }
-    else
-    {
+    } else {
         Result = NULL;
     }
 
@@ -166,12 +153,9 @@ plugin *GetPluginFromFilename(const char *Filename)
     snprintf(FilenameWithExtension, Length, "%s.so", Filename);
 
     plugin *Result;
-    if(LoadedPlugins.find(FilenameWithExtension) != LoadedPlugins.end())
-    {
+    if (LoadedPlugins.find(FilenameWithExtension) != LoadedPlugins.end()) {
         Result = LoadedPlugins[FilenameWithExtension]->Plugin;
-    }
-    else
-    {
+    } else {
         Result = NULL;
     }
 
@@ -200,28 +184,24 @@ bool LoadPlugin(const char *Absolutepath, const char *Filename)
     plugin *Plugin;
     loaded_plugin *LoadedPlugin;
 
-    if(IsPluginLoaded(Filename))
-    {
+    if (IsPluginLoaded(Filename)) {
         fprintf(stderr, "chunkwm: plugin '%s' is already running!\n", Absolutepath);
         goto already_loaded;
     }
 
     Handle = dlopen(Absolutepath, RTLD_LAZY);
-    if(!Handle)
-    {
+    if (!Handle) {
         fprintf(stderr, "chunkwm: dlopen '%s' failed!\n", Absolutepath);
         goto handle_err;
     }
 
     Info = (plugin_details *) dlsym(Handle, "Exports");
-    if(!Info)
-    {
+    if (!Info) {
         fprintf(stderr, "chunkwm: dlsym '%s' plugin details missing!\n", Absolutepath);
         goto info_err;
     }
 
-    if(!VerifyPluginABI(Info))
-    {
+    if (!VerifyPluginABI(Info)) {
         fprintf(stderr, "chunkwm: plugin '%s' ABI mismatch; expected %d, was %d\n",
                 Info->PluginName, CHUNKWM_PLUGIN_API_VERSION, Info->ApiVersion);
         goto abi_err;
@@ -235,8 +215,7 @@ bool LoadPlugin(const char *Absolutepath, const char *Filename)
     LoadedPlugin->Plugin = Plugin;
     LoadedPlugin->Info = Info;
 
-    if(!Plugin->Init(API))
-    {
+    if (!Plugin->Init(API)) {
         fprintf(stderr, "chunkwm: plugin '%s' init failed!\n", Info->PluginName);
         goto plugin_init_err;
     }
@@ -267,8 +246,7 @@ bool UnloadPlugin(const char *Absolutepath, const char *Filename)
     bool Result = false;
 
     loaded_plugin *LoadedPlugin = RemoveLoadedPlugin(Filename);
-    if(LoadedPlugin && LoadedPlugin->Handle)
-    {
+    if (LoadedPlugin && LoadedPlugin->Handle) {
         UnhookPlugin(LoadedPlugin);
 
         plugin *Plugin = LoadedPlugin->Plugin;
@@ -280,8 +258,7 @@ bool UnloadPlugin(const char *Absolutepath, const char *Filename)
         /* NOTE(koekeishiya): The objective-c runtime calls dlopen
          * and increments the reference count of the handle.
          * We decrement the counter to 0 to unload the library. */
-        while(dlopen(Absolutepath, RTLD_NOLOAD))
-        {
+        while (dlopen(Absolutepath, RTLD_NOLOAD)) {
             dlclose(LoadedPlugin->Handle);
             dlclose(LoadedPlugin->Handle);
         }
@@ -304,12 +281,8 @@ bool UnloadPlugin(const char *Absolutepath, const char *Filename)
 
 bool BeginPlugins()
 {
-    for(int Index = 0;
-        Index < chunkwm_export_count;
-        ++Index)
-    {
-        if(pthread_mutex_init(&Mutexes[Index], NULL) != 0)
-        {
+    for (int Index = 0; Index < chunkwm_export_count; ++Index) {
+        if (pthread_mutex_init(&Mutexes[Index], NULL) != 0) {
             return false;
         }
     }

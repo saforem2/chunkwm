@@ -38,10 +38,7 @@ bool BeginCVars()
 
 void EndCVars()
 {
-    for(cvar_map_it It = CVars.begin();
-        It != CVars.end();
-        ++It)
-    {
+    for (cvar_map_it It = CVars.begin(); It != CVars.end(); ++It) {
         cvar *Var = It->second;
 
         free((char *) Var->Name);
@@ -58,14 +55,11 @@ void UpdateCVarAPI(const char *Name, char *Value)
 {
     pthread_mutex_lock(&CVarsLock);
     cvar *Var = _FindCVar(Name);
-    if(Var)
-    {
+    if (Var) {
         ASSERT(Var->Value);
         free(Var->Value);
         Var->Value = strdup(Value);
-    }
-    else
-    {
+    } else {
         cvar *Var = _CreateCVar(Name, Value);
         CVars[Var->Name] = Var;
     }

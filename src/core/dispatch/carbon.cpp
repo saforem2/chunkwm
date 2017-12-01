@@ -41,8 +41,7 @@ SearchCarbonApplicationDetailsCache(ProcessSerialNumber PSN)
     carbon_application_details *Result = NULL;
 
     carbon_application_cache_iter It = CarbonApplicationCache.find(PSN);
-    if(It != CarbonApplicationCache.end())
-    {
+    if (It != CarbonApplicationCache.end()) {
         Result = It->second;
     }
 
@@ -70,8 +69,7 @@ internal void
 CacheRunningProcesses()
 {
     ProcessSerialNumber PSN = { kNoProcess, kNoProcess };
-    while(GetNextProcess(&PSN) == noErr)
-    {
+    while (GetNextProcess(&PSN) == noErr) {
         carbon_application_details *Info = BeginCarbonApplicationDetails(PSN);
         Info->State = Carbon_Application_State_Finished;
         PrintCarbonApplicationDetails(Info);
@@ -82,8 +80,7 @@ CacheRunningProcesses()
 internal bool
 IsProcessInteractive(carbon_application_details *Info)
 {
-    bool Result = ((!Info->ProcessBackground) &&
-                   (Info->ProcessPolicy == PROCESS_POLICY_REGULAR));
+    bool Result = ((!Info->ProcessBackground) && (Info->ProcessPolicy == PROCESS_POLICY_REGULAR));
     return Result;
 }
 
@@ -91,50 +88,41 @@ internal OSStatus
 CarbonApplicationEventHandler(EventHandlerCallRef HandlerCallRef, EventRef Event, void *Refcon)
 {
     ProcessSerialNumber PSN;
-    if(GetEventParameter(Event,
-                         kEventParamProcessID,
-                         typeProcessSerialNumber,
-                         NULL,
-                         sizeof(PSN),
-                         NULL,
-                         &PSN) != noErr)
-    {
+    if (GetEventParameter(Event,
+                          kEventParamProcessID,
+                          typeProcessSerialNumber,
+                          NULL,
+                          sizeof(PSN),
+                          NULL,
+                          &PSN) != noErr) {
         fprintf(stderr, "carbon: could not get serialnumber of process\n");
         return -1;
     }
 
     uint32_t Type = GetEventKind(Event);
-    switch(Type)
-    {
-        case kEventAppLaunched:
-        {
-            carbon_application_details *Info = BeginCarbonApplicationDetails(PSN);
-            CarbonApplicationCache[PSN] = Info;
-            PrintCarbonApplicationDetails(Info);
+    switch (Type) {
+    case kEventAppLaunched: {
+        carbon_application_details *Info = BeginCarbonApplicationDetails(PSN);
+        CarbonApplicationCache[PSN] = Info;
+        PrintCarbonApplicationDetails(Info);
 
-            if(IsProcessInteractive(Info))
-            {
-                ConstructAndAddApplication(Info);
-            }
-        } break;
-        case kEventAppTerminated:
-        {
-            carbon_application_details *Info = SearchCarbonApplicationDetailsCache(PSN);
-            if(Info)
-            {
-                CarbonApplicationCache.erase(PSN);
+        if (IsProcessInteractive(Info)) {
+            ConstructAndAddApplication(Info);
+        }
+    } break;
+    case kEventAppTerminated: {
+        carbon_application_details *Info = SearchCarbonApplicationDetailsCache(PSN);
+        if (Info) {
+            CarbonApplicationCache.erase(PSN);
 
-                if(Info->State == Carbon_Application_State_In_Progress)
-                {
-                    Info->State = Carbon_Application_State_Invalid;
-                }
-                else if((Info->State == Carbon_Application_State_Finished) ||
-                        (Info->State == Carbon_Application_State_Failed))
-                {
-                    ConstructEvent(ChunkWM_ApplicationTerminated, Info);
-                }
+            if (Info->State == Carbon_Application_State_In_Progress) {
+                Info->State = Carbon_Application_State_Invalid;
+            } else if ((Info->State == Carbon_Application_State_Finished) ||
+                       (Info->State == Carbon_Application_State_Failed)) {
+                ConstructEvent(ChunkWM_ApplicationTerminated, Info);
             }
-        } break;
+        }
+    } break;
     }
 
     return noErr;

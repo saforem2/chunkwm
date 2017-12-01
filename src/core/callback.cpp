@@ -17,10 +17,9 @@
 
 #define ProcessPluginList(plugin_export, Context)          \
     plugin_list *List = BeginPluginList(plugin_export);    \
-    for(plugin_list_iter It = List->begin();               \
-        It != List->end();                                 \
-        ++It)                                              \
-    {                                                      \
+    for (plugin_list_iter It = List->begin();              \
+         It != List->end();                                \
+         ++It) {                                           \
         plugin *Plugin = It->first;                        \
         Plugin->Run(#plugin_export,                        \
                     (void *) Context);                     \
@@ -31,10 +30,9 @@
     plugin_list *List = BeginPluginList(plugin_export);    \
     plugin_work WorkArray[List->size()];                   \
     int WorkCount = 0;                                     \
-    for(plugin_list_iter It = List->begin();               \
-        It != List->end();                                 \
-        ++It)                                              \
-    {                                                      \
+    for (plugin_list_iter It = List->begin();              \
+         It != List->end();                                \
+         ++It) {                                           \
         plugin_work *Work = WorkArray + WorkCount++;       \
         Work->Plugin = It->first;                          \
         Work->Export = (char *) #plugin_export;            \
@@ -67,8 +65,7 @@ WORK_QUEUE_CALLBACK(PluginWorkCallback)
 void ChunkwmBroadcast(const char *PluginName, const char *EventName,
                       void *PluginData, size_t Size)
 {
-    if(!PluginName || !EventName)
-    {
+    if (!PluginName || !EventName) {
         return;
     }
 
@@ -79,14 +76,11 @@ void ChunkwmBroadcast(const char *PluginName, const char *EventName,
     snprintf(Event, TotalLength, "%s_%s", PluginName, EventName);
     Context[0] = Event;
 
-    if(Size)
-    {
+    if (Size) {
         void *Data = (void *) malloc(Size);
         memcpy(Data, PluginData, Size);
         Context[1] = Data;
-    }
-    else
-    {
+    } else {
         Context[1] = NULL;
     }
 
@@ -106,15 +100,13 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_PluginBroadcast)
     plugin_work WorkArray[List->size()];
     int WorkCount = 0;
 
-    for(loaded_plugin_list_iter It = List->begin();
-        It != List->end();
-        ++It)
-    {
+    for (loaded_plugin_list_iter It = List->begin();
+         It != List->end();
+         ++It) {
         loaded_plugin *LoadedPlugin = It->second;
-        if(strncmp(LoadedPlugin->Info->PluginName,
-                  PluginEvent,
-                  strlen(LoadedPlugin->Info->PluginName)) != 0)
-        {
+        if (strncmp(LoadedPlugin->Info->PluginName,
+                    PluginEvent,
+                    strlen(LoadedPlugin->Info->PluginName)) != 0) {
             plugin_work *Work = WorkArray + WorkCount++;
             Work->Plugin = LoadedPlugin->Plugin;
             Work->Export = PluginEvent;
@@ -126,8 +118,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_PluginBroadcast)
     EndLoadedPluginList();
     CompleteWorkQueue(&Queue);
 
-    if(EventData)
-    {
+    if (EventData) {
         free(EventData);
     }
 
@@ -137,16 +128,12 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_PluginBroadcast)
 
 bool BeginCallbackThreads(int Count)
 {
-    if((Queue.Semaphore = sem_open("work_queue_semaphore", O_CREAT, 0644, 0)) == SEM_FAILED)
-    {
+    if ((Queue.Semaphore = sem_open("work_queue_semaphore", O_CREAT, 0644, 0)) == SEM_FAILED) {
         return false;
     }
 
     pthread_t Thread[Count];
-    for(int Index = 0;
-        Index < Count;
-        ++Index)
-    {
+    for (int Index = 0; Index < Count; ++Index) {
         pthread_create(&Thread[Index], NULL, &WorkQueueThreadProc, &Queue);
     }
 
@@ -181,8 +168,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_ApplicationTerminated)
     ASSERT(Info);
 
     macos_application *Application = GetApplicationFromPID(Info->PID);
-    if(Application)
-    {
+    if (Application) {
         printf("%d:%s terminated\n", Info->PID, Info->ProcessName);
 #if 0
         ProcessPluginList(chunkwm_export_application_terminated, Application);
@@ -201,8 +187,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_ApplicationActivated)
     ASSERT(Info);
 
     macos_application *Application = GetApplicationFromPID(Info->PID);
-    if(Application)
-    {
+    if (Application) {
         printf("%d:%s activated\n", Info->PID, Info->ProcessName);
 #if 0
         ProcessPluginList(chunkwm_export_application_activated, Application);
@@ -220,8 +205,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_ApplicationDeactivated)
     ASSERT(Info);
 
     macos_application *Application = GetApplicationFromPID(Info->PID);
-    if(Application)
-    {
+    if (Application) {
         printf("%d:%s deactivated\n", Info->PID, Info->ProcessName);
 #if 0
         ProcessPluginList(chunkwm_export_application_deactivated, Application);
@@ -239,8 +223,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_ApplicationVisible)
     ASSERT(Info);
 
     macos_application *Application = GetApplicationFromPID(Info->PID);
-    if(Application)
-    {
+    if (Application) {
         printf("%d:%s visible\n", Info->PID, Info->ProcessName);
 #if 0
         ProcessPluginList(chunkwm_export_application_unhidden, Application);
@@ -258,8 +241,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_ApplicationHidden)
     ASSERT(Info);
 
     macos_application *Application = GetApplicationFromPID(Info->PID);
-    if(Application)
-    {
+    if (Application) {
         printf("%d:%s hidden\n", Info->PID, Info->ProcessName);
 #if 0
         ProcessPluginList(chunkwm_export_application_hidden, Application);
@@ -372,8 +354,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_WindowCreated)
     macos_window *Window = (macos_window *) Event->Context;
     ASSERT(Window);
 
-    if(AddWindowToCollection(Window))
-    {
+    if (AddWindowToCollection(Window)) {
         printf("%s:%s%d window created\n", Window->Owner->Name, Window->Name, Window->Id);
 #if 0
         ProcessPluginList(chunkwm_export_window_created, Window);
@@ -384,9 +365,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_WindowCreated)
          * receive the kAXFocusedWindowChangedNotification first, We discard
          * that notification and restore it when we have the window to work with. */
         ConstructEvent(ChunkWM_WindowFocused, Window);
-    }
-    else
-    {
+    } else {
         printf("%s:%s:%d window is not destructible, ignore!\n", Window->Owner->Name, Window->Name, Window->Id);
         AXLibRemoveObserverNotification(&Window->Owner->Observer, Window->Ref, kAXUIElementDestroyedNotification);
         AXLibDestroyWindow(Window);
@@ -414,13 +393,11 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_WindowFocused)
 
     uint32_t Flags = Window->Flags;
     bool Result = __sync_bool_compare_and_swap(&Window->Flags, Flags, Flags);
-    if(Result && !AXLibHasFlags(Window, Window_Invalid))
-    {
+    if (Result && !AXLibHasFlags(Window, Window_Invalid)) {
         /* NOTE(koekeishiya): When a window is deminimized, we receive this notification before
          * the deminimized notification (window is not yet visible). Skip this notification and
          * post it after a 'ChunkWM_WindowDeminimized' event has been processed. */
-        if(!AXLibHasFlags(Window, Window_Minimized))
-        {
+        if (!AXLibHasFlags(Window, Window_Minimized)) {
             printf("%s:%s:%d window focused\n", Window->Owner->Name, Window->Name, Window->Id);
 #if 0
             ProcessPluginList(chunkwm_export_window_focused, Window);
@@ -428,9 +405,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_WindowFocused)
             ProcessPluginListThreaded(chunkwm_export_window_focused, Window);
 #endif
         }
-    }
-    else
-    {
+    } else {
         printf("chunkwm:%s: __sync_bool_compare_and_swap failed\n", __FUNCTION__);
     }
 }
@@ -442,8 +417,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_WindowMoved)
 
     uint32_t Flags = Window->Flags;
     bool Result = __sync_bool_compare_and_swap(&Window->Flags, Flags, Flags);
-    if(Result && !AXLibHasFlags(Window, Window_Invalid))
-    {
+    if (Result && !AXLibHasFlags(Window, Window_Invalid)) {
         Window->Position = AXLibGetWindowPosition(Window->Ref);
 
         printf("%s:%s:%d window moved\n", Window->Owner->Name, Window->Name, Window->Id);
@@ -452,9 +426,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_WindowMoved)
 #else
         ProcessPluginListThreaded(chunkwm_export_window_moved, Window);
 #endif
-    }
-    else
-    {
+    } else {
         printf("chunkwm:%s: __sync_bool_compare_and_swap failed\n", __FUNCTION__);
     }
 }
@@ -466,8 +438,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_WindowResized)
 
     uint32_t Flags = Window->Flags;
     bool Result = __sync_bool_compare_and_swap(&Window->Flags, Flags, Flags);
-    if(Result && !AXLibHasFlags(Window, Window_Invalid))
-    {
+    if (Result && !AXLibHasFlags(Window, Window_Invalid)) {
         Window->Position = AXLibGetWindowPosition(Window->Ref);
         Window->Size = AXLibGetWindowSize(Window->Ref);
 
@@ -477,9 +448,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_WindowResized)
 #else
         ProcessPluginListThreaded(chunkwm_export_window_resized, Window);
 #endif
-    }
-    else
-    {
+    } else {
         printf("chunkwm:%s: __sync_bool_compare_and_swap failed\n", __FUNCTION__);
     }
 }
@@ -491,8 +460,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_WindowMinimized)
 
     uint32_t Flags = Window->Flags;
     bool Result = __sync_bool_compare_and_swap(&Window->Flags, Flags, Flags);
-    if(Result && !AXLibHasFlags(Window, Window_Invalid))
-    {
+    if (Result && !AXLibHasFlags(Window, Window_Invalid)) {
         printf("%s:%s:%d window minimized\n", Window->Owner->Name, Window->Name, Window->Id);
 
         AXLibAddFlags(Window, Window_Minimized);
@@ -501,9 +469,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_WindowMinimized)
 #else
         ProcessPluginListThreaded(chunkwm_export_window_minimized, Window);
 #endif
-    }
-    else
-    {
+    } else {
         printf("chunkwm:%s: __sync_bool_compare_and_swap failed\n", __FUNCTION__);
     }
 }
@@ -515,18 +481,14 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_WindowDeminimized)
 
     uint32_t Flags = Window->Flags;
     bool Result = __sync_bool_compare_and_swap(&Window->Flags, Flags, Flags);
-    if(Result && !AXLibHasFlags(Window, Window_Invalid))
-    {
-        if(AXLibHasFlags(Window, Window_Init_Minimized))
-        {
-            if(Window->Mainrole)
-            {
+    if (Result && !AXLibHasFlags(Window, Window_Invalid)) {
+        if (AXLibHasFlags(Window, Window_Init_Minimized)) {
+            if (Window->Mainrole) {
                 CFRelease(Window->Mainrole);
                 AXLibGetWindowRole(Window->Ref, &Window->Mainrole);
             }
 
-            if(Window->Subrole)
-            {
+            if (Window->Subrole) {
                 CFRelease(Window->Subrole);
                 AXLibGetWindowSubrole(Window->Ref, &Window->Subrole);
             }
@@ -546,9 +508,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_WindowDeminimized)
          * receive the kAXFocusedWindowChangedNotification first, We discard
          * that notification and restore it when we have the window to work with. */
         ConstructEvent(ChunkWM_WindowFocused, Window);
-    }
-    else
-    {
+    } else {
         printf("chunkwm:%s: __sync_bool_compare_and_swap failed\n", __FUNCTION__);
     }
 }
@@ -563,8 +523,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_WindowTitleChanged)
 
     uint32_t Flags = Window->Flags;
     bool Result = __sync_bool_compare_and_swap(&Window->Flags, Flags, Flags);
-    if(Result && !AXLibHasFlags(Window, Window_Invalid))
-    {
+    if (Result && !AXLibHasFlags(Window, Window_Invalid)) {
         UpdateWindowTitle(Window);
 
         printf("%s:%s:%d window title changed\n", Window->Owner->Name, Window->Name, Window->Id);
@@ -573,9 +532,7 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_WindowTitleChanged)
 #else
         ProcessPluginListThreaded(chunkwm_export_window_title_changed, Window);
 #endif
-    }
-    else
-    {
+    } else {
         printf("chunkwm:%s: __sync_bool_compare_and_swap failed\n", __FUNCTION__);
     }
 }
