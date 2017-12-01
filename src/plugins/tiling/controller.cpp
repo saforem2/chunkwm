@@ -178,8 +178,8 @@ bool FindClosestWindow(macos_space *Space, virtual_space *VirtualSpace,
         region *B = &NodeB->Region;
 
         if (WindowIsInDirection(Direction,
-                               A->X, A->Y, A->Width, A->Height,
-                               B->X, B->Y, B->Width, B->Height)) {
+                                A->X, A->Y, A->Width, A->Height,
+                                B->X, B->Y, B->Width, B->Height)) {
             float X1 = A->X + A->Width / 2;
             float Y1 = A->Y + A->Height / 2;
             float X2 = B->X + B->Width / 2;
