@@ -33,12 +33,10 @@ GetFocusedWindow()
     AXUIElementRef ApplicationRef, WindowRef;
 
     ApplicationRef = AXLibGetFocusedApplication();
-    if(ApplicationRef)
-    {
+    if (ApplicationRef) {
         WindowRef = AXLibGetFocusedWindow(ApplicationRef);
         CFRelease(ApplicationRef);
-        if(WindowRef)
-        {
+        if (WindowRef) {
             return WindowRef;
         }
     }
@@ -68,18 +66,15 @@ FuckingMacOSMonitorBoundsChangingBetweenPrimaryAndMainMonitor(AXUIElementRef Win
     CGSize Size = AXLibGetWindowSize(WindowRef);
 
     CFStringRef DisplayRef = AXLibGetDisplayIdentifierForMainDisplay();
-    if(!DisplayRef) return;
+    if (!DisplayRef) return;
 
     CGRect DisplayBounds = AXLibGetDisplayBounds(DisplayRef);
     CFRelease(DisplayRef);
 
     int InvertY = DisplayBounds.size.height - (Position.y + Size.height);
-    if(Border)
-    {
+    if (Border) {
         UpdateBorderWindowRect(Border, Position.x, InvertY, Size.width, Size.height);
-    }
-    else
-    {
+    } else {
         CreateBorder(Position.x, InvertY, Size.width, Size.height);
     }
 }
@@ -87,17 +82,12 @@ FuckingMacOSMonitorBoundsChangingBetweenPrimaryAndMainMonitor(AXUIElementRef Win
 internal inline void
 UpdateWindow(AXUIElementRef WindowRef)
 {
-    if(DrawBorder)
-    {
-        if(AXLibIsWindowFullscreen(WindowRef))
-        {
-            if(Border)
-            {
+    if (DrawBorder) {
+        if (AXLibIsWindowFullscreen(WindowRef)) {
+            if (Border) {
                 ClearBorderWindow(Border);
             }
-        }
-        else
-        {
+        } else {
             FuckingMacOSMonitorBoundsChangingBetweenPrimaryAndMainMonitor(WindowRef);
         }
     }
@@ -107,14 +97,11 @@ internal void
 UpdateToFocusedWindow()
 {
     AXUIElementRef WindowRef = GetFocusedWindow();
-    if(WindowRef)
-    {
+    if (WindowRef) {
         uint32_t WindowId = AXLibGetWindowID(WindowRef);
-        if(WindowId)
-        {
+        if (WindowId) {
             CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromWindow(WindowId);
-            if(!DisplayRef)
-            {
+            if (!DisplayRef) {
                 CGPoint Position = AXLibGetWindowPosition(WindowRef);
                 CGSize Size = AXLibGetWindowSize(WindowRef);
                 DisplayRef = AXLibGetDisplayIdentifierFromWindowRect(Position, Size);
@@ -122,26 +109,19 @@ UpdateToFocusedWindow()
             ASSERT(DisplayRef);
 
             macos_space *Space = AXLibActiveSpace(DisplayRef);
-            if(AXLibSpaceHasWindow(Space->Id, WindowId))
-            {
+            if (AXLibSpaceHasWindow(Space->Id, WindowId)) {
                 UpdateWindow(WindowRef);
-            }
-            else if(Border)
-            {
+            } else if (Border) {
                 ClearBorderWindow(Border);
             }
 
             AXLibDestroySpace(Space);
             CFRelease(DisplayRef);
-        }
-        else if(Border)
-        {
+        } else if (Border) {
             ClearBorderWindow(Border);
         }
         CFRelease(WindowRef);
-    }
-    else if(Border)
-    {
+    } else if (Border) {
         ClearBorderWindow(Border);
     }
 }
@@ -150,10 +130,8 @@ internal void
 UpdateIfFocusedWindow(AXUIElementRef Element)
 {
     AXUIElementRef WindowRef = GetFocusedWindow();
-    if(WindowRef)
-    {
-        if(CFEqual(WindowRef, Element))
-        {
+    if (WindowRef) {
+        if (CFEqual(WindowRef, Element)) {
             UpdateWindow(WindowRef);
         }
         CFRelease(WindowRef);
@@ -171,11 +149,9 @@ internal inline void
 ApplicationDeactivatedHandler(void *Data)
 {
     macos_application *Context = (macos_application *) Data;
-    if(Application == Context)
-    {
+    if (Application == Context) {
         Application = NULL;
-        if(Border)
-        {
+        if (Border) {
             ClearBorderWindow(Border);
         }
     }
@@ -185,17 +161,15 @@ internal void
 WindowFocusedHandler(void *Data)
 {
     macos_window *Window = (macos_window *) Data;
-    if((AXLibIsWindowStandard(Window)) &&
-       ((Window->Owner == Application) ||
-       (Application == NULL)))
-    {
+    if ((AXLibIsWindowStandard(Window)) &&
+        ((Window->Owner == Application) ||
+        (Application == NULL))) {
         CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromWindow(Window->Id);
-        if(!DisplayRef) DisplayRef = AXLibGetDisplayIdentifierFromWindowRect(Window->Position, Window->Size);
+        if (!DisplayRef) DisplayRef = AXLibGetDisplayIdentifierFromWindowRect(Window->Position, Window->Size);
         ASSERT(DisplayRef);
 
         macos_space *Space = AXLibActiveSpace(DisplayRef);
-        if(AXLibSpaceHasWindow(Space->Id, Window->Id))
-        {
+        if (AXLibSpaceHasWindow(Space->Id, Window->Id)) {
             UpdateWindow(Window->Ref);
         }
 
@@ -207,14 +181,12 @@ WindowFocusedHandler(void *Data)
 internal inline void
 NewWindowHandler()
 {
-    if(Border) return;
+    if (Border) return;
 
     AXUIElementRef WindowRef = GetFocusedWindow();
-    if(WindowRef)
-    {
+    if (WindowRef) {
         uint32_t WindowId = AXLibGetWindowID(WindowRef);
-        if(WindowId)
-        {
+        if (WindowId) {
             FuckingMacOSMonitorBoundsChangingBetweenPrimaryAndMainMonitor(WindowRef);
         }
         CFRelease(WindowRef);
@@ -225,8 +197,7 @@ internal inline void
 WindowDestroyedHandler(void *Data)
 {
     macos_window *Window = (macos_window *) Data;
-    if(Window->Owner == Application)
-    {
+    if (Window->Owner == Application) {
         UpdateToFocusedWindow();
     }
 }
@@ -249,8 +220,7 @@ internal inline void
 WindowMinimizedHandler(void *Data)
 {
     macos_window *Window = (macos_window *) Data;
-    if(Window->Owner == Application)
-    {
+    if (Window->Owner == Application) {
         UpdateToFocusedWindow();
     }
 }
@@ -262,14 +232,12 @@ SpaceChangedHandler()
     bool Success = AXLibActiveSpace(&Space);
     ASSERT(Success);
 
-    if(Border)
-    {
+    if (Border) {
         DestroyBorderWindow(Border);
         Border = NULL;
     }
 
-    if(Space->Type == kCGSSpaceUser)
-    {
+    if (Space->Type == kCGSSpaceUser) {
         NewWindowHandler();
     }
 
@@ -287,22 +255,16 @@ internal void
 CommandHandler(void *Data)
 {
     chunkwm_payload *Payload = (chunkwm_payload *) Data;
-    if(StringEquals(Payload->Command, "color"))
-    {
+    if (StringEquals(Payload->Command, "color")) {
         token Token = GetToken(&Payload->Message);
-        if(Token.Length > 0)
-        {
+        if (Token.Length > 0) {
             unsigned Color = TokenToUnsigned(Token);
-            if(Border)
-            {
+            if (Border) {
                 UpdateBorderWindowColor(Border, Color);
             }
         }
-    }
-    else if(StringEquals(Payload->Command, "clear"))
-    {
-        if(Border)
-        {
+    } else if (StringEquals(Payload->Command, "clear")) {
+        if (Border) {
             ClearBorderWindow(Border);
         }
     }
@@ -312,16 +274,12 @@ internal inline void
 TilingFocusedWindowFloatStatus(void *Data)
 {
     uint32_t Status = *(uint32_t *) Data;
-    if(Status)
-    {
+    if (Status) {
         DrawBorder = false;
-        if(Border)
-        {
+        if (Border) {
             ClearBorderWindow(Border);
         }
-    }
-    else
-    {
+    } else {
         DrawBorder = true;
         UpdateToFocusedWindow();
     }
@@ -329,63 +287,41 @@ TilingFocusedWindowFloatStatus(void *Data)
 
 PLUGIN_MAIN_FUNC(PluginMain)
 {
-    if((StringEquals(Node, "chunkwm_export_application_launched")) ||
-       (StringEquals(Node, "chunkwm_export_window_created")) ||
-       (StringEquals(Node, "chunkwm_export_application_unhidden")) ||
-       (StringEquals(Node, "chunkwm_export_window_deminimized")))
-    {
+    if ((StringEquals(Node, "chunkwm_export_application_launched")) ||
+        (StringEquals(Node, "chunkwm_export_window_created")) ||
+        (StringEquals(Node, "chunkwm_export_application_unhidden")) ||
+        (StringEquals(Node, "chunkwm_export_window_deminimized"))) {
         NewWindowHandler();
         return true;
-    }
-    else if(StringEquals(Node, "chunkwm_export_application_activated"))
-    {
+    } else if (StringEquals(Node, "chunkwm_export_application_activated")) {
         ApplicationActivatedHandler(Data);
         return true;
-    }
-    else if(StringEquals(Node, "chunkwm_export_application_deactivated"))
-    {
+    } else if (StringEquals(Node, "chunkwm_export_application_deactivated")) {
         ApplicationDeactivatedHandler(Data);
         return true;
-    }
-    else if(StringEquals(Node, "chunkwm_export_window_destroyed"))
-    {
+    } else if (StringEquals(Node, "chunkwm_export_window_destroyed")) {
         WindowDestroyedHandler(Data);
         return true;
-    }
-    else if(StringEquals(Node, "chunkwm_export_window_focused"))
-    {
+    } else if (StringEquals(Node, "chunkwm_export_window_focused")) {
         WindowFocusedHandler(Data);
         return true;
-    }
-    else if(StringEquals(Node, "chunkwm_export_window_moved"))
-    {
+    } else if (StringEquals(Node, "chunkwm_export_window_moved")) {
         WindowMovedHandler(Data);
         return true;
-    }
-    else if(StringEquals(Node, "chunkwm_export_window_resized"))
-    {
+    } else if (StringEquals(Node, "chunkwm_export_window_resized")) {
         WindowResizedHandler(Data);
         return true;
-    }
-    else if(StringEquals(Node, "chunkwm_export_window_minimized"))
-    {
+    } else if (StringEquals(Node, "chunkwm_export_window_minimized")) {
         WindowMinimizedHandler(Data);
         return true;
-    }
-    else if((StringEquals(Node, "chunkwm_export_space_changed")) ||
-            (StringEquals(Node, "chunkwm_export_display_changed")))
-    {
+    } else if ((StringEquals(Node, "chunkwm_export_space_changed")) ||
+               (StringEquals(Node, "chunkwm_export_display_changed"))) {
         SpaceChangedHandler();
         return true;
-    }
-    else if(StringEquals(Node, "chunkwm_daemon_command"))
-    {
+    } else if (StringEquals(Node, "chunkwm_daemon_command")) {
         CommandHandler(Data);
         return true;
-    }
-    else if((StringEquals(Node, "Tiling_focused_window_float")) &&
-            (SkipFloating))
-    {
+    } else if ((StringEquals(Node, "Tiling_focused_window_float")) && (SkipFloating)) {
         TilingFocusedWindowFloatStatus(Data);
         return true;
     }
@@ -411,8 +347,7 @@ PLUGIN_BOOL_FUNC(PluginInit)
 
 PLUGIN_VOID_FUNC(PluginDeInit)
 {
-    if(Border)
-    {
+    if (Border) {
         DestroyBorderWindow(Border);
     }
 }
