@@ -181,6 +181,27 @@ void ResizeWindowToExternalRegionSize(node *Node, region Region)
     ResizeWindowToExternalRegionSize(Node, Region, true);
 }
 
+void ApplyNodeRegionWithPotentialZoom(node *Node, virtual_space *VirtualSpace)
+{
+    if (Node->WindowId && Node->WindowId != Node_PseudoLeaf) {
+        if (Node == VirtualSpace->Tree->Zoom) {
+            ResizeWindowToExternalRegionSize(Node, VirtualSpace->Tree->Region);
+        } else if (Node->Parent && Node == Node->Parent->Zoom) {
+            ResizeWindowToExternalRegionSize(Node, Node->Parent->Region);
+        } else {
+            ResizeWindowToRegionSize(Node, true);
+        }
+    }
+
+    if (Node->Left && VirtualSpace->Mode == Virtual_Space_Bsp) {
+        ApplyNodeRegionWithPotentialZoom(Node->Left, VirtualSpace);
+    }
+
+    if (Node->Right) {
+        ApplyNodeRegionWithPotentialZoom(Node->Right, VirtualSpace);
+    }
+}
+
 void ApplyNodeRegion(node *Node, virtual_space_mode VirtualSpaceMode, bool Center)
 {
     if (Node->WindowId && Node->WindowId != Node_PseudoLeaf) {
@@ -211,32 +232,56 @@ void ConstrainWindowToRegion(macos_window *Window)
     CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromWindowRect(Window->Position, Window->Size);
     ASSERT(DisplayRef);
 
-    macos_space *Space = AXLibActiveSpace(DisplayRef);
-    ASSERT(Space);
+    macos_space *ActiveSpace = AXLibActiveSpace(DisplayRef);
+    ASSERT(ActiveSpace);
 
-    // NOTE(choco): we already checked for fullscreen flag but we also need to
-    // check for the space type
-    // 1- when an app enters native fullscreen, space type may not be already
-    //    updated, fullscreen flag will be already set
-    // 2- when an app exits native fullscreen, fullscreen flag is removed
-    //    immediatly, but we may still be in a fullscreen space
-    if (Space->Type == kCGSSpaceUser) {
-        virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
-        if ((VirtualSpace->Tree) && (VirtualSpace->Mode != Virtual_Space_Float)) {
-            node *WindowNode = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
-            if (WindowNode) {
-                if (WindowNode == VirtualSpace->Tree->Zoom) {
-                    ResizeWindowToExternalRegionSize(WindowNode, VirtualSpace->Tree->Region);
-                } else if (WindowNode->Parent && WindowNode == WindowNode->Parent->Zoom) {
-                    ResizeWindowToExternalRegionSize(WindowNode, WindowNode->Parent->Region);
-                } else {
-                    ResizeWindowToRegionSize(WindowNode, true);
+    if (AXLibSpaceHasWindow(ActiveSpace->Id, Window->Id)) {
+        // NOTE(choco): we already checked for fullscreen flag but we also need to
+        // check for the space type
+        // 1- when an app enters native fullscreen, space type may not be already
+        //    updated, fullscreen flag will be already set
+        // 2- when an app exits native fullscreen, fullscreen flag is removed
+        //    immediatly, but we may still be in a fullscreen space
+        if (ActiveSpace->Type == kCGSSpaceUser) {
+            virtual_space *VirtualSpace = AcquireVirtualSpace(ActiveSpace);
+            if ((VirtualSpace->Tree) && (VirtualSpace->Mode != Virtual_Space_Float)) {
+                node *WindowNode = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
+                if (WindowNode) {
+                    if (WindowNode == VirtualSpace->Tree->Zoom) {
+                        ResizeWindowToExternalRegionSize(WindowNode, VirtualSpace->Tree->Region);
+                    } else if (WindowNode->Parent && WindowNode == WindowNode->Parent->Zoom) {
+                        ResizeWindowToExternalRegionSize(WindowNode, WindowNode->Parent->Region);
+                    } else {
+                        ResizeWindowToRegionSize(WindowNode, true);
+                    }
                 }
             }
+            ReleaseVirtualSpace(VirtualSpace);
         }
-        ReleaseVirtualSpace(VirtualSpace);
+    } else if (!AXLibStickyWindow(Window->Id)) {
+        //
+        // NOTE(koekeishiya): The window is not on the active desktop. Flag the
+        // desktop containing the window for a refresh upon next activation.
+        //
+        macos_space **WindowSpaces = AXLibSpacesForWindow(Window->Id);
+        ASSERT(WindowSpaces);
+
+        macos_space *WindowSpace = *WindowSpaces;
+        ASSERT(WindowSpace);
+
+        if (WindowSpace->Type == kCGSSpaceUser) {
+            virtual_space *VirtualSpace = AcquireVirtualSpace(WindowSpace);
+            if ((VirtualSpace->Tree) && (VirtualSpace->Mode != Virtual_Space_Float)) {
+                VirtualSpaceAddFlags(VirtualSpace, Virtual_Space_Require_Region_Update);
+            }
+            ReleaseVirtualSpace(VirtualSpace);
+        }
+
+        AXLibDestroySpace(WindowSpace);
+        free(WindowSpaces);
     }
-    AXLibDestroySpace(Space);
+
+    AXLibDestroySpace(ActiveSpace);
     CFRelease(DisplayRef);
 }
 

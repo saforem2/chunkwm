@@ -1270,12 +1270,16 @@ SpaceAndDisplayChangedHandler(void *Data)
             // NOTE(koekeishiya): If the activated virtual_space is flagged for resize,
             // we update the dimensions of all existing nodes in our window-tree.
             //
-
             if (VirtualSpaceHasFlags(VirtualSpace, Virtual_Space_Require_Resize)) {
-                CreateNodeRegion(VirtualSpace->Tree, Region_Full, Space, VirtualSpace);
-                CreateNodeRegionRecursive(VirtualSpace->Tree, false, Space, VirtualSpace);
-                ApplyNodeRegion(VirtualSpace->Tree, VirtualSpace->Mode, false);
-                VirtualSpaceClearFlags(VirtualSpace, Virtual_Space_Require_Resize);
+                VirtualSpaceRecreateRegions(Space, VirtualSpace);
+            }
+
+            //
+            // NOTE(koekeishiya): If the activated virtual_space is flagged for region update,
+            // we re-apply all the region of all existing nodes in our window-tree.
+            //
+            if (VirtualSpaceHasFlags(VirtualSpace, Virtual_Space_Require_Region_Update)) {
+                VirtualSpaceUpdateRegions(VirtualSpace);
             }
 
             RebalanceWindowTreeForSpaceWithWindows(Space, VirtualSpace, Windows);

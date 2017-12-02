@@ -31,6 +31,7 @@ struct virtual_space_config
 enum virtual_space_flags
 {
     Virtual_Space_Require_Resize = 1 << 0,
+    Virtual_Space_Require_Region_Update = 1 << 1,
 };
 
 struct virtual_space
@@ -56,6 +57,9 @@ void VirtualSpaceAddFlags(virtual_space *VirtualSpace, uint32_t Flag);
 void VirtualSpaceClearFlags(virtual_space *VirtualSpace, uint32_t Flag);
 virtual_space *AcquireVirtualSpace(macos_space *Space);
 void ReleaseVirtualSpace(virtual_space *VirtualSpace);
+
+void VirtualSpaceRecreateRegions(macos_space *Space, virtual_space *VirtualSpace);
+void VirtualSpaceUpdateRegions(virtual_space *VirtualSpace);
 
 bool BeginVirtualSpaces();
 void EndVirtualSpaces();

@@ -93,6 +93,7 @@ void FreeNode(node *Node);
 
 void ApplyNodeRegion(node *Node, virtual_space_mode VirtualSpaceMode);
 void ApplyNodeRegion(node *Node, virtual_space_mode VirtualSpaceMode, bool Center);
+void ApplyNodeRegionWithPotentialZoom(node *Node, virtual_space *VirtualSpace);
 
 void ResizeWindowToRegionSize(node *Node);
 void ResizeWindowToRegionSize(node *Node, bool Center);

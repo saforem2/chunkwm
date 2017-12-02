@@ -164,3 +164,17 @@ void EndVirtualSpaces()
     VirtualSpaces.clear();
     pthread_mutex_destroy(&VirtualSpacesLock);
 }
+
+void VirtualSpaceRecreateRegions(macos_space *Space, virtual_space *VirtualSpace)
+{
+    CreateNodeRegion(VirtualSpace->Tree, Region_Full, Space, VirtualSpace);
+    CreateNodeRegionRecursive(VirtualSpace->Tree, false, Space, VirtualSpace);
+    ApplyNodeRegion(VirtualSpace->Tree, VirtualSpace->Mode, false);
+    VirtualSpaceClearFlags(VirtualSpace, Virtual_Space_Require_Resize);
+}
+
+void VirtualSpaceUpdateRegions(virtual_space *VirtualSpace)
+{
+    ApplyNodeRegionWithPotentialZoom(VirtualSpace->Tree, VirtualSpace);
+    VirtualSpaceClearFlags(VirtualSpace, Virtual_Space_Require_Region_Update);
+}
