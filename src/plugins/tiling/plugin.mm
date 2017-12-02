@@ -102,6 +102,14 @@ ExtendedDockSetWindowAlpha(uint32_t WindowId, float Value, float Duration)
     CloseSocket(SockFD);
 }
 
+macos_window_map CopyWindowCache()
+{
+    pthread_mutex_lock(&WindowsLock);
+    macos_window_map Copy = Windows;
+    pthread_mutex_unlock(&WindowsLock);
+    return Copy;
+}
+
 internal void
 FadeAllWindows(float Value, float Duration)
 {
@@ -130,14 +138,6 @@ macos_window *GetWindowByID(uint32_t Id)
     macos_window *Result = _GetWindowByID(Id);
     pthread_mutex_unlock(&WindowsLock);
     return Result;
-}
-
-macos_window_map CopyWindowCache()
-{
-    pthread_mutex_lock(&WindowsLock);
-    macos_window_map Copy = Windows;
-    pthread_mutex_unlock(&WindowsLock);
-    return Copy;
 }
 
 internal uint32_t
