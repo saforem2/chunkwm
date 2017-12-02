@@ -229,10 +229,15 @@ void ConstrainWindowToRegion(macos_window *Window)
         return;
     }
 
+    macos_space *ActiveSpace;
     CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromWindowRect(Window->Position, Window->Size);
     ASSERT(DisplayRef);
 
-    macos_space *ActiveSpace = AXLibActiveSpace(DisplayRef);
+    if (AXLibIsDisplayChangingSpaces(DisplayRef)) {
+        goto out;
+    }
+
+    ActiveSpace = AXLibActiveSpace(DisplayRef);
     ASSERT(ActiveSpace);
 
     if (AXLibSpaceHasWindow(ActiveSpace->Id, Window->Id)) {
@@ -282,6 +287,7 @@ void ConstrainWindowToRegion(macos_window *Window)
     }
 
     AXLibDestroySpace(ActiveSpace);
+out:
     CFRelease(DisplayRef);
 }
 
