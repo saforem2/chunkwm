@@ -20,7 +20,6 @@
 typedef std::map<uint32_t, macos_window *> macos_window_map;
 typedef macos_window_map::iterator macos_window_map_it;
 
-extern macos_window_map CopyWindowCache();
 extern void TileWindow(macos_window *Window);
 
 // TODO(koekeishiya): This vector is accessed from our daemon thread,
@@ -127,22 +126,11 @@ void ApplyRulesForWindow(macos_window *Window)
     }
 }
 
-internal void
-ApplyRuleToExistingWindows(window_rule *Rule)
-{
-    macos_window_map Windows = CopyWindowCache();
-    for (macos_window_map_it It = Windows.begin(); It != Windows.end(); ++It) {
-        macos_window *Window = It->second;
-        ApplyWindowRule(Window, Rule);
-    }
-}
-
 void AddWindowRule(window_rule *Rule)
 {
     window_rule *Result = (window_rule *) malloc(sizeof(window_rule));
     memcpy(Result, Rule, sizeof(window_rule));
     WindowRules.push_back(Result);
-    ApplyRuleToExistingWindows(Result);
 }
 
 internal void
