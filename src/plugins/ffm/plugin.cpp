@@ -214,4 +214,4 @@ chunkwm_plugin_export Subscriptions[] =
     chunkwm_export_window_focused
 };
 CHUNKWM_PLUGIN_SUBSCRIBE(Subscriptions)
-CHUNKWM_PLUGIN("Focus Follows Mouse", "0.2.2")
+CHUNKWM_PLUGIN("Focus Follows Mouse", "0.2.3")

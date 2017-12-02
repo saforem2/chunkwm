@@ -372,4 +372,4 @@ chunkwm_plugin_export Subscriptions[] =
     chunkwm_export_display_changed,
 };
 CHUNKWM_PLUGIN_SUBSCRIBE(Subscriptions)
-CHUNKWM_PLUGIN("Border", "0.2.9")
+CHUNKWM_PLUGIN("Border", "0.2.10")

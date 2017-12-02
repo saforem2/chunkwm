@@ -22,7 +22,7 @@
 #define internal static
 
 internal const char *PluginName = "purify";
-internal const char *PluginVersion = "0.0.1";
+internal const char *PluginVersion = "0.0.2";
 internal chunkwm_api API;
 
 internal void
