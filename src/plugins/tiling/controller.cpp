@@ -1629,8 +1629,7 @@ void SendWindowToMonitor(char *Op)
         ReleaseVirtualSpace(VirtualSpace);
     }
 
-    AXLibSpaceAddWindow(DestinationSpace->Id, Window->Id);
-    AXLibSpaceRemoveWindow(Space->Id, Window->Id);
+    AXLibSpaceMoveWindow(DestinationSpace->Id, Window->Id);
 
     // NOTE(koekeishiya): MacOS does not update focus when we send the window
     // to a different monitor using this method. This results in a desync causing
