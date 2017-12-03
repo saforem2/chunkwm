@@ -269,21 +269,20 @@ void ConstrainWindowToRegion(macos_window *Window)
         // desktop containing the window for a refresh upon next activation.
         //
         macos_space **WindowSpaces = AXLibSpacesForWindow(Window->Id);
-        ASSERT(WindowSpaces);
-
-        macos_space *WindowSpace = *WindowSpaces;
-        ASSERT(WindowSpace);
-
-        if (WindowSpace->Type == kCGSSpaceUser) {
-            virtual_space *VirtualSpace = AcquireVirtualSpace(WindowSpace);
-            if ((VirtualSpace->Tree) && (VirtualSpace->Mode != Virtual_Space_Float)) {
-                VirtualSpaceAddFlags(VirtualSpace, Virtual_Space_Require_Region_Update);
+        if (WindowSpaces) {
+            macos_space *WindowSpace = *WindowSpaces;
+            if (WindowSpace) {
+                if (WindowSpace->Type == kCGSSpaceUser) {
+                    virtual_space *VirtualSpace = AcquireVirtualSpace(WindowSpace);
+                    if ((VirtualSpace->Tree) && (VirtualSpace->Mode != Virtual_Space_Float)) {
+                        VirtualSpaceAddFlags(VirtualSpace, Virtual_Space_Require_Region_Update);
+                    }
+                    ReleaseVirtualSpace(VirtualSpace);
+                }
+                AXLibDestroySpace(WindowSpace);
             }
-            ReleaseVirtualSpace(VirtualSpace);
+            free(WindowSpaces);
         }
-
-        AXLibDestroySpace(WindowSpace);
-        free(WindowSpaces);
     }
 
     AXLibDestroySpace(ActiveSpace);
