@@ -181,6 +181,11 @@ AXLibGetDisplayIdentifierForEdgeDisplay(int Side)
                 Position = DisplayFrame.origin;
                 BestResult = DisplayId;
             }
+        } else if (Side == 2) {
+            if (DisplayFrame.origin.y > Position.y) {
+                Position = DisplayFrame.origin;
+                BestResult = DisplayId;
+            }
         }
     }
 
@@ -200,6 +205,12 @@ CFStringRef AXLibGetDisplayIdentifierForLeftMostDisplay()
 CFStringRef AXLibGetDisplayIdentifierForRightMostDisplay()
 {
     return AXLibGetDisplayIdentifierForEdgeDisplay(1);
+}
+
+/* NOTE(koekeishiya): Caller is responsible for calling CFRelease. */
+CFStringRef AXLibGetDisplayIdentifierForBottomMostDisplay()
+{
+    return AXLibGetDisplayIdentifierForEdgeDisplay(2);
 }
 
 /* NOTE(koekeishiya): Caller is responsible for calling CFRelease. */

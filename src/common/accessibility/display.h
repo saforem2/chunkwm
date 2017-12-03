@@ -68,6 +68,7 @@ CFStringRef AXLibGetDisplayIdentifierFromWindowRect(CGPoint Position, CGSize Siz
 CFStringRef AXLibGetDisplayIdentifierForMainDisplay();
 CFStringRef AXLibGetDisplayIdentifierForRightMostDisplay();
 CFStringRef AXLibGetDisplayIdentifierForLeftMostDisplay();
+CFStringRef AXLibGetDisplayIdentifierForBottomMostDisplay();
 
 CGRect AXLibGetDisplayBounds(CFStringRef DisplayRef);
 bool AXLibIsDisplayChangingSpaces(CFStringRef DisplayRef);
