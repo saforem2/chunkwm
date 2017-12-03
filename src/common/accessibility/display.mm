@@ -15,6 +15,7 @@ extern "C" CFArrayRef CGSCopyManagedDisplaySpaces(const CGSConnectionID Connecti
 extern "C" CFArrayRef CGSCopySpacesForWindows(CGSConnectionID Connection, CGSSpaceSelector Type, CFArrayRef Windows);
 extern "C" void CGSRemoveWindowsFromSpaces(CGSConnectionID Connection, CFArrayRef Windows, CFArrayRef Spaces);
 extern "C" void CGSAddWindowsToSpaces(CGSConnectionID Connection, CFArrayRef Windows, CFArrayRef Spaces);
+extern "C" void CGSMoveWindowsToManagedSpace(CGSConnectionID Connection, CFArrayRef Windows, CGSSpaceID SpaceId);
 
 extern "C" CGSSpaceID CGSManagedDisplayGetCurrentSpace(CGSConnectionID Connection, CFStringRef DisplayRef);
 extern "C" CFStringRef CGSCopyManagedDisplayForSpace(const CGSConnectionID Connection, CGSSpaceID SpaceId);
@@ -449,6 +450,12 @@ void AXLibSpaceRemoveWindow(CGSSpaceID SpaceId, uint32_t WindowId)
     NSArray *NSArrayWindow = @[ @(WindowId) ];
     NSArray *NSArraySourceSpace = @[ @(SpaceId) ];
     CGSRemoveWindowsFromSpaces(CGSDefaultConnection, (__bridge CFArrayRef)NSArrayWindow, (__bridge CFArrayRef)NSArraySourceSpace);
+}
+
+void AXLibSpaceMoveWindow(CGSSpaceID SpaceId, uint32_t WindowId)
+{
+    NSArray *NSArrayWindow = @[ @(WindowId) ];
+    CGSMoveWindowsToManagedSpace(CGSDefaultConnection, (__bridge CFArrayRef)NSArrayWindow, SpaceId);
 }
 
 internal void

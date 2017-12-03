@@ -1423,11 +1423,38 @@ bool SendWindowToDesktop(macos_window *Window, char *Op)
     macos_space *Space, *DestinationMonitorActiveSpace;
     CFStringRef SourceMonitorRef, DestinationMonitorRef;
 
-    SpacesForWindow = List = AXLibSpacesForWindow(Window->Id);
-    Space = *List++;
-    ASSERT(Space);
-    ASSERT(!(*List));
-    free(SpacesForWindow);
+    if ((StringEquals(Op, "prev")) || (StringEquals(Op, "next"))) {
+
+        //
+        // NOTE(koekeishiya): If the target desktop is relative to the desktop of the window,
+        // we need to figure out the exact desktop the window is currently on.
+        //
+        // 'AXLibSpacesForWindow(..)' relies on the private API CGSCopySpacesForWindow which sometimes
+        // returns null for windows that have recently been created (probably because the internal state
+        // that the CGS-APis query has yet to be updated). This path is never taken when a window is moved
+        // through a rule and this specific instance should NOT be a problem for user-issued moves !!!
+        //
+
+        SpacesForWindow = List = AXLibSpacesForWindow(Window->Id);
+        Space = *List++;
+        ASSERT(Space);
+        ASSERT(!(*List));
+        free(SpacesForWindow);
+    } else {
+
+        //
+        // NOTE(koekeishiya): The destination desktop is given as an absolute value. Because of this
+        // we can blindly assume that the active desktop is the one that contains the window we are operating on.
+        //
+        // The reason for this is that this path is always taken by windows that are moved through the use of
+        // a rule, and if the operation was initiated by the user - the window we operate on will ALWAYS be the
+        // focused window. This resolves the problem mentioned in issue #236.
+        //
+
+        Success = AXLibActiveSpace(&Space);
+        ASSERT(Success);
+        ASSERT(Space);
+    }
 
     if (Space->Type != kCGSSpaceUser) {
         goto space_free;
@@ -1469,8 +1496,7 @@ bool SendWindowToDesktop(macos_window *Window, char *Op)
         ReleaseVirtualSpace(VirtualSpace);
     }
 
-    AXLibSpaceAddWindow(DestinationSpaceId, Window->Id);
-    AXLibSpaceRemoveWindow(Space->Id, Window->Id);
+    AXLibSpaceMoveWindow(DestinationSpaceId, Window->Id);
 
     // NOTE(koekeishiya): MacOS does not update focus when we send the window
     // to a different desktop using this method. This results in a desync causing
