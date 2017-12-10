@@ -94,6 +94,22 @@ SystemWideElement()
     return Element;
 }
 
+internal bool
+ForkAndExec(char *Command)
+{
+    static const char *Shell = "/bin/bash";
+    static const char *Arg   = "-c";
+
+    int Pid = fork();
+    if (Pid == 0) {
+        char *Exec[] = { (char*)Shell, (char*)Arg, Command, NULL};
+        int StatusCode = execvp(Exec[0], Exec);
+        exit(StatusCode);
+    }
+
+    return true;
+}
+
 inline bool
 CheckAccessibilityPrivileges()
 {
@@ -214,17 +230,15 @@ int main(int Count, char **Args)
 
     BeginSharedWorkspace();
 
-    // NOTE(koekeishiya): The config file is just an executable bash script!
-    system(ConfigFile);
-
-    printf("chunkwm: config file finished executing\n");
-
     // NOTE(koekeishiya): Read plugin directory from cvar.
     char *PluginDirectory = CVarStringValue(CVAR_PLUGIN_DIR);
     if (PluginDirectory && CVarIntegerValue(CVAR_PLUGIN_HOTLOAD)) {
         HotloaderAddPath(PluginDirectory);
         HotloaderInit();
     }
+
+    // NOTE(koekeishiya): The config file is just an executable bash script!
+    ForkAndExec(ConfigFile);
 
     if (!StartEventLoop()) {
         Fail("chunkwm: failed to start eventloop! abort..\n");

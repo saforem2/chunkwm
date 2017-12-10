@@ -1,3 +1,4 @@
+#include "config.h"
 #include "plugin.h"
 #include "wqueue.h"
 #include "state.h"
@@ -138,6 +139,26 @@ bool BeginCallbackThreads(int Count)
     }
 
     return true;
+}
+
+CHUNKWM_CALLBACK(Callback_ChunkWM_PluginCommand)
+{
+    chunkwm_delegate *Delegate = (chunkwm_delegate *) Event->Context;
+    ASSERT(Delegate);
+
+    plugin *Plugin = GetPluginFromFilename(Delegate->Target);
+    if (Plugin) {
+        chunkwm_payload Payload = { Delegate->SockFD, Delegate->Command, Delegate->Message };
+        Plugin->Run("chunkwm_daemon_command", (void *) &Payload);
+    } else {
+        fprintf(stderr, "chunkwm: plugin '%s' is not loaded\n", Delegate->Target);
+    }
+
+    CloseSocket(Delegate->SockFD);
+    free(Delegate->Target);
+    free(Delegate->Command);
+    free((char *)(Delegate->Message));
+    free(Delegate);
 }
 
 // NOTE(koekeishiya): Application-related callbacks.

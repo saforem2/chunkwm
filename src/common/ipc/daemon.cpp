@@ -47,6 +47,9 @@ void CloseSocket(int SockFD)
     close(SockFD);
 }
 
+/*
+ * NOTE(koekeishiya): The connection must be closed manually by the implementor of the connection callback !!!
+ */
 internal void *
 HandleConnection(void *)
 {
@@ -61,8 +64,6 @@ HandleConnection(void *)
                 (*ConnectionCallback)(Message, SockFD);
                 free(Message);
             }
-
-            CloseSocket(SockFD);
         }
     }
 

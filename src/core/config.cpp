@@ -1,8 +1,11 @@
+#include "config.h"
 #include "plugin.h"
 
 #include "../common/config/tokenize.h"
 #include "../common/misc/assert.h"
 #include "../common/ipc/daemon.h"
+
+#include "dispatch/event.h"
 
 #include "constants.h"
 #include "cvar.h"
@@ -12,13 +15,6 @@
 #include <string.h>
 
 #define internal static
-
-struct chunkwm_delegate
-{
-    char *Target;
-    char *Command;
-    const char *Message;
-};
 
 struct plugin_fs
 {
@@ -116,20 +112,13 @@ ChunkwmDaemonDelegate(const char *Message, chunkwm_delegate *Delegate)
         if (Success) {
             Delegate->Target = strdup(Target);
             Delegate->Command = strdup(Command);
-            Delegate->Message = Message;
+            Delegate->Message = strdup(Message);
         }
 
         free(Identifier);
     }
 
     return Success;
-}
-
-internal void
-DestroyChunkwmDaemonDelegate(chunkwm_delegate *Delegate)
-{
-    free(Delegate->Target);
-    free(Delegate->Command);
 }
 
 internal inline bool
@@ -179,18 +168,6 @@ HandleCore(chunkwm_delegate *Delegate)
     }
 }
 
-internal void
-HandlePlugin(int SockFD, chunkwm_delegate *Delegate)
-{
-    plugin *Plugin = GetPluginFromFilename(Delegate->Target);
-    if (Plugin) {
-        chunkwm_payload Payload = { SockFD, Delegate->Command, Delegate->Message };
-        Plugin->Run("chunkwm_daemon_command", (void *) &Payload);
-    } else {
-        fprintf(stderr, "chunkwm: plugin '%s' is not loaded\n", Delegate->Target);
-    }
-}
-
 internal inline bool
 ValidToken(token *Token, const char *Format, ...)
 {
@@ -236,14 +213,20 @@ GetCVar(const char **Message, int SockFD)
 
 DAEMON_CALLBACK(DaemonCallback)
 {
-    chunkwm_delegate Delegate;
-    if (ChunkwmDaemonDelegate(Message, &Delegate)) {
-        if (StringEquals(Delegate.Target, "core")) {
-            HandleCore(&Delegate);
+    chunkwm_delegate *Delegate = (chunkwm_delegate *) malloc(sizeof(chunkwm_delegate));
+    memset(Delegate, 0, sizeof(chunkwm_delegate));
+    Delegate->SockFD = SockFD;
+
+    if (ChunkwmDaemonDelegate(Message, Delegate)) {
+        if (StringEquals(Delegate->Target, "core")) {
+            HandleCore(Delegate);
+            CloseSocket(SockFD);
+            free(Delegate->Target);
+            free(Delegate->Command);
+            free(Delegate);
         } else {
-            HandlePlugin(SockFD, &Delegate);
+            ConstructEvent(ChunkWM_PluginCommand, Delegate);
         }
-        DestroyChunkwmDaemonDelegate(&Delegate);
     } else {
         token Type = GetToken(&Message);
         if (TokenEquals(Type, "set")) {
@@ -253,5 +236,7 @@ DAEMON_CALLBACK(DaemonCallback)
         } else {
             fprintf(stderr, "chunkwm: invalid command '%.*s %s'\n", Type.Length, Type.Text, Message);
         }
+        CloseSocket(SockFD);
+        free(Delegate);
     }
 }

@@ -35,6 +35,7 @@ extern CHUNKWM_CALLBACK(Callback_ChunkWM_WindowDeminimized);
 extern CHUNKWM_CALLBACK(Callback_ChunkWM_WindowTitleChanged);
 
 // NOTE(koekeishiya): This property is not exposed to plugins
+extern CHUNKWM_CALLBACK(Callback_ChunkWM_PluginCommand);
 extern CHUNKWM_CALLBACK(Callback_ChunkWM_PluginBroadcast);
 
 enum event_type
@@ -65,6 +66,7 @@ enum event_type
     ChunkWM_WindowTitleChanged,
 
     // NOTE(koekeishiya): This property is not exposed to plugins
+    ChunkWM_PluginCommand,
     ChunkWM_PluginBroadcast,
 };
 
