@@ -181,11 +181,37 @@ AXLibGetDisplayIdentifierForEdgeDisplay(int Side)
                 Position = DisplayFrame.origin;
                 BestResult = DisplayId;
             }
-        } else if (Side == 2) {
-            if (DisplayFrame.origin.y > Position.y) {
-                Position = DisplayFrame.origin;
-                BestResult = DisplayId;
-            }
+        }
+    }
+
+    Result = AXLibGetDisplayIdentifier(BestResult);
+
+    free(CGDisplayList);
+    return Result;
+}
+
+/* NOTE(koekeishiya): Caller is responsible for calling CFRelease. */
+CFStringRef AXLibGetDisplayIdentifierForBottomMostDisplay()
+{
+    CFStringRef Result = NULL;
+
+    CGDirectDisplayID *CGDisplayList =
+        (CGDirectDisplayID *) malloc(sizeof(CGDirectDisplayID) * MAX_DISPLAY_COUNT);
+
+    unsigned Count = 0;
+    CGGetActiveDisplayList(MAX_DISPLAY_COUNT, CGDisplayList, &Count);
+
+    CGDirectDisplayID BestResult = 0;
+    int LargestYCoordinate = 0;
+
+    for (unsigned Index = 0; Index < Count; ++Index) {
+        CGDirectDisplayID DisplayId = CGDisplayList[Index];
+        CGRect DisplayFrame = CGDisplayBounds(DisplayId);
+        int YCoordinate = DisplayFrame.origin.y + DisplayFrame.size.height;
+
+        if (YCoordinate > LargestYCoordinate) {
+            LargestYCoordinate = YCoordinate;
+            BestResult = DisplayId;
         }
     }
 
@@ -205,12 +231,6 @@ CFStringRef AXLibGetDisplayIdentifierForLeftMostDisplay()
 CFStringRef AXLibGetDisplayIdentifierForRightMostDisplay()
 {
     return AXLibGetDisplayIdentifierForEdgeDisplay(1);
-}
-
-/* NOTE(koekeishiya): Caller is responsible for calling CFRelease. */
-CFStringRef AXLibGetDisplayIdentifierForBottomMostDisplay()
-{
-    return AXLibGetDisplayIdentifierForEdgeDisplay(2);
 }
 
 /* NOTE(koekeishiya): Caller is responsible for calling CFRelease. */
