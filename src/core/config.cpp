@@ -22,6 +22,19 @@ struct plugin_fs
     char *Filename;
 };
 
+internal inline bool
+StringEquals(const char *A, const char *B)
+{
+    return (strcmp(A, B) == 0);
+}
+
+internal void
+DestroyPluginFS(plugin_fs *PluginFS)
+{
+    free(PluginFS->Absolutepath);
+    free(PluginFS->Filename);
+}
+
 // NOTE(koekeishiya): Caller is responsible for freeing memory of returned pointer
 internal char *
 PluginFilenameFromAbsolutepath(char *Absolutepath)
@@ -90,13 +103,6 @@ PopulatePluginPath(const char **Message, plugin_fs *PluginFs)
     return true;
 }
 
-internal void
-DestroyPluginFS(plugin_fs *PluginFS)
-{
-    free(PluginFS->Absolutepath);
-    free(PluginFS->Filename);
-}
-
 internal bool
 ChunkwmDaemonDelegate(const char *Message, chunkwm_delegate *Delegate)
 {
@@ -119,12 +125,6 @@ ChunkwmDaemonDelegate(const char *Message, chunkwm_delegate *Delegate)
     }
 
     return Success;
-}
-
-internal inline bool
-StringEquals(const char *A, const char *B)
-{
-    return (strcmp(A, B) == 0);
 }
 
 internal void
@@ -166,6 +166,11 @@ HandleCore(chunkwm_delegate *Delegate)
     } else {
         fprintf(stderr, "chunkwm: invalid command '%s::%s'\n", Delegate->Target, Delegate->Command);
     }
+
+    CloseSocket(Delegate->SockFD);
+    free(Delegate->Target);
+    free(Delegate->Command);
+    free(Delegate);
 }
 
 internal inline bool
@@ -211,6 +216,21 @@ GetCVar(const char **Message, int SockFD)
     }
 }
 
+internal void
+HandleCVar(chunkwm_delegate *Delegate, const char **Message)
+{
+    token Type = GetToken(Message);
+    if (TokenEquals(Type, "set")) {
+        SetCVar(Message);
+    } else if (TokenEquals(Type, "get")) {
+        GetCVar(Message, Delegate->SockFD);
+    } else {
+        fprintf(stderr, "chunkwm: invalid command '%.*s %s'\n", Type.Length, Type.Text, *Message);
+    }
+    CloseSocket(Delegate->SockFD);
+    free(Delegate);
+}
+
 DAEMON_CALLBACK(DaemonCallback)
 {
     chunkwm_delegate *Delegate = (chunkwm_delegate *) malloc(sizeof(chunkwm_delegate));
@@ -220,23 +240,10 @@ DAEMON_CALLBACK(DaemonCallback)
     if (ChunkwmDaemonDelegate(Message, Delegate)) {
         if (StringEquals(Delegate->Target, "core")) {
             HandleCore(Delegate);
-            CloseSocket(SockFD);
-            free(Delegate->Target);
-            free(Delegate->Command);
-            free(Delegate);
         } else {
             ConstructEvent(ChunkWM_PluginCommand, Delegate);
         }
     } else {
-        token Type = GetToken(&Message);
-        if (TokenEquals(Type, "set")) {
-            SetCVar(&Message);
-        } else if (TokenEquals(Type, "get")) {
-            GetCVar(&Message, SockFD);
-        } else {
-            fprintf(stderr, "chunkwm: invalid command '%.*s %s'\n", Type.Length, Type.Text, Message);
-        }
-        CloseSocket(SockFD);
-        free(Delegate);
+        HandleCVar(Delegate, &Message);
     }
 }
