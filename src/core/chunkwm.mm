@@ -6,6 +6,7 @@
 #include <execinfo.h>
 #include <signal.h>
 #include <unistd.h>
+#include <sys/wait.h>
 
 #include "dispatch/carbon.h"
 #include "dispatch/workspace.h"
@@ -94,20 +95,24 @@ SystemWideElement()
     return Element;
 }
 
-internal bool
-ForkAndExec(char *Command)
+internal void
+ForkExecWait(char *Command)
 {
     static const char *Shell = "/bin/bash";
     static const char *Arg   = "-c";
 
     int Pid = fork();
-    if (Pid == 0) {
+    if (Pid == -1) {
+        fprintf(stderr, "chunkwm: fork failed, config-file did not execute!\n");
+    } else if (Pid > 0) {
+        int Status;
+        waitpid(Pid, &Status, 0);
+        printf("chunkwm: finished executing config-file.\n");
+    } else {
         char *Exec[] = { (char*)Shell, (char*)Arg, Command, NULL};
         int StatusCode = execvp(Exec[0], Exec);
         exit(StatusCode);
     }
-
-    return true;
 }
 
 inline bool
@@ -229,19 +234,18 @@ int main(int Count, char **Args)
     }
 
     BeginSharedWorkspace();
+    if (!StartEventLoop()) {
+        Fail("chunkwm: failed to start eventloop! abort..\n");
+    }
+
+    // NOTE(koekeishiya): The config file is just an executable bash script!
+    ForkExecWait(ConfigFile);
 
     // NOTE(koekeishiya): Read plugin directory from cvar.
     char *PluginDirectory = CVarStringValue(CVAR_PLUGIN_DIR);
     if (PluginDirectory && CVarIntegerValue(CVAR_PLUGIN_HOTLOAD)) {
         HotloaderAddPath(PluginDirectory);
         HotloaderInit();
-    }
-
-    // NOTE(koekeishiya): The config file is just an executable bash script!
-    ForkAndExec(ConfigFile);
-
-    if (!StartEventLoop()) {
-        Fail("chunkwm: failed to start eventloop! abort..\n");
     }
 
     CFRunLoopRun();
