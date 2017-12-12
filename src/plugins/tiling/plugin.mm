@@ -1349,7 +1349,6 @@ internal void
 ChunkwmDaemonCommandHandler(void *Data)
 {
     chunkwm_payload *Payload = (chunkwm_payload *) Data;
-    printf("chunkwm-tiling command: (%d) '%s %s'\n", Payload->SockFD, Payload->Command, Payload->Message);
     CommandCallback(Payload->SockFD, Payload->Command, Payload->Message);
 }
 
