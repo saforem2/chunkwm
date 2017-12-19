@@ -36,6 +36,7 @@
   * [decrease region size](#decrease-region-size)
   * [set insertion point for the focused container](#set-bsp-insertion-point-for-the-focused-container)
   * [toggle various window options](#toggle-various-window-options)
+  * [grid layout](#grid-layout)
 * [desktop commands](#desktop-commands)
   * [desktop layout](#desktop-layout)
   * [rotate desktop](#rotate-desktop)
@@ -279,6 +280,13 @@
     <option>: native-fullscreen | fullscreen | parent | split | float | sticky
     short flag: -t
     desc: option 'sticky' requires chwm-sa (https://github.com/koekeishiya/chwm-sa)
+
+##### grid layout
+
+    chunkc tiling::window --grid-layout <option>
+    <option>: rows:cols:left:top:width:height
+    short flag: -g
+    desc: split region to rows:cols grid, windows on left:top grid, have <width> times grid width and <height> times grid height
 
 ---
 

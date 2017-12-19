@@ -112,7 +112,7 @@ ParseWindowCommand(const char *Message, command *Chain)
 
     int Option;
     bool Success = true;
-    const char *Short = "f:s:i:t:w:W:r:e:d:m:c:g";
+    const char *Short = "f:s:i:t:w:W:r:e:d:m:cg:";
 
     struct option Long[] = {
         { "focus", required_argument, NULL, 'f' },

@@ -1883,8 +1883,7 @@ void GridLayout(char *Op)
     Region = CGRectToRegion(AXLibGetDisplayBounds(DisplayRef));
     ConstrainRegion(DisplayRef, &Region);
 
-    if(sscanf(Op, "%d:%d:%d:%d:%d:%d", &GridRows, &GridCols, &WinX, &WinY, &WinWidth, &WinHeight) == 6)
-    {
+    if (sscanf(Op, "%d:%d:%d:%d:%d:%d", &GridRows, &GridCols, &WinX, &WinY, &WinWidth, &WinHeight) == 6) {
         WinX = WinX >= GridCols ? GridCols - 1 : WinX;
         WinY = WinY >= GridRows ? GridRows - 1 : WinY;
         WinWidth = WinWidth <= 0 ? 1 : WinWidth;
