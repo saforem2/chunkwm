@@ -27,7 +27,7 @@
   * [focus window](#focus-window)
   * [swap window](#swap-window)
   * [warp window](#warp-window)
-  * [warp floating window](#warp-floating-window)
+  * [grid layout](#grid-layout)
   * [send window to desktop](#send-window-to-desktop)
   * [send window to monitor](#send-window-to-monitor)
   * [use temporary ratio in commands](#use-temporary-ratio-in-commands)
@@ -35,7 +35,6 @@
   * [decrease region size](#decrease-region-size)
   * [set insertion point for the focused container](#set-bsp-insertion-point-for-the-focused-container)
   * [toggle various window options](#toggle-various-window-options)
-  * [grid layout](#grid-layout)
 * [desktop commands](#desktop-commands)
   * [desktop layout](#desktop-layout)
   * [rotate desktop](#rotate-desktop)
@@ -217,14 +216,12 @@
     short flag: -w
     desc: move window in direction and modifies layout
 
-##### warp floating window
+##### grid layout
 
-    chunkc tiling::window --warp-floating <option>
-    <option>: fullscreen | left | right | top-left
-              top-right  | bottom-left  | bottom-right
-              pip-right  | pip-left
-    short flag: -W
-    desc: move and resize a floating window to specific region of monitor
+    chunkc tiling::window --grid-layout <option>
+    <option>: rows:cols:left:top:width:height
+    short flag: -g
+    desc: split region to rows:cols grid, windows on left:top grid, have <width> times grid width and <height> times grid height
 
 ##### send window to desktop
 
@@ -274,13 +271,6 @@
     <option>: native-fullscreen | fullscreen | parent | split | float | sticky
     short flag: -t
     desc: option 'sticky' requires chwm-sa (https://github.com/koekeishiya/chwm-sa)
-
-##### grid layout
-
-    chunkc tiling::window --grid-layout <option>
-    <option>: rows:cols:left:top:width:height
-    short flag: -g
-    desc: split region to rows:cols grid, windows on left:top grid, have <width> times grid width and <height> times grid height
 
 ---
 
