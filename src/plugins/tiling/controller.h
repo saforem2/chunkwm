@@ -14,6 +14,7 @@ bool FindClosestWindow(macos_space *Space, virtual_space *VirtualSpace,
                        char *Direction, bool Wrap);
 void CenterMouseInWindow(macos_window *Window);
 
+void GridLayout(char *Op);
 void CloseWindow(char *Unused);
 void FocusWindow(char *Direction);
 void SwapWindow(char *Direction);
