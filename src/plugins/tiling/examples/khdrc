@@ -37,6 +37,10 @@ shift + cmd - right  : chunkc tiling::window --warp-floating top-right
 shift + ctrl - left  : chunkc tiling::window --warp-floating bottom-left
 shift + ctrl - right : chunkc tiling::window --warp-floating bottom-right
 
+# move floating windows / windows on a grid space
+# 10 rows 10 cols grid, windows left and top on 0 grid, and have 5 grid width 5 grid height
+alt - q : chunkc tiling::window --grid-layout 10:10:0:0:5:5
+
 # send window to desktop
 shift + alt - x : chunkc tiling::window --send-to-desktop $(chunkc get _last_active_desktop)
 shift + alt - z : chunkc tiling::window --send-to-desktop prev
