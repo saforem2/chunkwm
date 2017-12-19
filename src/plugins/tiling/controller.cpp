@@ -1853,6 +1853,57 @@ space_free:
 out:;
 }
 
+void GridLayout(char *Op)
+{
+    region Region;
+    macos_space *Space;
+    macos_window *Window;
+    CFStringRef DisplayRef;
+    virtual_space *VirtualSpace;
+    unsigned GridRows,GridCols,WinX,WinY,WinWidth,WinHeight;
+    
+    Window = GetFocusedWindow();
+    if (!Window) {
+        goto out;
+    }
+
+    DisplayRef = AXLibGetDisplayIdentifierFromWindowRect(Window->Position, Window->Size);
+    ASSERT(DisplayRef);
+
+    Space = AXLibActiveSpace(DisplayRef);
+    ASSERT(Space);
+
+    VirtualSpace = AcquireVirtualSpace(Space);
+
+    if ((!AXLibHasFlags(Window, Window_Float)) &&
+        (VirtualSpace->Mode != Virtual_Space_Float)) {
+        goto space_free;
+    }
+
+    Region = CGRectToRegion(AXLibGetDisplayBounds(DisplayRef));
+    ConstrainRegion(DisplayRef, &Region);
+
+    if (sscanf(Op, "%d:%d:%d:%d:%d:%d", &GridRows, &GridCols, &WinX, &WinY, &WinWidth, &WinHeight) == 6) {
+        WinX = WinX >= GridCols ? GridCols - 1 : WinX;
+        WinY = WinY >= GridRows ? GridRows - 1 : WinY;
+        WinWidth = WinWidth <= 0 ? 1 : WinWidth;
+        WinHeight = WinHeight <= 0 ? 1 : WinHeight;
+        WinWidth = WinWidth > GridCols - WinX ? GridCols - WinX : WinWidth;
+        WinHeight = WinHeight > GridRows - WinY ? GridRows - WinY : WinHeight;
+        DEBUG_PRINT("    GridRows:%d, GridCols:%d, WinX:%d, WinY:%d, WinWidth:%d, WinHeight:%d\n", GridRows, GridCols, WinX, WinY, WinWidth, WinHeight);
+        float CellWidth = Region.Width/GridCols;
+        float CellHeight = Region.Height/GridRows;
+        AXLibSetWindowPosition(Window->Ref, (Region.X + Region.Width) - CellWidth * (GridCols - WinX), (Region.Y + Region.Height) - CellHeight * (GridRows - WinY));
+        AXLibSetWindowSize(Window->Ref, CellWidth * WinWidth, CellHeight * WinHeight);
+    }
+
+space_free:
+    ReleaseVirtualSpace(VirtualSpace);
+    AXLibDestroySpace(Space);
+    CFRelease(DisplayRef);
+out:;
+}
+
 void EqualizeWindowTree(char *Unused)
 {
     bool Success;

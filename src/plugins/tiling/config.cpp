@@ -97,6 +97,7 @@ command_func WindowCommandDispatch(char Flag)
     case 'd': return SendWindowToDesktop;   break;
     case 'm': return SendWindowToMonitor;   break;
     case 'c': return CloseWindow;           break;
+    case 'g': return GridLayout;            break;
 
     // NOTE(koekeishiya): silence compiler warning.
     default: return 0; break;
@@ -111,7 +112,7 @@ ParseWindowCommand(const char *Message, command *Chain)
 
     int Option;
     bool Success = true;
-    const char *Short = "f:s:i:t:w:W:r:e:d:m:c";
+    const char *Short = "f:s:i:t:w:W:r:e:d:m:cg:";
 
     struct option Long[] = {
         { "focus", required_argument, NULL, 'f' },
@@ -125,6 +126,7 @@ ParseWindowCommand(const char *Message, command *Chain)
         { "send-to-desktop", required_argument, NULL, 'd' },
         { "send-to-monitor", required_argument, NULL, 'm' },
         { "close", no_argument, NULL, 'c' },
+        { "grid-layout", required_argument, NULL, 'g' },
         { NULL, 0, NULL, 0 }
     };
 
@@ -254,6 +256,19 @@ ParseWindowCommand(const char *Message, command *Chain)
                 command *Entry = ConstructCommand(Option, NULL);
                 Command->Next = Entry;
                 Command = Entry;
+        } break;
+        case 'g': {
+            unsigned Unsigned;
+            if ((sscanf(optarg, "%d:%d:%d:%d:%d:%d", &Unsigned, &Unsigned, &Unsigned, &Unsigned, &Unsigned, &Unsigned) == 6)) {
+                command *Entry = ConstructCommand(Option, optarg);
+                Command->Next = Entry;
+                Command = Entry;
+            } else {
+                fprintf(stderr, "    invalid selector '%s' for window flag '%c'\n", optarg, Option);
+                Success = false;
+                FreeCommandChain(Chain);
+                goto End;
+            }
         } break;
         case '?': {
             Success = false;
