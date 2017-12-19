@@ -16,7 +16,6 @@
   * [set state of mouse follows focus](#set-state-of-mouse-follows-focus)
   * [set modifier used for mouse interaction](#set-modifier-used-for-mouse-interaction)
   * [float the next window attempted tiled](#the-next-window-attempted-tiled-will-be-made-floating-instead)
-  * [center window on monitor when floated](#center-a-window-on-monitor-when-toggled-floating-by-the-user)
   * [constrain window to region size](#constrain-window-to-bsp-region-size)
   * [signal dock to make windows topmost when floated](#signal-dock-to-make-windows-topmost-when-floated)
   * [signal dock to fade inactive windows](#signal-dock-to-fade-inactive-windows)
@@ -154,11 +153,6 @@
 ##### the next window attempted tiled will be made floating instead
 
     chunkc set window_float_next             <option>
-    <option>: 1 | 0
-
-##### center a window on monitor when toggled floating by the user
-
-    chunkc set window_float_center           <option>
     <option>: 1 | 0
 
 ##### constrain window to bsp region size

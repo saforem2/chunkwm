@@ -303,12 +303,12 @@ TileWindowPreValidation(macos_window *Window)
     }
 
     if (!IsWindowValid(Window)) {
-        FloatWindow(Window, false);
+        FloatWindow(Window);
         return false;
     }
 
     if (CVarIntegerValue(CVAR_WINDOW_FLOAT_NEXT)) {
-        FloatWindow(Window, true);
+        FloatWindow(Window);
         UpdateCVar(CVAR_WINDOW_FLOAT_NEXT, 0);
         return false;
     }
@@ -1476,7 +1476,6 @@ Init(chunkwm_api ChunkwmAPI)
     CreateCVar(CVAR_MOUSE_MODIFIER, "fn");
 
     CreateCVar(CVAR_WINDOW_FLOAT_NEXT, 0);
-    CreateCVar(CVAR_WINDOW_FLOAT_CENTER, 0);
     CreateCVar(CVAR_WINDOW_REGION_LOCKED, 0);
 
     CreateCVar(CVAR_PRE_BORDER_COLOR, 0xffffff00);

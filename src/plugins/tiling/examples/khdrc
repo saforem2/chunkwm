@@ -123,8 +123,9 @@ alt - d : chunkc tiling::window --toggle parent
 # toggle window split type
 alt - e : chunkc tiling::window --toggle split
 
-# float / unfloat window
-alt - t : chunkc tiling::window --toggle float
+# float / unfloat window and center on screen
+alt - t : chunkc tiling::window --toggle float;\
+          chunkc tiling::window --grid-layout 4:4:1:1:2:2
 
 # toggle sticky, float and resize to picture-in-picture size
 alt - s : chunkc tiling::window --toggle sticky;\

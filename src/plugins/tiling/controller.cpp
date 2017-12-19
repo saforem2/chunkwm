@@ -647,36 +647,13 @@ ExtendedDockSetWindowSticky(macos_window *Window, int Value)
     CloseSocket(SockFD);
 }
 
-internal void
-CenterWindow(macos_window *Window)
-{
-    CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromWindowRect(Window->Position, Window->Size);
-    ASSERT(DisplayRef);
-
-    CGRect DisplayFrame = AXLibGetDisplayBounds(DisplayRef);
-
-    AXLibSetWindowPosition(Window->Ref,
-                           DisplayFrame.origin.x + DisplayFrame.size.width / 4,
-                           DisplayFrame.origin.y + DisplayFrame.size.height / 4);
-
-    AXLibSetWindowSize(Window->Ref,
-                       DisplayFrame.size.width / 2,
-                       DisplayFrame.size.height / 2);
-
-    CFRelease(DisplayRef);
-}
-
-void FloatWindow(macos_window *Window, bool UserInitiated)
+void FloatWindow(macos_window *Window)
 {
     AXLibAddFlags(Window, Window_Float);
     BroadcastFocusedWindowFloating(1);
 
     if (CVarIntegerValue(CVAR_WINDOW_FLOAT_TOPMOST)) {
         ExtendedDockSetWindowLevel(Window, kCGFloatingWindowLevelKey);
-    }
-
-    if ((UserInitiated) && (CVarIntegerValue(CVAR_WINDOW_FLOAT_CENTER))) {
-        CenterWindow(Window);
     }
 }
 
@@ -704,7 +681,7 @@ ToggleWindowFloat()
         TileWindow(Window);
     } else {
         UntileWindow(Window);
-        FloatWindow(Window, true);
+        FloatWindow(Window);
     }
 }
 
@@ -730,7 +707,7 @@ ToggleWindowSticky()
 
         if (!AXLibHasFlags(Window, Window_Float)) {
             UntileWindow(Window);
-            FloatWindow(Window, true);
+            FloatWindow(Window);
         }
     }
 }
@@ -1861,7 +1838,7 @@ void GridLayout(char *Op)
     CFStringRef DisplayRef;
     virtual_space *VirtualSpace;
     unsigned GridRows,GridCols,WinX,WinY,WinWidth,WinHeight;
-    
+
     Window = GetFocusedWindow();
     if (!Window) {
         goto out;

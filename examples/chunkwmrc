@@ -52,7 +52,6 @@ chunkc set window_focus_cycle            monitor
 
 chunkc set mouse_follows_focus           0
 chunkc set window_float_next             0
-chunkc set window_float_center           1
 chunkc set window_region_locked          1
 
 #

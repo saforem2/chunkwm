@@ -36,8 +36,6 @@
 #define CVAR_MOUSE_MODIFIER         "mouse_modifier"
 
 #define CVAR_WINDOW_FLOAT_NEXT      "window_float_next"
-#define CVAR_WINDOW_FLOAT_CENTER    "window_float_center"
-
 #define CVAR_WINDOW_REGION_LOCKED   "window_region_locked"
 
 #define CVAR_PRE_BORDER_COLOR       "preselect_border_color"
