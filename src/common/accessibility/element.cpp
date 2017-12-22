@@ -1,8 +1,10 @@
 #include "element.h"
 #include "../misc/assert.h"
 
-/* NOTE(koekeishiya): Caller is responsible for passing a valid CFStringRef.
- * Caller is responsible for freeing memory if non-null is returned. */
+/*
+ * NOTE(koekeishiya): Caller is responsible for passing a valid CFStringRef.
+ * Caller is responsible for freeing memory if non-null is returned.
+ */
 char *CopyCFStringToC(CFStringRef String)
 {
     ASSERT(String);
@@ -29,8 +31,10 @@ CGPoint AXLibGetCursorPos()
     return Cursor;
 }
 
-/* NOTE(koekeishiya): Caller is responsible for passing valid arguments.
- * Caller is responsible for calling 'CFRelease()' if non-null is returned. */
+/*
+ * NOTE(koekeishiya): Caller is responsible for passing valid arguments.
+ * Caller is responsible for calling 'CFRelease()' if non-null is returned.
+ */
 CFTypeRef AXLibGetWindowProperty(AXUIElementRef WindowRef, CFStringRef Property)
 {
     ASSERT(WindowRef);
@@ -55,16 +59,20 @@ AXError AXLibSetWindowProperty(AXUIElementRef WindowRef, CFStringRef Property, C
     return AXUIElementSetAttributeValue(WindowRef, Property, Value);
 }
 
-/* NOTE(koekeishiya): Caller is responsible for passing valid arguments.
- * Caller is responsible for calling 'CFRelease()' if non-null is returned. */
+/*
+ * NOTE(koekeishiya): Caller is responsible for passing valid arguments.
+ * Caller is responsible for calling 'CFRelease()' if non-null is returned.
+ */
 AXUIElementRef AXLibGetFocusedWindow(AXUIElementRef ApplicationRef)
 {
     ASSERT(ApplicationRef);
     return (AXUIElementRef) AXLibGetWindowProperty(ApplicationRef, kAXFocusedWindowAttribute);
 }
 
-/* NOTE(koekeishiya): Caller is responsible for passing a valid AXUIElementRef.
- * The passed window will become the key-window of its application. */
+/*
+ * NOTE(koekeishiya): Caller is responsible for passing a valid AXUIElementRef.
+ * The passed window will become the key-window of its application.
+ */
 void AXLibSetFocusedWindow(AXUIElementRef WindowRef)
 {
     ASSERT(WindowRef);
@@ -75,7 +83,7 @@ void AXLibSetFocusedWindow(AXUIElementRef WindowRef)
     // AXUIElementPerformAction(WindowRef, kAXRaiseAction);
 }
 
-// NOTE(koekeishiya): Caller is responsible for calling 'CFRelease()'. */
+/* NOTE(koekeishiya): Caller is responsible for calling 'CFRelease()'. */
 AXUIElementRef AXLibGetFocusedApplication()
 {
     pid_t PID;
@@ -217,8 +225,10 @@ bool AXLibSetWindowFullscreen(AXUIElementRef WindowRef, bool Fullscreen)
     return Result;
 }
 
-/* NOTE(koekeishiya): Caller is responsible for passing a valid AXUIElementRef.
- * kCGNullWindowID (0) may be returned if the window is minimized. */
+/*
+ * NOTE(koekeishiya): Caller is responsible for passing a valid AXUIElementRef.
+ * kCGNullWindowID (0) may be returned if the window is minimized.
+ */
 uint32_t AXLibGetWindowID(AXUIElementRef WindowRef)
 {
     ASSERT(WindowRef);
@@ -227,8 +237,10 @@ uint32_t AXLibGetWindowID(AXUIElementRef WindowRef)
     return WindowID;
 }
 
-/* NOTE(koekeishiya): Caller is responsible for passing a valid AXUIElementRef.
- * Caller frees memory. */
+/*
+ * NOTE(koekeishiya): Caller is responsible for passing a valid AXUIElementRef.
+ * Caller frees memory.
+ */
 char *AXLibGetWindowTitle(AXUIElementRef WindowRef)
 {
     ASSERT(WindowRef);
@@ -281,8 +293,10 @@ CGSize AXLibGetWindowSize(AXUIElementRef WindowRef)
     return WindowSize;
 }
 
-/* NOTE(koekeishiya): Caller is responsible for passing valid arguments.
- * Caller is responsible for calling 'CFRelease()'. */
+/*
+ * NOTE(koekeishiya): Caller is responsible for passing valid arguments.
+ * Caller is responsible for calling 'CFRelease()'.
+ */
 bool AXLibGetWindowRole(AXUIElementRef WindowRef, CFStringRef *Role)
 {
     ASSERT(WindowRef);
@@ -291,8 +305,10 @@ bool AXLibGetWindowRole(AXUIElementRef WindowRef, CFStringRef *Role)
     return *Role != NULL;
 }
 
-/* NOTE(koekeishiya): Caller is responsible for passing valid arguments.
- * Caller is responsible for calling 'CFRelease()'. */
+/*
+ * NOTE(koekeishiya): Caller is responsible for passing valid arguments.
+ * Caller is responsible for calling 'CFRelease()'.
+ */
 bool AXLibGetWindowSubrole(AXUIElementRef WindowRef, CFStringRef *Subrole)
 {
     ASSERT(WindowRef);

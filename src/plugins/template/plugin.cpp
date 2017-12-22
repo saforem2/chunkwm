@@ -22,7 +22,7 @@ StringsAreEqual(const char *A, const char *B)
  * parameter: const char *Node
  * parameter: void *Data
  * return: bool
- * */
+ */
 PLUGIN_MAIN_FUNC(PluginMain)
 {
     if (StringsAreEqual(Node, "chunkwm_export_application_launched")) {

@@ -176,9 +176,11 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_ApplicationLaunched)
     ProcessPluginListThreaded(chunkwm_export_application_launched, Application);
 #endif
 
-    /* NOTE(koekeishiya): When an application is launched, we incorrectly
+    /*
+     * NOTE(koekeishiya): When an application is launched, we incorrectly
      * receive the applicationActivated first. We discard that notification
-     * and restore it when we have the application to work with. */
+     * and restore it when we have the application to work with.
+     */
     workspace_application_details *WSInfo = BeginWorkspaceApplicationDetails(Info->ProcessName, Info->PSN, Info->PID);
     ConstructEvent(ChunkWM_ApplicationActivated, WSInfo);
 }
@@ -279,9 +281,11 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_SpaceChanged)
     /* NOTE(koekeishiya): This event does not take an argument. */
     ASSERT(Event->Context == NULL);
 
-    /* NOTE(koekeishiya): Applications that are not on our focused space fails to have their
+    /*
+     * NOTE(koekeishiya): Applications that are not on our focused space fails to have their
      * existing windows added to our windw collection. We must force update our collection on
-     * every space change. Windows that are already tracked is NOT added multiple times. */
+     * every space change. Windows that are already tracked is NOT added multiple times.
+     */
     UpdateWindowCollection();
 
 #if 0
@@ -357,9 +361,11 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_DisplayChanged)
     /* NOTE(koekeishiya): This event does not take an argument. */
     ASSERT(Event->Context == NULL);
 
-    /* NOTE(koekeishiya): Applications that are not on our focused space fails to have their
+    /*
+     * NOTE(koekeishiya): Applications that are not on our focused space fails to have their
      * existing windows added to our windw collection. We must force update our collection on
-     * every space change. Windows that are already tracked is NOT added multiple times. */
+     * every space change. Windows that are already tracked is NOT added multiple times.
+     */
     UpdateWindowCollection();
 
 #if 0
@@ -382,9 +388,11 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_WindowCreated)
 #else
         ProcessPluginListThreaded(chunkwm_export_window_created, Window);
 #endif
-        /* NOTE(koekeishiya): When a new window is created, we incorrectly
+        /*
+         * NOTE(koekeishiya): When a new window is created, we incorrectly
          * receive the kAXFocusedWindowChangedNotification first, We discard
-         * that notification and restore it when we have the window to work with. */
+         * that notification and restore it when we have the window to work with.
+         */
         ConstructEvent(ChunkWM_WindowFocused, Window);
     } else {
         printf("%s:%s:%d window is not destructible, ignore!\n", Window->Owner->Name, Window->Name, Window->Id);
@@ -415,9 +423,11 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_WindowFocused)
     uint32_t Flags = Window->Flags;
     bool Result = __sync_bool_compare_and_swap(&Window->Flags, Flags, Flags);
     if (Result && !AXLibHasFlags(Window, Window_Invalid)) {
-        /* NOTE(koekeishiya): When a window is deminimized, we receive this notification before
+        /*
+         * NOTE(koekeishiya): When a window is deminimized, we receive this notification before
          * the deminimized notification (window is not yet visible). Skip this notification and
-         * post it after a 'ChunkWM_WindowDeminimized' event has been processed. */
+         * post it after a 'ChunkWM_WindowDeminimized' event has been processed.
+         */
         if (!AXLibHasFlags(Window, Window_Minimized)) {
             printf("%s:%s:%d window focused\n", Window->Owner->Name, Window->Name, Window->Id);
 #if 0
@@ -525,18 +535,22 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_WindowDeminimized)
         ProcessPluginListThreaded(chunkwm_export_window_deminimized, Window);
 #endif
 
-        /* NOTE(koekeishiya): When a window is deminimized, we incorrectly
+        /*
+         * NOTE(koekeishiya): When a window is deminimized, we incorrectly
          * receive the kAXFocusedWindowChangedNotification first, We discard
-         * that notification and restore it when we have the window to work with. */
+         * that notification and restore it when we have the window to work with.
+         */
         ConstructEvent(ChunkWM_WindowFocused, Window);
     } else {
         printf("chunkwm:%s: __sync_bool_compare_and_swap failed\n", __FUNCTION__);
     }
 }
 
-/* NOTE(koekeishiya): If a plugin has stored a pointer to our macos_window structs
+/*
+ * NOTE(koekeishiya): If a plugin has stored a pointer to our macos_window structs
  * and tries to access the 'name' member outside of 'PLUGIN_MAIN_FUNC', there will
- * be a race condition. Doing so is considered an error.. */
+ * be a race condition. Doing so is considered an error..
+ */
 CHUNKWM_CALLBACK(Callback_ChunkWM_WindowTitleChanged)
 {
     macos_window *Window = (macos_window *) Event->Context;

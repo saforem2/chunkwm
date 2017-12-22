@@ -3,12 +3,14 @@
 
 #include <Carbon/Carbon.h>
 
-/* NOTE(koekeishiya):
+/*
+ * NOTE(koekeishiya):
  * ProcessPolicy == 0     -> Appears in Dock, default for bundled applications.
  * ProcessPolicy == 1     -> Does not appear in Dock. Can create windows.
  *                           LSUIElement is set to 1.
  * ProcessPolicy == 2     -> Does not appear in Dock, cannot create windows.
- *                           LSBackgroundOnly is set to 1. */
+ *                           LSBackgroundOnly is set to 1.
+ */
 
 #define PROCESS_POLICY_REGULAR 0
 #define PROCESS_POLICY_LSUIELEMENT 1

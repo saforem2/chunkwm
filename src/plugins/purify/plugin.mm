@@ -48,7 +48,7 @@ StringsAreEqual(const char *A, const char *B)
  * parameter: const char *Node
  * parameter: void *Data
  * return: bool
- * */
+ */
 PLUGIN_MAIN_FUNC(PluginMain)
 {
     if (StringsAreEqual(Node, "chunkwm_export_application_launched")) {
@@ -83,7 +83,8 @@ PLUGIN_BOOL_FUNC(PluginInit)
 {
     API = ChunkwmAPI;
 
-    /* NOTE(koekeishiya): Disable shadows for existing windows.
+    /*
+     * NOTE(koekeishiya): Disable shadows for existing windows.
      * This only works for windows on the currently active desktop !!!
      */
     uint32_t ProcessPolicy = Process_Policy_Regular;

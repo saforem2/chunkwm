@@ -7,9 +7,9 @@
  *
  * common/accessibility/application.cpp
  *
- * */
+ */
 
-// NOTE(koekeishiya): Caller is responsible for calling 'AXLibDestroyObserver()'. */
+/* NOTE(koekeishiya): Caller is responsible for calling 'AXLibDestroyObserver()'. */
 void AXLibConstructObserver(macos_application *Application, ObserverCallback Callback)
 {
     macos_observer *Observer = &Application->Observer;

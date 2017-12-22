@@ -7,7 +7,7 @@
  *
  * common/misc/workspace.mm
  *
- * */
+ */
 
 carbon_application_details *BeginCarbonApplicationDetails(ProcessSerialNumber PSN)
 {

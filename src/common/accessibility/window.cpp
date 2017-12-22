@@ -15,9 +15,9 @@ extern "C" CGError CGSGetWindowLevel(const CGSConnectionID Connection, uint32_t 
  *
  * common/accessibility/element.cpp
  *
- * */
+ */
 
-// NOTE(koekeishiya): Caller is responsible for calling 'AXLibDestroyWindow()'. */
+/* NOTE(koekeishiya): Caller is responsible for calling 'AXLibDestroyWindow()'. */
 macos_window *AXLibConstructWindow(macos_application *Application, AXUIElementRef WindowRef)
 {
     macos_window *Window = (macos_window *) malloc(sizeof(macos_window));

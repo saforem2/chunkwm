@@ -25,9 +25,11 @@ internal macos_application_map Applications;
 internal macos_window_map Windows;
 internal pthread_mutex_t WindowsLock;
 
-/* NOTE(koekeishiya): We need a way to retrieve AXUIElementRef from a CGWindowID.
+/*
+ * NOTE(koekeishiya): We need a way to retrieve AXUIElementRef from a CGWindowID.
  * There is no way to do this, without caching AXUIElementRef references.
- * Here we perform a lookup of macos_window structs. */
+ * Here we perform a lookup of macos_window structs.
+ */
 internal macos_window *
 GetWindowByID(uint32_t Id)
 {
@@ -39,8 +41,10 @@ GetWindowByID(uint32_t Id)
     return Result;
 }
 
-/* NOTE(koekeishiya): Caller is responsible for making sure that the window is not a dupe.
- * If the window can not be added to the collection, caller is responsible for memory. */
+/*
+ * NOTE(koekeishiya): Caller is responsible for making sure that the window is not a dupe.
+ * If the window can not be added to the collection, caller is responsible for memory.
+ */
 bool AddWindowToCollection(macos_window *Window)
 {
     bool Result = true;
@@ -98,8 +102,10 @@ void UpdateWindowTitle(macos_window *Window)
     Window->Name = AXLibGetWindowTitle(Window->Ref);
 }
 
-/* NOTE(koekeishiya): Construct macos_windows for an application and add them to our window-collection.
- * If a window is not added to our collection for any reason, we release the memory. */
+/*
+ * NOTE(koekeishiya): Construct macos_windows for an application and add them to our window-collection.
+ * If a window is not added to our collection for any reason, we release the memory.
+ */
 internal void
 AddApplicationWindowsToCollection(macos_application *Application)
 {
@@ -158,7 +164,8 @@ OBSERVER_CALLBACK(ApplicationCallback)
         macos_window *Window = AXLibConstructWindow(Application, Element);
         ConstructEvent(ChunkWM_WindowCreated, Window);
     } else if (CFEqual(Notification, kAXUIElementDestroyedNotification)) {
-        /* NOTE(koekeishiya): If this is an actual window, it should be associated
+        /*
+         * NOTE(koekeishiya): If this is an actual window, it should be associated
          * with a valid CGWindowID. HOWEVER, because the window in question has been
          * destroyed. We are unable to utilize this window reference with the AX API.
          *
@@ -175,7 +182,8 @@ OBSERVER_CALLBACK(ApplicationCallback)
          *      By doing this, we can pass our own data containing the information necessary
          *      to properly identify and report which window was destroyed.
          *
-         * At the very least, we need to know the windowid of the destroyed window. */
+         * At the very least, we need to know the windowid of the destroyed window.
+         */
 
         /* NOTE(koekeishiya): Option 'b' has been implemented. Leave note for future reference. */
 
@@ -187,12 +195,16 @@ OBSERVER_CALLBACK(ApplicationCallback)
             ConstructEvent(ChunkWM_WindowDestroyed, Window);
         }
     } else if (CFEqual(Notification, kAXFocusedWindowChangedNotification)) {
-        /* NOTE(koekeishiya): We have to make sure that we can actually interact with the window.
+        /*
+         * NOTE(koekeishiya): We have to make sure that we can actually interact with the window.
          * When a window is created, we receive this notification before kAXWindowCreatedNotification.
-         * When a window is deminimized, we receive this notification before the window is visible. */
+         * When a window is deminimized, we receive this notification before the window is visible.
+         */
 
-        /* NOTE(koekeishiya): To achieve the expected behaviour, we emit a 'ChunkWM_WindowFocused' event
-         * after processing 'ChunkWM_WindowCreated' and 'ChunkWM_WindowDeminimized' events. */
+        /*
+         * NOTE(koekeishiya): To achieve the expected behaviour, we emit a 'ChunkWM_WindowFocused' event
+         * after processing 'ChunkWM_WindowCreated' and 'ChunkWM_WindowDeminimized' events.
+         */
 
         uint32_t WindowId = AXLibGetWindowID(Element);
         macos_window *Window = GetWindowByID(WindowId);
@@ -212,19 +224,23 @@ OBSERVER_CALLBACK(ApplicationCallback)
             ConstructEvent(ChunkWM_WindowResized, Window);
         }
     } else if (CFEqual(Notification, kAXWindowMiniaturizedNotification)) {
-        /* NOTE(koekeishiya): We cannot register this notification globally for an application.
+        /*
+         * NOTE(koekeishiya): We cannot register this notification globally for an application.
          * The AXUIElementRef 'Element' we receive cannot be used with 'AXLibGetWindowID', because
          * a window that is minimized often return a CGWindowID of 0. We have to register this
-         * notification for every window such that we can pass our own cached window-information. */
+         * notification for every window such that we can pass our own cached window-information.
+         */
 
         macos_window *Window = (macos_window *) Reference;
         ConstructEvent(ChunkWM_WindowMinimized, Window);
     } else if (CFEqual(Notification, kAXWindowDeminiaturizedNotification)) {
-        /* NOTE(koekeishiya): when a deminimized window pulls the user to the space of that window,
+        /*
+         * NOTE(koekeishiya): when a deminimized window pulls the user to the space of that window,
          * we receive this notification before 'didActiveSpaceChangeNotification'.
          *
          * This does NOT happen if a window is deminimized by cmd-clicking the window. The window
-         * will be deminimized on the currently active space, and no space change occur. */
+         * will be deminimized on the currently active space, and no space change occur.
+         */
 
         macos_window *Window = (macos_window *) Reference;
         ConstructEvent(ChunkWM_WindowDeminimized, Window);

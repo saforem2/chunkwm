@@ -29,9 +29,6 @@ enum CGSSpaceSelector
 
 typedef int CGSSpaceID;
 typedef int CGSSpaceType;
-/* NOTE(koekeishiya):
- * CGDirectDisplayID   typedef  -> uint32_t
- * */
 
 struct macos_space
 {

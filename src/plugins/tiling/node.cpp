@@ -401,9 +401,11 @@ node *GetFirstMinDepthLeafNode(node *Tree)
         Queue.push(Node->Right);
     }
 
-    /* NOTE(koekeishiya): Unreachable return;
+    /*
+     * NOTE(koekeishiya): Unreachable return;
      * the binary-tree is always proper.
-     * Silence compiler warning.. */
+     * Silence compiler warning..
+     */
     return NULL;
 }
 

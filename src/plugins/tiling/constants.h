@@ -42,8 +42,10 @@
 #define CVAR_PRE_BORDER_WIDTH       "preselect_border_width"
 #define CVAR_PRE_BORDER_RADIUS      "preselect_border_radius"
 
-/* NOTE(koekeishiya): The following cvars requires extended dock
- * functionality provided by chwm-sa to work. */
+/*
+ * NOTE(koekeishiya): The following cvars requires extended dock
+ * functionality provided by chwm-sa to work.
+ */
 
 #define CVAR_WINDOW_FLOAT_TOPMOST   "window_float_topmost"
 #define CVAR_WINDOW_FADE_INACTIVE   "window_fade_inactive"

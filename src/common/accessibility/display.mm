@@ -239,9 +239,11 @@ CFStringRef AXLibGetDisplayIdentifierForMainDisplay()
     return AXLibGetDisplayIdentifierFromArrangement(0);
 }
 
-/* NOTE(koekeishiya): Caller is responsible for calling CFRelease.
+/*
+ * NOTE(koekeishiya): Caller is responsible for calling CFRelease.
  * This function appears to always return a valid identifier!
- * Could this potentially return NULL if an invalid CGSSpaceID is passed ? */
+ * Could this potentially return NULL if an invalid CGSSpaceID is passed ?
+ */
 CFStringRef AXLibGetDisplayIdentifierFromSpace(CGSSpaceID SpaceId)
 {
     return CGSCopyManagedDisplayForSpace(CGSDefaultConnection, SpaceId);
@@ -322,8 +324,10 @@ CGSSpaceID AXLibActiveCGSSpaceID(CFStringRef DisplayRef)
     return CGSManagedDisplayGetCurrentSpace(CGSDefaultConnection, DisplayRef);
 }
 
-/* NOTE(koekeishiya): Returns a macos_space representing the active space
-for the given display. Caller is responsible for calling 'AXLibDestroySpace()'. */
+/*
+ * NOTE(koekeishiya): Returns a macos_space representing the active space
+ * for the given display. Caller is responsible for calling 'AXLibDestroySpace()'.
+ */
 macos_space *AXLibActiveSpace(CFStringRef DisplayRef)
 {
     ASSERT(DisplayRef);
@@ -336,9 +340,11 @@ macos_space *AXLibActiveSpace(CFStringRef DisplayRef)
     return Space;
 }
 
-/* NOTE(koekeishiya): Construct a macos_space representing the active space for the
+/*
+ * NOTE(koekeishiya): Construct a macos_space representing the active space for the
  * display that currently holds the window that accepts key-input.
- * Caller is responsible for calling 'AXLibDestroySpace()'. */
+ * Caller is responsible for calling 'AXLibDestroySpace()'.
+ */
 bool AXLibActiveSpace(macos_space **Space)
 {
     bool Result = false;
@@ -370,13 +376,15 @@ void AXLibDestroySpace(macos_space *Space)
     free(Space);
 }
 
-/* NOTE(koekeishiya): Translate a CGSSpaceID to the index shown in mission control. Also
+/*
+ * NOTE(koekeishiya): Translate a CGSSpaceID to the index shown in mission control. Also
  * assign the arrangement index of the display that the space belongs to.
  *
  * It is safe to pass NULL for OutArrangement and OutDesktopId in case this information
  * is not of importance to the caller.
  *
- * The function returns a bool specifying if the CGSSpaceID was properly translated. */
+ * The function returns a bool specifying if the CGSSpaceID was properly translated.
+ */
 bool AXLibCGSSpaceIDToDesktopID(CGSSpaceID SpaceId, unsigned *OutArrangement, unsigned *OutDesktopId)
 {
     bool Result = false;
@@ -419,13 +427,15 @@ End:
     return Result;
 }
 
-/* NOTE(koekeishiya): Translate the space index shown in mission control to a CGSSpaceID.
+/*
+ * NOTE(koekeishiya): Translate the space index shown in mission control to a CGSSpaceID.
  * Also assign the arrangement index of the display that the space belongs to.
  *
  * It is safe to pass NULL for OutArrangement and OutSpaceId in case this information
  * is not of importance to the caller.
  *
- * The function returns a bool specifying if the index was properly translated. */
+ * The function returns a bool specifying if the index was properly translated.
+ */
 bool AXLibCGSSpaceIDFromDesktopID(unsigned DesktopId, unsigned *OutArrangement, CGSSpaceID *OutSpaceId)
 {
     bool Result = false;
@@ -529,7 +539,8 @@ int *AXLibSpacesForDisplay(CFStringRef DisplayRef, int *Count)
     return Result;
 }
 
-/* NOTE(koekeishiya): Returns a list of macos_space * structs for all spaces on the given display.
+/*
+ * NOTE(koekeishiya): Returns a list of macos_space * structs for all spaces on the given display.
  * The list is terminated by a null-pointer and can be iterated in the following way:
  *
  *     macos_space *Space, **List, **Spaces;
@@ -566,7 +577,8 @@ macos_space **AXLibSpacesForDisplay(CFStringRef DisplayRef)
     return Result;
 }
 
-/* NOTE(koekeishiya): Returns a list of macos_space * structs that show this window.
+/*
+ * NOTE(koekeishiya): Returns a list of macos_space * structs that show this window.
  * The list is terminated by a null-pointer and can be iterated in the following way:
  *
  *     macos_space *Space, **List, **Spaces;
@@ -664,9 +676,11 @@ macos_dock_orientation AXLibGetDockOrientation()
     return Orientation;
 }
 
-/* NOTE(koekeishiya): CoreDock API returns a float in the range 0.0 -> 1.0
+/*
+ * NOTE(koekeishiya): CoreDock API returns a float in the range 0.0 -> 1.0
  * the minimum size of the Dock is 16 and the maximum size is 128. We translate
- * our value back into this number range. */
+ * our value back into this number range.
+ */
 #define DOCK_MAX_TILESIZE 128
 #define DOCK_MIN_TILESIZE  16
 size_t AXLibGetDockTileSize()

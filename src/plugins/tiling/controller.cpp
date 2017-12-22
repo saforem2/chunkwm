@@ -775,8 +775,10 @@ ToggleWindowFullscreenZoom()
             Node->Parent->Zoom = NULL;
         }
 
-        /* NOTE(koekeishiya): Some other window is in
-         * fullscreen zoom, unzoom the existing window. */
+        /*
+         * NOTE(koekeishiya): Some other window is in
+         * fullscreen zoom, unzoom the existing window.
+         */
         if (VirtualSpace->Tree->Zoom) {
             ResizeWindowToRegionSize(VirtualSpace->Tree->Zoom);
         }
@@ -833,8 +835,10 @@ ToggleWindowParentZoom()
             VirtualSpace->Tree->Zoom = NULL;
         }
 
-        /* NOTE(koekeishiya): Some other window is in
-         * parent zoom, unzoom the existing window. */
+        /*
+         * NOTE(koekeishiya): Some other window is in
+         * parent zoom, unzoom the existing window.
+         */
         if (Node->Parent->Zoom) {
             ResizeWindowToRegionSize(Node->Parent->Zoom);
         }
@@ -1495,8 +1499,10 @@ bool SendWindowToDesktop(macos_window *Window, char *Op)
         goto space_free;
     }
 
-    /* NOTE(koekeishiya): If the destination space is on a different monitor,
-     * we need to normalize the window x and y position, or it will be out of bounds. */
+    /*
+     * NOTE(koekeishiya): If the destination space is on a different monitor,
+     * we need to normalize the window x and y position, or it will be out of bounds.
+     */
     SourceMonitorRef = AXLibGetDisplayIdentifierFromSpace(Space->Id);
     ASSERT(SourceMonitorRef);
 

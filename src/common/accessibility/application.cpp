@@ -12,7 +12,7 @@
  * common/misc/carbon.cpp
  * common/misc/workspace.mm
  *
- * */
+ */
 
 enum macos_application_notifications
 {
@@ -95,8 +95,10 @@ bool AXLibAddApplicationObserver(macos_application *Application, ObserverCallbac
     return Result;
 }
 
-/* NOTE(koekeishiya): Passing 'Process_Policy_Regular | Process_Policy_LSUIElement'
- * will filter out any process marked as background-only. */
+/*
+ * NOTE(koekeishiya): Passing 'Process_Policy_Regular | Process_Policy_LSUIElement'
+ * will filter out any process marked as background-only.
+ */
 std::vector<macos_application *> AXLibRunningProcesses(uint32_t ProcessFlags)
 {
     std::vector<macos_application *> Applications;
@@ -135,8 +137,10 @@ std::vector<macos_application *> AXLibRunningProcesses(uint32_t ProcessFlags)
     return Applications;
 }
 
-/* NOTE(koekeishiya): Wrap the frontmost application inside a macos_application struct.
- * The caller is responsible for calling 'AXLibDestroyApplication()'. */
+/*
+ * NOTE(koekeishiya): Wrap the frontmost application inside a macos_application struct.
+ * The caller is responsible for calling 'AXLibDestroyApplication()'.
+ */
 macos_application *AXLibConstructFocusedApplication()
 {
     pid_t PID;

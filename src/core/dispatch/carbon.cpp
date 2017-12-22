@@ -32,7 +32,7 @@ typedef std::unordered_map<ProcessSerialNumber, carbon_application_details *, ps
  * NOTE(koekeishiya): By the time our application has received the kEventAppTerminated event,
  * the terminating application has already quit. Thus we can't get information about that
  * application using GetProcessInformation and have to cache the information in advance.
- * */
+ */
 internal carbon_application_cache CarbonApplicationCache;
 
 internal carbon_application_details *
@@ -64,7 +64,7 @@ PrintCarbonApplicationDetails(carbon_application_details *Info)
  * NOTE(koekeishiya): We have to cache information about processes that have
  * already been launched before us, such that we can properly perform our lookup
  * and report when any of these applications are terminated.
- * */
+ */
 internal void
 CacheRunningProcesses()
 {

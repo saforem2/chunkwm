@@ -345,9 +345,10 @@ RightMouseDragged()
                 ResizeState.Vertical->Ratio = Ratio;
                 ResizeNodeRegion(ResizeState.Vertical, ResizeState.Space, ResizeState.VirtualSpace);
 
-                /* NOTE(koekeishiya): Enable to perform live resizing !!!
-                ApplyNodeRegion(ResizeState.Vertical, ResizeState.VirtualSpace->Mode);
-                */
+                /*
+                 * NOTE(koekeishiya): Enable to perform live resizing !!!
+                 * ApplyNodeRegion(ResizeState.Vertical, ResizeState.VirtualSpace->Mode);
+                 */
             }
         }
 
@@ -368,8 +369,8 @@ RightMouseDragged()
                 ResizeNodeRegion(ResizeState.Horizontal, ResizeState.Space, ResizeState.VirtualSpace);
 
                 /* NOTE(koekeishiya): Enable to perform live resizing !!!
-                ApplyNodeRegion(ResizeState.Horizontal, ResizeState.VirtualSpace->Mode);
-                */
+                 * ApplyNodeRegion(ResizeState.Horizontal, ResizeState.VirtualSpace->Mode);
+                 */
             }
         }
 

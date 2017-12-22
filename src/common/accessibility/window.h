@@ -55,11 +55,6 @@ bool AXLibWindowHasRole(macos_window *Window, CFTypeRef Role);
 
 macos_window **AXLibWindowListForApplication(macos_application *Application);
 
-/* NOTE(koekeishiya): This is not a thing for now.
- * bool AXLibIsWindowCustom(macos_window *Window);
- * bool AXLibWindowHasCustomRole(macos_window *Window, CFTypeRef Role);
- * */
-
 inline void
 AXLibAddFlags(macos_window *Window, uint32_t Flag)
 {

@@ -122,9 +122,11 @@ FadeAllWindows(float Value, float Duration)
     }
 }
 
-/* NOTE(koekeishiya): We need a way to retrieve AXUIElementRef from a CGWindowID.
+/*
+ * NOTE(koekeishiya): We need a way to retrieve AXUIElementRef from a CGWindowID.
  * There is no way to do this, without caching AXUIElementRef references.
- * Here we perform a lookup of macos_window structs. */
+ * Here we perform a lookup of macos_window structs.
+ */
 internal inline macos_window *
 _GetWindowByID(uint32_t Id)
 {
@@ -327,9 +329,11 @@ void TileWindowOnSpace(macos_window *Window, macos_space *Space, virtual_space *
         goto out;
     }
 
-    /* NOTE(koekeishiya): This function appears to always return a valid identifier!
+    /*
+     * NOTE(koekeishiya): This function appears to always return a valid identifier!
      * Could this potentially return NULL if an invalid CGSSpaceID is passed ?
-     * The function returns NULL if "Displays have separate spaces" is disabled !!! */
+     * The function returns NULL if "Displays have separate spaces" is disabled !!!
+     */
     DisplayRef = AXLibGetDisplayIdentifierFromSpace(Space->Id);
     ASSERT(DisplayRef);
 
@@ -483,15 +487,19 @@ UntileWindowFromSpace(uint32_t WindowId, macos_space *Space, virtual_space *Virt
     }
 
     if (VirtualSpace->Mode == Virtual_Space_Bsp) {
-        /* NOTE(koekeishiya): The window was in fullscreen-zoom.
-         * We need to null the pointer to prevent a potential bug. */
+        /*
+         * NOTE(koekeishiya): The window was in fullscreen-zoom.
+         * We need to null the pointer to prevent a potential bug.
+         */
         if (VirtualSpace->Tree->Zoom == Node) {
             VirtualSpace->Tree->Zoom = NULL;
         }
 
         if (Node->Parent && Node->Parent->Left && Node->Parent->Right) {
-            /* NOTE(koekeishiya): The window was in parent-zoom.
-             * We need to null the pointer to prevent a potential bug. */
+            /*
+             * NOTE(koekeishiya): The window was in parent-zoom.
+             * We need to null the pointer to prevent a potential bug.
+             */
             if (Node->Parent->Zoom == Node) {
                 Node->Parent->Zoom = NULL;
             }
@@ -514,8 +522,10 @@ UntileWindowFromSpace(uint32_t WindowId, macos_space *Space, virtual_space *Virt
                 CreateNodeRegionRecursive(NewLeaf, true, Space, VirtualSpace);
             }
 
-            /* NOTE(koekeishiya): Re-zoom window after spawned window closes.
-             * see reference: https://github.com/koekeishiya/chunkwm/issues/20 */
+            /*
+             * NOTE(koekeishiya): Re-zoom window after spawned window closes.
+             * see reference: https://github.com/koekeishiya/chunkwm/issues/20
+             */
             ApplyNodeRegion(NewLeaf, VirtualSpace->Mode);
             if (NewLeaf->Parent && NewLeaf->Parent->Zoom) {
                 ResizeWindowToExternalRegionSize(NewLeaf->Parent->Zoom,
@@ -608,9 +618,11 @@ std::vector<uint32_t> GetAllVisibleWindowsForSpace(macos_space *Space, bool Incl
         uint32_t WindowId = WindowList[Index];
 
         if (!AXLibSpaceHasWindow(Space->Id, WindowId)) {
-            /* NOTE(koekeishiya): The onscreenwindowlist can contain windowids
+            /*
+             * NOTE(koekeishiya): The onscreenwindowlist can contain windowids
              * that we do not care about. Check that the window in question is
-             * in our cache and on the correct monitor. */
+             * in our cache and on the correct monitor.
+             */
             continue;
         }
 
@@ -721,10 +733,12 @@ GetAllWindowsToRemoveFromTree(std::vector<uint32_t> &VisibleWindows, std::vector
     return Windows;
 }
 
-/* NOTE(koekeishiya): The caller is responsible for making sure that the space
+/*
+ * NOTE(koekeishiya): The caller is responsible for making sure that the space
  * passed to this function is of type kCGSSpaceUser, and that the virtual space
  * is set to a tiling mode, and that an existing tree is not present. The window
- * list must also be non-empty !!! */
+ * list must also be non-empty !!!
+ */
 internal void
 CreateWindowTreeForSpaceWithWindows(macos_space *Space, virtual_space *VirtualSpace, std::vector<uint32_t> Windows)
 {
@@ -755,9 +769,11 @@ CreateWindowTreeForSpaceWithWindows(macos_space *Space, virtual_space *VirtualSp
     ApplyNodeRegion(VirtualSpace->Tree, VirtualSpace->Mode);
 }
 
-/* NOTE(koekeishiya): The caller is responsible for making sure that the space
+/*
+ * NOTE(koekeishiya): The caller is responsible for making sure that the space
  * passed to this function is of type kCGSSpaceUser, and that the virtual space
- * is set to bsp tiling mode. The window list must also be non-empty !!! */
+ * is set to bsp tiling mode. The window list must also be non-empty !!!
+ */
 internal void
 CreateDeserializedWindowTreeForSpaceWithWindows(macos_space *Space, virtual_space *VirtualSpace, std::vector<uint32_t> Windows)
 {
@@ -848,9 +864,11 @@ void CreateWindowTree()
     bool Success = AXLibActiveSpace(&Space);
     ASSERT(Success);
 
-    /* NOTE(koekeishiya): This function appears to always return a valid identifier!
+    /*
+     * NOTE(koekeishiya): This function appears to always return a valid identifier!
      * Could this potentially return NULL if an invalid CGSSpaceID is passed ?
-     * The function returns NULL if "Displays have separate spaces" is disabled !!! */
+     * The function returns NULL if "Displays have separate spaces" is disabled !!!
+     */
     CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromSpace(Space->Id);
     ASSERT(DisplayRef);
 
@@ -873,10 +891,12 @@ space_free:
     CFRelease(DisplayRef);
 }
 
-/* NOTE(koekeishiya): The caller is responsible for making sure that the space
+/*
+ * NOTE(koekeishiya): The caller is responsible for making sure that the space
  * passed to this function is of type kCGSSpaceUser, and that the virtual space
  * is set to a tiling mode, and that an existing tree is present. The window list
- * must also be non-empty !!! */
+ * must also be non-empty !!!
+ */
 internal void
 RebalanceWindowTreeForSpaceWithWindows(macos_space *Space, virtual_space *VirtualSpace, std::vector<uint32_t> Windows)
 {
@@ -913,14 +933,15 @@ RebalanceWindowTreeForSpace(macos_space *Space, virtual_space *VirtualSpace)
 
     Windows = GetAllVisibleWindowsForSpace(Space);
 
-    /* NOTE(koekeishiya): We need to rebalacne our window-tree even though
+    /*
+     * NOTE(koekeishiya): We need to rebalacne our window-tree even though
      * there are no visible windows left on this desktop.
      *
      * In short; When we quit the last application we trigger an Application_Terminated
      * event, and this event relies on RebalanceWindowTree to properly restore the window.
      *
      * See https://github.com/koekeishiya/chunkwm/issues/69 for history.
-     * */
+     */
 
     RebalanceWindowTreeForSpaceWithWindows(Space, VirtualSpace, Windows);
 }
@@ -932,9 +953,11 @@ RebalanceWindowTree()
     bool Success = AXLibActiveSpace(&Space);
     ASSERT(Success);
 
-    /* NOTE(koekeishiya): This function appears to always return a valid identifier!
+    /*
+     * NOTE(koekeishiya): This function appears to always return a valid identifier!
      * Could this potentially return NULL if an invalid CGSSpaceID is passed ?
-     * The function returns NULL if "Displays have separate spaces" is disabled !!! */
+     * The function returns NULL if "Displays have separate spaces" is disabled !!!
+     */
     CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromSpace(Space->Id);
     ASSERT(DisplayRef);
 
@@ -1357,7 +1380,7 @@ ChunkwmDaemonCommandHandler(void *Data)
  * parameter: const char *Node
  * parameter: void *Data
  * return: bool
- * */
+ */
 PLUGIN_MAIN_FUNC(PluginMain)
 {
     if (StringEquals(Node, "chunkwm_export_application_launched")) {
@@ -1482,8 +1505,10 @@ Init(chunkwm_api ChunkwmAPI)
     CreateCVar(CVAR_PRE_BORDER_WIDTH, 4);
     CreateCVar(CVAR_PRE_BORDER_RADIUS, 4);
 
-    /* NOTE(koekeishiya): The following cvars requires extended dock
-     * functionality provided by chwm-sa to work. */
+    /*
+     * NOTE(koekeishiya): The following cvars requires extended dock
+     * functionality provided by chwm-sa to work.
+     */
 
     CreateCVar(CVAR_WINDOW_FLOAT_TOPMOST, 0);
     CreateCVar(CVAR_WINDOW_FADE_INACTIVE, 0);

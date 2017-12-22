@@ -255,19 +255,23 @@ bool UnloadPlugin(const char *Absolutepath, const char *Filename)
         Result = dlclose(LoadedPlugin->Handle) == 0;
 
 #if 0
-        /* NOTE(koekeishiya): The objective-c runtime calls dlopen
+        /*
+         * NOTE(koekeishiya): The objective-c runtime calls dlopen
          * and increments the reference count of the handle.
-         * We decrement the counter to 0 to unload the library. */
+         * We decrement the counter to 0 to unload the library.
+         */
         while (dlopen(Absolutepath, RTLD_NOLOAD)) {
             dlclose(LoadedPlugin->Handle);
             dlclose(LoadedPlugin->Handle);
         }
 
-        // NOTE(koekeishiya): This workaround no longer works on MacOS Sierra.
-        // Any plugin that uses the objective-c runtime cannot be dynamically reloaded !!!
-        //
-        // Unloading and reloading the plugin will still work properly, however, it cannot
-        // be used to load NEW code, if the plugin has been modified and recompiled !!!
+        /*
+         * NOTE(koekeishiya): This workaround no longer works on MacOS Sierra.
+         * Any plugin that uses the objective-c runtime cannot be dynamically reloaded !!!
+         *
+         * Unloading and reloading the plugin will still work properly, however, it cannot
+         * be used to load NEW code, if the plugin has been modified and recompiled !!!
+         */
 #endif
 
         printf("chunkwm: plugin '%s' unloaded!\n", Filename);
