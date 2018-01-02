@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include <stdint.h>
 
+#include <ft2build.h>
+#include FT_FREETYPE_H
+
 #include <Carbon/Carbon.h>
 #include <OpenGL/CGLTypes.h>
 #include <OpenGL/CGLCurrent.h>
@@ -10,7 +13,6 @@
 #include <pthread.h>
 
 #include "../../api/plugin_api.h"
-#include "../../common/accessibility/application.h"
 
 #include "cgl_window.h"
 #include "cgl_window.c"
@@ -20,103 +22,148 @@
 
 #define internal static
 
-internal const char *PluginName = "bar";
-internal const char *PluginVersion = "0.0.1";
-internal chunkwm_api API;
+internal const char *plugin_name = "bar";
+internal const char *plugin_version = "0.0.1";
+internal chunkwm_api api;
 
-internal struct cgl_window Window;
-internal pthread_t BarThread;
-internal bool Quit;
+internal struct cgl_window window;
+internal pthread_t bar_thread;
+internal bool quit;
 
-const char *VertexShaderCode =
+internal FT_Library ft;
+internal FT_Face face;
+
+const char *vertex_shader_code =
     "#version 330 core\n"
-    "layout (location = 0) in vec3 aPos;\n"
-    "layout (location = 1) in vec3 aColor;\n"
-    "out vec3 oColor;\n"
-    "void main()\n"
-    "{\n"
-    "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
-    "   oColor = aColor;\n"
+    "layout (location = 0) in vec4 coord;\n"
+    "out vec2 tex_coord;\n"
+    "void main(void) {\n"
+    "  gl_Position = vec4(coord.xy, 0, 1);\n"
+    "  tex_coord = coord.zw;\n"
     "}\n\0";
 
-const char *FragmentShaderCode =
+const char *fragment_shader_code =
     "#version 330 core\n"
-    "out vec4 FragColor;\n"
-    "in vec3 oColor;\n"
-    "void main()\n"
-    "{\n"
-    "   FragColor = vec4(oColor, 1.0f);\n"
+    "in vec2 tex_coord;\n"
+    "out vec4 frag_color;\n"
+    "uniform sampler2D tex;\n"
+    "uniform vec4 color;\n"
+    "void main(void) {\n"
+    "  frag_color = vec4(1, 1, 1, texture(tex, tex_coord).r) * color;\n"
     "}\n\0";
+
+void render_text(const char *text, float x, float y, float sx, float sy, GLfloat *color) {
+    for (const char *p = text; *p; p++) {
+        if (FT_Load_Char(face, *p, FT_LOAD_RENDER)) {
+            continue;
+        }
+
+        glTexImage2D(GL_TEXTURE_2D,
+                     0,
+                     GL_RED,
+                     face->glyph->bitmap.width,
+                     face->glyph->bitmap.rows,
+                     0,
+                     GL_RED,
+                     GL_UNSIGNED_BYTE,
+                     face->glyph->bitmap.buffer);
+
+        float x2 = x + face->glyph->bitmap_left * sx;
+        float y2 = -y - face->glyph->bitmap_top * sy;
+        float w = face->glyph->bitmap.width * sx;
+        float h = face->glyph->bitmap.rows * sy;
+
+        GLfloat box[4][4] = {
+            {x2, -y2, 0, 0},
+            {x2 + w, -y2, 1, 0},
+            {x2, -y2 - h, 0, 1},
+            {x2 + w, -y2 - h, 1, 1},
+        };
+
+        glUniform4fv(1, 1, color);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(box), box, GL_DYNAMIC_DRAW);
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+        x += (face->glyph->advance.x / 64) * sx;
+        y += (face->glyph->advance.y / 64) * sy;
+    }
+}
 
 void *BarMainThreadProcedure(void*)
 {
-    struct shader ShaderProgram;
+    CGLError cgl_err;
+    GLenum gl_err;
 
-    CGLError CGlErr;
-    GLenum GlErr;
+    GLint cgl_major, cgl_minor;
+    GLuint vao, vbo, tex;
 
-    GLint CGLMajor, CGLMinor;
-    GLuint VAO, VBO;
+    struct shader text_shader;
+    GLfloat color1[4] = {0.75, 0.75, 0.30, 1};
+    GLfloat color2[4] = {0.57, 0.79, 0.79, 1};
 
-    float Vertices[] = {
-        -0.5f, -0.5f, 0.0f, 0.2f, 1.0f, 0.2f,
-         0.5f, -0.5f, 0.0f, 1.0f, 0.5f, 0.2f,
-         0.0f,  0.5f, 0.0f, 0.2f, 0.2f, 1.0f
-    };
+    float sx = 2.0 / window.width;
+    float sy = 2.0 / window.height;
 
-    cgl_window_make_current(&Window);
-
-    CGLGetVersion(&CGLMajor, &CGLMinor);
+    cgl_window_make_current(&window);
+    CGLGetVersion(&cgl_major, &cgl_minor);
     printf("CGL Version: %d.%d\nOpenGL Version: %s\n",
-           CGLMajor, CGLMinor, glGetString(GL_VERSION));
+           cgl_major, cgl_minor, glGetString(GL_VERSION));
 
     // NOTE(koekeishiya): wireframe mode
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-    shader_init_buffer(&ShaderProgram, VertexShaderCode, FragmentShaderCode);
+    shader_init_buffer(&text_shader, vertex_shader_code, fragment_shader_code);
 
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
-    glBindVertexArray(VAO);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(Vertices), Vertices, GL_STATIC_DRAW);
+    glActiveTexture(GL_TEXTURE0);
+    glGenTextures(1, &tex);
+    glBindTexture(GL_TEXTURE_2D, tex);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *) 0);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+    glGenVertexArrays(1, &vao);
+    glGenBuffers(1, &vbo);
+
+    glBindVertexArray(vao);
     glEnableVertexAttribArray(0);
-
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *) (3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
-
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, 0);
     glBindVertexArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-    while(!Quit)
-    {
+    while (!quit) {
         glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        shader_enable(&ShaderProgram);
-        glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        shader_enable(&text_shader);
+        glBindVertexArray(vao);
+
+        render_text("The Quick Brown Fox Jumps Over The Lazy Dog",
+                    -1 + 8 * sx, 1 - 50 * sy, sx, sy, color1);
+        render_text("Hello, Sailor!",
+                    -1 + 8.5 * sx, 1 - 100.5 * sy, sx, sy, color2);
+
         glBindVertexArray(0);
         shader_disable();
 
-        if((CGlErr = cgl_window_flush(&Window)) != kCGLNoError)
-        {
-            printf("CGL Error: %d\n", CGlErr);
+        if ((cgl_err = cgl_window_flush(&window)) != kCGLNoError) {
+            printf("CGL Error: %d\n", cgl_err);
         }
 
-        if((GlErr = glGetError()) != GL_NO_ERROR)
-        {
-            printf("OpenGL Error: %d\n", GlErr);
+        if ((gl_err = glGetError()) != GL_NO_ERROR) {
+            printf("OpenGL Error: %d\n", gl_err);
         }
 
         sleep(1);
     }
 
-    glDeleteVertexArrays(1, &VAO);
-    glDeleteBuffers(1, &VBO);
+    glDeleteVertexArrays(1, &vao);
+    glDeleteBuffers(1, &vbo);
 
     return NULL;
 }
@@ -128,25 +175,36 @@ PLUGIN_MAIN_FUNC(PluginMain)
 
 PLUGIN_BOOL_FUNC(PluginInit)
 {
-    API = ChunkwmAPI;
+    api = ChunkwmAPI;
 
-    if(!cgl_window_init(&Window, 0, 22, 500, 500, kCGMaximumWindowLevelKey))
-    {
+    if (!cgl_window_init(&window, 0, 22, 500, 500, kCGMaximumWindowLevelKey)) {
         return false;
     }
 
-    pthread_create(&BarThread, NULL, &BarMainThreadProcedure, NULL);
+    if (FT_Init_FreeType(&ft)) {
+        fprintf(stderr, "Could not init freetype library\n");
+        return false;
+    }
+
+    if (FT_New_Face(ft, "/Library/Fonts/Arial.ttf", 0, &face)) {
+        fprintf(stderr, "Could not open font\n");
+        return false;
+    }
+
+    FT_Set_Pixel_Sizes(face, 0, 18);
+
+    pthread_create(&bar_thread, NULL, &BarMainThreadProcedure, NULL);
     return true;
 }
 
 PLUGIN_VOID_FUNC(PluginDeInit)
 {
-    Quit = true;
-    pthread_join(BarThread, NULL);
-    cgl_window_destroy(&Window);
+    quit = true;
+    pthread_join(bar_thread, NULL);
+    cgl_window_destroy(&window);
 }
 
 CHUNKWM_PLUGIN_VTABLE(PluginInit, PluginDeInit, PluginMain)
-chunkwm_plugin_export Subscriptions[] = { };
-CHUNKWM_PLUGIN_SUBSCRIBE(Subscriptions)
-CHUNKWM_PLUGIN(PluginName, PluginVersion);
+chunkwm_plugin_export subscriptions[] = { };
+CHUNKWM_PLUGIN_SUBSCRIBE(subscriptions)
+CHUNKWM_PLUGIN(plugin_name, plugin_version);
