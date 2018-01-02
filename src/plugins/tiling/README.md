@@ -147,7 +147,7 @@
 
     chunkc set mouse_modifier                <option>
     <option>: fn | shift | alt | cmd | ctrl
-    desc: arbitrary combination allowed, separate by whitespace
+    desc: arbitrary combination allowed (use whitespace as delimeter)
 
 ##### the next window attempted tiled will be made floating instead
 
