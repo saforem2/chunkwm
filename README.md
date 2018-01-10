@@ -26,6 +26,17 @@ Older versions may or may not be compatible and will not be officially supported
 
 Click [here](https://github.com/koekeishiya/chunkwm/issues/21) for more screenshots.
 
+## Beginner's Guide
+
+The instructions that follow further in the README can be perceived as hard to understand for people that are new to the concept
+of a tiling window manager and the client -> server architecture that **chunkwm** uses.
+
+[shihanng](https://github.com/shihanng) has written a guide that is more friendly to beginners; check it out [here](http://hde-advent-2017.hatenadiary.jp/entry/2017/12/24/000000).
+
+There is also a wiki page explaining the interaction of chunkwm & skhd and how to get started [here](https://github.com/koekeishiya/chunkwm/wiki/Instructions:-chunkwm-with-\(s\)khd-on-macOS-High-Sierra)
+
+I highly recommend coming back and reading the later sections of this README once you have become more comfortable with this idea.
+
 ## Install
 
 The installation process consists of multiple steps, due to how **chunkwm** is structured.
