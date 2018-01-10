@@ -13,6 +13,10 @@
 #include <pthread.h>
 
 #include "../../api/plugin_api.h"
+#include "../../common/accessibility/application.h"
+#include "../../common/accessibility/window.h"
+#include "../../common/accessibility/window.cpp"
+#include "../../common/accessibility/element.cpp"
 
 #include "cgl_window.h"
 #include "cgl_window.c"
@@ -89,6 +93,7 @@ void render_text(const char *text, float x, float y, float sx, float sy, GLfloat
     }
 }
 
+internal char *text;
 void *BarMainThreadProcedure(void*)
 {
     CGLError cgl_err;
@@ -143,10 +148,11 @@ void *BarMainThreadProcedure(void*)
         shader_enable(&text_shader);
         glBindVertexArray(vao);
 
-        render_text("The Quick Brown Fox Jumps Over The Lazy Dog",
-                    -1 + 8 * sx, 1 - 50 * sy, sx, sy, color1);
-        render_text("Hello, Sailor!",
-                    -1 + 8.5 * sx, 1 - 100.5 * sy, sx, sy, color2);
+        // char text[256] = {};
+        // snprintf(text, sizeof(text), "sx = %.2f and sy = %.2f å", sx, sy);
+        if (text) {
+            render_text(text, -0.95f, -0.3, sx, sy, color2);
+        }
 
         glBindVertexArray(0);
         shader_disable();
@@ -170,6 +176,15 @@ void *BarMainThreadProcedure(void*)
 
 PLUGIN_MAIN_FUNC(PluginMain)
 {
+    if (strcmp(Node, "chunkwm_export_application_activated") == 0) {
+        macos_application *application = (macos_application *) Data;
+        text = strdup(application->Name);
+        return true;
+    } else if (strcmp(Node, "chunkwm_export_window_focused") == 0) {
+        macos_window *window = (macos_window *) Data;
+        text = strdup(window->Name);
+        return true;
+    }
     return false;
 }
 
@@ -177,21 +192,27 @@ PLUGIN_BOOL_FUNC(PluginInit)
 {
     api = ChunkwmAPI;
 
-    if (!cgl_window_init(&window, 0, 22, 500, 500, kCGMaximumWindowLevelKey)) {
-        return false;
-    }
+    int x = 0;
+    int y = 0;
+    int width = 600;
+    int height = 20;
+    int font_size = 12;
 
     if (FT_Init_FreeType(&ft)) {
         fprintf(stderr, "Could not init freetype library\n");
         return false;
     }
 
-    if (FT_New_Face(ft, "/Library/Fonts/Arial.ttf", 0, &face)) {
+    if (FT_New_Face(ft, "/Library/Fonts/Courier New.ttf", 0, &face)) {
         fprintf(stderr, "Could not open font\n");
         return false;
     }
 
-    FT_Set_Pixel_Sizes(face, 0, 18);
+    FT_Set_Pixel_Sizes(face, 0, font_size);
+
+    if (!cgl_window_init(&window, x, y, width, height, kCGMaximumWindowLevelKey)) {
+        return false;
+    }
 
     pthread_create(&bar_thread, NULL, &BarMainThreadProcedure, NULL);
     return true;
@@ -205,6 +226,10 @@ PLUGIN_VOID_FUNC(PluginDeInit)
 }
 
 CHUNKWM_PLUGIN_VTABLE(PluginInit, PluginDeInit, PluginMain)
-chunkwm_plugin_export subscriptions[] = { };
+chunkwm_plugin_export subscriptions[] =
+{
+    chunkwm_export_window_focused,
+    chunkwm_export_application_activated,
+};
 CHUNKWM_PLUGIN_SUBSCRIBE(subscriptions)
 CHUNKWM_PLUGIN(plugin_name, plugin_version);
