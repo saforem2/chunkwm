@@ -33,7 +33,7 @@ of a tiling window manager and the client -> server architecture that **chunkwm*
 
 [shihanng](https://github.com/shihanng) has written a guide that is more friendly to beginners; check it out [here](http://hde-advent-2017.hatenadiary.jp/entry/2017/12/24/000000).
 
-There is also a wiki page explaining the interaction of chunkwm & skhd and how to get started [here](https://github.com/koekeishiya/chunkwm/wiki/Instructions:-chunkwm-with-\(s\)khd-on-macOS-High-Sierra)
+There is also a wiki page explaining the interaction of chunkwm & skhd and how to get started [here](https://github.com/koekeishiya/chunkwm/wiki/Instructions:-chunkwm-with-\(s\)khd-on-macOS-High-Sierra).
 
 I highly recommend coming back and reading the later sections of this README once you have become more comfortable with this idea.
 
