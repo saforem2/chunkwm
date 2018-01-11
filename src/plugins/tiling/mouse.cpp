@@ -448,8 +448,7 @@ void SetMouseModifier(const char *Mod)
         token ModToken = GetToken(&Mod);
         if (TokenEquals(ModToken, "fn")) {
             MouseModifier |= Event_Mask_Fn;
-        } else if (TokenEquals(ModToken, "shift"))
-        {
+        } else if (TokenEquals(ModToken, "shift")) {
             MouseModifier |= Event_Mask_Shift;
         } else if (TokenEquals(ModToken, "alt")) {
             MouseModifier |= Event_Mask_Alt;
