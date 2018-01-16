@@ -1368,6 +1368,103 @@ DisplayResizedHandler(void *Data)
     free(Spaces);
 }
 
+#if 0
+internal void
+DisplayAddedHandler(void *Data)
+{
+    CGDirectDisplayID DisplayId = *(CGDirectDisplayID *) Data;
+    CFStringRef DisplayRef = AXLibGetDisplayIdentifier(DisplayId);
+    if (DisplayRef) {
+
+        /*
+         * TODO(koekeishiya): we need to cache all relevant information,
+         * using display_id as our lookup-key.
+         *
+         * the end-goal is to restore the state of all virtual_spaces belonging to
+         * this monitor, assuming that this monitor has been connected once before
+         * in the current session.
+         */
+
+        char *Ref = CopyCFStringToC(DisplayRef);
+        printf("display with ref '%s' connected!\n", Ref);
+        free(Ref);
+        CFRelease(DisplayRef);
+
+        /*
+         * TODO(koekeishiya): basically what we want to do when a monitor is connected.
+         *
+         * pending_display_state *state = NULL;
+         * if ((state = PendingDisplayState(DisplayId))) {
+         *     for each window_state .. state.window_state {
+         *         window = window_state.window;
+         *         space_id = window_state.original_space_id;
+         *
+         *         for each space .. spaces_for_window(window) {
+         *             untile_window(window, space);
+         *         }
+         *
+         *         original_space = space_from_id(space_id);
+         *         tile_window(window, original_space);
+         *     }
+         * }
+         */
+
+    } else {
+
+        /*
+         * NOTE(koekeishiya): well.. if we get here, we are screwed.
+         */
+
+        printf("display with id '%u' connected (could not retireve ref)\n", DisplayId);
+    }
+}
+
+internal void
+DisplayRemovedHandler(void *Data)
+{
+    CGDirectDisplayID DisplayId = *(CGDirectDisplayID *) Data;
+    CFStringRef DisplayRef = AXLibGetDisplayIdentifier(DisplayId);
+    if (DisplayRef) {
+
+        /*
+         * NOTE(koekeishiya): macOS has already cleared its internal state for this monitor,
+         * and we are left empty-handed. Really appreciated, amazing.
+         *
+         * this branch will never run, but what can you do.
+         */
+
+        char *Ref = CopyCFStringToC(DisplayRef);
+        printf("display with ref '%s' disconnected!\n", Ref);
+        free(Ref);
+        CFRelease(DisplayRef);
+    } else {
+
+        /*
+         * TODO(koekeishiya): we need to store our current state of all window-trees that could
+         * be impacted by this monitor disconnected event. Hopefully, we get this notification
+         * BEFORE macOS starts to relocate windows and desktops to their target monitor. if not..
+         *
+         * the end-goal is to store enough information that we will be able to properly track
+         * precisely the windows that will will be duped in our system, such that this operation
+         * can be undone the next time this monitor is connected and macOS performs a restore.
+         */
+
+        printf("display with id '%u' disconnected (could not retireve ref)\n", DisplayId);
+
+        /*
+         * TODO(koekeishiya): basically what we want to do when a monitor is disconnected.
+         *
+         * display_cache *info = SearchDisplayCache(DisplayId);
+         * if (info) {
+         *     // add pending changes here; don't even know..
+         * } else {
+         *     // well.. that's not good
+         * }
+         */
+    }
+}
+#endif
+
 internal void
 ChunkwmDaemonCommandHandler(void *Data)
 {
@@ -1429,6 +1526,14 @@ PLUGIN_MAIN_FUNC(PluginMain)
     } else if (StringEquals(Node, "chunkwm_export_display_resized")) {
         DisplayResizedHandler(Data);
         return true;
+#if 0
+    } else if (StringEquals(Node, "chunkwm_export_display_added")) {
+        DisplayAddedHandler(Data);
+        return true;
+    } else if (StringEquals(Node, "chunkwm_export_display_removed")) {
+        DisplayRemovedHandler(Data);
+        return true;
+#endif
     } else if (StringEquals(Node, "chunkwm_daemon_command")) {
         ChunkwmDaemonCommandHandler(Data);
         return true;
@@ -1612,6 +1717,9 @@ chunkwm_plugin_export Subscriptions[] =
     chunkwm_export_display_changed,
 
     chunkwm_export_display_resized,
+
+    chunkwm_export_display_added,
+    chunkwm_export_display_removed,
 };
 CHUNKWM_PLUGIN_SUBSCRIBE(Subscriptions)
 
