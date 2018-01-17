@@ -1,5 +1,6 @@
 #include "plugin.h"
 #include "cvar.h"
+#include "clog.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -8,7 +9,6 @@
 #include <string.h>
 #include <pthread.h>
 #include <dirent.h>
-
 #include <map>
 
 #define internal static
@@ -19,7 +19,7 @@ internal pthread_mutex_t LoadedPluginLock;
 internal pthread_mutex_t Mutexes[chunkwm_export_count];
 internal plugin_list ExportedPlugins[chunkwm_export_count];
 
-internal chunkwm_api API = { UpdateCVarAPI,  AcquireCVarAPI, FindCVarAPI, ChunkwmBroadcast };
+internal chunkwm_api API = { UpdateCVarAPI,  AcquireCVarAPI, FindCVarAPI, ChunkwmBroadcast, (chunkwm_log*)c_log };
 
 internal bool
 VerifyPluginABI(plugin_details *Info)
@@ -31,15 +31,16 @@ VerifyPluginABI(plugin_details *Info)
 internal void
 PrintPluginDetails(plugin_details *Info)
 {
-    printf("Plugin Details\n"
-           "API Version %d\n"
-           "FileName '%s'\n"
-           "PluginName '%s'\n"
-           "PluginVersion '%s'\n",
-            Info->ApiVersion,
-            Info->FileName,
-            Info->PluginName,
-            Info->PluginVersion);
+    c_log(C_LOG_LEVEL_DEBUG,
+          "Plugin Details\n"
+          "API Version %d\n"
+          "FileName '%s'\n"
+          "PluginName '%s'\n"
+          "PluginVersion '%s'\n",
+           Info->ApiVersion,
+           Info->FileName,
+           Info->PluginName,
+           Info->PluginVersion);
 }
 
 plugin_list *BeginPluginList(chunkwm_plugin_export Export)
@@ -86,9 +87,10 @@ HookPlugin(loaded_plugin *LoadedPlugin)
     if (Plugin->Subscriptions) {
         for (int Index = 0; Index < Plugin->SubscriptionCount; ++Index) {
             chunkwm_plugin_export *Export = Plugin->Subscriptions + Index;
-            printf("Plugin '%s' subscribed to '%s'\n",
-                   LoadedPlugin->Info->PluginName,
-                   chunkwm_plugin_export_str[*Export]);
+            c_log(C_LOG_LEVEL_DEBUG,
+                  "Plugin '%s' subscribed to '%s'\n",
+                  LoadedPlugin->Info->PluginName,
+                  chunkwm_plugin_export_str[*Export]);
             SubscribeToEvent(Plugin, *Export);
         }
     }
@@ -102,9 +104,10 @@ UnhookPlugin(loaded_plugin *LoadedPlugin)
     if (Plugin->Subscriptions) {
         for (int Index = 0; Index < Plugin->SubscriptionCount; ++Index) {
             chunkwm_plugin_export *Export = Plugin->Subscriptions + Index;
-            printf("Plugin '%s' unsubscribed from '%s'\n",
-                   LoadedPlugin->Info->PluginName,
-                   chunkwm_plugin_export_str[*Export]);
+            c_log(C_LOG_LEVEL_DEBUG,
+                  "Plugin '%s' unsubscribed from '%s'\n",
+                  LoadedPlugin->Info->PluginName,
+                  chunkwm_plugin_export_str[*Export]);
             UnsubscribeFromEvent(Plugin, *Export);
         }
     }
@@ -185,25 +188,25 @@ bool LoadPlugin(const char *Absolutepath, const char *Filename)
     loaded_plugin *LoadedPlugin;
 
     if (IsPluginLoaded(Filename)) {
-        fprintf(stderr, "chunkwm: plugin '%s' is already running!\n", Absolutepath);
+        c_log(C_LOG_LEVEL_ERROR, "chunkwm: plugin '%s' is already running!\n", Absolutepath);
         goto already_loaded;
     }
 
     Handle = dlopen(Absolutepath, RTLD_LAZY);
     if (!Handle) {
-        fprintf(stderr, "chunkwm: dlopen '%s' failed!\n", Absolutepath);
+        c_log(C_LOG_LEVEL_ERROR, "chunkwm: dlopen '%s' failed!\n", Absolutepath);
         goto handle_err;
     }
 
     Info = (plugin_details *) dlsym(Handle, "Exports");
     if (!Info) {
-        fprintf(stderr, "chunkwm: dlsym '%s' plugin details missing!\n", Absolutepath);
+        c_log(C_LOG_LEVEL_ERROR, "chunkwm: dlsym '%s' plugin details missing!\n", Absolutepath);
         goto info_err;
     }
 
     if (!VerifyPluginABI(Info)) {
-        fprintf(stderr, "chunkwm: plugin '%s' ABI mismatch; expected %d, was %d\n",
-                Info->PluginName, CHUNKWM_PLUGIN_API_VERSION, Info->ApiVersion);
+        c_log(C_LOG_LEVEL_ERROR, "chunkwm: plugin '%s' ABI mismatch; expected %d, was %d\n",
+              Info->PluginName, CHUNKWM_PLUGIN_API_VERSION, Info->ApiVersion);
         goto abi_err;
     }
 
@@ -216,11 +219,11 @@ bool LoadPlugin(const char *Absolutepath, const char *Filename)
     LoadedPlugin->Info = Info;
 
     if (!Plugin->Init(API)) {
-        fprintf(stderr, "chunkwm: plugin '%s' init failed!\n", Info->PluginName);
+        c_log(C_LOG_LEVEL_ERROR, "chunkwm: plugin '%s' init failed!\n", Info->PluginName);
         goto plugin_init_err;
     }
 
-    printf("chunkwm: plugin '%s' loaded!\n", Filename);
+    c_log(C_LOG_LEVEL_DEBUG, "chunkwm: plugin '%s' loaded!\n", Filename);
     LoadedPlugin->Filename = strdup(Filename);
     StoreLoadedPlugin(LoadedPlugin);
     HookPlugin(LoadedPlugin);
@@ -274,7 +277,7 @@ bool UnloadPlugin(const char *Absolutepath, const char *Filename)
          */
 #endif
 
-        printf("chunkwm: plugin '%s' unloaded!\n", Filename);
+        c_log(C_LOG_LEVEL_DEBUG, "chunkwm: plugin '%s' unloaded!\n", Filename);
 
         free(LoadedPlugin->Filename);
         free(LoadedPlugin);

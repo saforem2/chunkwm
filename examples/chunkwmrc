@@ -1,6 +1,14 @@
 #!/bin/bash
 
 #
+# NOTE: specify the desired level of logging.
+#
+#       - none, debug, warn, error
+#
+
+chunkc core::log_level error
+
+#
 # NOTE: specify the absolutepath to the directory to use when
 #       loading a plugin. '~' expansion is supported.
 #

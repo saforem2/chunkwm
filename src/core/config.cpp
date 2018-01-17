@@ -1,5 +1,6 @@
 #include "config.h"
 #include "plugin.h"
+#include "clog.h"
 
 #include "../common/config/tokenize.h"
 #include "../common/misc/assert.h"
@@ -139,6 +140,17 @@ HandleCore(chunkwm_delegate *Delegate)
         token Token = GetToken(&Delegate->Message);
         int Status = TokenToInt(Token);
         UpdateCVar(CVAR_PLUGIN_HOTLOAD, Status);
+    } else if (StringEquals(Delegate->Command, CVAR_LOG_LEVEL)) {
+        token Token = GetToken(&Delegate->Message);
+        if (TokenEquals(Token, "none")) {
+            c_log_active_level = C_LOG_LEVEL_NONE;
+        } else if (TokenEquals(Token, "debug")) {
+            c_log_active_level = C_LOG_LEVEL_DEBUG;
+        } else if (TokenEquals(Token, "warn")) {
+            c_log_active_level = C_LOG_LEVEL_WARN;
+        } else if (TokenEquals(Token, "error")) {
+            c_log_active_level = C_LOG_LEVEL_ERROR;
+        }
     } else if (StringEquals(Delegate->Command, "load")) {
         plugin_fs PluginFS;
         if (PopulatePluginPath(&Delegate->Message, &PluginFS)) {
@@ -153,7 +165,7 @@ HandleCore(chunkwm_delegate *Delegate)
                     LoadPlugin(PluginFS.Absolutepath, PluginFS.Filename);
                 }
             } else {
-                fprintf(stderr, "chunkwm: plugin '%s' not found..\n", PluginFS.Absolutepath);
+                c_log(C_LOG_LEVEL_WARN, "chunkwm: plugin '%s' not found..\n", PluginFS.Absolutepath);
             }
             DestroyPluginFS(&PluginFS);
         }
@@ -164,7 +176,7 @@ HandleCore(chunkwm_delegate *Delegate)
             DestroyPluginFS(&PluginFS);
         }
     } else {
-        fprintf(stderr, "chunkwm: invalid command '%s::%s'\n", Delegate->Target, Delegate->Command);
+        c_log(C_LOG_LEVEL_WARN, "chunkwm: invalid command '%s::%s'\n", Delegate->Target, Delegate->Command);
     }
 
     CloseSocket(Delegate->SockFD);
@@ -174,15 +186,9 @@ HandleCore(chunkwm_delegate *Delegate)
 }
 
 internal inline bool
-ValidToken(token *Token, const char *Format, ...)
+ValidToken(token *Token)
 {
     bool Result = Token->Length > 0;
-    if (!Result) {
-        va_list Args;
-        va_start(Args, Format);
-        vfprintf(stderr, Format, Args);
-        va_end(Args);
-    }
     return Result;
 }
 
@@ -190,17 +196,19 @@ internal void
 SetCVar(const char **Message)
 {
     token NameToken = GetToken(Message);
-    if (ValidToken(&NameToken, "chunkwm: missing cvar name !!!\n")) {
+    if (ValidToken(&NameToken)) {
         token ValueToken = GetToken(Message);
-        if (ValidToken(&ValueToken,
-                       "chunkwm: missing value for cvar '%.*s'\n",
-                       NameToken.Length, NameToken.Text)) {
+        if (ValidToken(&ValueToken)) {
             char *Name = TokenToString(NameToken);
             char *Value = TokenToString(ValueToken);
             UpdateCVar(Name, Value);
             free(Name);
             free(Value);
+        } else {
+            c_log(C_LOG_LEVEL_WARN, "chunkwm: missing value for cvar '%.*s'.\n", NameToken.Length, NameToken.Length);
         }
+    } else {
+        c_log(C_LOG_LEVEL_WARN, "chunkwm: missing cvar name.\n");
     }
 }
 
@@ -208,11 +216,13 @@ internal void
 GetCVar(const char **Message, int SockFD)
 {
     token NameToken = GetToken(Message);
-    if (ValidToken(&NameToken, "chunkwm: missing cvar name !!!\n")) {
+    if (ValidToken(&NameToken)) {
         char *Name = TokenToString(NameToken);
         char *Value = CVarStringValue(Name);
         WriteToSocket(Value, SockFD);
         free(Name);
+    } else {
+        c_log(C_LOG_LEVEL_WARN, "chunkwm: missing cvar name.\n");
     }
 }
 
@@ -225,7 +235,7 @@ HandleCVar(chunkwm_delegate *Delegate, const char **Message)
     } else if (TokenEquals(Type, "get")) {
         GetCVar(Message, Delegate->SockFD);
     } else {
-        fprintf(stderr, "chunkwm: invalid command '%.*s %s'\n", Type.Length, Type.Text, *Message);
+        c_log(C_LOG_LEVEL_WARN, "chunkwm: invalid command '%.*s %s'\n", Type.Length, Type.Text, *Message);
     }
     CloseSocket(Delegate->SockFD);
     free(Delegate);

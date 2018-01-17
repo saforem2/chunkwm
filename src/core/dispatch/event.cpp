@@ -1,4 +1,5 @@
 #include "event.h"
+#include "../clog.h"
 
 #define internal static
 
@@ -38,7 +39,7 @@ ProcessEventQueue(void *)
         if (Result) {
             uint64_t ID;
             pthread_threadid_np(NULL, &ID);
-            fprintf(stderr, "%lld: sem_wait(..) failed\n", ID);
+            c_log(C_LOG_LEVEL_DEBUG, "%lld: sem_wait(..) failed\n", ID);
         }
     }
 
@@ -52,12 +53,12 @@ BeginEventLoop()
     bool Result = true;
 
     if ((EventLoop.Semaphore = sem_open("eventloop_semaphore", O_CREAT, 0644, 0)) == SEM_FAILED) {
-        fprintf(stderr, "chunkwm: could not initialize semaphore!");
+        c_log(C_LOG_LEVEL_ERROR, "chunkwm: could not initialize semaphore!");
         goto sem_err;
     }
 
     if (pthread_mutex_init(&EventLoop.Lock, NULL) != 0) {
-        fprintf(stderr, "chunkwm: could not initialize work mutex!");
+        c_log(C_LOG_LEVEL_ERROR, "chunkwm: could not initialize work mutex!");
         goto work_err;
     }
 

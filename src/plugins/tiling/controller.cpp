@@ -7,7 +7,6 @@
 #include "../../common/config/cvar.h"
 #include "../../common/ipc/daemon.h"
 #include "../../common/misc/assert.h"
-#include "../../common/misc/debug.h"
 
 #include "presel.h"
 #include "region.h"
@@ -1449,24 +1448,24 @@ bool SendWindowToDesktop(macos_window *Window, char *Op)
     } else if (StringEquals(Op, "next")) {
         DestinationDesktopId = SourceDesktopId + 1;
     } else if (sscanf(Op, "%d", &DestinationDesktopId) != 1) {
-        fprintf(stderr, "invalid destination desktop specified '%s'!\n", Op);
+        c_log(C_LOG_LEVEL_WARN, "invalid destination desktop specified '%s'!\n", Op);
         Success = false;
         goto space_free;
     }
 
     if (SourceDesktopId == DestinationDesktopId) {
-        fprintf(stderr,
-                "invalid destination desktop specified, source desktop and destination '%d' are the same!\n",
-                DestinationDesktopId);
+        c_log(C_LOG_LEVEL_WARN,
+              "invalid destination desktop specified, source desktop and destination '%d' are the same!\n",
+              DestinationDesktopId);
         Success = false;
         goto space_free;
     }
 
     Success = AXLibCGSSpaceIDFromDesktopID(DestinationDesktopId, &DestinationMonitor, &DestinationSpaceId);
     if (!Success) {
-        fprintf(stderr,
-                "invalid destination desktop specified, desktop '%d' does not exist!\n",
-                DestinationDesktopId);
+        c_log(C_LOG_LEVEL_WARN,
+              "invalid destination desktop specified, desktop '%d' does not exist!\n",
+              DestinationDesktopId);
         goto space_free;
     }
 
@@ -1577,24 +1576,24 @@ void SendWindowToMonitor(char *Op)
         // NOTE(koekeishiya): Convert 1-indexed back to 0-index expected by the system.
         --DestinationMonitor;
     } else {
-        fprintf(stderr, "invalid destination monitor specified '%s'!\n", Op);
+        c_log(C_LOG_LEVEL_WARN, "invalid destination monitor specified '%s'!\n", Op);
         goto space_free;
     }
 
     if (DestinationMonitor == SourceMonitor) {
         // NOTE(koekeishiya): Convert 0-indexed back to 1-index when printng error to user.
-        fprintf(stderr,
-                "invalid destination monitor specified, source monitor and destination '%d' are the same!\n",
-                DestinationMonitor + 1);
+        c_log(C_LOG_LEVEL_WARN,
+              "invalid destination monitor specified, source monitor and destination '%d' are the same!\n",
+              DestinationMonitor + 1);
         goto space_free;
     }
 
     DestinationMonitorRef = AXLibGetDisplayIdentifierFromArrangement(DestinationMonitor);
     if (!DestinationMonitorRef) {
         // NOTE(koekeishiya): Convert 0-indexed back to 1-index when printng error to user.
-        fprintf(stderr,
-                "invalid destination monitor specified, monitor '%d' does not exist!\n",
-                DestinationMonitor + 1);
+        c_log(C_LOG_LEVEL_WARN,
+              "invalid destination monitor specified, monitor '%d' does not exist!\n",
+              DestinationMonitor + 1);
         goto space_free;
     }
 
@@ -1674,9 +1673,9 @@ FocusMonitor(unsigned MonitorId)
     MonitorRef = AXLibGetDisplayIdentifierFromArrangement(MonitorId);
     if (!MonitorRef) {
         // NOTE(koekeishiya): Convert 0-indexed back to 1-index when printng error to user.
-        fprintf(stderr,
-                "invalid destination monitor specified, monitor '%d' does not exist!\n",
-                MonitorId + 1);
+        c_log(C_LOG_LEVEL_WARN,
+              "invalid destination monitor specified, monitor '%d' does not exist!\n",
+              MonitorId + 1);
         goto out;
     }
 
@@ -1728,14 +1727,14 @@ void FocusMonitor(char *Op)
         --DestinationMonitor;
         Operation = 0;
     } else {
-        fprintf(stderr, "invalid destination monitor specified '%s'!\n", Op);
+        c_log(C_LOG_LEVEL_WARN, "invalid destination monitor specified '%s'!\n", Op);
         goto space_free;
     }
 
     if (DestinationMonitor == SourceMonitor) {
-        fprintf(stderr,
-                "invalid destination monitor specified, source monitor and destination '%d' are the same!\n",
-                DestinationMonitor + 1);
+        c_log(C_LOG_LEVEL_WARN,
+              "invalid destination monitor specified, source monitor and destination '%d' are the same!\n",
+              DestinationMonitor + 1);
         goto space_free;
     }
 
@@ -1808,7 +1807,7 @@ void GridLayout(char *Op)
         WinHeight = WinHeight <= 0 ? 1 : WinHeight;
         WinWidth = WinWidth > GridCols - WinX ? GridCols - WinX : WinWidth;
         WinHeight = WinHeight > GridRows - WinY ? GridRows - WinY : WinHeight;
-        DEBUG_PRINT("    GridRows:%d, GridCols:%d, WinX:%d, WinY:%d, WinWidth:%d, WinHeight:%d\n", GridRows, GridCols, WinX, WinY, WinWidth, WinHeight);
+        c_log(C_LOG_LEVEL_DEBUG, "    GridRows:%d, GridCols:%d, WinX:%d, WinY:%d, WinWidth:%d, WinHeight:%d\n", GridRows, GridCols, WinX, WinY, WinWidth, WinHeight);
         float CellWidth = Region.Width/GridCols;
         float CellHeight = Region.Height/GridRows;
         AXLibSetWindowPosition(Window->Ref, (Region.X + Region.Width) - CellWidth * (GridCols - WinX), (Region.Y + Region.Height) - CellHeight * (GridRows - WinY));
@@ -1879,7 +1878,7 @@ void SerializeDesktop(char *Op)
         fwrite(Buffer, sizeof(char), Length, Handle);
         fclose(Handle);
     } else {
-        fprintf(stderr, "failed to open '%s' for writing!\n", Op);
+        c_log(C_LOG_LEVEL_ERROR, "failed to open '%s' for writing!\n", Op);
     }
 
     free(Buffer);
@@ -1920,7 +1919,7 @@ void DeserializeDesktop(char *Op)
         CreateDeserializedWindowTreeForSpace(Space, VirtualSpace);
         free(Buffer);
     } else {
-        fprintf(stderr, "failed to open '%s' for reading!\n", Op);
+        c_log(C_LOG_LEVEL_ERROR, "failed to open '%s' for reading!\n", Op);
     }
 
 vspace_release:

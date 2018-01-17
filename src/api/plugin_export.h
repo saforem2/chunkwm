@@ -8,6 +8,15 @@ struct chunkwm_payload
     const char *Message;
 };
 
+#ifndef CHUNKWM_CORE
+enum c_log_level
+{
+    C_LOG_LEVEL_DEBUG =  0,
+    C_LOG_LEVEL_WARN  =  1,
+    C_LOG_LEVEL_ERROR =  2,
+};
+#endif
+
 static const char *chunkwm_plugin_export_str[] =
 {
     "chunkwm_export_application_launched",

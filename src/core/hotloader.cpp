@@ -2,13 +2,13 @@
 
 #include "plugin.h"
 #include "constants.h"
+#include "clog.h"
 
 #include <sys/stat.h>
 #include <string.h>
 #include <vector>
 
 #include "../common/ipc/daemon.h"
-#include "../common/misc/debug.h"
 
 #define internal static
 
@@ -84,14 +84,14 @@ HOTLOADER_CALLBACK(HotloadPluginCallback)
         char *Filename;
 
         if ((Filename = WatchedIOFileChange(Absolutepath))) {
-            printf("hotloader: plugin '%s' changed!\n", Filename);
+            c_log(C_LOG_LEVEL_DEBUG, "hotloader: plugin '%s' changed!\n", Filename);
 
-            DEBUG_PRINT("hotloader: unloading plugin '%s'\n", Filename);
+            c_log(C_LOG_LEVEL_DEBUG, "hotloader: unloading plugin '%s'\n", Filename);
             PerformIOOperation("core::unload", Filename);
 
             struct stat Buffer;
             if (stat(Absolutepath, &Buffer) == 0) {
-                DEBUG_PRINT("hotloader: loading plugin '%s'\n", Filename);
+                c_log(C_LOG_LEVEL_DEBUG, "hotloader: loading plugin '%s'\n", Filename);
                 PerformIOOperation("core::load", Filename);
             }
         }
@@ -114,13 +114,13 @@ void HotloaderAddPath(const char *Path)
                 if (Result != -1) {
                     Directory[Result] = '\0';
                     Directories.push_back(strdup(Directory));
-                    printf("hotloader: symlink '%s' -> '%s'\n", Path, Directory);
+                    c_log(C_LOG_LEVEL_DEBUG, "hotloader: symlink '%s' -> '%s'\n", Path, Directory);
                 }
             } else {
-                fprintf(stderr, "hotloader: '%s' is not a directory!\n", Path);
+                c_log(C_LOG_LEVEL_WARN, "hotloader: '%s' is not a directory!\n", Path);
             }
         } else {
-            fprintf(stderr, "hotloader: '%s' is not a valid path!\n", Path);
+            c_log(C_LOG_LEVEL_WARN, "hotloader: '%s' is not a valid path!\n", Path);
         }
     }
 }
@@ -155,7 +155,7 @@ void HotloaderInit()
             FSEventStreamScheduleWithRunLoop(Hotloader.Stream, CFRunLoopGetMain(), kCFRunLoopDefaultMode);
             FSEventStreamStart(Hotloader.Stream);
         } else {
-            fprintf(stderr, "hotloader: no directories specified!\n");
+            c_log(C_LOG_LEVEL_WARN, "hotloader: no directories specified!\n");
         }
     }
 }

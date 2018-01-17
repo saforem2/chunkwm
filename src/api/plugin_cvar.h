@@ -21,12 +21,20 @@ typedef CHUNKWM_API_ACQUIRE_CVAR_FUNC(chunkwm_acquire_cvar_func);
 #define CHUNKWM_API_FIND_CVAR_FUNC(name) bool name(const char *Name)
 typedef CHUNKWM_API_FIND_CVAR_FUNC(chunkwm_find_cvar_func);
 
+#ifdef CHUNKWM_CORE
+#define CHUNKWM_API_LOG_FUNC(name) void name(unsigned Level, const char *Format, ...)
+#else
+#define CHUNKWM_API_LOG_FUNC(name) void name(c_log_level Level, const char *Format, ...)
+#endif
+typedef CHUNKWM_API_LOG_FUNC(chunkwm_log);
+
 struct chunkwm_api
 {
     chunkwm_update_cvar_func *UpdateCVar;
     chunkwm_acquire_cvar_func *AcquireCVar;
     chunkwm_find_cvar_func *FindCVar;
     plugin_broadcast_func *Broadcast;
+    chunkwm_log *Log;
 };
 
 #endif

@@ -14,5 +14,6 @@
 
 #define CVAR_PLUGIN_DIR         "plugin_dir"
 #define CVAR_PLUGIN_HOTLOAD     "hotload"
+#define CVAR_LOG_LEVEL          "log_level"
 
 #endif

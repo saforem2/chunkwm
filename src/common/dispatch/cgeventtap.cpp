@@ -22,7 +22,6 @@ bool BeginEventTap(event_tap *EventTap, eventtap_callback *Callback)
         CFRunLoopAddSource(CFRunLoopGetMain(), EventTap->RunLoopSource, kCFRunLoopCommonModes);
         return true;
     } else {
-        fprintf(stderr, "Could not create event tap!\n");
         return false;
     }
 }

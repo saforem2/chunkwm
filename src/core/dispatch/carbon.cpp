@@ -1,6 +1,7 @@
 #include "carbon.h"
 #include "event.h"
 #include "../state.h"
+#include "../clog.h"
 
 #include <string.h>
 #include <unordered_map>
@@ -51,13 +52,14 @@ SearchCarbonApplicationDetailsCache(ProcessSerialNumber PSN)
 internal inline void
 PrintCarbonApplicationDetails(carbon_application_details *Info)
 {
-    printf("carbon: process details\nName: %s\nPID: %d\nPSN: %d %d\nPolicy: %d\nBackground: %d\n",
-            Info->ProcessName,
-            Info->PID,
-            Info->PSN.lowLongOfPSN,
-            Info->PSN.highLongOfPSN,
-            Info->ProcessPolicy,
-            Info->ProcessBackground);
+    c_log(C_LOG_LEVEL_DEBUG,
+          "carbon: process details\nName: %s\nPID: %d\nPSN: %d %d\nPolicy: %d\nBackground: %d\n",
+          Info->ProcessName,
+          Info->PID,
+          Info->PSN.lowLongOfPSN,
+          Info->PSN.highLongOfPSN,
+          Info->ProcessPolicy,
+          Info->ProcessBackground);
 }
 
 /*
@@ -94,7 +96,7 @@ CarbonApplicationEventHandler(EventHandlerCallRef HandlerCallRef, EventRef Event
                           sizeof(PSN),
                           NULL,
                           &PSN) != noErr) {
-        fprintf(stderr, "carbon: could not get serialnumber of process\n");
+        c_log(C_LOG_LEVEL_ERROR, "carbon: could not get serialnumber of process\n");
         return -1;
     }
 

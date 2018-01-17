@@ -33,7 +33,7 @@ RegexMatchPattern(regex_t *Regex, const char *Match, const char *Pattern)
         Error = regexec(Regex, Match, 0, NULL, 0);
         regfree(Regex);
     } else {
-        fprintf(stderr, "chunkwm-tiling: window rule - could not compile regex!\n");
+        c_log(C_LOG_LEVEL_WARN, "chunkwm-tiling: window rule - could not compile regex!\n");
     }
 
     return Error == 0;
@@ -66,7 +66,7 @@ ApplyWindowRuleState(macos_window *Window, window_rule *Rule)
         AXLibSetWindowFullscreen(Window->Ref, true);
         AXLibAddFlags(Window, Rule_Desktop_Changed);
     } else {
-        fprintf(stderr, "chunkwm-tiling: window rule - invalid state '%s', ignored..\n", Rule->State);
+        c_log(C_LOG_LEVEL_WARN, "chunkwm-tiling: window rule - invalid state '%s', ignored..\n", Rule->State);
     }
 }
 

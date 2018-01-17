@@ -18,7 +18,6 @@
 #include "../../common/misc/carbon.h"
 #include "../../common/misc/workspace.h"
 #include "../../common/misc/assert.h"
-#include "../../common/misc/debug.h"
 #include "../../common/border/border.h"
 
 #include "../../common/accessibility/display.mm"
@@ -44,6 +43,8 @@
 #include "mouse.h"
 #include "constants.h"
 #include "misc.h"
+
+extern chunkwm_log *c_log;
 
 #include "presel.mm"
 #include "config.cpp"
@@ -89,6 +90,7 @@ internal macos_window_map Windows;
 internal pthread_mutex_t WindowsLock;
 internal event_tap EventTap;
 internal chunkwm_api API;
+chunkwm_log *c_log;
 
 internal void
 ExtendedDockSetWindowAlpha(uint32_t WindowId, float Value, float Duration)
@@ -597,7 +599,7 @@ std::vector<uint32_t> GetAllVisibleWindowsForSpace(macos_space *Space, bool Incl
 
     Error = CGSGetOnScreenWindowCount(CGSDefaultConnection, 0, &WindowCount);
     if (Error != kCGErrorSuccess) {
-        fprintf(stderr, "CGSGetOnScreenWindowCount failed..\n");
+        c_log(C_LOG_LEVEL_ERROR, "CGSGetOnScreenWindowCount failed..\n");
         goto out;
     }
 
@@ -606,7 +608,7 @@ std::vector<uint32_t> GetAllVisibleWindowsForSpace(macos_space *Space, bool Incl
 
     Error = CGSGetOnScreenWindowList(CGSDefaultConnection, 0, WindowCount, WindowList, &WindowCount);
     if (Error != kCGErrorSuccess) {
-        fprintf(stderr, "CGSGetOnScreenWindowList failed..\n");
+        c_log(C_LOG_LEVEL_ERROR, "CGSGetOnScreenWindowList failed..\n");
         goto windowlist_free;
     }
 
@@ -635,22 +637,24 @@ std::vector<uint32_t> GetAllVisibleWindowsForSpace(macos_space *Space, bool Incl
         }
 
         if (IsWindowValid(Window) || IncludeInvalidWindows) {
-            printf("%d:desktop   %d:%d:%s:%s\n",
-                    DesktopId,
-                    Window->Id,
-                    Window->Level,
-                    Window->Owner->Name,
-                    Window->Name);
+            c_log(C_LOG_LEVEL_DEBUG,
+                  "%d:desktop   %d:%d:%s:%s\n",
+                  DesktopId,
+                  Window->Id,
+                  Window->Level,
+                  Window->Owner->Name,
+                  Window->Name);
             if ((!AXLibHasFlags(Window, Window_Float)) || (IncludeFloatingWindows)) {
                 Result.push_back(Window->Id);
             }
         } else {
-            printf("%d:desktop   %d:%d:invalid window:%s:%s\n",
-                    DesktopId,
-                    Window->Id,
-                    Window->Level,
-                    Window->Owner->Name,
-                    Window->Name);
+            c_log(C_LOG_LEVEL_DEBUG,
+                  "%d:desktop   %d:%d:invalid window:%s:%s\n",
+                  DesktopId,
+                  Window->Id,
+                  Window->Level,
+                  Window->Owner->Name,
+                  Window->Name);
         }
     }
 
@@ -783,7 +787,7 @@ CreateDeserializedWindowTreeForSpaceWithWindows(macos_space *Space, virtual_spac
             VirtualSpace->Tree = DeserializeNodeFromBuffer(Buffer);
             free(Buffer);
         } else {
-            fprintf(stderr, "failed to open '%s' for reading!\n", VirtualSpace->TreeLayout);
+            c_log(C_LOG_LEVEL_ERROR, "failed to open '%s' for reading!\n", VirtualSpace->TreeLayout);
             CreateWindowTreeForSpaceWithWindows(Space, VirtualSpace, Windows);
             return;
         }
@@ -1561,6 +1565,7 @@ Init(chunkwm_api ChunkwmAPI)
     unsigned DesktopId;
 
     API = ChunkwmAPI;
+    c_log = API.Log;
     BeginCVars(&API);
 
     Success = (pthread_mutex_init(&WindowsLock, NULL) == 0);
@@ -1648,7 +1653,7 @@ Init(chunkwm_api ChunkwmAPI)
         goto out;
     }
 
-    fprintf(stderr, "chunkwm-tiling: failed to initialize virtual space system!\n");
+    c_log(C_LOG_LEVEL_ERROR, "chunkwm-tiling: failed to initialize virtual space system!\n");
 
     EndEventTap(&EventTap);
     ClearApplicationCache();

@@ -62,25 +62,6 @@ bool AXLibAddApplicationObserver(macos_application *Application, ObserverCallbac
                                                            Application->Ref,
                                                            AXNotificationFromEnum(Notification),
                                                            Application);
-#if 1
-            if (Success == kAXErrorInvalidUIElementObserver)
-                printf("OBSERVER ERROR (%s): The observer is not a valid AXObserverRef type.\n", Application->Name);
-
-            if (Success == kAXErrorIllegalArgument)
-                printf("OBSERVER ERROR (%s): One or more of the arguments is an illegal value or the length of the notification name is greater than 1024.\n", Application->Name);
-
-            if (Success == kAXErrorNotificationUnsupported)
-                printf("OBSERVER ERROR (%s): The accessibility object does not support notifications (note that the system-wide accessibility object does not support notifications).\n", Application->Name);
-
-            if (Success == kAXErrorNotificationAlreadyRegistered)
-                printf("OBSERVER ERROR (%s): The notification has already been registered.\n", Application->Name);
-
-            if (Success == kAXErrorCannotComplete)
-                printf("OBSERVER ERROR (%s): The function cannot complete because messaging has failed in some way.\n", Application->Name);
-
-            if (Success == kAXErrorFailure)
-                printf("OBSERVER ERROR (%s): There is some sort of system memory failure.\n", Application->Name);
-#endif
             if (Success != kAXErrorSuccess) {
                 Result = false;
                 break;

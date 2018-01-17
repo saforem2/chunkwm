@@ -1,4 +1,5 @@
 #include "wqueue.h"
+#include "clog.h"
 #include "../common/misc/assert.h"
 
 #include <stdio.h>
@@ -51,7 +52,7 @@ void *WorkQueueThreadProc(void *Data)
             if (Result) {
                 uint64_t ID;
                 pthread_threadid_np(NULL, &ID);
-                fprintf(stderr, "%lld: sem_wait(..) failed\n", ID);
+                c_log(C_LOG_LEVEL_DEBUG, "%lld: sem_wait(..) failed\n", ID);
             }
         }
     }

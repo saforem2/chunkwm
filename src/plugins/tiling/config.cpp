@@ -10,7 +10,6 @@
 #include "../../common/config/tokenize.h"
 #include "../../common/config/cvar.h"
 #include "../../common/misc/assert.h"
-#include "../../common/misc/debug.h"
 
 #include <CoreFoundation/CFString.h>
 #include <stdlib.h>
@@ -34,7 +33,7 @@ BuildArguments(const char *Message, int *Count)
 
 #if 0
     for (int Index = 1; Index < *Count; ++Index) {
-        DEBUG_PRINT("%d arg '%s'\n", Index, Args[Index]);
+        c_log(C_LOG_LEVEL_DEBUG, "%d arg '%s'\n", Index, Args[Index]);
     }
 #endif
 
@@ -146,7 +145,7 @@ ParseWindowCommand(const char *Message, command *Chain)
                 Command->Next = Entry;
                 Command = Entry;
             } else {
-                fprintf(stderr, "    invalid selector '%s' for window flag '%c'\n", optarg, Option);
+                c_log(C_LOG_LEVEL_WARN, "    invalid selector '%s' for window flag '%c'\n", optarg, Option);
                 Success = false;
                 FreeCommandChain(Chain);
                 goto End;
@@ -161,7 +160,7 @@ ParseWindowCommand(const char *Message, command *Chain)
                 Command->Next = Entry;
                 Command = Entry;
             } else {
-                fprintf(stderr, "    invalid selector '%s' for window flag '%c'\n", optarg, Option);
+                c_log(C_LOG_LEVEL_WARN, "    invalid selector '%s' for window flag '%c'\n", optarg, Option);
                 Success = false;
                 FreeCommandChain(Chain);
                 goto End;
@@ -177,7 +176,7 @@ ParseWindowCommand(const char *Message, command *Chain)
                 Command->Next = Entry;
                 Command = Entry;
             } else {
-                fprintf(stderr, "    invalid selector '%s' for window flag '%c'\n", optarg, Option);
+                c_log(C_LOG_LEVEL_WARN, "    invalid selector '%s' for window flag '%c'\n", optarg, Option);
                 Success = false;
                 FreeCommandChain(Chain);
                 goto End;
@@ -190,7 +189,7 @@ ParseWindowCommand(const char *Message, command *Chain)
                 Command->Next = Entry;
                 Command = Entry;
             } else {
-                fprintf(stderr, "    invalid selector '%s' for window flag '%c'\n", optarg, Option);
+                c_log(C_LOG_LEVEL_WARN, "    invalid selector '%s' for window flag '%c'\n", optarg, Option);
                 Success = false;
                 FreeCommandChain(Chain);
                 goto End;
@@ -207,7 +206,7 @@ ParseWindowCommand(const char *Message, command *Chain)
                 Command->Next = Entry;
                 Command = Entry;
             } else {
-                fprintf(stderr, "    invalid selector '%s' for window flag '%c'\n", optarg, Option);
+                c_log(C_LOG_LEVEL_WARN, "    invalid selector '%s' for window flag '%c'\n", optarg, Option);
                 Success = false;
                 FreeCommandChain(Chain);
                 goto End;
@@ -223,7 +222,7 @@ ParseWindowCommand(const char *Message, command *Chain)
                 Command->Next = Entry;
                 Command = Entry;
             } else {
-                fprintf(stderr, "    invalid selector '%s' for window flag '%c'\n", optarg, Option);
+                c_log(C_LOG_LEVEL_WARN, "    invalid selector '%s' for window flag '%c'\n", optarg, Option);
                 Success = false;
                 FreeCommandChain(Chain);
                 goto End;
@@ -242,7 +241,7 @@ ParseWindowCommand(const char *Message, command *Chain)
                 Command->Next = Entry;
                 Command = Entry;
             } else {
-                fprintf(stderr, "    invalid selector '%s' for window flag '%c'\n", optarg, Option);
+                c_log(C_LOG_LEVEL_WARN, "    invalid selector '%s' for window flag '%c'\n", optarg, Option);
                 Success = false;
                 FreeCommandChain(Chain);
                 goto End;
@@ -316,7 +315,7 @@ ParseSpaceCommand(const char *Message, command *Chain)
                 Command->Next = Entry;
                 Command = Entry;
             } else {
-                fprintf(stderr, "    invalid selector '%s' for desktop flag '%c'\n", optarg, Option);
+                c_log(C_LOG_LEVEL_WARN, "    invalid selector '%s' for desktop flag '%c'\n", optarg, Option);
                 Success = false;
                 FreeCommandChain(Chain);
                 goto End;
@@ -330,7 +329,7 @@ ParseSpaceCommand(const char *Message, command *Chain)
                 Command->Next = Entry;
                 Command = Entry;
             } else {
-                fprintf(stderr, "    invalid selector '%s' for desktop flag '%c'\n", optarg, Option);
+                c_log(C_LOG_LEVEL_WARN, "    invalid selector '%s' for desktop flag '%c'\n", optarg, Option);
                 Success = false;
                 FreeCommandChain(Chain);
                 goto End;
@@ -342,7 +341,7 @@ ParseSpaceCommand(const char *Message, command *Chain)
                 Command->Next = Entry;
                 Command = Entry;
             } else {
-                fprintf(stderr, "    invalid selector '%s' for desktop flag '%c'\n", optarg, Option);
+                c_log(C_LOG_LEVEL_WARN, "    invalid selector '%s' for desktop flag '%c'\n", optarg, Option);
                 Success = false;
                 FreeCommandChain(Chain);
                 goto End;
@@ -355,7 +354,7 @@ ParseSpaceCommand(const char *Message, command *Chain)
                 Command->Next = Entry;
                 Command = Entry;
             } else {
-                fprintf(stderr, "    invalid selector '%s' for desktop flag '%c'\n", optarg, Option);
+                c_log(C_LOG_LEVEL_WARN, "    invalid selector '%s' for desktop flag '%c'\n", optarg, Option);
                 Success = false;
                 FreeCommandChain(Chain);
                 goto End;
@@ -369,7 +368,7 @@ ParseSpaceCommand(const char *Message, command *Chain)
                 Command->Next = Entry;
                 Command = Entry;
             } else {
-                fprintf(stderr, "    invalid selector '%s' for desktop flag '%c'\n", optarg, Option);
+                c_log(C_LOG_LEVEL_WARN, "    invalid selector '%s' for desktop flag '%c'\n", optarg, Option);
                 Success = false;
                 FreeCommandChain(Chain);
                 goto End;
@@ -389,7 +388,7 @@ ParseSpaceCommand(const char *Message, command *Chain)
                 Command->Next = Entry;
                 Command = Entry;
             } else {
-                fprintf(stderr, "    missing selector for desktop flag '%c'\n", Option);
+                c_log(C_LOG_LEVEL_WARN, "    missing selector for desktop flag '%c'\n", Option);
                 Success = false;
                 FreeCommandChain(Chain);
                 goto End;
@@ -443,7 +442,7 @@ ParseMonitorCommand(const char *Message, command *Chain)
                 Command->Next = Entry;
                 Command = Entry;
             } else {
-                fprintf(stderr, "    invalid selector '%s' for monitor flag '%c'\n", optarg, Option);
+                c_log(C_LOG_LEVEL_WARN, "    invalid selector '%s' for monitor flag '%c'\n", optarg, Option);
                 Success = false;
                 FreeCommandChain(Chain);
                 goto End;
@@ -511,7 +510,7 @@ ParseQueryCommand(const char *Message, command *Chain)
                 Command->Next = Entry;
                 Command = Entry;
             } else {
-                fprintf(stderr, "    invalid selector '%s' for window flag '%c'\n", optarg, Option);
+                c_log(C_LOG_LEVEL_WARN, "    invalid selector '%s' for window flag '%c'\n", optarg, Option);
                 Success = false;
                 FreeCommandChain(Chain);
                 goto End;
@@ -525,7 +524,7 @@ ParseQueryCommand(const char *Message, command *Chain)
                 Command->Next = Entry;
                 Command = Entry;
             } else {
-                fprintf(stderr, "    invalid selector '%s' for desktop flag '%c'\n", optarg, Option);
+                c_log(C_LOG_LEVEL_WARN, "    invalid selector '%s' for desktop flag '%c'\n", optarg, Option);
                 Success = false;
                 FreeCommandChain(Chain);
                 goto End;
@@ -538,7 +537,7 @@ ParseQueryCommand(const char *Message, command *Chain)
                 Command->Next = Entry;
                 Command = Entry;
             } else {
-                fprintf(stderr, "    invalid selector '%s' for monitor flag '%c'\n", optarg, Option);
+                c_log(C_LOG_LEVEL_WARN, "    invalid selector '%s' for monitor flag '%c'\n", optarg, Option);
                 Success = false;
                 FreeCommandChain(Chain);
                 goto End;
@@ -552,7 +551,7 @@ ParseQueryCommand(const char *Message, command *Chain)
                 Command->Next = Entry;
                 Command = Entry;
             } else {
-                fprintf(stderr, "    invalid selector '%s' for flag '%c'\n", optarg, Option);
+                c_log(C_LOG_LEVEL_WARN, "    invalid selector '%s' for flag '%c'\n", optarg, Option);
                 Success = false;
                 FreeCommandChain(Chain);
                 goto End;
@@ -640,12 +639,12 @@ End:
     optind = 1;
 
     if (!HasFilter) {
-        fprintf(stderr, "chunkwm-tiling: window rule - no filter specified, ignored..\n");
+        c_log(C_LOG_LEVEL_WARN, "chunkwm-tiling: window rule - no filter specified, ignored..\n");
         Success = false;
     }
 
     if (!HasProperty) {
-        fprintf(stderr, "chunkwm-tiling: window rule - missing value for state, ignored..\n");
+        c_log(C_LOG_LEVEL_WARN, "chunkwm-tiling: window rule - missing value for state, ignored..\n");
         Success = false;
     }
 
@@ -661,7 +660,7 @@ void CommandCallback(int SockFD, const char *Type, const char *Message)
         if (Success) {
             command *Command = &Chain;
             while ((Command = Command->Next)) {
-                DEBUG_PRINT("    command: '%c', arg: '%s'\n", Command->Flag, Command->Arg);
+                c_log(C_LOG_LEVEL_DEBUG, "    command: '%c', arg: '%s'\n", Command->Flag, Command->Arg);
                 (*QueryCommandDispatch(Command->Flag))(Command->Arg, SockFD);
             }
 
@@ -679,7 +678,7 @@ void CommandCallback(int SockFD, const char *Type, const char *Message)
             float Ratio = CVarFloatingPointValue(CVAR_BSP_SPLIT_RATIO);
             command *Command = &Chain;
             while ((Command = Command->Next)) {
-                DEBUG_PRINT("    command: '%c', arg: '%s'\n", Command->Flag, Command->Arg);
+                c_log(C_LOG_LEVEL_DEBUG, "    command: '%c', arg: '%s'\n", Command->Flag, Command->Arg);
                 (*WindowCommandDispatch(Command->Flag))(Command->Arg);
             }
 
@@ -695,7 +694,7 @@ void CommandCallback(int SockFD, const char *Type, const char *Message)
         if (Success) {
             command *Command = &Chain;
             while ((Command = Command->Next)) {
-                DEBUG_PRINT("    command: '%c', arg: '%s'\n", Command->Flag, Command->Arg);
+                c_log(C_LOG_LEVEL_DEBUG, "    command: '%c', arg: '%s'\n", Command->Flag, Command->Arg);
                 (*SpaceCommandDispatch(Command->Flag))(Command->Arg);
             }
 
@@ -707,13 +706,13 @@ void CommandCallback(int SockFD, const char *Type, const char *Message)
         if (Success) {
             command *Command = &Chain;
             while ((Command = Command->Next)) {
-                DEBUG_PRINT("    command: '%c', arg: '%s'\n", Command->Flag, Command->Arg);
+                c_log(C_LOG_LEVEL_DEBUG, "    command: '%c', arg: '%s'\n", Command->Flag, Command->Arg);
                 (*MonitorCommandDispatch(Command->Flag))(Command->Arg);
             }
 
             FreeCommandChain(&Chain);
         }
     } else {
-        fprintf(stderr, "chunkwm-tiling: no match for '%s %s'\n", Type, Message);
+        c_log(C_LOG_LEVEL_WARN, "chunkwm-tiling: no match for '%s %s'\n", Type, Message);
     }
 }

@@ -1,6 +1,7 @@
 #include "state.h"
 
 #include "dispatch/event.h"
+#include "clog.h"
 
 #include "../common/accessibility/application.h"
 #include "../common/accessibility/window.h"
@@ -120,7 +121,7 @@ AddApplicationWindowsToCollection(macos_application *Application)
             goto success;
 
 win_invalid:
-            printf("%s:%s is not destructible, ignore!\n", Window->Owner->Name, Window->Name);
+            c_log(C_LOG_LEVEL_DEBUG, "%s:%s is not destructible, ignore!\n", Window->Owner->Name, Window->Name);
             AXLibRemoveObserverNotification(&Window->Owner->Observer, Window->Ref, kAXUIElementDestroyedNotification);
 
 win_dupe:
@@ -264,7 +265,7 @@ ConstructAndAddApplicationDispatch(macos_application *Application, carbon_applic
         if (Info->State == Carbon_Application_State_In_Progress) {
             bool Success = AXLibAddApplicationObserver(Application, ApplicationCallback);
             if (Success) {
-                printf("%d:%s successfully registered window notifications\n", Application->PID, Application->Name);
+                c_log(C_LOG_LEVEL_DEBUG, "%d:%s successfully registered window notifications\n", Application->PID, Application->Name);
                 Info->State = Carbon_Application_State_Finished;
                 AddApplication(Application);
                 AddApplicationWindowsToCollection(Application);
@@ -283,10 +284,10 @@ ConstructAndAddApplicationDispatch(macos_application *Application, carbon_applic
                 ConstructAndAddApplicationDispatch(Application, Info, OBSERVER_DELAY);
             }
         } else if (Info->State == Carbon_Application_State_Failed) {
-            fprintf(stderr, "%d:%s could not register window notifications!!!\n", Application->PID, Application->Name);
+            c_log(C_LOG_LEVEL_WARN, "%d:%s could not register window notifications!!!\n", Application->PID, Application->Name);
             AXLibDestroyApplication(Application);
         } else if (Info->State == Carbon_Application_State_Invalid) {
-            fprintf(stderr, "%d:%s process terminated; cancel registration of window notifications!!!\n", Application->PID, Application->Name);
+            c_log(C_LOG_LEVEL_DEBUG, "%d:%s process terminated; cancel registration of window notifications!!!\n", Application->PID, Application->Name);
             AXLibDestroyApplication(Application);
             ConstructEvent(ChunkWM_ApplicationTerminated, Info);
         }

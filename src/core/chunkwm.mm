@@ -1,3 +1,5 @@
+#define CHUNKWM_CORE
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
@@ -18,8 +20,10 @@
 #include "plugin.h"
 #include "wqueue.h"
 #include "cvar.h"
-
 #include "constants.h"
+
+#include "clog.h"
+#include "clog.c"
 
 #include "../common/misc/carbon.cpp"
 #include "../common/misc/workspace.mm"
@@ -61,27 +65,6 @@ Fail(const char *Format, ...)
     exit(EXIT_FAILURE);
 }
 
-inline void
-Warn(const char *Format, ...)
-{
-    va_list Args;
-    va_start(Args, Format);
-    vfprintf(stderr, Format, Args);
-    va_end(Args);
-}
-
-void SignalHandler(int Signal)
-{
-  void *Trace[15];
-  size_t Size;
-
-  Size = backtrace(Trace, 15);
-
-  fprintf(stderr, "chunkwm: recv signal %d, printing stack trace\n", Signal);
-  backtrace_symbols_fd(Trace, Size, STDERR_FILENO);
-  exit(1);
-}
-
 inline AXUIElementRef
 SystemWideElement()
 {
@@ -103,11 +86,11 @@ ForkExecWait(char *Command)
 
     int Pid = fork();
     if (Pid == -1) {
-        fprintf(stderr, "chunkwm: fork failed, config-file did not execute!\n");
+        c_log(C_LOG_LEVEL_ERROR, "chunkwm: fork failed, config-file did not execute!\n");
     } else if (Pid > 0) {
         int Status;
         waitpid(Pid, &Status, 0);
-        printf("chunkwm: finished executing config-file.\n");
+        c_log(C_LOG_LEVEL_DEBUG, "chunkwm: finished executing config-file.\n");
     } else {
         char *Exec[] = { (char*)Shell, (char*)Arg, Command, NULL};
         int StatusCode = execvp(Exec[0], Exec);
@@ -154,10 +137,11 @@ internal bool
 ParseArguments(int Count, char **Args)
 {
     int Option;
-    const char *Short = "vc:";
+    const char *Short = "vc:l:";
     struct option Long[] = {
         { "version", no_argument, NULL, 'v' },
         { "config", required_argument, NULL, 'c' },
+        { "log-level", required_argument, NULL, 'l' },
         { NULL, 0, NULL, 0 }
     };
 
@@ -174,6 +158,17 @@ ParseArguments(int Count, char **Args)
             ConfigAbsolutePath = strdup(optarg);
             return false;
         } break;
+        case 'l': {
+            if (strcmp(optarg, "none") == 0) {
+                c_log_active_level = C_LOG_LEVEL_NONE;
+            } else if (strcmp(optarg, "debug") == 0) {
+                c_log_active_level = C_LOG_LEVEL_DEBUG;
+            } else if (strcmp(optarg, "warn") == 0) {
+                c_log_active_level = C_LOG_LEVEL_WARN;
+            } else if (strcmp(optarg, "error") == 0) {
+                c_log_active_level = C_LOG_LEVEL_ERROR;
+            }
+        }
         }
     }
 
@@ -182,8 +177,6 @@ ParseArguments(int Count, char **Args)
 
 int main(int Count, char **Args)
 {
-    signal(SIGSEGV, SignalHandler);
-
     if (ParseArguments(Count, Args)) {
         return EXIT_SUCCESS;
     }
@@ -226,11 +219,11 @@ int main(int Count, char **Args)
     }
 
     if (!BeginDisplayHandler()) {
-        Warn("chunkwm: could not register for display notifications..\n");
+        c_log(C_LOG_LEVEL_WARN, "chunkwm: could not register for display notifications..\n");
     }
 
     if (!BeginCallbackThreads(CHUNKWM_THREAD_COUNT)) {
-        Warn("chunkwm: could not get semaphore, callback multi-threading disabled..\n");
+        c_log(C_LOG_LEVEL_WARN, "chunkwm: could not get semaphore, callback multi-threading disabled..\n");
     }
 
     BeginSharedWorkspace();
