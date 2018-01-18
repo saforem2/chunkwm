@@ -167,8 +167,10 @@ ParseArguments(int Count, char **Args)
                 c_log_active_level = C_LOG_LEVEL_WARN;
             } else if (strcmp(optarg, "error") == 0) {
                 c_log_active_level = C_LOG_LEVEL_ERROR;
+            } else {
+                c_log(C_LOG_LEVEL_ERROR, "chunkwm: invalid log-level '%s'.\n", optarg);
             }
-        }
+        } break;
         }
     }
 

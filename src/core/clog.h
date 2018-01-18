@@ -1,5 +1,5 @@
-#ifndef CHUNKWM_COMMON_CLOG_H
-#define CHUNKWM_COMMON_CLOG_H
+#ifndef CHUNKWM_CORE_CLOG_H
+#define CHUNKWM_CORE_CLOG_H
 
 enum c_log_level
 {
