@@ -55,14 +55,14 @@ void ConstrainRegion(CFStringRef DisplayRef, region *Region)
             CFRelease(RightMostDisplayRef);
         } break;
         case Dock_Orientation_Bottom: {
-            CFStringRef BottomMostDisplayRef = AXLibGetDisplayIdentifierForBottomMostDisplay();
-            ASSERT(BottomMostDisplayRef);
+            CFStringRef MainDisplayRef = AXLibGetDisplayIdentifierForMainDisplay();
+            ASSERT(MainDisplayRef);
 
-            if (CFStringCompare(DisplayRef, BottomMostDisplayRef, 0) == kCFCompareEqualTo) {
+            if (CFStringCompare(DisplayRef, MainDisplayRef, 0) == kCFCompareEqualTo) {
                 Region->Height -= TileSize;
             }
 
-            CFRelease(BottomMostDisplayRef);
+            CFRelease(MainDisplayRef);
         } break;
         case Dock_Orientation_Top: { /* NOTE(koekeishiya) compiler warning.. */ } break;
         }
