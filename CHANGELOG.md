@@ -11,7 +11,7 @@
 #### cvar changes
 
 - added new option to select logging-level during runtime:
-  `chunkc core::logging_level <none | debug | warn | error>`
+  `chunkc core::log_level <none | debug | warn | error>`
 
 #### other changes
 
