@@ -17,6 +17,6 @@
 
 - removed command *--warp-floating*. replaced by *--grid-layout*.
 
-### version 0.2.26
+### version 0.2.36
 
 changes from previous versions are unvailable..

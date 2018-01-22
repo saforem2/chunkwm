@@ -17,6 +17,6 @@
 
 - plugin commands are now ran through the main event-queue, for safety-reasons.
 
-### version 0.2.26
+### version 0.2.36
 
 changes from previous versions are unavailable..
