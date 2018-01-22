@@ -2,7 +2,7 @@
 
 #### launch argument
 
-- added new launch arugment to set logging-level:
+- added new launch argument to set logging-level:
   ```
   chunkwm --log-level <option>
   <option>: none | debug | warn | error
