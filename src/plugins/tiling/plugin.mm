@@ -1016,7 +1016,7 @@ WindowFocusedHandler(uint32_t WindowId)
         }
 
         if ((FocusedWindowId != WindowId) &&
-            (CVarIntegerValue(CVAR_MOUSE_FOLLOWS_FOCUS))) {
+            (StringEquals(CVarStringValue(CVAR_MOUSE_FOLLOWS_FOCUS), Mouse_Follows_Focus_All))) {
             CenterMouseInWindow(Window);
         }
 
@@ -1476,12 +1476,6 @@ ChunkwmDaemonCommandHandler(void *Data)
     CommandCallback(Payload->SockFD, Payload->Command, Payload->Message);
 }
 
-/*
- * NOTE(koekeishiya):
- * parameter: const char *Node
- * parameter: void *Data
- * return: bool
- */
 PLUGIN_MAIN_FUNC(PluginMain)
 {
     if (StringEquals(Node, "chunkwm_export_application_launched")) {
@@ -1603,10 +1597,10 @@ Init(chunkwm_api ChunkwmAPI)
     CreateCVar(CVAR_BSP_SPLIT_MODE, node_split_str[Split_Optimal]);
 
     CreateCVar(CVAR_MONITOR_FOCUS_CYCLE, 0);
-    CreateCVar(CVAR_WINDOW_FOCUS_CYCLE, "none");
+    CreateCVar(CVAR_WINDOW_FOCUS_CYCLE, Window_Focus_Cycle_None);
 
-    CreateCVar(CVAR_MOUSE_FOLLOWS_FOCUS, 1);
-    CreateCVar(CVAR_MOUSE_MODIFIER, "fn");
+    CreateCVar(CVAR_MOUSE_FOLLOWS_FOCUS, Mouse_Follows_Focus_Off);
+    CreateCVar(CVAR_MOUSE_MODIFIER, Mouse_Modifier_Fn);
 
     CreateCVar(CVAR_WINDOW_FLOAT_NEXT, 0);
     CreateCVar(CVAR_WINDOW_REGION_LOCKED, 0);
@@ -1675,11 +1669,6 @@ Deinit()
     EndVirtualSpaces();
 }
 
-/*
- * NOTE(koekeishiya):
- * parameter: plugin_broadcast *Broadcast
- * return: bool -> true if startup succeeded
- */
 PLUGIN_BOOL_FUNC(PluginInit)
 {
     return Init(ChunkwmAPI);
@@ -1690,16 +1679,7 @@ PLUGIN_VOID_FUNC(PluginDeInit)
     Deinit();
 }
 
-// NOTE(koekeishiya): Enable to manually trigger ABI mismatch
-#if 0
-#undef CHUNKWM_PLUGIN_API_VERSION
-#define CHUNKWM_PLUGIN_API_VERSION 0
-#endif
-
-// NOTE(koekeishiya): Initialize plugin function pointers.
 CHUNKWM_PLUGIN_VTABLE(PluginInit, PluginDeInit, PluginMain)
-
-// NOTE(koekeishiya): Subscribe to ChunkWM events!
 chunkwm_plugin_export Subscriptions[] =
 {
     chunkwm_export_application_launched,
@@ -1727,6 +1707,4 @@ chunkwm_plugin_export Subscriptions[] =
     chunkwm_export_display_removed,
 };
 CHUNKWM_PLUGIN_SUBSCRIBE(Subscriptions)
-
-// NOTE(koekeishiya): Generate plugin
 CHUNKWM_PLUGIN(PluginName, PluginVersion)

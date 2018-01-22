@@ -33,7 +33,12 @@
 #define Window_Focus_Cycle_All      "all"
 
 #define CVAR_MOUSE_FOLLOWS_FOCUS    "mouse_follows_focus"
+#define Mouse_Follows_Focus_Off     "off"
+#define Mouse_Follows_Focus_Intr    "intrinsic"
+#define Mouse_Follows_Focus_All     "all"
+
 #define CVAR_MOUSE_MODIFIER         "mouse_modifier"
+#define Mouse_Modifier_Fn           "fn"
 
 #define CVAR_WINDOW_FLOAT_NEXT      "window_float_next"
 #define CVAR_WINDOW_REGION_LOCKED   "window_region_locked"

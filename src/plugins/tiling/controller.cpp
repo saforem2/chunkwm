@@ -303,6 +303,10 @@ void FocusWindowInFullscreenSpace(macos_space *Space, char *Direction)
     if (FindClosestFullscreenWindow(Space, Window, &ClosestWindow, Direction, WrapMonitor)) {
         AXLibSetFocusedWindow(ClosestWindow->Ref);
         AXLibSetFocusedApplication(ClosestWindow->Owner->PSN);
+
+        if (StringEquals(CVarStringValue(CVAR_MOUSE_FOLLOWS_FOCUS), Mouse_Follows_Focus_Intr)) {
+            CenterMouseInWindow(ClosestWindow);
+        }
     }
 }
 
@@ -347,6 +351,10 @@ void FocusWindow(char *Direction)
 
             AXLibSetFocusedWindow(Window->Ref);
             AXLibSetFocusedApplication(Window->Owner->PSN);
+
+            if (StringEquals(CVarStringValue(CVAR_MOUSE_FOLLOWS_FOCUS), Mouse_Follows_Focus_Intr)) {
+                CenterMouseInWindow(Window);
+            }
         }
     } else if (VirtualSpace->Mode == Virtual_Space_Bsp) {
         char *FocusCycleMode = CVarStringValue(CVAR_WINDOW_FOCUS_CYCLE);
@@ -362,6 +370,10 @@ void FocusWindow(char *Direction)
                 (FindClosestWindow(Space, VirtualSpace, Window, &ClosestWindow, Direction, WrapMonitor))) {
                 AXLibSetFocusedWindow(ClosestWindow->Ref);
                 AXLibSetFocusedApplication(ClosestWindow->Owner->PSN);
+
+                if (StringEquals(CVarStringValue(CVAR_MOUSE_FOLLOWS_FOCUS), Mouse_Follows_Focus_Intr)) {
+                    CenterMouseInWindow(ClosestWindow);
+                }
             } else if ((StringEquals(Direction, "east")) ||
                        (StringEquals(Direction, "next"))) {
                 FocusMonitor("next");
@@ -376,6 +388,10 @@ void FocusWindow(char *Direction)
                 (FindClosestWindow(Space, VirtualSpace, Window, &ClosestWindow, Direction, WrapMonitor))) {
                 AXLibSetFocusedWindow(ClosestWindow->Ref);
                 AXLibSetFocusedApplication(ClosestWindow->Owner->PSN);
+
+                if (StringEquals(CVarStringValue(CVAR_MOUSE_FOLLOWS_FOCUS), Mouse_Follows_Focus_Intr)) {
+                    CenterMouseInWindow(ClosestWindow);
+                }
             }
         }
     } else if (VirtualSpace->Mode == Virtual_Space_Monocle) {
@@ -421,6 +437,10 @@ void FocusWindow(char *Direction)
 
                 AXLibSetFocusedWindow(FocusWindow->Ref);
                 AXLibSetFocusedApplication(FocusWindow->Owner->PSN);
+
+                if (StringEquals(CVarStringValue(CVAR_MOUSE_FOLLOWS_FOCUS), Mouse_Follows_Focus_Intr)) {
+                    CenterMouseInWindow(FocusWindow);
+                }
             }
         }
     }
@@ -476,7 +496,7 @@ void SwapWindow(char *Direction)
         ResizeWindowToRegionSize(WindowNode);
         ResizeWindowToRegionSize(ClosestNode);
 
-        if (CVarIntegerValue(CVAR_MOUSE_FOLLOWS_FOCUS)) {
+        if (!StringEquals(CVarStringValue(CVAR_MOUSE_FOLLOWS_FOCUS), Mouse_Follows_Focus_Off)) {
             CenterMouseInRegion(&ClosestNode->Region);
         }
     } else if (VirtualSpace->Mode == Virtual_Space_Monocle) {
@@ -568,8 +588,8 @@ void WarpWindow(char *Direction)
 
         ASSERT(FocusedNode);
 
-        if (CVarIntegerValue(CVAR_MOUSE_FOLLOWS_FOCUS)) {
-            CenterMouseInRegion(&FocusedNode->Region);
+        if (!StringEquals(CVarStringValue(CVAR_MOUSE_FOLLOWS_FOCUS), Mouse_Follows_Focus_Off)) {
+            CenterMouseInRegion(&ClosestNode->Region);
         }
     } else if (VirtualSpace->Mode == Virtual_Space_Monocle) {
         WindowNode = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
