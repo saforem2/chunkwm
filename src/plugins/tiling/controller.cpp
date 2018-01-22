@@ -1713,6 +1713,11 @@ FocusMonitor(unsigned MonitorId)
     Window = GetWindowByID(WindowIds[0]);
     AXLibSetFocusedWindow(Window->Ref);
     AXLibSetFocusedApplication(Window->Owner->PSN);
+
+    if (StringEquals(CVarStringValue(CVAR_MOUSE_FOLLOWS_FOCUS), Mouse_Follows_Focus_Intr)) {
+        CenterMouseInWindow(Window);
+    }
+
     Result = true;
 
 space_free:
