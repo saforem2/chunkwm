@@ -3,7 +3,7 @@
 #### cvar changes
 
 - mouse_follows_focus has been changed to be of type string, formerly a boolean value.
-  the new values are as follows: `none`, `intrinsic` and `all`.
+  the new values are as follows: `off`, `intrinsic` and `all`.
 
 - window_float_center has been removed in favour of a new feature. see provided sample config
   for an example of how to reproduce this using the newly added command.

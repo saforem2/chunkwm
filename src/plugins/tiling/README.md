@@ -141,7 +141,7 @@
 ##### set state of mouse follows focus
 
     chunkc set mouse_follows_focus           <option>
-    <option>: none | intrinsic | all
+    <option>: off | intrinsic | all
     desc:
          intrinsic: only trigger from focus events performed by chunkwm.
          all: trigger from all focus events reported by macOS (system-wide)
