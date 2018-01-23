@@ -123,6 +123,19 @@ BeginFloatingWindow(virtual_space *VirtualSpace)
         Window =  GetFocusedWindow();
     }
 
+    if (!Window) {
+        /*
+         * NOTE(koekeishiya): We can potentially get a null-pointer returned here, because
+         * the window is not a valid window in the eyes of chunkwm, for whatever reason.
+         *
+         * This can be reproduced by having Übersicht draw a window and try to initiate
+         * mouse-drag.
+         *
+         */
+
+        return false;
+    }
+
     if ((VirtualSpace->Mode == Virtual_Space_Float) || (AXLibHasFlags(Window, Window_Float))) {
         if ((Cursor.x >= Window->Position.x) &&
             (Cursor.x <= Window->Position.x + Window->Size.width) &&
