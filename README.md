@@ -22,7 +22,7 @@ Development is happening on macOS High Sierra (10.13.0), but OSX El Capitan (10.
 
 Older versions may or may not be compatible and will not be officially supported.
 
-![chunkwm_img](https://user-images.githubusercontent.com/6175959/29497156-478ccdca-85e3-11e7-8acc-9610954d6fc2.png)
+![chunkwm_img](https://user-images.githubusercontent.com/6175959/35296227-b4c0d428-007b-11e8-804c-8a4244a547f2.png)
 
 Click [here](https://github.com/koekeishiya/chunkwm/issues/21) for more screenshots.
 
