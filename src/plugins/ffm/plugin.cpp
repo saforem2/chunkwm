@@ -29,6 +29,7 @@ internal uint32_t MouseModifier;
 internal bool volatile IsActive;
 internal uint32_t volatile FocusedWindowId;
 internal chunkwm_api API;
+internal AXUIElementRef SystemWideElement;
 
 internal bool
 IsWindowLevelAllowed(int WindowLevel)
@@ -89,20 +90,34 @@ FocusFollowsMouse(CGEventRef Event)
     int WindowLevel = 0;
     int WindowConnection = 0;
     CGPoint WindowPosition;
+    AXUIElementRef ApplicationRef;
+    AXUIElementRef WindowRef;
 
     int Connection = CGSMainConnectionID();
     CGPoint CursorPosition = CGEventGetLocation(Event);
     CGSFindWindowByGeometry(Connection, 0, 1, 0, &CursorPosition, &WindowPosition, &WindowId, &WindowConnection);
 
+    if (WindowId == 0)                  return;
     if (Connection == WindowConnection) return;
     if (WindowId == FocusedWindowId)    return;
 
     CGSGetWindowLevel(Connection, WindowId, &WindowLevel);
-    // printf("FFM: Window level %d\n", WindowLevel);
     if (!IsWindowLevelAllowed(WindowLevel)) return;
 
     CGSConnectionGetPID(WindowConnection, &WindowPid);
-    FocusWindow(WindowId, WindowPid);
+    ApplicationRef = AXUIElementCreateApplication(WindowPid);
+    if (!ApplicationRef) goto out;
+
+    AXUIElementCopyElementAtPosition(SystemWideElement, CursorPosition.x, CursorPosition.y, &WindowRef);
+    if (!WindowRef) goto app_release;
+
+    AXLibSetFocusedWindow(WindowRef);
+    AXLibSetFocusedApplication(WindowPid);
+    CFRelease(WindowRef);
+
+app_release:
+    CFRelease(ApplicationRef);
+out:;
 }
 
 EVENTTAP_CALLBACK(EventTapCallback)
@@ -193,6 +208,9 @@ PLUGIN_MAIN_FUNC(PluginMain)
 PLUGIN_BOOL_FUNC(PluginInit)
 {
     API = ChunkwmAPI;
+    SystemWideElement = AXUIElementCreateSystemWide();
+    if (!SystemWideElement) return false;
+
     IsActive = true;
     EventTap.Mask = (1 << kCGEventMouseMoved);
     bool Result = BeginEventTap(&EventTap, &EventTapCallback);
