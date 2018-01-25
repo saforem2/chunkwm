@@ -51,46 +51,13 @@ IsWindowLevelAllowed(int WindowLevel)
 }
 
 internal inline void
-FocusWindow(uint32_t WindowID, pid_t WindowPID)
-{
-    AXUIElementRef ApplicationRef;
-    CFArrayRef WindowList;
-    CFIndex WindowCount;
-
-    ApplicationRef = AXUIElementCreateApplication(WindowPID);
-    if (!ApplicationRef) goto out;
-
-    WindowList = (CFArrayRef) AXLibGetWindowProperty(ApplicationRef, kAXWindowsAttribute);
-    if (!WindowList) goto app_release;
-
-    WindowCount = CFArrayGetCount(WindowList);
-    for (CFIndex Index = 0; Index < WindowCount; ++Index) {
-        AXUIElementRef WindowRef = (AXUIElementRef) CFArrayGetValueAtIndex(WindowList, Index);
-        if (!WindowRef) continue;
-
-        int WindowRefWID = AXLibGetWindowID(WindowRef);
-        if (WindowRefWID != WindowID) continue;
-
-        AXLibSetFocusedWindow(WindowRef);
-        AXLibSetFocusedApplication(WindowPID);
-        break;
-    }
-
-    CFRelease(WindowList);
-app_release:
-    CFRelease(ApplicationRef);
-out:;
-}
-
-internal inline void
 FocusFollowsMouse(CGEventRef Event)
 {
-    pid_t WindowPid = 0;
     int WindowId = 0;
     int WindowLevel = 0;
+    pid_t WindowPid = 0;
     int WindowConnection = 0;
     CGPoint WindowPosition;
-    AXUIElementRef ApplicationRef;
     AXUIElementRef WindowRef;
 
     int Connection = CGSMainConnectionID();
@@ -105,19 +72,12 @@ FocusFollowsMouse(CGEventRef Event)
     if (!IsWindowLevelAllowed(WindowLevel)) return;
 
     CGSConnectionGetPID(WindowConnection, &WindowPid);
-    ApplicationRef = AXUIElementCreateApplication(WindowPid);
-    if (!ApplicationRef) goto out;
-
     AXUIElementCopyElementAtPosition(SystemWideElement, CursorPosition.x, CursorPosition.y, &WindowRef);
-    if (!WindowRef) goto app_release;
+    if (!WindowRef) return;
 
     AXLibSetFocusedWindow(WindowRef);
     AXLibSetFocusedApplication(WindowPid);
     CFRelease(WindowRef);
-
-app_release:
-    CFRelease(ApplicationRef);
-out:;
 }
 
 EVENTTAP_CALLBACK(EventTapCallback)
