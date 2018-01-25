@@ -58,9 +58,11 @@ FocusFollowsMouse(CGEventRef Event)
     pid_t WindowPid = 0;
     int WindowConnection = 0;
     CGPoint WindowPosition;
-    AXUIElementRef WindowRef;
+    CFStringRef Role;
+    AXUIElementRef Element;
+    AXUIElementRef WindowRef = NULL;
 
-    int Connection = CGSMainConnectionID();
+    local_persist int Connection = CGSMainConnectionID();
     CGPoint CursorPosition = CGEventGetLocation(Event);
     CGSFindWindowByGeometry(Connection, 0, 1, 0, &CursorPosition, &WindowPosition, &WindowId, &WindowConnection);
 
@@ -70,11 +72,22 @@ FocusFollowsMouse(CGEventRef Event)
 
     CGSGetWindowLevel(Connection, WindowId, &WindowLevel);
     if (!IsWindowLevelAllowed(WindowLevel)) return;
-
     CGSConnectionGetPID(WindowConnection, &WindowPid);
-    AXUIElementCopyElementAtPosition(SystemWideElement, CursorPosition.x, CursorPosition.y, &WindowRef);
-    if (!WindowRef) return;
 
+    AXUIElementCopyElementAtPosition(SystemWideElement, CursorPosition.x, CursorPosition.y, &Element);
+    if (!Element) return;
+
+    if (AXLibGetWindowRole(Element, &Role)) {
+        if (CFEqual(Role, kAXWindowRole)) {
+            WindowRef = Element;
+        } else {
+            AXUIElementCopyAttributeValue(Element, kAXWindowAttribute, (CFTypeRef*)&WindowRef);
+            CFRelease(Element);
+        }
+        CFRelease(Role);
+    }
+
+    if (!WindowRef) return;
     AXLibSetFocusedWindow(WindowRef);
     AXLibSetFocusedApplication(WindowPid);
     CFRelease(WindowRef);
