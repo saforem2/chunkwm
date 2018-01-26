@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <pthread.h>
+#include <AvailabilityMacros.h>
 
 #include <map>
 #include <vector>
@@ -987,8 +988,24 @@ WindowFocusedHandler(uint32_t WindowId)
     UpdateCVar(CVAR_FOCUSED_WINDOW, WindowId);
     macos_window *Window = GetWindowByID(WindowId);
     if (Window && IsWindowFocusable(Window)) {
+        /*
+         * NOTE(koekeishiya): Memory-ownership differs on El Capitan and newer versions.
+         * On El Capitan we do not want to free the DisplayRef if it was retrieved through
+         * the private CGSCopyManagedDisplayForWindow function
+         */
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 101200
+        bool ShouldFreeDisplayRef = false;
         CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromWindow(Window->Id);
-        if (!DisplayRef) DisplayRef = AXLibGetDisplayIdentifierFromWindowRect(Window->Position, Window->Size);
+        if (!DisplayRef) {
+            ShouldFreeDisplayRef = true;
+            DisplayRef = AXLibGetDisplayIdentifierFromWindowRect(Window->Position, Window->Size);
+        }
+#else
+        CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromWindow(Window->Id);
+        if (!DisplayRef) {
+            DisplayRef = AXLibGetDisplayIdentifierFromWindowRect(Window->Position, Window->Size);
+        }
+#endif
         ASSERT(DisplayRef);
 
         macos_space *Space = AXLibActiveSpace(DisplayRef);
@@ -1021,8 +1038,21 @@ WindowFocusedHandler(uint32_t WindowId)
         }
 
 space_free:
+
         AXLibDestroySpace(Space);
+
+        /*
+         * NOTE(koekeishiya): Memory-ownership differs on El Capitan and newer versions.
+         * On El Capitan we do not want to free the DisplayRef if it was retrieved through
+         * the private CGSCopyManagedDisplayForWindow function
+         */
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 101200
+        if (ShouldFreeDisplayRef) {
+            CFRelease(DisplayRef);
+        }
+#else
         CFRelease(DisplayRef);
+#endif
     }
 }
 
