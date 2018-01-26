@@ -196,6 +196,7 @@ PLUGIN_BOOL_FUNC(PluginInit)
 PLUGIN_VOID_FUNC(PluginDeInit)
 {
     EndEventTap(&EventTap);
+    CFRelease(SystemWideElement);
 }
 
 CHUNKWM_PLUGIN_VTABLE(PluginInit, PluginDeInit, PluginMain)
