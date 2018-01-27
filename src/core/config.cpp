@@ -17,23 +17,10 @@
 
 #define internal static
 
-struct plugin_fs
-{
-    char *Absolutepath;
-    char *Filename;
-};
-
 internal inline bool
 StringEquals(const char *A, const char *B)
 {
     return (strcmp(A, B) == 0);
-}
-
-internal void
-DestroyPluginFS(plugin_fs *PluginFS)
-{
-    free(PluginFS->Absolutepath);
-    free(PluginFS->Filename);
 }
 
 // NOTE(koekeishiya): Caller is responsible for freeing memory of returned pointer
@@ -152,28 +139,31 @@ HandleCore(chunkwm_delegate *Delegate)
             c_log_active_level = C_LOG_LEVEL_ERROR;
         }
     } else if (StringEquals(Delegate->Command, "load")) {
-        plugin_fs PluginFS;
-        if (PopulatePluginPath(&Delegate->Message, &PluginFS)) {
+        plugin_fs *PluginFS = (plugin_fs *) malloc(sizeof(plugin_fs));
+        if (PopulatePluginPath(&Delegate->Message, PluginFS)) {
             struct stat Buffer;
-            if (lstat(PluginFS.Absolutepath, &Buffer) == 0) {
+            if (lstat(PluginFS->Absolutepath, &Buffer) == 0) {
                 if (S_ISLNK(Buffer.st_mode)) {
                     char *ResolvedPath = (char *) malloc(PATH_MAX);
-                    realpath(PluginFS.Absolutepath, ResolvedPath);
-                    LoadPlugin(ResolvedPath, PluginFS.Filename);
-                    free(ResolvedPath);
-                } else {
-                    LoadPlugin(PluginFS.Absolutepath, PluginFS.Filename);
+                    realpath(PluginFS->Absolutepath, ResolvedPath);
+                    free(PluginFS->Absolutepath);
+                    PluginFS->Absolutepath = ResolvedPath;
                 }
+                ConstructEvent(ChunkWM_PluginLoad, PluginFS);
             } else {
-                c_log(C_LOG_LEVEL_WARN, "chunkwm: plugin '%s' not found..\n", PluginFS.Absolutepath);
+                c_log(C_LOG_LEVEL_WARN, "chunkwm: plugin '%s' not found..\n", PluginFS->Absolutepath);
+                DestroyPluginFS(PluginFS);
+                free(PluginFS);
             }
-            DestroyPluginFS(&PluginFS);
+        } else {
+            free(PluginFS);
         }
     } else if (StringEquals(Delegate->Command, "unload")) {
-        plugin_fs PluginFS;
-        if (PopulatePluginPath(&Delegate->Message, &PluginFS)) {
-            UnloadPlugin(PluginFS.Absolutepath, PluginFS.Filename);
-            DestroyPluginFS(&PluginFS);
+        plugin_fs *PluginFS = (plugin_fs *) malloc(sizeof(plugin_fs));
+        if (PopulatePluginPath(&Delegate->Message, PluginFS)) {
+            ConstructEvent(ChunkWM_PluginUnload, PluginFS);
+        } else {
+            free(PluginFS);
         }
     } else {
         c_log(C_LOG_LEVEL_WARN, "chunkwm: invalid command '%s::%s'\n", Delegate->Target, Delegate->Command);

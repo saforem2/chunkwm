@@ -141,6 +141,22 @@ bool BeginCallbackThreads(int Count)
     return true;
 }
 
+CHUNKWM_CALLBACK(Callback_ChunkWM_PluginLoad)
+{
+    plugin_fs *PluginFS = (plugin_fs *) Event->Context;
+    LoadPlugin(PluginFS->Absolutepath, PluginFS->Filename);
+    DestroyPluginFS(PluginFS);
+    free(PluginFS);
+}
+
+CHUNKWM_CALLBACK(Callback_ChunkWM_PluginUnload)
+{
+    plugin_fs *PluginFS = (plugin_fs *) Event->Context;
+    UnloadPlugin(PluginFS->Absolutepath, PluginFS->Filename);
+    DestroyPluginFS(PluginFS);
+    free(PluginFS);
+}
+
 CHUNKWM_CALLBACK(Callback_ChunkWM_PluginCommand)
 {
     chunkwm_delegate *Delegate = (chunkwm_delegate *) Event->Context;

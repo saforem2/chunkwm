@@ -35,6 +35,7 @@ ProcessEventQueue(void *)
             HasWork = !EventLoop.Queue.empty();
             pthread_mutex_unlock(&EventLoop.Lock);
 
+            c_log(C_LOG_LEVEL_DEBUG, "chunkwm: processing event of type '%s'\n", Event.Name);
             (*Event.Handle)(&Event);
         }
 

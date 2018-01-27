@@ -185,6 +185,10 @@ int main(int Count, char **Args)
         Fail("chunkwm: failed to initialize critical mutex! abort..\n");
     }
 
+    if (!BeginEventLoop()) {
+        Fail("chunkwm: could not initialize event-loop! abort..\n");
+    }
+
     NSApplicationLoad();
     AXUIElementSetMessagingTimeout(SystemWideElement(), 1.0);
 
@@ -199,14 +203,6 @@ int main(int Count, char **Args)
 
     // NOTE(koekeishiya): The config file is just an executable bash script!
     ForkExecWait(ConfigFile);
-    c_log(C_LOG_LEVEL_DEBUG, "chunkwm: finished executing config-file.\n");
-
-    // NOTE(koekeishiya): Read plugin directory from cvar.
-    char *PluginDirectory = CVarStringValue(CVAR_PLUGIN_DIR);
-    if (PluginDirectory && CVarIntegerValue(CVAR_PLUGIN_HOTLOAD)) {
-        HotloaderAddPath(PluginDirectory);
-        HotloaderInit();
-    }
 
     if (!InitState()) {
         Fail("chunkwm: failed to initialize critical mutex! abort..\n");
@@ -216,16 +212,19 @@ int main(int Count, char **Args)
         c_log(C_LOG_LEVEL_WARN, "chunkwm: could not get semaphore, callback multi-threading disabled..\n");
     }
 
-    if (!BeginEventLoop()) {
-        Fail("chunkwm: could not initialize event-loop! abort..\n");
-    }
-
     if (!BeginCarbonEventHandler(&Carbon)) {
         Fail("chunkwm: failed to install carbon eventhandler! abort..\n");
     }
 
     if (!BeginDisplayHandler()) {
         c_log(C_LOG_LEVEL_WARN, "chunkwm: could not register for display notifications..\n");
+    }
+
+    // NOTE(koekeishiya): Read plugin directory from cvar.
+    char *PluginDirectory = CVarStringValue(CVAR_PLUGIN_DIR);
+    if (PluginDirectory && CVarIntegerValue(CVAR_PLUGIN_HOTLOAD)) {
+        HotloaderAddPath(PluginDirectory);
+        HotloaderInit();
     }
 
     BeginSharedWorkspace();

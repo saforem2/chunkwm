@@ -6,6 +6,12 @@
 
 #include <map>
 
+struct plugin_fs
+{
+    char *Absolutepath;
+    char *Filename;
+};
+
 struct loaded_plugin
 {
     char *Filename;
@@ -32,5 +38,7 @@ loaded_plugin_list *BeginLoadedPluginList();
 void EndLoadedPluginList();
 
 plugin *GetPluginFromFilename(const char *Filename);
+
+void DestroyPluginFS(plugin_fs *PluginFS);
 
 #endif

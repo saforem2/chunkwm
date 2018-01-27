@@ -166,7 +166,6 @@ plugin *GetPluginFromFilename(const char *Filename)
     return Result;
 }
 
-
 loaded_plugin_list *BeginLoadedPluginList()
 {
     pthread_mutex_lock(&LoadedPluginLock);
@@ -295,4 +294,10 @@ bool BeginPlugins()
     }
 
     return (pthread_mutex_init(&LoadedPluginLock, NULL) == 0);
+}
+
+void DestroyPluginFS(plugin_fs *PluginFS)
+{
+    free(PluginFS->Absolutepath);
+    free(PluginFS->Filename);
 }

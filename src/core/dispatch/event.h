@@ -37,6 +37,8 @@ extern CHUNKWM_CALLBACK(Callback_ChunkWM_WindowTitleChanged);
 // NOTE(koekeishiya): This property is not exposed to plugins
 extern CHUNKWM_CALLBACK(Callback_ChunkWM_PluginCommand);
 extern CHUNKWM_CALLBACK(Callback_ChunkWM_PluginBroadcast);
+extern CHUNKWM_CALLBACK(Callback_ChunkWM_PluginLoad);
+extern CHUNKWM_CALLBACK(Callback_ChunkWM_PluginUnload);
 
 enum event_type
 {
@@ -74,6 +76,7 @@ struct chunk_event
 {
     chunkwm_callback *Handle;
     void *Context;
+    const char *Name;
 };
 
 struct event_loop
@@ -101,6 +104,7 @@ void AddEvent(chunk_event Event);
     do { chunk_event Event = {}; \
          Event.Context = EventContext; \
          Event.Handle = &Callback_##EventType; \
+         Event.Name = #EventType; \
          AddEvent(Event); \
        } while(0)
 
