@@ -144,17 +144,13 @@ Requires xcode-8 command line tools.
 
 This implies that the `.chunkwmrc` file needs executable permissions; `chmod +x ~/.chunkwmrc`.
 
-Both the *chunkwm-core* and all plugins are configured in this file.
-
-Plugin settings should be set before the command to load said plugin.
-
 A different location can be specified with the `--config | -c` argument.
 
 e.g: `chunkwm --config /opt/local/etc/chunkwm/chunkwmrc`.
 
-The desired logging-level can also be specified with the `--log-level | -l` argument.
-Possible options are `none`, `debug`, `warn`, `error`. Setting the *logging-level*
-here will affect logging that happens before the config-file has been executed
+Both the *chunkwm-core* and all plugins are configured in this file.
+
+Plugin settings should be set before the command to load said plugin.
 
 The valid config-options for *chunkwm-core* are as follows:
 

@@ -8,11 +8,14 @@ internal event_loop EventLoop = {};
 /* NOTE(koekeishiya): Must be thread-safe! Called through ConstructEvent macro */
 void AddEvent(chunk_event Event)
 {
-    if (EventLoop.Running && Event.Handle) {
+    if (Event.Handle) {
         pthread_mutex_lock(&EventLoop.Lock);
         EventLoop.Queue.push(Event);
         pthread_mutex_unlock(&EventLoop.Lock);
-        sem_post(EventLoop.Semaphore);
+
+        if (EventLoop.Running) {
+            sem_post(EventLoop.Semaphore);
+        }
     }
 }
 
@@ -47,8 +50,7 @@ ProcessEventQueue(void *)
 }
 
 /* NOTE(koekeishiya): Initialize required mutexes and semaphore for the eventloop */
-internal bool
-BeginEventLoop()
+bool BeginEventLoop()
 {
     bool Result = true;
 
@@ -75,32 +77,18 @@ out:
 }
 
 /* NOTE(koekeishiya): Destroy mutexes and condition used by the event-loop */
-internal void
-EndEventLoop()
+void EndEventLoop()
 {
     pthread_mutex_destroy(&EventLoop.Lock);
     sem_destroy(EventLoop.Semaphore);
 }
 
-void PauseEventLoop()
+void StartEventLoop()
 {
-    // TODO(koekeishiya): Probably want a proper way to temporarily ignore all events
-}
-
-void ResumeEventLoop()
-{
-    // TODO(koekeishiya): NYI
-}
-
-bool StartEventLoop()
-{
-    if ((!EventLoop.Running) && (BeginEventLoop())) {
+    if (!EventLoop.Running) {
         EventLoop.Running = true;
         pthread_create(&EventLoop.Thread, NULL, &ProcessEventQueue, NULL);
-        return true;
     }
-
-    return false;
 }
 
 void StopEventLoop()
@@ -108,6 +96,5 @@ void StopEventLoop()
     if (EventLoop.Running) {
         EventLoop.Running = false;
         pthread_join(EventLoop.Thread, NULL);
-        EndEventLoop();
     }
 }

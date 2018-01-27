@@ -85,7 +85,10 @@ struct event_loop
     std::queue<chunk_event> Queue;
 };
 
-bool StartEventLoop();
+bool BeginEventLoop();
+void EndEventLoop();
+
+void StartEventLoop();
 void StopEventLoop();
 
 void PauseEventLoop();

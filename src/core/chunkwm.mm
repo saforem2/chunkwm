@@ -53,6 +53,7 @@
 #define internal static
 #define local_persist static
 
+internal carbon_event_handler Carbon;
 internal char *ConfigAbsolutePath;
 
 inline void
@@ -90,7 +91,6 @@ ForkExecWait(char *Command)
     } else if (Pid > 0) {
         int Status;
         waitpid(Pid, &Status, 0);
-        c_log(C_LOG_LEVEL_DEBUG, "chunkwm: finished executing config-file.\n");
     } else {
         char *Exec[] = { (char*)Shell, (char*)Arg, Command, NULL};
         int StatusCode = execvp(Exec[0], Exec);
@@ -137,11 +137,10 @@ internal bool
 ParseArguments(int Count, char **Args)
 {
     int Option;
-    const char *Short = "vc:l:";
+    const char *Short = "vc:";
     struct option Long[] = {
         { "version", no_argument, NULL, 'v' },
         { "config", required_argument, NULL, 'c' },
-        { "log-level", required_argument, NULL, 'l' },
         { NULL, 0, NULL, 0 }
     };
 
@@ -156,24 +155,11 @@ ParseArguments(int Count, char **Args)
         } break;
         case 'c': {
             ConfigAbsolutePath = strdup(optarg);
-            return false;
-        } break;
-        case 'l': {
-            if (strcmp(optarg, "none") == 0) {
-                c_log_active_level = C_LOG_LEVEL_NONE;
-            } else if (strcmp(optarg, "debug") == 0) {
-                c_log_active_level = C_LOG_LEVEL_DEBUG;
-            } else if (strcmp(optarg, "warn") == 0) {
-                c_log_active_level = C_LOG_LEVEL_WARN;
-            } else if (strcmp(optarg, "error") == 0) {
-                c_log_active_level = C_LOG_LEVEL_ERROR;
-            } else {
-                c_log(C_LOG_LEVEL_ERROR, "chunkwm: invalid log-level '%s'.\n", optarg);
-            }
         } break;
         }
     }
 
+    optind = 1;
     return false;
 }
 
@@ -187,13 +173,20 @@ int main(int Count, char **Args)
         Fail("chunkwm: could not access accessibility features! abort..\n");
     }
 
+    if (!StartDaemon(CHUNKWM_PORT, DaemonCallback)) {
+        Fail("chunkwm: failed to initialize daemon! abort..\n");
+    }
+
     if (!BeginCVars()) {
         Fail("chunkwm: failed to initialize cvars! abort..\n");
     }
 
-    if (!StartDaemon(CHUNKWM_PORT, DaemonCallback)) {
-        Fail("chunkwm: failed to initialize daemon! abort..\n");
+    if (!BeginPlugins()) {
+        Fail("chunkwm: failed to initialize critical mutex! abort..\n");
     }
+
+    NSApplicationLoad();
+    AXUIElementSetMessagingTimeout(SystemWideElement(), 1.0);
 
     char ConfigFile[MAX_LEN];
     ConfigFile[0] = '\0';
@@ -204,37 +197,9 @@ int main(int Count, char **Args)
         Fail("chunkwm: config '%s' not found!\n", ConfigFile);
     }
 
-    if (!BeginPlugins()) {
-        Fail("chunkwm: failed to initialize critical mutex! abort..\n");
-    }
-
-    NSApplicationLoad();
-    AXUIElementSetMessagingTimeout(SystemWideElement(), 1.0);
-
-    carbon_event_handler Carbon = {};
-    if (!BeginCarbonEventHandler(&Carbon)) {
-        Fail("chunkwm: failed to install carbon eventhandler! abort..\n");
-    }
-
-    if (!InitState()) {
-        Fail("chunkwm: failed to initialize critical mutex! abort..\n");
-    }
-
-    if (!BeginDisplayHandler()) {
-        c_log(C_LOG_LEVEL_WARN, "chunkwm: could not register for display notifications..\n");
-    }
-
-    if (!BeginCallbackThreads(CHUNKWM_THREAD_COUNT)) {
-        c_log(C_LOG_LEVEL_WARN, "chunkwm: could not get semaphore, callback multi-threading disabled..\n");
-    }
-
-    BeginSharedWorkspace();
-    if (!StartEventLoop()) {
-        Fail("chunkwm: failed to start eventloop! abort..\n");
-    }
-
     // NOTE(koekeishiya): The config file is just an executable bash script!
     ForkExecWait(ConfigFile);
+    c_log(C_LOG_LEVEL_DEBUG, "chunkwm: finished executing config-file.\n");
 
     // NOTE(koekeishiya): Read plugin directory from cvar.
     char *PluginDirectory = CVarStringValue(CVAR_PLUGIN_DIR);
@@ -243,6 +208,29 @@ int main(int Count, char **Args)
         HotloaderInit();
     }
 
+    if (!InitState()) {
+        Fail("chunkwm: failed to initialize critical mutex! abort..\n");
+    }
+
+    if (!BeginCallbackThreads(CHUNKWM_THREAD_COUNT)) {
+        c_log(C_LOG_LEVEL_WARN, "chunkwm: could not get semaphore, callback multi-threading disabled..\n");
+    }
+
+    if (!BeginEventLoop()) {
+        Fail("chunkwm: could not initialize event-loop! abort..\n");
+    }
+
+    if (!BeginCarbonEventHandler(&Carbon)) {
+        Fail("chunkwm: failed to install carbon eventhandler! abort..\n");
+    }
+
+    if (!BeginDisplayHandler()) {
+        c_log(C_LOG_LEVEL_WARN, "chunkwm: could not register for display notifications..\n");
+    }
+
+    BeginSharedWorkspace();
+    StartEventLoop();
     CFRunLoopRun();
+
     return EXIT_SUCCESS;
 }
