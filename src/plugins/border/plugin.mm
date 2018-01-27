@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <AvailabilityMacros.h>
 
 #include "../../api/plugin_api.h"
 #include "../../common/accessibility/display.h"
@@ -100,12 +101,23 @@ UpdateToFocusedWindow()
     if (WindowRef) {
         uint32_t WindowId = AXLibGetWindowID(WindowRef);
         if (WindowId) {
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 101200
+            bool ShouldFreeDisplayRef = false;
+            CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromWindow(WindowId);
+            if (!DisplayRef) {
+                CGPoint Position = AXLibGetWindowPosition(WindowRef);
+                CGSize Size = AXLibGetWindowSize(WindowRef);
+                DisplayRef = AXLibGetDisplayIdentifierFromWindowRect(Position, Size);
+                ShouldFreeDisplayRef = true;
+            }
+#else
             CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromWindow(WindowId);
             if (!DisplayRef) {
                 CGPoint Position = AXLibGetWindowPosition(WindowRef);
                 CGSize Size = AXLibGetWindowSize(WindowRef);
                 DisplayRef = AXLibGetDisplayIdentifierFromWindowRect(Position, Size);
             }
+#endif
             ASSERT(DisplayRef);
 
             macos_space *Space = AXLibActiveSpace(DisplayRef);
@@ -116,7 +128,13 @@ UpdateToFocusedWindow()
             }
 
             AXLibDestroySpace(Space);
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 101200
+            if (ShouldFreeDisplayRef) {
+                CFRelease(DisplayRef);
+            }
+#else
             CFRelease(DisplayRef);
+#endif
         } else if (Border) {
             ClearBorderWindow(Border);
         }

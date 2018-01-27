@@ -572,9 +572,19 @@ void UntileWindowFromSpace(macos_window *Window, macos_space *Space, virtual_spa
 void UntileWindow(macos_window *Window)
 {
     if (UntileWindowPreValidation(Window)) {
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 101200
+        bool ShouldFreeDisplayRef = false;
         CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromWindow(Window->Id);
-        if (!DisplayRef) DisplayRef = AXLibGetDisplayIdentifierFromWindowRect(Window->Position, Window->Size);
-        ASSERT(DisplayRef);
+        if (!DisplayRef) {
+            ShouldFreeDisplayRef = true;
+            DisplayRef = AXLibGetDisplayIdentifierFromWindowRect(Window->Position, Window->Size);
+        }
+#else
+        CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromWindow(Window->Id);
+        if (!DisplayRef) {
+            DisplayRef = AXLibGetDisplayIdentifierFromWindowRect(Window->Position, Window->Size);
+        }
+#endif
 
         macos_space *Space = AXLibActiveSpace(DisplayRef);
         ASSERT(Space);
@@ -586,7 +596,14 @@ void UntileWindow(macos_window *Window)
         }
 
         AXLibDestroySpace(Space);
+
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 101200
+        if (ShouldFreeDisplayRef) {
+            CFRelease(DisplayRef);
+        }
+#else
         CFRelease(DisplayRef);
+#endif
     }
 }
 
