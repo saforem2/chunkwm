@@ -1,3 +1,13 @@
+### version 0.3.1
+
+#### other changes
+
+- fix memory ownership issue in El Capitan, causing a segfault (double-free).
+
+- fix an invalid access attempt for some windows when initiating mouse-drag on floating windows.
+
+----------
+
 ### version 0.3.0
 
 #### cvar changes
@@ -16,6 +26,8 @@
 #### removed features
 
 - removed command *--warp-floating*. replaced by *--grid-layout*.
+
+----------
 
 ### version 0.2.36
 
