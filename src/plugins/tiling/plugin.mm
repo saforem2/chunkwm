@@ -1609,6 +1609,12 @@ Init(chunkwm_api ChunkwmAPI)
     c_log = API.Log;
     BeginCVars(&API);
 
+    if (!AXLibDisplayHasSeparateSpaces()) {
+        c_log(C_LOG_LEVEL_ERROR, "chunkwm-tiling: displays have separate spaces is disabled! abort..\n");
+        Success = false;
+        goto out;
+    }
+
     Success = (pthread_mutex_init(&WindowsLock, NULL) == 0);
     if (!Success) goto out;
 

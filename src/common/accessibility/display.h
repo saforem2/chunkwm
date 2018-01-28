@@ -88,4 +88,6 @@ bool AXLibIsDockAutoHideEnabled();
 macos_dock_orientation AXLibGetDockOrientation();
 size_t AXLibGetDockTileSize();
 
+bool AXLibDisplayHasSeparateSpaces();
+
 #endif

@@ -689,3 +689,8 @@ size_t AXLibGetDockTileSize()
     size_t Result = (Ratio * (DOCK_MAX_TILESIZE - DOCK_MIN_TILESIZE)) + DOCK_MIN_TILESIZE;
     return Result;
 }
+
+bool AXLibDisplayHasSeparateSpaces()
+{
+    return [NSScreen screensHaveSeparateSpaces];
+}
