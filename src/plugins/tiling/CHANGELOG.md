@@ -1,3 +1,13 @@
+### version 0.3.2
+
+#### other changes
+
+- fixed an issue with identifying monitors by arrangement.
+
+- don't segfault, but fail to load plugin and print an error if `displays have separate spaces` is disabled.
+
+----------
+
 ### version 0.3.1
 
 #### other changes

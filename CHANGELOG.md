@@ -1,3 +1,11 @@
+### version 0.3.2
+
+#### other changes
+
+- fixed an issue with identifying monitors by arrangement.
+
+----------
+
 ### version 0.3.1
 
 #### launch argument
