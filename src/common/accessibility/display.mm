@@ -137,19 +137,18 @@ bool AXLibIsDisplayChangingSpaces(CFStringRef DisplayRef)
 /* NOTE(koekeishiya): Caller is responsible for calling CFRelease. */
 CFStringRef AXLibGetDisplayIdentifierFromArrangement(unsigned Arrangement)
 {
+    unsigned Index = 0;
     CFStringRef Result = NULL;
-
-    CGDirectDisplayID *CGDisplayList =
-        (CGDirectDisplayID *) malloc(sizeof(CGDirectDisplayID) * MAX_DISPLAY_COUNT);
-
-    unsigned Count = 0;
-    CGGetActiveDisplayList(MAX_DISPLAY_COUNT, CGDisplayList, &Count);
-
-    if (Arrangement < Count) {
-        Result = AXLibGetDisplayIdentifier(CGDisplayList[Arrangement]);
+    CFArrayRef DisplayDictionaries = CGSCopyManagedDisplaySpaces(CGSDefaultConnection);
+    for (NSDictionary *DisplayDictionary in (__bridge NSArray *) DisplayDictionaries) {
+        NSString *DisplayIdentifier = DisplayDictionary[@"Display Identifier"];
+        if (Index == Arrangement) {
+            Result = (__bridge CFStringRef) [[NSString alloc] initWithString:DisplayIdentifier];
+            break;
+        }
+        ++Index;
     }
-
-    free(CGDisplayList);
+    CFRelease(DisplayDictionaries);
     return Result;
 }
 
