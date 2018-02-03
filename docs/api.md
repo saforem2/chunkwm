@@ -24,7 +24,7 @@ allow the plugin to broadcast custom events to other plugins, gives it access to
 *cvar* system, and a logger with different output levels that is controlled through
 the config-file.
 
-The init functions is defined through the *PLUGIN_BOOL_FUNC* macro and should return
+The init function is defined through the *PLUGIN_BOOL_FUNC* macro and should return
 true if initialization succeeded, and false otherwise.
 
 ```
