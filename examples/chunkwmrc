@@ -1,6 +1,13 @@
 #!/bin/bash
 
 #
+# NOTE: specify the absolutepath of the file to use for logging.
+#       'stdout' and 'stderr' are valid values.
+#
+
+chunkc core::log_file stdout
+
+#
 # NOTE: specify the desired level of logging.
 #
 #       - none, debug, warn, error
@@ -20,7 +27,7 @@ chunkc core::plugin_dir ~/.chunkwm_plugins
 #       and automatically reload any '.so' file that is changed.
 #
 
-chunkc core::hotload 1
+chunkc core::hotload 0
 
 #
 # NOTE: the following are config variables for the chunkwm-tiling plugin.
@@ -35,12 +42,6 @@ chunkc set global_desktop_offset_bottom  20
 chunkc set global_desktop_offset_left    20
 chunkc set global_desktop_offset_right   20
 chunkc set global_desktop_offset_gap     15
-
-chunkc set 1_desktop_offset_top          190
-chunkc set 1_desktop_offset_bottom       190
-chunkc set 1_desktop_offset_left         190
-chunkc set 1_desktop_offset_right        190
-chunkc set 1_desktop_offset_gap          15
 
 chunkc set 3_desktop_offset_top          190
 chunkc set 3_desktop_offset_bottom       190

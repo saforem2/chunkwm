@@ -154,6 +154,7 @@ Plugin settings should be set before the command to load said plugin.
 
 The valid config-options for *chunkwm-core* are as follows:
 
+    chunkc core::log_file </path/to/log/file>
     chunkc core::log_level <none | debug | warn | error>
     chunkc core::plugin_dir </path/to/plugins>
     chunkc core::hotload <1 | 0>

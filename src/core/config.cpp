@@ -127,6 +127,22 @@ HandleCore(chunkwm_delegate *Delegate)
         token Token = GetToken(&Delegate->Message);
         int Status = TokenToInt(Token);
         UpdateCVar(CVAR_PLUGIN_HOTLOAD, Status);
+    } else if (StringEquals(Delegate->Command, CVAR_LOG_FILE)) {
+        if (c_log_output_file == stdout) {
+            token Token = GetToken(&Delegate->Message);
+            if (TokenEquals(Token, "stdout")) {
+                c_log_output_file = stdout;
+            } else if (TokenEquals(Token, "stderr")) {
+                c_log_output_file = stderr;
+            } else {
+                char *OutputFile = TokenToString(Token);
+                FILE *Handle = fopen(OutputFile, "w");
+                if (Handle) {
+                    c_log_output_file = Handle;
+                }
+                free(OutputFile);
+            }
+        }
     } else if (StringEquals(Delegate->Command, CVAR_LOG_LEVEL)) {
         token Token = GetToken(&Delegate->Message);
         if (TokenEquals(Token, "none")) {
