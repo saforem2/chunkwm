@@ -339,6 +339,9 @@ PLUGIN_MAIN_FUNC(PluginMain)
     } else if (StringEquals(Node, "chunkwm_daemon_command")) {
         CommandHandler(Data);
         return true;
+    } else if (StringEquals(Node, "chunkwm_events_subscribed")) {
+        UpdateToFocusedWindow();
+        return true;
     } else if ((StringEquals(Node, "Tiling_focused_window_float")) && (SkipFloating)) {
         TilingFocusedWindowFloatStatus(Data);
         return true;
