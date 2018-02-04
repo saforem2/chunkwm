@@ -572,19 +572,8 @@ void UntileWindowFromSpace(macos_window *Window, macos_space *Space, virtual_spa
 void UntileWindow(macos_window *Window)
 {
     if (UntileWindowPreValidation(Window)) {
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 101200
-        bool ShouldFreeDisplayRef = false;
-        CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromWindow(Window->Id);
-        if (!DisplayRef) {
-            ShouldFreeDisplayRef = true;
-            DisplayRef = AXLibGetDisplayIdentifierFromWindowRect(Window->Position, Window->Size);
-        }
-#else
-        CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromWindow(Window->Id);
-        if (!DisplayRef) {
-            DisplayRef = AXLibGetDisplayIdentifierFromWindowRect(Window->Position, Window->Size);
-        }
-#endif
+        __AppleGetDisplayIdentifierFromMacOSWindow(Window);
+        ASSERT(DisplayRef);
 
         macos_space *Space = AXLibActiveSpace(DisplayRef);
         ASSERT(Space);
@@ -596,14 +585,7 @@ void UntileWindow(macos_window *Window)
         }
 
         AXLibDestroySpace(Space);
-
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 101200
-        if (ShouldFreeDisplayRef) {
-            CFRelease(DisplayRef);
-        }
-#else
-        CFRelease(DisplayRef);
-#endif
+        __AppleFreeDisplayIdentifierFromWindow();
     }
 }
 
@@ -1005,24 +987,7 @@ WindowFocusedHandler(uint32_t WindowId)
     UpdateCVar(CVAR_FOCUSED_WINDOW, WindowId);
     macos_window *Window = GetWindowByID(WindowId);
     if (Window && IsWindowFocusable(Window)) {
-        /*
-         * NOTE(koekeishiya): Memory-ownership differs on El Capitan and newer versions.
-         * On El Capitan we do not want to free the DisplayRef if it was retrieved through
-         * the private CGSCopyManagedDisplayForWindow function
-         */
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 101200
-        bool ShouldFreeDisplayRef = false;
-        CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromWindow(Window->Id);
-        if (!DisplayRef) {
-            ShouldFreeDisplayRef = true;
-            DisplayRef = AXLibGetDisplayIdentifierFromWindowRect(Window->Position, Window->Size);
-        }
-#else
-        CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromWindow(Window->Id);
-        if (!DisplayRef) {
-            DisplayRef = AXLibGetDisplayIdentifierFromWindowRect(Window->Position, Window->Size);
-        }
-#endif
+        __AppleGetDisplayIdentifierFromMacOSWindow(Window);
         ASSERT(DisplayRef);
 
         macos_space *Space = AXLibActiveSpace(DisplayRef);
@@ -1057,19 +1022,7 @@ WindowFocusedHandler(uint32_t WindowId)
 space_free:
 
         AXLibDestroySpace(Space);
-
-        /*
-         * NOTE(koekeishiya): Memory-ownership differs on El Capitan and newer versions.
-         * On El Capitan we do not want to free the DisplayRef if it was retrieved through
-         * the private CGSCopyManagedDisplayForWindow function
-         */
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 101200
-        if (ShouldFreeDisplayRef) {
-            CFRelease(DisplayRef);
-        }
-#else
-        CFRelease(DisplayRef);
-#endif
+        __AppleFreeDisplayIdentifierFromWindow();
     }
 }
 

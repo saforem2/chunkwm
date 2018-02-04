@@ -67,6 +67,54 @@ CFStringRef AXLibGetDisplayIdentifierForRightMostDisplay();
 CFStringRef AXLibGetDisplayIdentifierForLeftMostDisplay();
 CFStringRef AXLibGetDisplayIdentifierForBottomMostDisplay();
 
+/*
+ * NOTE(koekeishiya): Memory-ownership differs on El Capitan and newer versions.
+ * On El Capitan we do not want to free the DisplayRef if it was retrieved through
+ * the private CGSCopyManagedDisplayForWindow function
+ *
+ *      CFStringRef AXLibGetDisplayIdentifierFromWindow(uint32_t WindowId);
+ */
+
+#include <AvailabilityMacros.h>
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 101200
+#define __AppleGetDisplayIdentifierFromMacOSWindow(Window) \
+            bool ShouldFreeDisplayRef = false; \
+            CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromWindow(Window->Id); \
+            if (!DisplayRef) { \
+                DisplayRef = AXLibGetDisplayIdentifierFromWindowRect(Window->Position, Window->Size); \
+                ShouldFreeDisplayRef = true; \
+            }
+#define __AppleGetDisplayIdentifierFromWindow(WindowRef, WindowId) \
+            bool ShouldFreeDisplayRef = false; \
+            CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromWindow(WindowId); \
+            if (!DisplayRef) { \
+                CGPoint Position = AXLibGetWindowPosition(WindowRef); \
+                CGSize Size = AXLibGetWindowSize(WindowRef); \
+                DisplayRef = AXLibGetDisplayIdentifierFromWindowRect(Position, Size); \
+                ShouldFreeDisplayRef = true; \
+            }
+#define __AppleFreeDisplayIdentifierFromWindow() \
+            if (ShouldFreeDisplayRef) { \
+                CFRelease(DisplayRef); \
+            }
+#else
+#define __AppleGetDisplayIdentifierFromMacOSWindow(Window) \
+            CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromWindow(Window->Id); \
+            if (!DisplayRef) { \
+                DisplayRef = AXLibGetDisplayIdentifierFromWindowRect(Window->Position, Window->Size); \
+            }
+#define __AppleGetDisplayIdentifierFromWindow(WindowRef, WindowId) \
+            CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromWindow(WindowId); \
+            if (!DisplayRef) { \
+                CGPoint Position = AXLibGetWindowPosition(WindowRef); \
+                CGSize Size = AXLibGetWindowSize(WindowRef); \
+                DisplayRef = AXLibGetDisplayIdentifierFromWindowRect(Position, Size); \
+            }
+#define __AppleFreeDisplayIdentifierFromWindow() \
+            CFRelease(DisplayRef);
+#endif
+
+
 CGRect AXLibGetDisplayBounds(CFStringRef DisplayRef);
 bool AXLibIsDisplayChangingSpaces(CFStringRef DisplayRef);
 

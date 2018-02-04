@@ -1,7 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <AvailabilityMacros.h>
 
 #include "../../api/plugin_api.h"
 #include "../../common/accessibility/display.h"
@@ -101,23 +100,7 @@ UpdateToFocusedWindow()
     if (WindowRef) {
         uint32_t WindowId = AXLibGetWindowID(WindowRef);
         if (WindowId) {
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 101200
-            bool ShouldFreeDisplayRef = false;
-            CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromWindow(WindowId);
-            if (!DisplayRef) {
-                CGPoint Position = AXLibGetWindowPosition(WindowRef);
-                CGSize Size = AXLibGetWindowSize(WindowRef);
-                DisplayRef = AXLibGetDisplayIdentifierFromWindowRect(Position, Size);
-                ShouldFreeDisplayRef = true;
-            }
-#else
-            CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromWindow(WindowId);
-            if (!DisplayRef) {
-                CGPoint Position = AXLibGetWindowPosition(WindowRef);
-                CGSize Size = AXLibGetWindowSize(WindowRef);
-                DisplayRef = AXLibGetDisplayIdentifierFromWindowRect(Position, Size);
-            }
-#endif
+            __AppleGetDisplayIdentifierFromWindow(WindowRef, WindowId);
             ASSERT(DisplayRef);
 
             macos_space *Space = AXLibActiveSpace(DisplayRef);
@@ -128,13 +111,7 @@ UpdateToFocusedWindow()
             }
 
             AXLibDestroySpace(Space);
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 101200
-            if (ShouldFreeDisplayRef) {
-                CFRelease(DisplayRef);
-            }
-#else
-            CFRelease(DisplayRef);
-#endif
+            __AppleFreeDisplayIdentifierFromWindow();
         } else if (Border) {
             ClearBorderWindow(Border);
         }
@@ -182,8 +159,7 @@ WindowFocusedHandler(void *Data)
     if ((AXLibIsWindowStandard(Window)) &&
         ((Window->Owner == Application) ||
         (Application == NULL))) {
-        CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromWindow(Window->Id);
-        if (!DisplayRef) DisplayRef = AXLibGetDisplayIdentifierFromWindowRect(Window->Position, Window->Size);
+        __AppleGetDisplayIdentifierFromWindow(Window->Ref, Window->Id);
         ASSERT(DisplayRef);
 
         macos_space *Space = AXLibActiveSpace(DisplayRef);
@@ -192,7 +168,7 @@ WindowFocusedHandler(void *Data)
         }
 
         AXLibDestroySpace(Space);
-        CFRelease(DisplayRef);
+        __AppleFreeDisplayIdentifierFromWindow();
     }
 }
 
