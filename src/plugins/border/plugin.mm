@@ -251,9 +251,8 @@ SpaceChangedHandler()
     ASSERT(Success);
 
     if (Border) {
-        ClearBorderWindow(Border);
         DestroyBorderWindow(Border);
-        Border = NULL;
+        CreateBorder(0, 0, 0, 0);
     }
 
     if (Space->Type == kCGSSpaceUser) {
