@@ -336,6 +336,7 @@ PLUGIN_BOOL_FUNC(PluginInit)
 
     SkipFloating = CVarIntegerValue("focused_border_skip_floating");
     DrawBorder = !SkipFloating;
+    CreateBorder(0, 0, 0, 0);
     return true;
 }
 
