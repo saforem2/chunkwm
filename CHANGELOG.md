@@ -1,3 +1,12 @@
+### version 0.3.3
+
+#### cvar changes
+
+- added new option to set logging-output in the config-file:
+  `chunkc core::log_file <stdout | stderr | /path/to/file>`
+
+----------
+
 ### version 0.3.2
 
 #### other changes

@@ -1,3 +1,11 @@
+### version 0.3.3
+
+#### other changes
+
+- fixed a double-free issue caused by memory-ownership differences on El Capitan and new macOS versions.
+
+----------
+
 ### version 0.3.2
 
 #### other changes
