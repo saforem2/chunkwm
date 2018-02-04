@@ -173,15 +173,25 @@ WindowFocusedHandler(void *Data)
 }
 
 internal inline void
-NewWindowHandler()
+NewWindowHandler(macos_space *Space)
 {
     AXUIElementRef WindowRef = GetFocusedWindow();
     if (WindowRef) {
         uint32_t WindowId = AXLibGetWindowID(WindowRef);
         if (WindowId) {
-            FuckingMacOSMonitorBoundsChangingBetweenPrimaryAndMainMonitor(WindowRef);
+            if (Space && !AXLibSpaceHasWindow(Space->Id, WindowId)) {
+                if (Border) {
+                    ClearBorderWindow(Border);
+                }
+            } else {
+                FuckingMacOSMonitorBoundsChangingBetweenPrimaryAndMainMonitor(WindowRef);
+            }
+        } else if (Border) {
+            ClearBorderWindow(Border);
         }
         CFRelease(WindowRef);
+    } else if (Border) {
+        ClearBorderWindow(Border);
     }
 }
 
@@ -230,7 +240,7 @@ SpaceChangedHandler()
     }
 
     if (Space->Type == kCGSSpaceUser) {
-        NewWindowHandler();
+        NewWindowHandler(Space);
     }
 
     AXLibDestroySpace(Space);
@@ -283,7 +293,7 @@ PLUGIN_MAIN_FUNC(PluginMain)
         (StringEquals(Node, "chunkwm_export_window_created")) ||
         (StringEquals(Node, "chunkwm_export_application_unhidden")) ||
         (StringEquals(Node, "chunkwm_export_window_deminimized"))) {
-        NewWindowHandler();
+        NewWindowHandler(NULL);
         return true;
     } else if (StringEquals(Node, "chunkwm_export_application_activated")) {
         ApplicationActivatedHandler(Data);
