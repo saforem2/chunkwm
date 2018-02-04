@@ -33,8 +33,8 @@ NSColor *ColorFromHex(unsigned int Color);
     if (Rect.size.height >= Frame.size.height) {
         NSBezierPath *Border = [NSBezierPath bezierPathWithRoundedRect:Frame xRadius:self->Radius yRadius:self->Radius];
         [Border setLineWidth:self->Width];
-        NSColor *Color = ColorFromHex(self->Color);
-        [Color set];
+        NSColor *C = ColorFromHex(self->Color);
+        [C set];
         [Border stroke];
     }
 
@@ -82,6 +82,7 @@ InitBorderWindow(border_window_internal *Border, int X, int Y, int W, int H, int
     [Border->Handle setOpaque:NO];
     [Border->Handle setBackgroundColor: [NSColor clearColor]];
     [Border->Handle setCollectionBehavior:NSWindowCollectionBehaviorDefault];
+    [Border->Handle setAnimationBehavior:NSWindowAnimationBehaviorNone];
     [Border->Handle setLevel:NSFloatingWindowLevel];
     [Border->Handle makeKeyAndOrderFront:nil];
     [Border->Handle setReleasedWhenClosed:YES];
@@ -151,6 +152,7 @@ void DestroyBorderWindow(border_window *Border)
 
     if ([NSThread isMainThread]) {
         NSAutoreleasePool *Pool = [[NSAutoreleasePool alloc] init];
+        [BorderInternal->Handle orderOut:nil];
         [BorderInternal->Handle close];
         [Pool release];
         free(BorderInternal);
@@ -158,6 +160,7 @@ void DestroyBorderWindow(border_window *Border)
         dispatch_async(dispatch_get_main_queue(), ^(void)
         {
             NSAutoreleasePool *Pool = [[NSAutoreleasePool alloc] init];
+            [BorderInternal->Handle orderOut:nil];
             [BorderInternal->Handle close];
             [Pool release];
             free(BorderInternal);

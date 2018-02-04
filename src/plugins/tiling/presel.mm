@@ -40,8 +40,8 @@ DrawLine(int W, int X1, int Y1, int X2, int Y2)
 
     NSRect Frame = [self bounds];
     if (Rect.size.height >= Frame.size.height) {
-        NSColor *Color = ColorFromHex(self->Color);
-        [Color set];
+        NSColor *C = ColorFromHex(self->Color);
+        [C set];
 
         if (self->Type == PRESEL_TYPE_NORTH) {
             DrawLine(self->Width, 0, 0, 0, Frame.size.height);
@@ -110,6 +110,7 @@ InitPreselWindow(presel_window_internal *Window, int X, int Y, int W, int H)
     [Window->Handle setOpaque:NO];
     [Window->Handle setBackgroundColor: [NSColor clearColor]];
     [Window->Handle setCollectionBehavior:NSWindowCollectionBehaviorDefault];
+    [Window->Handle setAnimationBehavior:NSWindowAnimationBehaviorNone];
     [Window->Handle setLevel:NSFloatingWindowLevel];
     [Window->Handle makeKeyAndOrderFront:nil];
     [Window->Handle setReleasedWhenClosed:YES];
@@ -165,6 +166,7 @@ void DestroyPreselWindow(presel_window *WindowF)
 
     if ([NSThread isMainThread]) {
         NSAutoreleasePool *Pool = [[NSAutoreleasePool alloc] init];
+        [Window->Handle orderOut:nil];
         [Window->Handle close];
         [Pool release];
         free(Window);
@@ -172,6 +174,7 @@ void DestroyPreselWindow(presel_window *WindowF)
         dispatch_async(dispatch_get_main_queue(), ^(void)
         {
             NSAutoreleasePool *Pool = [[NSAutoreleasePool alloc] init];
+            [Window->Handle orderOut:nil];
             [Window->Handle close];
             [Pool release];
             free(Window);
