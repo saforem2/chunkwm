@@ -199,8 +199,6 @@ WindowFocusedHandler(void *Data)
 internal inline void
 NewWindowHandler()
 {
-    if (Border) return;
-
     AXUIElementRef WindowRef = GetFocusedWindow();
     if (WindowRef) {
         uint32_t WindowId = AXLibGetWindowID(WindowRef);
@@ -362,7 +360,6 @@ PLUGIN_BOOL_FUNC(PluginInit)
 
     SkipFloating = CVarIntegerValue("focused_border_skip_floating");
     DrawBorder = !SkipFloating;
-    CreateBorder(0, 0, 0, 0);
     return true;
 }
 
