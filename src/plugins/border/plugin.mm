@@ -251,6 +251,7 @@ SpaceChangedHandler()
     ASSERT(Success);
 
     if (Border) {
+        ClearBorderWindow(Border);
         DestroyBorderWindow(Border);
         Border = NULL;
     }
