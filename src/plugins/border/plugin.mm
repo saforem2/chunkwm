@@ -272,18 +272,44 @@ CommandHandler(void *Data)
     }
 }
 
+internal bool
+IsFocusedWindowStandard(uint32_t WindowId)
+{
+    AXUIElementRef WindowRef = GetFocusedWindow();
+    if (!WindowRef) return false;
+
+    if (WindowId != AXLibGetWindowID(WindowRef)) return false;
+
+    CFStringRef Role, Subrole;
+    if (!AXLibGetWindowRole(WindowRef, &Role)) return false;
+    if (!AXLibGetWindowSubrole(WindowRef, &Subrole)) return false;
+
+    bool Result = (CFEqual(Role, kAXWindowRole)) &&
+                  (CFEqual(Subrole, kAXStandardWindowSubrole));
+
+    CFRelease(Subrole);
+    CFRelease(Role);
+    CFRelease(WindowRef);
+
+    return Result;
+}
+
 internal inline void
 TilingFocusedWindowFloatStatus(void *Data)
 {
-    uint32_t Status = *(uint32_t *) Data;
-    if (Status) {
-        DrawBorder = false;
-        if (Border) {
-            ClearBorderWindow(Border);
-        }
-    } else {
+    uint32_t WindowId = *(uint32_t *) Data;
+    uint32_t Status = *((uint32_t *) Data + 1);
+
+    if (!Status) {
         DrawBorder = true;
         UpdateToFocusedWindow();
+    } else {
+        if (IsFocusedWindowStandard(WindowId)) {
+            DrawBorder = false;
+            if (Border) {
+                ClearBorderWindow(Border);
+            }
+        }
     }
 }
 

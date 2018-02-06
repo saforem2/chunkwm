@@ -267,13 +267,16 @@ ClearApplicationCache()
 
 void BroadcastFocusedWindowFloating(int Status)
 {
-    API.Broadcast(PluginName, "focused_window_float", (char *) &Status, sizeof(int));
+    uint32_t Data[2] = { 0, (uint32_t) Status };
+    API.Broadcast(PluginName, "focused_window_float", (char *) Data, sizeof(Data));
 }
 
 internal void
 BroadcastFocusedWindowFloating(macos_window *Window)
 {
-    BroadcastFocusedWindowFloating((int)AXLibHasFlags(Window, Window_Float));
+    uint32_t Status = (uint32_t) AXLibHasFlags(Window, Window_Float);
+    uint32_t Data[2] = { Window->Id, Status };
+    API.Broadcast(PluginName, "focused_window_float", (char *) Data, sizeof(Data));
 }
 
 bool IsWindowValid(macos_window *Window)

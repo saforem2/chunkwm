@@ -137,7 +137,7 @@ WindowFocusedHandler(void *Data)
 internal inline void
 TilingWindowFloatHandler(void *Data)
 {
-    uint32_t Status = *(uint32_t *) Data;
+    uint32_t Status = *((uint32_t *) Data + 1);
     IsActive = !(Status & 0x1);
 }
 
