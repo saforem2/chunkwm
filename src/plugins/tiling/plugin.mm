@@ -265,14 +265,14 @@ ClearApplicationCache()
     Applications.clear();
 }
 
-void BroadcastFocusedWindowFloating(int Status)
+internal void
+BroadcastFocusedWindowFloating()
 {
-    uint32_t Data[2] = { 0, (uint32_t) Status };
+    uint32_t Data[2] = { 0, 0 };
     API.Broadcast(PluginName, "focused_window_float", (char *) Data, sizeof(Data));
 }
 
-internal void
-BroadcastFocusedWindowFloating(macos_window *Window)
+void BroadcastFocusedWindowFloating(macos_window *Window)
 {
     uint32_t Status = (uint32_t) AXLibHasFlags(Window, Window_Float);
     uint32_t Data[2] = { Window->Id, Status };
@@ -1136,7 +1136,7 @@ WindowDestroyedHandler(void *Data)
         if (AXLibHasFlags(Copy, Window_Float)) {
             unsigned FocusedWindowId = CVarUnsignedValue(CVAR_FOCUSED_WINDOW);
             if (Copy->Id == FocusedWindowId) {
-                BroadcastFocusedWindowFloating(0);
+                BroadcastFocusedWindowFloating();
             }
         }
 

@@ -304,7 +304,7 @@ TilingFocusedWindowFloatStatus(void *Data)
         DrawBorder = true;
         UpdateToFocusedWindow();
     } else {
-        if (IsFocusedWindowStandard(WindowId)) {
+        if (!WindowId || IsFocusedWindowStandard(WindowId)) {
             DrawBorder = false;
             if (Border) {
                 ClearBorderWindow(Border);
