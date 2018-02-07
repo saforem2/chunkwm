@@ -93,6 +93,28 @@ internal event_tap EventTap;
 internal chunkwm_api API;
 chunkwm_log *c_log;
 
+/*
+ * NOTE(koekeishiya): Signals chunkwm to unload and load the tiling plugin.
+ * This will only work if the "plugin_dir" cvar has been set in the config!
+ */
+internal void Reload()
+{
+    int SockFD;
+    if (ConnectToDaemon(&SockFD, 3920)) {
+        char Message[64];
+        sprintf(Message, "core::unload tiling.so");
+        WriteToSocket(Message, SockFD);
+    }
+    CloseSocket(SockFD);
+
+    if (ConnectToDaemon(&SockFD, 3920)) {
+        char Message[64];
+        sprintf(Message, "core::load tiling.so");
+        WriteToSocket(Message, SockFD);
+    }
+    CloseSocket(SockFD);
+}
+
 internal void
 ExtendedDockSetWindowAlpha(uint32_t WindowId, float Value, float Duration)
 {
@@ -1375,10 +1397,12 @@ DisplayResizedHandler(void *Data)
     free(Spaces);
 }
 
-#if 0
 internal void
 DisplayAddedHandler(void *Data)
 {
+    // NOTE(koekeishiya): Temporary workaround to reload upon display-changes
+    Reload();
+#if 0
     CGDirectDisplayID DisplayId = *(CGDirectDisplayID *) Data;
     CFStringRef DisplayRef = AXLibGetDisplayIdentifier(DisplayId);
     if (DisplayRef) {
@@ -1424,11 +1448,15 @@ DisplayAddedHandler(void *Data)
 
         printf("display with id '%u' connected (could not retireve ref)\n", DisplayId);
     }
+#endif
 }
 
 internal void
 DisplayRemovedHandler(void *Data)
 {
+    // NOTE(koekeishiya): Temporary workaround to reload upon display-changes
+    Reload();
+#if 0
     CGDirectDisplayID DisplayId = *(CGDirectDisplayID *) Data;
     CFStringRef DisplayRef = AXLibGetDisplayIdentifier(DisplayId);
     if (DisplayRef) {
@@ -1469,8 +1497,8 @@ DisplayRemovedHandler(void *Data)
          * }
          */
     }
-}
 #endif
+}
 
 internal void
 ChunkwmDaemonCommandHandler(void *Data)
@@ -1527,14 +1555,12 @@ PLUGIN_MAIN_FUNC(PluginMain)
     } else if (StringEquals(Node, "chunkwm_export_display_resized")) {
         DisplayResizedHandler(Data);
         return true;
-#if 0
     } else if (StringEquals(Node, "chunkwm_export_display_added")) {
         DisplayAddedHandler(Data);
         return true;
     } else if (StringEquals(Node, "chunkwm_export_display_removed")) {
         DisplayRemovedHandler(Data);
         return true;
-#endif
     } else if (StringEquals(Node, "chunkwm_daemon_command")) {
         ChunkwmDaemonCommandHandler(Data);
         return true;
