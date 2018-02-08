@@ -99,10 +99,10 @@ void CreateLeafNodePairPreselect(node *Parent, uint32_t ExistingWindowId, uint32
                                  macos_space *Space, virtual_space *VirtualSpace)
 {
     Parent->WindowId = Node_Root;
-    Parent->Split = Parent->Preselect->Split;
-    Parent->Ratio = Parent->Preselect->Ratio;
+    Parent->Split = VirtualSpace->Preselect->Split;
+    Parent->Ratio = VirtualSpace->Preselect->Ratio;
 
-    node_ids NodeIds = AssignNodeIds(ExistingWindowId, SpawnedWindowId, Parent->Preselect->SpawnLeft);
+    node_ids NodeIds = AssignNodeIds(ExistingWindowId, SpawnedWindowId, VirtualSpace->Preselect->SpawnLeft);
 
     ASSERT(Parent->Split == Split_Vertical || Parent->Split == Split_Horizontal);
     if (Parent->Split == Split_Vertical) {
@@ -290,20 +290,16 @@ out:
     CFRelease(DisplayRef);
 }
 
-void FreePreselectNode(node *Node)
+void FreePreselectNode(virtual_space *VirtualSpace)
 {
-    DestroyPreselWindow(Node->Preselect->Border);
-    free(Node->Preselect->Direction);
-    free(Node->Preselect);
-    Node->Preselect = NULL;
+    DestroyPreselWindow(VirtualSpace->Preselect->Border);
+    free(VirtualSpace->Preselect->Direction);
+    free(VirtualSpace->Preselect);
+    VirtualSpace->Preselect = NULL;
 }
 
 void FreeNodeTree(node *Node, virtual_space_mode VirtualSpaceMode)
 {
-    if (Node->Preselect) {
-        FreePreselectNode(Node);
-    }
-
     if (Node->Left && VirtualSpaceMode == Virtual_Space_Bsp) {
         FreeNodeTree(Node->Left, VirtualSpaceMode);
     }
@@ -317,10 +313,6 @@ void FreeNodeTree(node *Node, virtual_space_mode VirtualSpaceMode)
 
 void FreeNode(node *Node)
 {
-    if (Node->Preselect) {
-        FreePreselectNode(Node);
-    }
-
     free(Node);
 }
 

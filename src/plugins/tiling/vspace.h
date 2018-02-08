@@ -34,6 +34,7 @@ enum virtual_space_flags
     Virtual_Space_Require_Region_Update = 1 << 1,
 };
 
+struct preselect_node;
 struct virtual_space
 {
     virtual_space_mode Mode;
@@ -43,6 +44,7 @@ struct virtual_space
     char *TreeLayout;
     node *Tree;
     uint32_t Flags;
+    preselect_node *Preselect;
 
     pthread_mutex_t Lock;
 };

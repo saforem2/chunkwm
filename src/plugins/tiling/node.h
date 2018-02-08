@@ -63,8 +63,6 @@ struct node
 
     node *Zoom;
     region Region;
-
-    preselect_node *Preselect;
 };
 
 struct equalize_node
@@ -88,7 +86,7 @@ void CreateLeafNodePair(node *Parent, uint32_t ExistingWindowId, uint32_t Spawne
 void CreateLeafNodePairPreselect(node *Parent, uint32_t ExistingWindowId, uint32_t SpawnedWindowId, macos_space *Space, virtual_space *VirtualSpace);
 equalize_node EqualizeNodeTree(node *Tree);
 void FreeNodeTree(node *Node, virtual_space_mode VirtualSpaceMode);
-void FreePreselectNode(node *Node);
+void FreePreselectNode(virtual_space *VirtualSpace);
 void FreeNode(node *Node);
 
 void ApplyNodeRegion(node *Node, virtual_space_mode VirtualSpaceMode);

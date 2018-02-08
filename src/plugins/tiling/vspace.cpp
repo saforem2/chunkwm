@@ -70,6 +70,7 @@ CreateAndInitVirtualSpace(macos_space *Space)
 {
     virtual_space *VirtualSpace = (virtual_space *) malloc(sizeof(virtual_space));
     VirtualSpace->Tree = NULL;
+    VirtualSpace->Preselect = NULL;
 
     // TODO(koekeishiya): How do we react if this call fails ??
     bool Mutex = pthread_mutex_init(&VirtualSpace->Lock, NULL) == 0;

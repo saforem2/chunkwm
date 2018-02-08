@@ -963,12 +963,13 @@ void UseInsertionPoint(char *Direction)
         goto vspace_release;
     }
 
-    if (Node->Preselect) {
-        if (StringEquals(Direction, Node->Preselect->Direction)) {
-            FreePreselectNode(Node);
+    if (VirtualSpace->Preselect) {
+        if ((StringEquals(Direction, VirtualSpace->Preselect->Direction)) &&
+            (VirtualSpace->Preselect->Node == Node)) {
+            FreePreselectNode(VirtualSpace);
             goto vspace_release;
         } else {
-            FreePreselectNode(Node);
+            FreePreselectNode(VirtualSpace);
         }
     }
 
@@ -976,46 +977,46 @@ void UseInsertionPoint(char *Direction)
         goto vspace_release;
     }
 
-    Node->Preselect = (preselect_node *) malloc(sizeof(preselect_node));
-    memset(Node->Preselect, 0, sizeof(preselect_node));
+    VirtualSpace->Preselect = (preselect_node *) malloc(sizeof(preselect_node));
+    memset(VirtualSpace->Preselect, 0, sizeof(preselect_node));
 
-    Node->Preselect->Direction = strdup(Direction);
+    VirtualSpace->Preselect->Direction = strdup(Direction);
 
     if (StringEquals(Direction, "west")) {
-        Node->Preselect->SpawnLeft = true;
-        Node->Preselect->Split = Split_Vertical;
+        VirtualSpace->Preselect->SpawnLeft = true;
+        VirtualSpace->Preselect->Split = Split_Vertical;
         PreselectBorderType = PRESEL_TYPE_WEST;
     } else if (StringEquals(Direction, "east")) {
-        Node->Preselect->SpawnLeft = false;
-        Node->Preselect->Split = Split_Vertical;
+        VirtualSpace->Preselect->SpawnLeft = false;
+        VirtualSpace->Preselect->Split = Split_Vertical;
         PreselectBorderType = PRESEL_TYPE_EAST;
     } else if (StringEquals(Direction, "north")) {
-        Node->Preselect->SpawnLeft = true;
-        Node->Preselect->Split = Split_Horizontal;
+        VirtualSpace->Preselect->SpawnLeft = true;
+        VirtualSpace->Preselect->Split = Split_Horizontal;
         PreselectBorderType = PRESEL_TYPE_NORTH;
     } else if (StringEquals(Direction, "south")) {
-        Node->Preselect->SpawnLeft = false;
-        Node->Preselect->Split = Split_Horizontal;
+        VirtualSpace->Preselect->SpawnLeft = false;
+        VirtualSpace->Preselect->Split = Split_Horizontal;
         PreselectBorderType = PRESEL_TYPE_SOUTH;
     } else {
         // NOTE(koekeishiya): this can't actually happen, silence compiler warning..
         PreselectBorderType = PRESEL_TYPE_NORTH;
     }
 
-    Node->Preselect->Node = Node;
-    Node->Preselect->Ratio = Node->Preselect->SpawnLeft
-                           ? CVarFloatingPointValue(CVAR_BSP_SPLIT_RATIO)
-                           : 1 - CVarFloatingPointValue(CVAR_BSP_SPLIT_RATIO);
+    VirtualSpace->Preselect->Node = Node;
+    VirtualSpace->Preselect->Ratio = VirtualSpace->Preselect->SpawnLeft
+                                   ? CVarFloatingPointValue(CVAR_BSP_SPLIT_RATIO)
+                                   : 1 - CVarFloatingPointValue(CVAR_BSP_SPLIT_RATIO);
 
 
-    if (Node->Preselect->Split == Split_Vertical) {
-        CreatePreselectRegion(Node->Preselect,
-                              Node->Preselect->SpawnLeft ? Region_Left : Region_Right,
+    if (VirtualSpace->Preselect->Split == Split_Vertical) {
+        CreatePreselectRegion(VirtualSpace->Preselect,
+                              VirtualSpace->Preselect->SpawnLeft ? Region_Left : Region_Right,
                               Space,
                               VirtualSpace);
-    } else if (Node->Preselect->Split == Split_Horizontal) {
-        CreatePreselectRegion(Node->Preselect,
-                              Node->Preselect->SpawnLeft ? Region_Upper : Region_Lower,
+    } else if (VirtualSpace->Preselect->Split == Split_Horizontal) {
+        CreatePreselectRegion(VirtualSpace->Preselect,
+                              VirtualSpace->Preselect->SpawnLeft ? Region_Upper : Region_Lower,
                               Space,
                               VirtualSpace);
     }
@@ -1023,13 +1024,13 @@ void UseInsertionPoint(char *Direction)
     PreselectBorderColor = CVarUnsignedValue(CVAR_PRE_BORDER_COLOR);
     PreselectBorderWidth = CVarIntegerValue(CVAR_PRE_BORDER_WIDTH);
 
-    Node->Preselect->Border = CreatePreselWindow(PreselectBorderType,
-                                                 Node->Preselect->Region.X,
-                                                 Node->Preselect->Region.Y,
-                                                 Node->Preselect->Region.Width,
-                                                 Node->Preselect->Region.Height,
-                                                 PreselectBorderWidth,
-                                                 PreselectBorderColor);
+    VirtualSpace->Preselect->Border = CreatePreselWindow(PreselectBorderType,
+                                                         VirtualSpace->Preselect->Region.X,
+                                                         VirtualSpace->Preselect->Region.Y,
+                                                         VirtualSpace->Preselect->Region.Width,
+                                                         VirtualSpace->Preselect->Region.Height,
+                                                         PreselectBorderWidth,
+                                                         PreselectBorderColor);
 
 vspace_release:
     ReleaseVirtualSpace(VirtualSpace);

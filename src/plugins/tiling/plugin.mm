@@ -379,38 +379,50 @@ void TileWindowOnSpace(macos_window *Window, macos_space *Space, virtual_space *
         uint32_t InsertionPoint = CVarUnsignedValue(CVAR_BSP_INSERTION_POINT);
 
         if (VirtualSpace->Mode == Virtual_Space_Bsp) {
-            Node = GetFirstMinDepthPseudoLeafNode(VirtualSpace->Tree);
-            if (Node) {
-                if (Node->Parent) {
-                    int SpawnLeft = CVarIntegerValue(CVAR_BSP_SPAWN_LEFT);
-                    node_ids NodeIds = AssignNodeIds(Node->Parent->WindowId, Window->Id, SpawnLeft);
-                    Node->Parent->WindowId = Node_Root;
-                    Node->Parent->Left->WindowId = NodeIds.Left;
-                    Node->Parent->Right->WindowId = NodeIds.Right;
-                    CreateNodeRegionRecursive(Node->Parent, false, Space, VirtualSpace);
-                    ApplyNodeRegion(Node->Parent, VirtualSpace->Mode);
-                } else {
-                    Node->WindowId = Window->Id;
-                    CreateNodeRegion(Node, Region_Full, Space, VirtualSpace);
-                    ApplyNodeRegion(Node, VirtualSpace->Mode);
-                }
-                goto display_free;
-            }
 
-            if (InsertionPoint) {
-                Node = GetNodeWithId(VirtualSpace->Tree, InsertionPoint, VirtualSpace->Mode);
-            }
+            /*
+             * NOTE(koekeishiya): When a new window is being tiled, the following priority is taking place.
+             *
+             *              1. If the desktop has an active preselection, the window is placed here.
+             *              2. If there are any pending pseudo-leafs (layout deserialization), fill this region.
+             *              3. If the focused window is eligible, split this region.
+             *              4. Find the first minimum-depth leaf node and split this region.
+             */
 
-            if (!Node) {
-                Node = GetFirstMinDepthLeafNode(VirtualSpace->Tree);
-                ASSERT(Node != NULL);
-            }
-
-            if (Node->Preselect) {
-                CreateLeafNodePairPreselect(Node, Node->WindowId, Window->Id, Space, VirtualSpace);
-                ApplyNodeRegion(Node, VirtualSpace->Mode);
-                FreePreselectNode(Node);
+            if (VirtualSpace->Preselect) {
+                CreateLeafNodePairPreselect(VirtualSpace->Preselect->Node,
+                                            VirtualSpace->Preselect->Node->WindowId,
+                                            Window->Id, Space, VirtualSpace);
+                ApplyNodeRegion(VirtualSpace->Preselect->Node, VirtualSpace->Mode);
+                FreePreselectNode(VirtualSpace);
             } else {
+                Node = GetFirstMinDepthPseudoLeafNode(VirtualSpace->Tree);
+                if (Node) {
+                    if (Node->Parent) {
+                        int SpawnLeft = CVarIntegerValue(CVAR_BSP_SPAWN_LEFT);
+                        node_ids NodeIds = AssignNodeIds(Node->Parent->WindowId, Window->Id, SpawnLeft);
+                        Node->Parent->WindowId = Node_Root;
+                        Node->Parent->Left->WindowId = NodeIds.Left;
+                        Node->Parent->Right->WindowId = NodeIds.Right;
+                        CreateNodeRegionRecursive(Node->Parent, false, Space, VirtualSpace);
+                        ApplyNodeRegion(Node->Parent, VirtualSpace->Mode);
+                    } else {
+                        Node->WindowId = Window->Id;
+                        CreateNodeRegion(Node, Region_Full, Space, VirtualSpace);
+                        ApplyNodeRegion(Node, VirtualSpace->Mode);
+                    }
+                    goto display_free;
+                }
+
+                if (InsertionPoint) {
+                    Node = GetNodeWithId(VirtualSpace->Tree, InsertionPoint, VirtualSpace->Mode);
+                }
+
+                if (!Node) {
+                    Node = GetFirstMinDepthLeafNode(VirtualSpace->Tree);
+                    ASSERT(Node != NULL);
+                }
+
                 node_split Split = NodeSplitFromString(CVarStringValue(CVAR_BSP_SPLIT_MODE));
                 if (Split == Split_Optimal) {
                     Split = OptimalSplitMode(Node);
