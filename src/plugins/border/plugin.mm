@@ -342,8 +342,7 @@ PLUGIN_MAIN_FUNC(PluginMain)
     } else if (StringEquals(Node, "chunkwm_export_window_minimized")) {
         WindowMinimizedHandler(Data);
         return true;
-    } else if ((StringEquals(Node, "chunkwm_export_space_changed")) ||
-               (StringEquals(Node, "chunkwm_export_display_changed"))) {
+    } else if (StringEquals(Node, "chunkwm_export_space_changed")) {
         SpaceChangedHandler();
         return true;
     } else if (StringEquals(Node, "chunkwm_daemon_command")) {
@@ -399,8 +398,7 @@ chunkwm_plugin_export Subscriptions[] =
     chunkwm_export_window_minimized,
     chunkwm_export_window_deminimized,
 
-    chunkwm_export_space_changed,
-    chunkwm_export_display_changed,
+    chunkwm_export_space_changed
 };
 CHUNKWM_PLUGIN_SUBSCRIBE(Subscriptions)
 CHUNKWM_PLUGIN("Border", "0.3.0")
