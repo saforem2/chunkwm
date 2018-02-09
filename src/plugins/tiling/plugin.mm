@@ -1409,12 +1409,17 @@ DisplayResizedHandler(void *Data)
     free(Spaces);
 }
 
+#if 0
 internal void
 DisplayAddedHandler(void *Data)
 {
-    // NOTE(koekeishiya): Temporary workaround to reload upon display-changes
-    Reload();
-#if 0
+    /*
+     * NOTE(koekeishiya): Temporary workaround to reload upon display-changes.
+     *   Reload();
+     *                    So..  this workaround does not actually work, because
+     *                    we seem to get these notifications when a macOS wakes from sleep..
+     */
+
     CGDirectDisplayID DisplayId = *(CGDirectDisplayID *) Data;
     CFStringRef DisplayRef = AXLibGetDisplayIdentifier(DisplayId);
     if (DisplayRef) {
@@ -1460,15 +1465,17 @@ DisplayAddedHandler(void *Data)
 
         printf("display with id '%u' connected (could not retireve ref)\n", DisplayId);
     }
-#endif
 }
 
 internal void
 DisplayRemovedHandler(void *Data)
 {
-    // NOTE(koekeishiya): Temporary workaround to reload upon display-changes
-    Reload();
-#if 0
+    /*
+     * NOTE(koekeishiya): Temporary workaround to reload upon display-changes.
+     *   Reload();
+     *                    So..  this workaround does not actually work, because
+     *                    we seem to get these notifications when a macOS wakes from sleep..
+     */
     CGDirectDisplayID DisplayId = *(CGDirectDisplayID *) Data;
     CFStringRef DisplayRef = AXLibGetDisplayIdentifier(DisplayId);
     if (DisplayRef) {
@@ -1509,8 +1516,8 @@ DisplayRemovedHandler(void *Data)
          * }
          */
     }
-#endif
 }
+#endif
 
 internal void
 ChunkwmDaemonCommandHandler(void *Data)
@@ -1567,12 +1574,14 @@ PLUGIN_MAIN_FUNC(PluginMain)
     } else if (StringEquals(Node, "chunkwm_export_display_resized")) {
         DisplayResizedHandler(Data);
         return true;
+#if 0
     } else if (StringEquals(Node, "chunkwm_export_display_added")) {
         DisplayAddedHandler(Data);
         return true;
     } else if (StringEquals(Node, "chunkwm_export_display_removed")) {
         DisplayRemovedHandler(Data);
         return true;
+#endif
     } else if (StringEquals(Node, "chunkwm_daemon_command")) {
         ChunkwmDaemonCommandHandler(Data);
         return true;
@@ -1750,8 +1759,10 @@ chunkwm_plugin_export Subscriptions[] =
 
     chunkwm_export_display_resized,
 
+#if 0
     chunkwm_export_display_added,
     chunkwm_export_display_removed,
+#endif
 };
 CHUNKWM_PLUGIN_SUBSCRIBE(Subscriptions)
 CHUNKWM_PLUGIN(PluginName, PluginVersion)
