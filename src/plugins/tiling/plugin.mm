@@ -93,6 +93,7 @@ internal event_tap EventTap;
 internal chunkwm_api API;
 chunkwm_log *c_log;
 
+#if 0
 /*
  * NOTE(koekeishiya): Signals chunkwm to unload and load the tiling plugin.
  * This will only work if the "plugin_dir" cvar has been set in the config!
@@ -114,6 +115,7 @@ internal void Reload()
     }
     CloseSocket(SockFD);
 }
+#endif
 
 internal void
 ExtendedDockSetWindowAlpha(uint32_t WindowId, float Value, float Duration)
