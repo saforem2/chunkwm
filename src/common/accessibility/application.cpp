@@ -13,6 +13,15 @@
  * common/misc/workspace.mm
  *
  */
+internal const char *macos_application_notifications_str[] =
+{
+    "Application_Notification_WindowCreated",
+    "Application_Notification_WindowFocused",
+    "Application_Notification_WindowMoved",
+    "Application_Notification_WindowResized",
+    "Application_Notification_WindowTitleChanged",
+    "Application_Notification_Count"
+};
 
 enum macos_application_notifications
 {
@@ -62,7 +71,8 @@ bool AXLibAddApplicationObserver(macos_application *Application, ObserverCallbac
                                                            Application->Ref,
                                                            AXNotificationFromEnum(Notification),
                                                            Application);
-            if (Success != kAXErrorSuccess) {
+
+            if ((Success != kAXErrorSuccess) && (Success != kAXErrorNotificationAlreadyRegistered)) {
                 Result = false;
                 break;
             }

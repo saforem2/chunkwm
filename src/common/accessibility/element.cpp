@@ -1,6 +1,28 @@
 #include "element.h"
 #include "../misc/assert.h"
 
+const char *AXLibAXErrorToString(AXError Error)
+{
+    switch (Error) {
+    case kAXErrorAPIDisabled:                       { return "kAXErrorAPIDisabled";                       } break;
+    case kAXErrorActionUnsupported:                 { return "kAXErrorActionUnsupported";                 } break;
+    case kAXErrorAttributeUnsupported:              { return "kAXErrorAttributeUnsupported";              } break;
+    case kAXErrorCannotComplete:                    { return "kAXErrorCannotComplete";                    } break;
+    case kAXErrorFailure:                           { return "kAXErrorFailure";                           } break;
+    case kAXErrorIllegalArgument:                   { return "kAXErrorIllegalArgument";                   } break;
+    case kAXErrorInvalidUIElement:                  { return "kAXErrorInvalidUIElement";                  } break;
+    case kAXErrorInvalidUIElementObserver:          { return "kAXErrorInvalidUIElementObserver";          } break;
+    case kAXErrorNoValue:                           { return "kAXErrorNoValue";                           } break;
+    case kAXErrorNotEnoughPrecision:                { return "kAXErrorNotEnoughPrecision";                } break;
+    case kAXErrorNotImplemented:                    { return "kAXErrorNotImplemented";                    } break;
+    case kAXErrorNotificationAlreadyRegistered:     { return "kAXErrorNotificationAlreadyRegistered";     } break;
+    case kAXErrorNotificationNotRegistered:         { return "kAXErrorNotificationNotRegistered";         } break;
+    case kAXErrorNotificationUnsupported:           { return "kAXErrorNotificationUnsupported";           } break;
+    case kAXErrorParameterizedAttributeUnsupported: { return "kAXErrorParameterizedAttributeUnsupported"; } break;
+    case kAXErrorSuccess:                           { return "kAXErrorSuccess";                           } break;
+    }
+}
+
 /*
  * NOTE(koekeishiya): Caller is responsible for passing a valid CFStringRef.
  * Caller is responsible for freeing memory if non-null is returned.

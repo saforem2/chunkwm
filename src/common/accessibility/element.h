@@ -38,4 +38,6 @@ bool AXLibGetWindowSubrole(AXUIElementRef WindowRef, CFStringRef *Subrole);
 CGPoint AXLibGetCursorPos();
 char *CopyCFStringToC(CFStringRef String);
 
+const char *AXLibAXErrorToString(AXError Error);
+
 #endif

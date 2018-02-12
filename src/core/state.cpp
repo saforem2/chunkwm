@@ -58,7 +58,11 @@ bool AddWindowToCollection(macos_window *Window)
                                            Window->Ref,
                                            kAXUIElementDestroyedNotification,
                                            (void *)(uintptr_t)Window->Id);
-    if (Success != kAXErrorSuccess) goto err;
+
+    if (Success != kAXErrorSuccess && Success != kAXErrorNotificationAlreadyRegistered) {
+        c_log(C_LOG_LEVEL_WARN, "%s:%s failed to add kAXUIElementDestroyedNotification '%s'\n", Window->Owner->Name, Window->Name, AXLibAXErrorToString(Success));
+        goto err;
+    }
 
     AXLibAddObserverNotification(&Window->Owner->Observer,
                                  Window->Ref,
@@ -121,7 +125,7 @@ AddApplicationWindowsToCollection(macos_application *Application)
             goto success;
 
 win_invalid:
-            c_log(C_LOG_LEVEL_DEBUG, "%s:%s is not destructible, ignore!\n", Window->Owner->Name, Window->Name);
+            c_log(C_LOG_LEVEL_WARN, "%s:%s is not destructible, ignore!\n", Window->Owner->Name, Window->Name);
             AXLibRemoveObserverNotification(&Window->Owner->Observer, Window->Ref, kAXUIElementDestroyedNotification);
 
 win_dupe:
