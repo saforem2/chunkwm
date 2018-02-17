@@ -12,6 +12,7 @@ char *TokenToString(token Token);
 float TokenToFloat(token Token);
 int TokenToInt(token Token);
 unsigned TokenToUnsigned(token Token);
+bool TokenIsDigit(token Token);
 
 // NOTE(koekeishiya): simple 'whitespace' tokenizer
 token GetToken(const char **Data);

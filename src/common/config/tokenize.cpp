@@ -56,6 +56,16 @@ unsigned TokenToUnsigned(token Token)
     return Result;
 }
 
+bool TokenIsDigit(token Token)
+{
+    for (int Index = 0; Index < Token.Length; ++Index) {
+        if (Token.Text[Index] < '0' || Token.Text[Index] > '9') {
+            return false;
+        }
+    }
+    return true;
+}
+
 internal inline bool
 IsWhiteSpace(char C)
 {
