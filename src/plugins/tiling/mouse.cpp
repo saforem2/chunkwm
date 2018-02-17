@@ -94,7 +94,7 @@ IsMouseActionInProgress()
     return (ResizeState.Mode != Drag_Mode_None);
 }
 
-internal uint32_t
+internal inline uint32_t
 CgEventFlagsToMouseBindingFlags(uint32_t Flags)
 {
     uint32_t MouseBindingFlags = 0;
@@ -106,23 +106,13 @@ CgEventFlagsToMouseBindingFlags(uint32_t Flags)
     return MouseBindingFlags;
 }
 
-internal bool
+internal inline bool
 MatchMouseBinding(mouse_binding *Binding, uint32_t Flags, uint32_t Button)
 {
-    // @cleanup
-    if (!Binding->Active) {
-        return false;
-    }
-
-    if (Flags != Binding->Flags) {
-        return false;
-    }
-
-    if (Button != Binding->Button) {
-        return false;
-    }
-
-    return true;
+    bool Result = ((Binding->Active) &&
+                   (Binding->Flags == Flags) &&
+                   (Binding->Button == Button));
+    return Result;
 }
 
 internal resize_border
