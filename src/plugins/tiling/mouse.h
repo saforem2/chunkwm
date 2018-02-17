@@ -2,6 +2,7 @@
 #define PLUGIN_MOUSE_H
 
 EVENTTAP_CALLBACK(EventTapCallback);
-void SetMouseModifier(const char *Mod);
+bool BindMouseMoveAction(const char *BindSym);
+bool BindMouseResizeAction(const char *BindSym);
 
 #endif

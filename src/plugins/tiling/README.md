@@ -14,7 +14,8 @@
   * [set wrap behaviour for monitor focus command](#set-wrap-behaviour-for-monitor-focus-command)
   * [set wrap behaviour for window focus command](#set-wrap-behaviour-for-window-focus-command)
   * [set state of mouse follows focus](#set-state-of-mouse-follows-focus)
-  * [set modifier used for mouse interaction](#set-modifier-used-for-mouse-interaction)
+  * [set binding to use for moving windows with the mouse](#set-binding-to-use-for-moving-windows-with-the-mouse)
+  * [set binding to use for resizing windows with the mouse](#set-binding-to-use-for-resizing-windows-with-the-mouse)
   * [float the next window attempted tiled](#the-next-window-attempted-tiled-will-be-made-floating-instead)
   * [constrain window to region size](#constrain-window-to-bsp-region-size)
   * [signal dock to make windows topmost when floated](#signal-dock-to-make-windows-topmost-when-floated)
@@ -146,11 +147,19 @@
          intrinsic: only trigger from focus events performed by chunkwm.
          all: trigger from all focus events reported by macOS (system-wide)
 
-##### set modifier used for mouse interaction
+##### set binding to use for moving windows with the mouse
 
-    chunkc set mouse_modifier                <option>
-    <option>: fn | shift | alt | cmd | ctrl
-    desc: arbitrary combination allowed (use whitespace as delimeter)
+    chunkc set mouse_move_window             <option>
+    <option>: none | fn | shift | alt | cmd | ctrl | mouse_button_index
+    desc: arbitrary combination allowed (use whitespace as delimeter).
+          left-mouse = 1, right-mouse = 2, middle-mouse = 3
+
+##### set binding to use for resizing windows with the mouse
+
+    chunkc set mouse_resize_window           <option>
+    <option>: none | fn | shift | alt | cmd | ctrl | mouse_button_index
+    desc: arbitrary combination allowed (use whitespace as delimeter).
+          left-mouse = 1, right-mouse = 2, middle-mouse = 3
 
 ##### the next window attempted tiled will be made floating instead
 

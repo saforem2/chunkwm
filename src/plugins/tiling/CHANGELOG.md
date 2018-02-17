@@ -1,3 +1,29 @@
+### HEAD -  not yet released
+
+#### cvar changes
+
+- *mouse_modifier* is no longer used by the tiling plugin, and has been replaced with a more flexible system.
+
+- *mouse_move_window* is a new cvar that is used to set the binding to use to move windows using the mouse.
+  previously set by *mouse_modifier*.
+
+  to get the same behaviour as before this change, use: `chunkc set mouse_move_window \"fn 1\"`
+
+- *mouse_resize_window* is a new cvar that is used to set the binding to use to resize windows using the mouse.
+  previously set by *mouse_modifier*.
+
+  to get the same behaviour as before this change, use: `chunkc set mouse_resize_window \"fn 2\"`
+
+See updated README for the tiling plugin for more information.
+
+#### other changes
+
+- expand information sent with the custom event *tiling_focused_window_floating*
+
+- *--use-insertion-point* command now applies to the current desktop, instead of the current node.
+
+----------
+
 ### version 0.3.3
 
 #### other changes

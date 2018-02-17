@@ -1,3 +1,5 @@
+#include "mouse.h"
+
 #include "../../common/dispatch/cgeventtap.h"
 #include "../../common/accessibility/element.h"
 #include "../../common/accessibility/display.h"
@@ -29,6 +31,7 @@ enum drag_mode
     Drag_Mode_Swap,
     Drag_Mode_Resize,
     Drag_Mode_Move_Floating,
+    Drag_Mode_Resize_Floating,
 };
 
 struct resize_border_state
@@ -50,9 +53,77 @@ struct resize_border
     node *Node;
 };
 
+enum mouse_binding_flag
+{
+    Mouse_Binding_Flag_Alt         = (1 << 0),
+    Mouse_Binding_Flag_Shift       = (1 << 1),
+    Mouse_Binding_Flag_Cmd         = (1 << 2),
+    Mouse_Binding_Flag_Control     = (1 << 3),
+    Mouse_Binding_Flag_Fn          = (1 << 4),
+};
+struct mouse_binding
+{
+    bool Active;
+    uint32_t Button;
+    uint32_t Flags;
+};
+
 internal std::vector<resize_border> ResizeBorders;
 internal resize_border_state ResizeState;
-internal uint32_t MouseModifier;
+
+internal mouse_binding MouseMove;
+internal mouse_binding MouseResize;
+
+internal inline bool
+IsMouseMoveInProgress()
+{
+    return ((ResizeState.Mode == Drag_Mode_Swap) ||
+            (ResizeState.Mode == Drag_Mode_Move_Floating));
+}
+
+internal inline bool
+IsMouseResizeInProgress()
+{
+    return ((ResizeState.Mode == Drag_Mode_Resize) ||
+            (ResizeState.Mode == Drag_Mode_Resize_Floating));
+}
+
+internal inline bool
+IsMouseActionInProgress()
+{
+    return (ResizeState.Mode != Drag_Mode_None);
+}
+
+internal uint32_t
+CgEventFlagsToMouseBindingFlags(uint32_t Flags)
+{
+    uint32_t MouseBindingFlags = 0;
+    if ((Flags & Event_Mask_Fn)      == Event_Mask_Fn)      { MouseBindingFlags |= Mouse_Binding_Flag_Fn;      }
+    if ((Flags & Event_Mask_Shift)   == Event_Mask_Shift)   { MouseBindingFlags |= Mouse_Binding_Flag_Shift;   }
+    if ((Flags & Event_Mask_Alt)     == Event_Mask_Alt)     { MouseBindingFlags |= Mouse_Binding_Flag_Alt;     }
+    if ((Flags & Event_Mask_Cmd)     == Event_Mask_Cmd)     { MouseBindingFlags |= Mouse_Binding_Flag_Cmd;     }
+    if ((Flags & Event_Mask_Control) == Event_Mask_Control) { MouseBindingFlags |= Mouse_Binding_Flag_Control; }
+    return MouseBindingFlags;
+}
+
+internal bool
+MatchMouseBinding(mouse_binding *Binding, uint32_t Flags, uint32_t Button)
+{
+    // @cleanup
+    if (!Binding->Active) {
+        return false;
+    }
+
+    if (Flags != Binding->Flags) {
+        return false;
+    }
+
+    if (Button != Binding->Button) {
+        return false;
+    }
+
+    return true;
+}
 
 internal resize_border
 CreateResizeBorder(node *Node)
@@ -175,7 +246,7 @@ BeginTiledWindow(macos_space *Space, virtual_space *VirtualSpace)
 }
 
 internal void
-LeftMouseDown()
+MouseMoveWindowBegin()
 {
     macos_space *Space;
     virtual_space *VirtualSpace;
@@ -199,7 +270,7 @@ out:;
 }
 
 internal void
-LeftMouseDragged()
+MouseMoveWindowTick()
 {
     if (ResizeState.Mode == Drag_Mode_Swap) {
         CGPoint Cursor = AXLibGetCursorPos();
@@ -239,7 +310,7 @@ LeftMouseDragged()
 }
 
 internal void
-LeftMouseUp()
+MouseMoveWindowEnd()
 {
     if (ResizeState.Mode == Drag_Mode_Swap) {
         FreeResizeBorders();
@@ -263,7 +334,7 @@ LeftMouseUp()
 }
 
 internal void
-RightMouseDown()
+MouseResizeWindowBegin()
 {
     CGPoint Cursor = AXLibGetCursorPos();
 
@@ -336,7 +407,7 @@ out:;
 }
 
 internal void
-RightMouseDragged()
+MouseResizeWindowTick()
 {
     if (ResizeState.Mode == Drag_Mode_Resize) {
         CGPoint Cursor = AXLibGetCursorPos();
@@ -392,7 +463,7 @@ RightMouseDragged()
 }
 
 internal void
-RightMouseUp()
+MouseResizeWindowEnd()
 {
     if (ResizeState.Mode == Drag_Mode_Resize) {
         FreeResizeBorders();
@@ -420,33 +491,38 @@ EVENTTAP_CALLBACK(EventTapCallback)
     case kCGEventTapDisabledByUserInput: {
         CGEventTapEnable(EventTap->Handle, true);
     } break;
-    case kCGEventLeftMouseDown: {
-        CGEventFlags Flags = CGEventGetFlags(Event);
-        if (((Flags & MouseModifier) == MouseModifier) &&
-            (ResizeState.Mode == Drag_Mode_None)) {
-            LeftMouseDown();
-            return NULL;
-        }
-    } break;
-    case kCGEventLeftMouseDragged: {
-        LeftMouseDragged();
-    } break;
-    case kCGEventLeftMouseUp: {
-        LeftMouseUp();
-    } break;
+    case kCGEventLeftMouseDown:
     case kCGEventRightMouseDown: {
-        CGEventFlags Flags = CGEventGetFlags(Event);
-        if (((Flags & MouseModifier) == MouseModifier) &&
-            (ResizeState.Mode == Drag_Mode_None)) {
-            RightMouseDown();
-            return NULL;
+        if (!IsMouseActionInProgress()) {
+            uint32_t Flags = CgEventFlagsToMouseBindingFlags(CGEventGetFlags(Event));
+            uint32_t Button = CGEventGetIntegerValueField(Event, kCGMouseEventButtonNumber);
+
+            if (MatchMouseBinding(&MouseMove, Flags, Button)) {
+                MouseMoveWindowBegin();
+                return NULL;
+            }
+
+            if (MatchMouseBinding(&MouseResize, Flags, Button)) {
+                MouseResizeWindowBegin();
+                return NULL;
+            }
         }
     } break;
+    case kCGEventLeftMouseDragged:
     case kCGEventRightMouseDragged: {
-        RightMouseDragged();
+        if (IsMouseMoveInProgress()) {
+            MouseMoveWindowTick();
+        } else if (IsMouseResizeInProgress()) {
+            MouseResizeWindowTick();
+        }
     } break;
+    case kCGEventLeftMouseUp:
     case kCGEventRightMouseUp: {
-        RightMouseUp();
+        if (IsMouseMoveInProgress()) {
+            MouseMoveWindowEnd();
+        } else if (IsMouseResizeInProgress()) {
+            MouseResizeWindowEnd();
+        }
     } break;
     default: {} break;
     }
@@ -454,24 +530,44 @@ EVENTTAP_CALLBACK(EventTapCallback)
     return Event;
 }
 
-// NOTE(koekeishiya): This function should only be called once (during init) !!
-void SetMouseModifier(const char *Mod)
+internal void
+ParseMouseBinding(mouse_binding *MouseBinding, const char *BindSym)
 {
-    while (*Mod) {
-        token ModToken = GetToken(&Mod);
-        if (TokenEquals(ModToken, "fn")) {
-            MouseModifier |= Event_Mask_Fn;
-        } else if (TokenEquals(ModToken, "shift")) {
-            MouseModifier |= Event_Mask_Shift;
-        } else if (TokenEquals(ModToken, "alt")) {
-            MouseModifier |= Event_Mask_Alt;
-        } else if (TokenEquals(ModToken, "cmd")) {
-            MouseModifier |= Event_Mask_Cmd;
-        } else if (TokenEquals(ModToken, "ctrl")) {
-            MouseModifier |= Event_Mask_Control;
+    while (*BindSym) {
+        token Token = GetToken(&BindSym);
+        if (!Token.Text || Token.Length == 0) {
+            break;
+        }
+
+        if (TokenEquals(Token, "fn")) {
+            MouseBinding->Flags |= Mouse_Binding_Flag_Fn;
+        } else if (TokenEquals(Token, "shift")) {
+            MouseBinding->Flags |= Mouse_Binding_Flag_Shift;
+        } else if (TokenEquals(Token, "alt")) {
+            MouseBinding->Flags |= Mouse_Binding_Flag_Alt;
+        } else if (TokenEquals(Token, "cmd")) {
+            MouseBinding->Flags |= Mouse_Binding_Flag_Cmd;
+        } else if (TokenEquals(Token, "ctrl")) {
+            MouseBinding->Flags |= Mouse_Binding_Flag_Control;
+        } else if (TokenIsDigit(Token)) {
+            MouseBinding->Button = TokenToUnsigned(Token) - 1;
+        } else if (TokenEquals(Token, "none")) {
+            memset(MouseBinding, 0, sizeof(mouse_binding));
+            return;
         }
     }
 
-    // NOTE(koekeishiya): If no matches were found, we default to FN
-    if (MouseModifier == 0) MouseModifier |= Event_Mask_Fn;
+    MouseBinding->Active = MouseBinding->Flags != 0;
+}
+
+bool BindMouseMoveAction(const char *BindSym)
+{
+    ParseMouseBinding(&MouseMove, BindSym);
+    return MouseMove.Active;
+}
+
+bool BindMouseResizeAction(const char *BindSym)
+{
+    ParseMouseBinding(&MouseResize, BindSym);
+    return MouseResize.Active;
 }

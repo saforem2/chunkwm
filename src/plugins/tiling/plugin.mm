@@ -1623,15 +1623,6 @@ Init(chunkwm_api ChunkwmAPI)
     Success = (pthread_mutex_init(&WindowsLock, NULL) == 0);
     if (!Success) goto out;
 
-
-    EventTap.Mask = ((1 << kCGEventLeftMouseDown) |
-                     (1 << kCGEventLeftMouseDragged) |
-                     (1 << kCGEventLeftMouseUp) |
-                     (1 << kCGEventRightMouseDown) |
-                     (1 << kCGEventRightMouseDragged) |
-                     (1 << kCGEventRightMouseUp));
-    BeginEventTap(&EventTap, &EventTapCallback);
-
     CreateCVar(CVAR_SPACE_MODE, virtual_space_mode_str[Virtual_Space_Bsp]);
 
     CreateCVar(CVAR_SPACE_OFFSET_TOP, 60.0f);
@@ -1658,7 +1649,8 @@ Init(chunkwm_api ChunkwmAPI)
     CreateCVar(CVAR_WINDOW_FOCUS_CYCLE, Window_Focus_Cycle_None);
 
     CreateCVar(CVAR_MOUSE_FOLLOWS_FOCUS, Mouse_Follows_Focus_Off);
-    CreateCVar(CVAR_MOUSE_MODIFIER, Mouse_Modifier_Fn);
+    CreateCVar(CVAR_MOUSE_MOVE_BINDING, Mouse_Move_Binding);
+    CreateCVar(CVAR_MOUSE_RESIZE_BINDING, Mouse_Resize_Binding);
 
     CreateCVar(CVAR_WINDOW_FLOAT_NEXT, 0);
     CreateCVar(CVAR_WINDOW_REGION_LOCKED, 0);
@@ -1701,7 +1693,17 @@ Init(chunkwm_api ChunkwmAPI)
 
     Success = BeginVirtualSpaces();
     if (Success) {
-        SetMouseModifier(CVarStringValue(CVAR_MOUSE_MODIFIER));
+        bool MouseMoveBound = BindMouseMoveAction(CVarStringValue(CVAR_MOUSE_MOVE_BINDING));
+        bool MouseResizeBound = BindMouseResizeAction(CVarStringValue(CVAR_MOUSE_RESIZE_BINDING));
+        if (MouseMoveBound || MouseResizeBound) {
+            EventTap.Mask = ((1 << kCGEventLeftMouseDown) |
+                             (1 << kCGEventLeftMouseDragged) |
+                             (1 << kCGEventLeftMouseUp) |
+                             (1 << kCGEventRightMouseDown) |
+                             (1 << kCGEventRightMouseDragged) |
+                             (1 << kCGEventRightMouseUp));
+            BeginEventTap(&EventTap, &EventTapCallback);
+        }
         goto out;
     }
 

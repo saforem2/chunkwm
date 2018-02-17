@@ -37,8 +37,10 @@
 #define Mouse_Follows_Focus_Intr    "intrinsic"
 #define Mouse_Follows_Focus_All     "all"
 
-#define CVAR_MOUSE_MODIFIER         "mouse_modifier"
-#define Mouse_Modifier_Fn           "fn"
+#define CVAR_MOUSE_MOVE_BINDING     "mouse_move_window"
+#define CVAR_MOUSE_RESIZE_BINDING   "mouse_resize_window"
+#define Mouse_Move_Binding          "fn 1"
+#define Mouse_Resize_Binding        "fn 2"
 
 #define CVAR_WINDOW_FLOAT_NEXT      "window_float_next"
 #define CVAR_WINDOW_REGION_LOCKED   "window_region_locked"
