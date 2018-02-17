@@ -1,3 +1,11 @@
+### HEAD -  not yet released
+
+#### other changes
+
+- fixed an issue where a window would incorrectly be deemed invalid due to an obscure issue with registering notifications.
+
+----------
+
 ### version 0.3.3
 
 #### cvar changes
