@@ -165,7 +165,7 @@ FreeResizeBorders()
 }
 
 internal bool
-BeginFloatingWindow(virtual_space *VirtualSpace)
+BeginFloatingWindow(virtual_space *VirtualSpace, drag_mode DragMode)
 {
     macos_window *Window;
     CGPoint Cursor;
@@ -204,7 +204,7 @@ BeginFloatingWindow(virtual_space *VirtualSpace)
             (Cursor.y <= Window->Position.y + Window->Size.height)) {
             ResizeState.Window = Window;
             ResizeState.InitialCursor = Cursor;
-            ResizeState.Mode = Drag_Mode_Move_Floating;
+            ResizeState.Mode = DragMode;
             ResizeState.InitialRatioH = Window->Position.x;
             ResizeState.InitialRatioV = Window->Position.y;
             return true;
@@ -215,24 +215,75 @@ BeginFloatingWindow(virtual_space *VirtualSpace)
 }
 
 internal bool
-BeginTiledWindow(macos_space *Space, virtual_space *VirtualSpace)
+BeginTiledWindow(macos_space *Space, virtual_space *VirtualSpace, drag_mode DragMode)
 {
     node *Root, *NodeBelowCursor;
-    CGPoint Cursor;
+    CGPoint Cursor = AXLibGetCursorPos();
 
     if (VirtualSpace->Mode != Virtual_Space_Bsp) return false;
     if (!(Root = VirtualSpace->Tree)) return false;
-
-    Cursor = AXLibGetCursorPos();
     if (!(NodeBelowCursor = GetNodeForPoint(Root, &Cursor))) return false;
 
-    ResizeState.Mode = Drag_Mode_Swap;
-    ResizeState.Horizontal = NodeBelowCursor;
-    ResizeState.Space = Space;
-    ResizeState.VirtualSpace = VirtualSpace;
+    if (DragMode == Drag_Mode_Swap) {
+        ResizeState.Mode = Drag_Mode_Swap;
+        ResizeState.Horizontal = NodeBelowCursor;
+        ResizeState.Space = Space;
+        ResizeState.VirtualSpace = VirtualSpace;
+        ResizeBorders.push_back(CreateResizeBorder(NodeBelowCursor));
+        return true;
+    } else if (DragMode == Drag_Mode_Resize) {
+        node *Ancestor;
+        bool North, East, South, West;
+        macos_window *WindowBelowCursor;
+        macos_window *VerticalWindow, *HorizontalWindow;
+        macos_window *NorthWindow, *EastWindow, *SouthWindow, *WestWindow;
+        if (!(WindowBelowCursor = GetWindowByID(NodeBelowCursor->WindowId))) return false;
 
-    ResizeBorders.push_back(CreateResizeBorder(NodeBelowCursor));
-    return true;
+        ResizeState.Mode = Drag_Mode_Resize;
+        ResizeState.InitialCursor = Cursor;
+        ResizeState.Space = Space;
+        ResizeState.VirtualSpace = VirtualSpace;
+
+        North = FindClosestWindow(Space, VirtualSpace, WindowBelowCursor, &NorthWindow, "north", false);
+        East  = FindClosestWindow(Space, VirtualSpace, WindowBelowCursor, &EastWindow, "east", false);
+        South = FindClosestWindow(Space, VirtualSpace, WindowBelowCursor, &SouthWindow, "south", false);
+        West  = FindClosestWindow(Space, VirtualSpace, WindowBelowCursor, &WestWindow, "west", false);
+
+        if      (North && South) VerticalWindow = NorthWindow;
+        else if (North)          VerticalWindow = NorthWindow;
+        else if (South)          VerticalWindow = SouthWindow;
+        else                     VerticalWindow = NULL;
+
+        if      (East && West) HorizontalWindow = EastWindow;
+        else if (East)         HorizontalWindow = EastWindow;
+        else if (West)         HorizontalWindow = WestWindow;
+        else                   HorizontalWindow = NULL;
+
+        if (VerticalWindow) {
+            node *VerticalNode = GetNodeWithId(Root, VerticalWindow->Id, VirtualSpace->Mode);
+            ASSERT(VerticalNode);
+            ResizeState.Vertical = GetLowestCommonAncestor(NodeBelowCursor, VerticalNode);
+            ResizeState.InitialRatioV = ResizeState.Vertical->Ratio;
+        }
+
+        if (HorizontalWindow) {
+            node *HorizontalNode = GetNodeWithId(Root, HorizontalWindow->Id, VirtualSpace->Mode);
+            ASSERT(HorizontalNode);
+            ResizeState.Horizontal = GetLowestCommonAncestor(NodeBelowCursor, HorizontalNode);
+            ResizeState.InitialRatioH = ResizeState.Horizontal->Ratio;
+        }
+
+        if      ((ResizeState.Vertical) &&
+                 (ResizeState.Horizontal))    Ancestor = GetLowestCommonAncestor(ResizeState.Vertical, ResizeState.Horizontal);
+        else if (ResizeState.Vertical)        Ancestor = ResizeState.Vertical;
+        else if (ResizeState.Horizontal)      Ancestor = ResizeState.Horizontal;
+        else                                  Ancestor = Root;
+
+        CreateResizeBorders(Ancestor);
+        return true;
+    }
+
+    return false;
 }
 
 internal void
@@ -246,9 +297,9 @@ MouseMoveWindowBegin()
     if (Space->Type != kCGSSpaceUser) goto free_space;
     VirtualSpace = AcquireVirtualSpace(Space);
 
-    if (BeginFloatingWindow(VirtualSpace)) {
+    if (BeginFloatingWindow(VirtualSpace, Drag_Mode_Move_Floating)) {
         goto release_vspace;
-    } else if (BeginTiledWindow(Space, VirtualSpace)) {
+    } else if (BeginTiledWindow(Space, VirtualSpace, Drag_Mode_Swap)) {
         goto out;
     }
 
@@ -326,68 +377,19 @@ MouseMoveWindowEnd()
 internal void
 MouseResizeWindowBegin()
 {
-    CGPoint Cursor = AXLibGetCursorPos();
-
     macos_space *Space;
+    virtual_space *VirtualSpace;
     bool Success = AXLibActiveSpace(&Space);
     ASSERT(Success);
 
-    virtual_space *VirtualSpace;
-    bool North, East, South, West;
-    macos_window *WindowBelowCursor;
-    node *Root, *NodeBelowCursor, *Ancestor;
-    macos_window *VerticalWindow, *HorizontalWindow;
-    macos_window *NorthWindow, *EastWindow, *SouthWindow, *WestWindow;
-
     if (Space->Type != kCGSSpaceUser) goto free_space;
     VirtualSpace = AcquireVirtualSpace(Space);
-    if (VirtualSpace->Mode != Virtual_Space_Bsp) goto release_vspace;
-    if (!(Root = VirtualSpace->Tree)) goto release_vspace;
-    if (!(NodeBelowCursor = GetNodeForPoint(Root, &Cursor))) goto release_vspace;
-    if (!(WindowBelowCursor = GetWindowByID(NodeBelowCursor->WindowId))) goto release_vspace;
 
-    ResizeState.Mode = Drag_Mode_Resize;
-    ResizeState.InitialCursor = Cursor;
-    ResizeState.Space = Space;
-    ResizeState.VirtualSpace = VirtualSpace;
-
-    North = FindClosestWindow(Space, VirtualSpace, WindowBelowCursor, &NorthWindow, "north", false);
-    East = FindClosestWindow(Space, VirtualSpace, WindowBelowCursor, &EastWindow, "east", false);
-    South = FindClosestWindow(Space, VirtualSpace, WindowBelowCursor, &SouthWindow, "south", false);
-    West = FindClosestWindow(Space, VirtualSpace, WindowBelowCursor, &WestWindow, "west", false);
-
-    if      (North && South) VerticalWindow = NorthWindow;
-    else if (North)          VerticalWindow = NorthWindow;
-    else if (South)          VerticalWindow = SouthWindow;
-    else                     VerticalWindow = NULL;
-
-    if      (East && West) HorizontalWindow = EastWindow;
-    else if (East)         HorizontalWindow = EastWindow;
-    else if (West)         HorizontalWindow = WestWindow;
-    else                   HorizontalWindow = NULL;
-
-    if (VerticalWindow) {
-        node *VerticalNode = GetNodeWithId(Root, VerticalWindow->Id, VirtualSpace->Mode);
-        ASSERT(VerticalNode);
-        ResizeState.Vertical = GetLowestCommonAncestor(NodeBelowCursor, VerticalNode);
-        ResizeState.InitialRatioV = ResizeState.Vertical->Ratio;
+    if (BeginFloatingWindow(VirtualSpace, Drag_Mode_Resize_Floating)) {
+        goto release_vspace;
+    } else if (BeginTiledWindow(Space, VirtualSpace, Drag_Mode_Resize)) {
+        goto out;
     }
-
-    if (HorizontalWindow) {
-        node *HorizontalNode = GetNodeWithId(Root, HorizontalWindow->Id, VirtualSpace->Mode);
-        ASSERT(HorizontalNode);
-        ResizeState.Horizontal = GetLowestCommonAncestor(NodeBelowCursor, HorizontalNode);
-        ResizeState.InitialRatioH = ResizeState.Horizontal->Ratio;
-    }
-
-    if      ((ResizeState.Vertical) &&
-             (ResizeState.Horizontal))    Ancestor = GetLowestCommonAncestor(ResizeState.Vertical, ResizeState.Horizontal);
-    else if (ResizeState.Vertical)        Ancestor = ResizeState.Vertical;
-    else if (ResizeState.Horizontal)      Ancestor = ResizeState.Horizontal;
-    else                                  Ancestor = Root;
-
-    CreateResizeBorders(Ancestor);
-    goto out;
 
 release_vspace:
     ReleaseVirtualSpace(VirtualSpace);
@@ -418,11 +420,6 @@ MouseResizeWindowTick()
                 (Ratio >= 0.1f && Ratio <= 0.9f)) {
                 ResizeState.Vertical->Ratio = Ratio;
                 ResizeNodeRegion(ResizeState.Vertical, ResizeState.Space, ResizeState.VirtualSpace);
-
-                /*
-                 * NOTE(koekeishiya): Enable to perform live resizing !!!
-                 * ApplyNodeRegion(ResizeState.Vertical, ResizeState.VirtualSpace->Mode);
-                 */
             }
         }
 
@@ -441,14 +438,12 @@ MouseResizeWindowTick()
                 (Ratio >= 0.1f && Ratio <= 0.9f)) {
                 ResizeState.Horizontal->Ratio = Ratio;
                 ResizeNodeRegion(ResizeState.Horizontal, ResizeState.Space, ResizeState.VirtualSpace);
-
-                /* NOTE(koekeishiya): Enable to perform live resizing !!!
-                 * ApplyNodeRegion(ResizeState.Horizontal, ResizeState.VirtualSpace->Mode);
-                 */
             }
         }
 
         UpdateResizeBorders();
+    } else if (ResizeState.Mode == Drag_Mode_Resize_Floating) {
+        // TODO(koekeishiya): NYI
     }
 }
 
@@ -469,6 +464,9 @@ MouseResizeWindowEnd()
         ReleaseVirtualSpace(ResizeState.VirtualSpace);
         AXLibDestroySpace(ResizeState.Space);
 
+        memset(&ResizeState, 0, sizeof(resize_border_state));
+    } else if (ResizeState.Mode == Drag_Mode_Resize_Floating) {
+        // TODO(koekeishiya): NYI
         memset(&ResizeState, 0, sizeof(resize_border_state));
     }
 }
