@@ -22,6 +22,9 @@ See updated README for the tiling plugin for more information.
 
 - *--use-insertion-point* command now applies to the current desktop, instead of the current node.
 
+- *--toggle* now has a new option `chunkc tiling::window --toggle fade` to enable or disable the effect of
+  fading inactive windows, properly restoring alpha values when deactivated.
+
 ----------
 
 ### version 0.3.3

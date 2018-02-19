@@ -20,6 +20,10 @@
 
 #define internal static
 
+typedef std::map<uint32_t, macos_window *> macos_window_map;
+typedef macos_window_map::iterator macos_window_map_it;
+
+extern macos_window_map CopyWindowCache();
 extern macos_window *GetWindowByID(uint32_t Id);
 extern macos_window *GetFocusedWindow();
 extern std::vector<uint32_t> GetAllVisibleWindowsForSpace(macos_space *Space);
@@ -631,6 +635,46 @@ void TemporaryRatio(char *Ratio)
     UpdateCVar(CVAR_BSP_SPLIT_RATIO, FloatRatio);
 }
 
+void ExtendedDockSetWindowAlpha(uint32_t WindowId, float Value, float Duration)
+{
+    int SockFD;
+    if (ConnectToDaemon(&SockFD, 5050)) {
+        char Message[64];
+        sprintf(Message, "window_alpha_fade %d %f %f", WindowId, Value, Duration);
+        WriteToSocket(Message, SockFD);
+    }
+    CloseSocket(SockFD);
+}
+
+void EnableWindowFading(uint32_t FocusedWindowId)
+{
+    float Alpha = CVarFloatingPointValue(CVAR_WINDOW_FADE_ALPHA);
+    float Duration = CVarFloatingPointValue(CVAR_WINDOW_FADE_DURATION);
+    macos_window_map Copy = CopyWindowCache();
+
+    ExtendedDockSetWindowAlpha(FocusedWindowId, 1.0f, Duration);
+    for (macos_window_map_it It = Copy.begin(); It != Copy.end(); ++It) {
+        macos_window *Window = It->second;
+        if (Window->Id == FocusedWindowId) continue;
+        ExtendedDockSetWindowAlpha(Window->Id, Alpha, Duration);
+    }
+
+    UpdateCVar(CVAR_WINDOW_FADE_INACTIVE, 1);
+}
+
+void DisableWindowFading()
+{
+    float Duration = CVarFloatingPointValue(CVAR_WINDOW_FADE_DURATION);
+    macos_window_map Copy = CopyWindowCache();
+
+    for (macos_window_map_it It = Copy.begin(); It != Copy.end(); ++It) {
+        macos_window *Window = It->second;
+        ExtendedDockSetWindowAlpha(Window->Id, 1.0f, Duration);
+    }
+
+    UpdateCVar(CVAR_WINDOW_FADE_INACTIVE, 0);
+}
+
 void ExtendedDockSetWindowPosition(uint32_t WindowId, int X, int Y)
 {
     int SockFD;
@@ -684,6 +728,21 @@ UnfloatWindow(macos_window *Window)
 
     if (CVarIntegerValue(CVAR_WINDOW_FLOAT_TOPMOST)) {
         ExtendedDockSetWindowLevel(Window, kCGNormalWindowLevelKey);
+    }
+}
+
+internal void
+ToggleWindowFade()
+{
+    macos_window *Window = GetFocusedWindow();
+    if (!Window) {
+        return;
+    }
+
+    if (CVarIntegerValue(CVAR_WINDOW_FADE_INACTIVE)) {
+        DisableWindowFading();
+    } else {
+        EnableWindowFading(Window->Id);
     }
 }
 
@@ -927,6 +986,7 @@ void ToggleWindow(char *Type)
     else if (StringEquals(Type, "fullscreen"))          ToggleWindowFullscreenZoom();
     else if (StringEquals(Type, "parent"))              ToggleWindowParentZoom();
     else if (StringEquals(Type, "split"))               ToggleWindowSplitMode();
+    else if (StringEquals(Type, "fade"))                ToggleWindowFade();
 }
 
 void UseInsertionPoint(char *Direction)

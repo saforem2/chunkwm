@@ -8,6 +8,10 @@ struct macos_space;
 struct virtual_space;
 
 void ExtendedDockSetWindowPosition(uint32_t WindowId, int X, int Y);
+void ExtendedDockSetWindowAlpha(uint32_t WindowId, float Value, float Duration);
+
+void EnableWindowFading(uint32_t FocusedWindowId);
+void DisableWindowFading();
 
 bool FindClosestWindow(macos_space *Space, virtual_space *VirtualSpace,
                        macos_window *Match, macos_window **ClosestWindow,

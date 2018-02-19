@@ -197,6 +197,7 @@ ParseWindowCommand(const char *Message, command *Chain)
         } break;
         case 't': {
             if ((StringEquals(optarg, "float")) ||
+                (StringEquals(optarg, "fade")) ||
                 (StringEquals(optarg, "split")) ||
                 (StringEquals(optarg, "sticky")) ||
                 (StringEquals(optarg, "fullscreen")) ||

@@ -117,18 +117,6 @@ internal void Reload()
 }
 #endif
 
-internal void
-ExtendedDockSetWindowAlpha(uint32_t WindowId, float Value, float Duration)
-{
-    int SockFD;
-    if (ConnectToDaemon(&SockFD, 5050)) {
-        char Message[64];
-        sprintf(Message, "window_alpha_fade %d %f %f", WindowId, Value, Duration);
-        WriteToSocket(Message, SockFD);
-    }
-    CloseSocket(SockFD);
-}
-
 macos_window_map CopyWindowCache()
 {
     pthread_mutex_lock(&WindowsLock);
@@ -138,14 +126,17 @@ macos_window_map CopyWindowCache()
 }
 
 internal void
-FadeAllWindows(float Value, float Duration)
+FadeWindows(uint32_t FocusedWindowId)
 {
-    uint32_t FocusedWindowId = CVarUnsignedValue(CVAR_FOCUSED_WINDOW);
+    float Alpha = CVarFloatingPointValue(CVAR_WINDOW_FADE_ALPHA);
+    float Duration = CVarFloatingPointValue(CVAR_WINDOW_FADE_DURATION);
     macos_window_map Copy = CopyWindowCache();
+
+    ExtendedDockSetWindowAlpha(FocusedWindowId, 1.0f, Duration);
     for (macos_window_map_it It = Copy.begin(); It != Copy.end(); ++It) {
         macos_window *Window = It->second;
         if (Window->Id == FocusedWindowId) continue;
-        ExtendedDockSetWindowAlpha(Window->Id, Value, Duration);
+        ExtendedDockSetWindowAlpha(Window->Id, Alpha, Duration);
     }
 }
 
@@ -1042,10 +1033,7 @@ WindowFocusedHandler(uint32_t WindowId)
         }
 
         if (CVarIntegerValue(CVAR_WINDOW_FADE_INACTIVE)) {
-            float Alpha = CVarFloatingPointValue(CVAR_WINDOW_FADE_ALPHA);
-            float Duration = CVarFloatingPointValue(CVAR_WINDOW_FADE_DURATION);
-            ExtendedDockSetWindowAlpha(WindowId, 1.0f, Duration);
-            FadeAllWindows(Alpha, Duration);
+            FadeWindows(WindowId);
         }
 
         BroadcastFocusedWindowFloating(Window);
@@ -1593,8 +1581,12 @@ PLUGIN_MAIN_FUNC(PluginMain)
 
         /* NOTE(koekeishiya): Set our initial insertion-point on launch. */
         uint32_t WindowId = GetFocusedWindowId();
-        if (WindowId) WindowFocusedHandler(WindowId);
-        return true;
+        if (WindowId) {
+            if (CVarIntegerValue(CVAR_WINDOW_FADE_INACTIVE)) {
+                FadeWindows(WindowId);
+            }
+            WindowFocusedHandler(WindowId);
+        }
     }
 
     return false;
