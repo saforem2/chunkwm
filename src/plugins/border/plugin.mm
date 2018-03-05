@@ -265,6 +265,13 @@ CommandHandler(void *Data)
                 UpdateBorderWindowColor(Border, Color);
             }
         }
+    } else if (StringEquals(Payload->Command, "width")) {
+        token Token = GetToken(&Payload->Message);
+        if (Token.Length > 0) {
+            int Width = TokenToInt(Token);
+            UpdateCVar("focused_border_width", Width);
+            UpdateBorderWindowWidth(Border, Width);
+        }
     } else if (StringEquals(Payload->Command, "clear")) {
         if (Border) {
             ClearBorderWindow(Border);

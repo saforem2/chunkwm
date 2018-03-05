@@ -146,6 +146,22 @@ void UpdateBorderWindowColor(border_window *Border, unsigned Color)
     }
 }
 
+void UpdateBorderWindowWidth(border_window *Border, int BorderWidth)
+{
+    border_window_internal *BorderInternal = (border_window_internal *) Border;
+    BorderInternal->Width = BorderWidth;
+    BorderInternal->View->Width = BorderInternal->Width;
+
+    if ([NSThread isMainThread]) {
+        [BorderInternal->View setNeedsDisplay:YES];
+    } else {
+        dispatch_async(dispatch_get_main_queue(), ^(void)
+        {
+            [BorderInternal->View setNeedsDisplay:YES];
+        });
+    }
+}
+
 void DestroyBorderWindow(border_window *Border)
 {
     border_window_internal *BorderInternal = (border_window_internal *) Border;

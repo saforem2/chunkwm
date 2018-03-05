@@ -34,6 +34,10 @@
 
     chunkc border::color 0xAARRGGBB
 
+##### change border width
+
+    chunkc border::width 8
+
 ##### clear border
 
     chunkc border::clear
