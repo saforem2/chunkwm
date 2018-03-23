@@ -2162,7 +2162,6 @@ QueryFocusedSpaceUuid(int SockFD)
 {
     char Message[512];
     macos_space *Space;
-    unsigned DesktopId;
     char *IdentifierC;
     bool Success;
     
@@ -2171,14 +2170,11 @@ QueryFocusedSpaceUuid(int SockFD)
         snprintf(Message, sizeof(Message), "?");
         goto out;
     }
-    
-    Success = AXLibCGSSpaceIDToDesktopID(Space->Id, NULL, &DesktopId);
-    ASSERT(Success);
-    {
-        IdentifierC = CopyCFStringToC(Space->Ref);
-    }
+
+    IdentifierC = CopyCFStringToC(Space->Ref);
     snprintf(Message, sizeof(Message), "%s", IdentifierC);
-    
+    free(IdentifierC);
+
     AXLibDestroySpace(Space);
     
 out:
@@ -2253,6 +2249,8 @@ void QueryDesktop(char *Op, int SockFD)
 {
     if (StringEquals(Op, "id")) {
         QueryFocusedDesktop(SockFD);
+    } else if (StringEquals(Op, "uuid")) {
+        QueryFocusedSpaceUuid(SockFD);
     } else if (StringEquals(Op, "mode")) {
         QueryFocusedVirtualSpaceMode(SockFD);
     } else if (StringEquals(Op, "windows")) {
