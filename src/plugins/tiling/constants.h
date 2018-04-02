@@ -39,6 +39,7 @@
 
 #define CVAR_MOUSE_MOVE_BINDING     "mouse_move_window"
 #define CVAR_MOUSE_RESIZE_BINDING   "mouse_resize_window"
+#define CVAR_MOUSE_MOTION_INTERVAL  "mouse_motion_interval"
 #define Mouse_Move_Binding          "fn 1"
 #define Mouse_Resize_Binding        "fn 2"
 

@@ -16,6 +16,7 @@
   * [set state of mouse follows focus](#set-state-of-mouse-follows-focus)
   * [set binding to use for moving windows with the mouse](#set-binding-to-use-for-moving-windows-with-the-mouse)
   * [set binding to use for resizing windows with the mouse](#set-binding-to-use-for-resizing-windows-with-the-mouse)
+  * [set minimum interval between two mouse-motion events](#set-minimum-interval-between-two-mouse-motion-events)
   * [float the next window attempted tiled](#the-next-window-attempted-tiled-will-be-made-floating-instead)
   * [constrain window to region size](#constrain-window-to-bsp-region-size)
   * [signal dock to make windows topmost when floated](#signal-dock-to-make-windows-topmost-when-floated)
@@ -160,6 +161,12 @@
     <option>: none | fn | shift | alt | cmd | ctrl | mouse_button_index
     desc: arbitrary combination allowed (use whitespace as delimeter).
           left-mouse = 1, right-mouse = 2, middle-mouse = 3
+
+##### set minimum interval between two mouse-motion events
+
+    chunkc set mouse_motion_interval         <option>
+    <option>: floating-point value
+    desc: the minimum interval in milliseconds
 
 ##### the next window attempted tiled will be made floating instead
 

@@ -41,10 +41,13 @@ struct resize_border_state
     node *Vertical;
     float InitialRatioH;
     float InitialRatioV;
+    float InitialWidth;
+    float InitialHeight;
     CGPoint InitialCursor;
     macos_space *Space;
     virtual_space *VirtualSpace;
     macos_window *Window;
+    uint64_t LastEventTime;
 };
 
 struct resize_border
@@ -73,6 +76,8 @@ internal resize_border_state ResizeState;
 
 internal mouse_binding MouseMove;
 internal mouse_binding MouseResize;
+
+internal CGEventRef CurrentEvent;
 
 internal inline bool
 IsMouseMoveInProgress()
@@ -207,6 +212,9 @@ BeginFloatingWindow(virtual_space *VirtualSpace, drag_mode DragMode)
             ResizeState.Mode = DragMode;
             ResizeState.InitialRatioH = Window->Position.x;
             ResizeState.InitialRatioV = Window->Position.y;
+            ResizeState.InitialWidth = Window->Size.width;
+            ResizeState.InitialHeight = Window->Size.height;
+            ResizeState.LastEventTime = CGEventGetTimestamp(CurrentEvent);
             return true;
         }
     }
@@ -279,6 +287,8 @@ BeginTiledWindow(macos_space *Space, virtual_space *VirtualSpace, drag_mode Drag
         else if (ResizeState.Horizontal)      Ancestor = ResizeState.Horizontal;
         else                                  Ancestor = Root;
 
+        ResizeState.LastEventTime = CGEventGetTimestamp(CurrentEvent);
+
         CreateResizeBorders(Ancestor);
         return true;
     }
@@ -342,6 +352,16 @@ MouseMoveWindowTick()
                                               (int)(ResizeState.InitialRatioH + DeltaX),
                                               (int)(ResizeState.InitialRatioV + DeltaY));
             } else {
+                float MouseMotionInterval = CVarFloatingPointValue(CVAR_MOUSE_MOTION_INTERVAL);
+                uint64_t CurrentEventTime = CGEventGetTimestamp(CurrentEvent);
+                float DeltaEventTime = ((float)CurrentEventTime - ResizeState.LastEventTime) * (1.0f / 1E6);
+
+                if (DeltaEventTime < MouseMotionInterval) {
+                    return;
+                }
+
+                ResizeState.LastEventTime = CurrentEventTime;
+
                 AXLibSetWindowPosition(ResizeState.Window->Ref,
                                        (int)(ResizeState.InitialRatioH + DeltaX),
                                        (int)(ResizeState.InitialRatioV + DeltaY));
@@ -443,7 +463,101 @@ MouseResizeWindowTick()
 
         UpdateResizeBorders();
     } else if (ResizeState.Mode == Drag_Mode_Resize_Floating) {
-        // TODO(koekeishiya): NYI
+        float MouseMotionInterval = CVarFloatingPointValue(CVAR_MOUSE_MOTION_INTERVAL);
+        uint64_t CurrentEventTime = CGEventGetTimestamp(CurrentEvent);
+        float DeltaEventTime = ((float)CurrentEventTime - ResizeState.LastEventTime) * (1.0f / 1E6);
+
+        if (DeltaEventTime < MouseMotionInterval) {
+            return;
+        }
+
+        ResizeState.LastEventTime = CurrentEventTime;
+
+        macos_window *Window = ResizeState.Window;
+
+        CGPoint InitialCursor = ResizeState.InitialCursor;
+        CGPoint InitialCursorInWindow = {
+            InitialCursor.x - ResizeState.InitialRatioH,
+            InitialCursor.y - ResizeState.InitialRatioV
+        };
+
+        CGPoint Cursor = AXLibGetCursorPos();
+        CGPoint CursorInWindow = {
+            Cursor.x - ResizeState.InitialRatioH,
+            Cursor.y - ResizeState.InitialRatioV
+        };
+
+        CGPoint DeltaCursor = {
+            CursorInWindow.x - InitialCursorInWindow.x,
+            CursorInWindow.y - InitialCursorInWindow.y
+        };
+
+        CGPoint WindowCenter = {
+            ResizeState.InitialWidth / 2,
+            ResizeState.InitialHeight / 2
+        };
+
+        ResizeState.InitialCursor = Cursor;
+
+        if (CursorInWindow.x < WindowCenter.x) {
+            if (CursorInWindow.y < WindowCenter.y) {
+                // NOTE(koekeishiya): The user is gripping the top left corner
+                ResizeState.InitialRatioH += DeltaCursor.x;
+                ResizeState.InitialRatioV += DeltaCursor.y;
+                ResizeState.InitialWidth -= DeltaCursor.x;
+                ResizeState.InitialHeight -= DeltaCursor.y;
+
+                AXLibSetWindowPosition(Window->Ref,
+                                       ResizeState.InitialRatioH,
+                                       ResizeState.InitialRatioV);
+                AXLibSetWindowSize(Window->Ref,
+                                   ResizeState.InitialWidth,
+                                   ResizeState.InitialHeight);
+            }
+
+            if (CursorInWindow.y > WindowCenter.y) {
+                // NOTE(koekeishiya): The user is gripping the bottom left corner
+                ResizeState.InitialRatioH += DeltaCursor.x;
+                ResizeState.InitialHeight += DeltaCursor.y;
+                ResizeState.InitialWidth -= DeltaCursor.x;
+
+                AXLibSetWindowPosition(Window->Ref,
+                                       ResizeState.InitialRatioH,
+                                       ResizeState.InitialRatioV);
+                AXLibSetWindowSize(Window->Ref,
+                                   ResizeState.InitialWidth,
+                                   ResizeState.InitialHeight);
+            }
+        }
+
+        if (CursorInWindow.x > WindowCenter.x) {
+            if (CursorInWindow.y < WindowCenter.y) {
+                // NOTE(koekeishiya): The user is gripping the top right corner
+                ResizeState.InitialRatioV += DeltaCursor.y;
+                ResizeState.InitialWidth += DeltaCursor.x;
+                ResizeState.InitialHeight -= DeltaCursor.y;
+
+                AXLibSetWindowPosition(Window->Ref,
+                                       ResizeState.InitialRatioH,
+                                       ResizeState.InitialRatioV);
+                AXLibSetWindowSize(Window->Ref,
+                                   ResizeState.InitialWidth,
+                                   ResizeState.InitialHeight);
+            }
+
+            if (CursorInWindow.y > WindowCenter.y) {
+                // NOTE(koekeishiya): The user is gripping the bottom right corner
+                ResizeState.InitialHeight += DeltaCursor.y;
+                ResizeState.InitialWidth += DeltaCursor.x;
+
+                AXLibSetWindowPosition(Window->Ref,
+                                       ResizeState.InitialRatioH,
+                                       ResizeState.InitialRatioV);
+                AXLibSetWindowSize(Window->Ref,
+                                   ResizeState.InitialWidth,
+                                   ResizeState.InitialHeight);
+            }
+        }
     }
 }
 
@@ -466,7 +580,6 @@ MouseResizeWindowEnd()
 
         memset(&ResizeState, 0, sizeof(resize_border_state));
     } else if (ResizeState.Mode == Drag_Mode_Resize_Floating) {
-        // TODO(koekeishiya): NYI
         memset(&ResizeState, 0, sizeof(resize_border_state));
     }
 }
@@ -474,6 +587,9 @@ MouseResizeWindowEnd()
 EVENTTAP_CALLBACK(EventTapCallback)
 {
     event_tap *EventTap = (event_tap *) Reference;
+
+    CurrentEvent = Event;
+
     switch (Type) {
     case kCGEventTapDisabledByTimeout:
     case kCGEventTapDisabledByUserInput: {

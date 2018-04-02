@@ -1643,6 +1643,7 @@ Init(chunkwm_api ChunkwmAPI)
     CreateCVar(CVAR_MOUSE_FOLLOWS_FOCUS, Mouse_Follows_Focus_Off);
     CreateCVar(CVAR_MOUSE_MOVE_BINDING, Mouse_Move_Binding);
     CreateCVar(CVAR_MOUSE_RESIZE_BINDING, Mouse_Resize_Binding);
+    CreateCVar(CVAR_MOUSE_MOTION_INTERVAL, 35.0f);
 
     CreateCVar(CVAR_WINDOW_FLOAT_NEXT, 0);
     CreateCVar(CVAR_WINDOW_REGION_LOCKED, 0);
