@@ -187,9 +187,11 @@ PLUGIN_BOOL_FUNC(PluginInit)
     IsActive = true;
     EventTap.Mask = (1 << kCGEventMouseMoved);
     bool Result = BeginEventTap(&EventTap, &EventTapCallback);
-    BeginCVars(&API);
-    CreateCVar("mouse_modifier", "fn");
-    SetMouseModifier(CVarStringValue("mouse_modifier"));
+    if (Result) {
+        BeginCVars(&API);
+        CreateCVar("ffm_bypass_modifier", "fn");
+        SetMouseModifier(CVarStringValue("ffm_bypass_modifier"));
+    }
     return Result;
 }
 
@@ -206,4 +208,4 @@ chunkwm_plugin_export Subscriptions[] =
     chunkwm_export_window_focused
 };
 CHUNKWM_PLUGIN_SUBSCRIBE(Subscriptions)
-CHUNKWM_PLUGIN("Focus Follows Mouse", "0.3.0")
+CHUNKWM_PLUGIN("Focus Follows Mouse", "0.3.1")

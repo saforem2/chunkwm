@@ -1,3 +1,11 @@
+### version 0.3.1
+
+#### cvar changes
+
+- *mouse_modifier* has been renamed to *ffm_bypass_modifier*
+
+---------------
+
 ### version 0.3.0
 
 #### other changes
