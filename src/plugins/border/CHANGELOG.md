@@ -1,5 +1,9 @@
 ### HEAD -  not yet released
 
+----------
+
+### version 0.3.1
+
 #### added runtime command
 
  - command to change border width during runtime: `chunkc border::width <number>`

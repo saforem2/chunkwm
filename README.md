@@ -2,10 +2,10 @@
 
 | NAME            | RELEASE | VERSION | CHANGELOG |
 |-----------------|:-------:|:-------:|:---------:|
-| chunkwm-core    | Alpha   | 0.3.3   | [what's new](https://github.com/koekeishiya/chunkwm/blob/master/CHANGELOG.md)      |
-| chunkwm-tiling  | Alpha   | 0.3.3   | [what's new](https://github.com/koekeishiya/chunkwm/blob/master/src/plugins/tiling/CHANGELOG.md)  |
-| chunkwm-border  | Alpha   | 0.3.0   | [what's new](https://github.com/koekeishiya/chunkwm/blob/master/src/plugins/border/CHANGELOG.md)  |
-| chunkwm-ffm     | Alpha   | 0.3.0   | [what's new](https://github.com/koekeishiya/chunkwm/blob/master/src/plugins/ffm/CHANGELOG.md)     |
+| chunkwm-core    | Alpha   | 0.3.4   | [what's new](https://github.com/koekeishiya/chunkwm/blob/master/CHANGELOG.md)      |
+| chunkwm-tiling  | Alpha   | 0.3.4   | [what's new](https://github.com/koekeishiya/chunkwm/blob/master/src/plugins/tiling/CHANGELOG.md)  |
+| chunkwm-border  | Alpha   | 0.3.1   | [what's new](https://github.com/koekeishiya/chunkwm/blob/master/src/plugins/border/CHANGELOG.md)  |
+| chunkwm-ffm     | Alpha   | 0.3.1   | [what's new](https://github.com/koekeishiya/chunkwm/blob/master/src/plugins/ffm/CHANGELOG.md)     |
 
 **chunkwm** is a tiling window manager for macOS that uses a plugin architecture, successor to [**kwm**](https://github.com/koekeishiya/kwm).
 It represents windows as the leaves of a binary tree, and supports binary space partitioned, monocle and floating desktops.
@@ -168,6 +168,8 @@ See [**sample config**](https://github.com/koekeishiya/chunkwm/blob/master/examp
 Visit [**chunkwm-tiling reference**](https://github.com/koekeishiya/chunkwm/tree/master/src/plugins/tiling/README.md).
 
 Visit [**chunkwm-border reference**](https://github.com/koekeishiya/chunkwm/tree/master/src/plugins/border/README.md).
+
+Visit [**chunkwm-ffm reference**](https://github.com/koekeishiya/chunkwm/tree/master/src/plugins/ffm/README.md).
 
 A sample keybinding config file for [**skhd**](https://github.com/koekeishiya/skhd) is available [**here**](https://github.com/koekeishiya/chunkwm/tree/master/src/plugins/tiling/examples/skhdrc).
 

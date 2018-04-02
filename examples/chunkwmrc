@@ -13,7 +13,7 @@ chunkc core::log_file stdout
 #       - none, debug, warn, error
 #
 
-chunkc core::log_level error
+chunkc core::log_level warn
 
 #
 # NOTE: specify the absolutepath to the directory to use when
@@ -73,7 +73,6 @@ chunkc set mouse_motion_interval         35
 
 chunkc set preselect_border_color        0xffd75f5f
 chunkc set preselect_border_width        5
-chunkc set preselect_border_radius       0
 
 #
 # NOTE: these settings require chwm-sa.
@@ -99,7 +98,7 @@ chunkc set focused_border_skip_floating  0
 # NOTE: the following are config variables for the chunkwm-ffm plugin.
 #
 
-chunkc set mouse_modifier                fn
+chunkc set ffm_bypass_modifier           fn
 
 #
 # NOTE: specify plugins to load when chunkwm starts.
@@ -116,3 +115,4 @@ chunkc core::load ffm.so
 
 chunkc tiling::rule --owner Finder --name Copy --state float
 chunkc tiling::rule --owner \"App Store\" --state float
+chunkc tiling::rule --owner Emacs --except "^$" --state tile

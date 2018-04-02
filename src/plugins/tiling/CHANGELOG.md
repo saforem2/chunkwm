@@ -1,5 +1,9 @@
 ### HEAD -  not yet released
 
+----------
+
+### version 0.3.4
+
 #### cvar changes
 
 - *mouse_modifier* is no longer used by the tiling plugin, and has been replaced with a more flexible system.

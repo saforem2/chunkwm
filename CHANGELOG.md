@@ -1,5 +1,9 @@
 ### HEAD -  not yet released
 
+----------
+
+### version 0.3.4
+
 #### other changes
 
 - fixed an issue where a window would incorrectly be deemed invalid due to an obscure issue with registering notifications.
