@@ -60,6 +60,7 @@
       * [query window information](#query-window-information)
   * [query desktop related](#query-desktop-related)
       * [query focused desktop id](#query-focused-desktop-id)
+      * [query focused desktop uuid](#query-focused-desktop-uuid)
       * [query focused desktop mode](#query-focused-desktop-mode)
       * [query list of windows on focused desktop](#query-list-of-windows-on-focused-desktop)
   * [query monitor related](#query-monitor-related)
@@ -434,6 +435,11 @@ See the following sections for how to retrieve information about an open window:
 ##### query focused desktop id
 
     chunkc tiling::query --desktop id
+    short flag: d
+
+##### query focused desktop uuid
+
+    chunkc tiling::query --desktop uuid
     short flag: d
 
 ##### query focused desktop mode
