@@ -520,6 +520,7 @@ ParseQueryCommand(const char *Message, command *Chain)
         case 'd': {
             if ((StringEquals(optarg, "id")) ||
                 (StringEquals(optarg, "mode")) ||
+                (StringEquals(optarg, "uuid")) ||
                 (StringEquals(optarg, "windows"))) {
                 command *Entry = ConstructCommand(Option, optarg);
                 Command->Next = Entry;
