@@ -29,6 +29,9 @@ See updated README for the tiling plugin for more information.
 
 - *mouse_resize_window* has been extended to also allow resizing of floating windows.
 
+- *mouse_move_window* is now rate-limited by the *mouse_motion_interval* cvar
+  and should make for an improved experience for people who does not utilize chwm-sa.
+
 ----------
 
 ### version 0.3.3
