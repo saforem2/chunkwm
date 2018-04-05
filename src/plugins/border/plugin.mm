@@ -104,7 +104,8 @@ UpdateToFocusedWindow()
             ASSERT(DisplayRef);
 
             macos_space *Space = AXLibActiveSpace(DisplayRef);
-            if (AXLibSpaceHasWindow(Space->Id, WindowId)) {
+            if ((Space->Type == kCGSSpaceUser) &&
+                (AXLibSpaceHasWindow(Space->Id, WindowId))) {
                 UpdateWindow(WindowRef);
             } else if (Border) {
                 ClearBorderWindow(Border);
@@ -163,7 +164,8 @@ WindowFocusedHandler(void *Data)
         ASSERT(DisplayRef);
 
         macos_space *Space = AXLibActiveSpace(DisplayRef);
-        if (AXLibSpaceHasWindow(Space->Id, Window->Id)) {
+        if ((Space->Type == kCGSSpaceUser) &&
+            (AXLibSpaceHasWindow(Space->Id, Window->Id))) {
             UpdateWindow(Window->Ref);
         }
 
@@ -179,13 +181,45 @@ NewWindowHandler(macos_space *Space)
     if (WindowRef) {
         uint32_t WindowId = AXLibGetWindowID(WindowRef);
         if (WindowId) {
-            if (Space && !AXLibSpaceHasWindow(Space->Id, WindowId)) {
+            if ((!AXLibSpaceHasWindow(Space->Id, WindowId)) ||
+                (Space->Type != kCGSSpaceUser)) {
                 if (Border) {
                     ClearBorderWindow(Border);
                 }
             } else {
                 FuckingMacOSMonitorBoundsChangingBetweenPrimaryAndMainMonitor(WindowRef);
             }
+        } else if (Border) {
+            ClearBorderWindow(Border);
+        }
+        CFRelease(WindowRef);
+    } else if (Border) {
+        ClearBorderWindow(Border);
+    }
+}
+
+internal inline void
+NewWindowHandler()
+{
+    AXUIElementRef WindowRef = GetFocusedWindow();
+    if (WindowRef) {
+        uint32_t WindowId = AXLibGetWindowID(WindowRef);
+        if (WindowId) {
+            __AppleGetDisplayIdentifierFromWindow(WindowRef, WindowId);
+            ASSERT(DisplayRef);
+
+            macos_space *Space = AXLibActiveSpace(DisplayRef);
+            if ((!AXLibSpaceHasWindow(Space->Id, WindowId)) ||
+                (Space->Type != kCGSSpaceUser)) {
+                if (Border) {
+                    ClearBorderWindow(Border);
+                }
+            } else {
+                FuckingMacOSMonitorBoundsChangingBetweenPrimaryAndMainMonitor(WindowRef);
+            }
+
+            AXLibDestroySpace(Space);
+            __AppleFreeDisplayIdentifierFromWindow();
         } else if (Border) {
             ClearBorderWindow(Border);
         }
@@ -326,7 +360,7 @@ PLUGIN_MAIN_FUNC(PluginMain)
         (StringEquals(Node, "chunkwm_export_window_created")) ||
         (StringEquals(Node, "chunkwm_export_application_unhidden")) ||
         (StringEquals(Node, "chunkwm_export_window_deminimized"))) {
-        NewWindowHandler(NULL);
+        NewWindowHandler();
         return true;
     } else if (StringEquals(Node, "chunkwm_export_application_activated")) {
         ApplicationActivatedHandler(Data);
