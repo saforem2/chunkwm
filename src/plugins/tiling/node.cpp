@@ -161,9 +161,22 @@ void ResizeWindowToRegionSize(node *Node)
 
 void ResizeWindowToExternalRegionSize(node *Node, region Region, bool Center)
 {
-    // NOTE(koekeishiya): GetWindowByID should not be able to fail!
     macos_window *Window = GetWindowByID(Node->WindowId);
-    ASSERT(Window);
+    if (!Window) {
+
+        /*
+         * NOTE(koekeishiya): GetWindowByID can fail in this case, so we need to guard for it.
+         *
+         * If it fails, that means we were unable to restore the window back to the position
+         * and size we expected it to get after the latest operation, howeveer since the window
+         * no longer seems to exist anyway, this is actually fine.
+         *
+         * This seems to be triggered by code that handles the zoom-system whenever a window is
+         * untiled from the currently active desktop.
+         */
+
+        return;
+    }
 
     bool WindowMoved  = AXLibSetWindowPosition(Window->Ref, Region.X, Region.Y);
     bool WindowResized = AXLibSetWindowSize(Window->Ref, Region.Width, Region.Height);
