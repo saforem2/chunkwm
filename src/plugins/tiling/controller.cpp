@@ -2032,6 +2032,22 @@ QueryFocusedWindowFloat(int SockFD)
 }
 
 internal void
+QueryFocusedWindowId(int SockFD)
+{
+    char Message[512];
+    macos_window *Window;
+
+    Window = GetFocusedWindow();
+    if (Window) {
+        snprintf(Message, sizeof(Message), "%d", Window->Id);
+    } else {
+        snprintf(Message, sizeof(Message), "0");
+    }
+
+    WriteToSocket(Message, SockFD);
+}
+
+internal void
 QueryFocusedWindowOwner(int SockFD)
 {
     char Message[512];
@@ -2120,7 +2136,9 @@ QueryWindowDetails(uint32_t WindowId, int SockFD)
 void QueryWindow(char *Op, int SockFD)
 {
     uint32_t WindowId;
-    if (StringEquals(Op, "owner")) {
+    if (StringEquals(Op, "id")) {
+        QueryFocusedWindowId(SockFD);
+    } else if (StringEquals(Op, "owner")) {
         QueryFocusedWindowOwner(SockFD);
     } else if (StringEquals(Op, "name")) {
         QueryFocusedWindowName(SockFD);
@@ -2164,7 +2182,7 @@ QueryFocusedSpaceUuid(int SockFD)
     macos_space *Space;
     char *IdentifierC;
     bool Success;
-    
+
     Success = AXLibActiveSpace(&Space);
     if (!Success) {
         snprintf(Message, sizeof(Message), "?");
@@ -2176,7 +2194,7 @@ QueryFocusedSpaceUuid(int SockFD)
     free(IdentifierC);
 
     AXLibDestroySpace(Space);
-    
+
 out:
     WriteToSocket(Message, SockFD);
 }

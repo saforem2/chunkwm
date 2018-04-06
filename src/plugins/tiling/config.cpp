@@ -502,7 +502,8 @@ ParseQueryCommand(const char *Message, command *Chain)
         switch (Option) {
         case 'w': {
             uint32_t WindowId;
-            if ((StringEquals(optarg, "owner")) ||
+            if ((StringEquals(optarg, "id")) ||
+                (StringEquals(optarg, "owner")) ||
                 (StringEquals(optarg, "name")) ||
                 (StringEquals(optarg, "tag")) ||
                 (StringEquals(optarg, "float")) ||

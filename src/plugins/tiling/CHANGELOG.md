@@ -1,5 +1,11 @@
 ### HEAD -  not yet released
 
+#### other changes
+
+- fixed an issue that could lead to a segfault in certain situations (#367)
+
+- added command to query id of focused window: `chunkc tiling::query --window id`
+
 ----------
 
 ### version 0.3.4

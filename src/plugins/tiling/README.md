@@ -53,6 +53,7 @@
   * [sample rules](#sample-rules)
 * [query commands](#query-commands)
   * [query window related](#query-window-related)
+      * [query focused window id](#query-focused-window-id)
       * [query focused window name](#query-focused-window-name)
       * [query focused window owner](#query-focused-window-owner)
       * [query focused window tag](#query-focused-window-tag)
@@ -400,6 +401,11 @@ See the following sections for how to retrieve information about an open window:
 #### query commands
 
 ##### query window related
+
+##### query focused window id
+
+    chunkc tiling::query --window id
+    short flag: w
 
 ##### query focused window name
 
