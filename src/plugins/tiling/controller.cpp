@@ -365,36 +365,36 @@ void FocusWindow(char *Direction)
         ASSERT(FocusCycleMode);
 
         node *WindowNode = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
-        ASSERT(WindowNode);
+        if (WindowNode) {
+            if (StringEquals(FocusCycleMode, Window_Focus_Cycle_All)) {
+                bool WrapMonitor = AXLibDisplayCount() == 1;
+                macos_window *ClosestWindow;
+                if ((FindWindowUndirected(Space, VirtualSpace, WindowNode, &ClosestWindow, Direction, WrapMonitor)) ||
+                    (FindClosestWindow(Space, VirtualSpace, Window, &ClosestWindow, Direction, WrapMonitor))) {
+                    AXLibSetFocusedWindow(ClosestWindow->Ref);
+                    AXLibSetFocusedApplication(ClosestWindow->Owner->PSN);
 
-        if (StringEquals(FocusCycleMode, Window_Focus_Cycle_All)) {
-            bool WrapMonitor = AXLibDisplayCount() == 1;
-            macos_window *ClosestWindow;
-            if ((FindWindowUndirected(Space, VirtualSpace, WindowNode, &ClosestWindow, Direction, WrapMonitor)) ||
-                (FindClosestWindow(Space, VirtualSpace, Window, &ClosestWindow, Direction, WrapMonitor))) {
-                AXLibSetFocusedWindow(ClosestWindow->Ref);
-                AXLibSetFocusedApplication(ClosestWindow->Owner->PSN);
-
-                if (StringEquals(CVarStringValue(CVAR_MOUSE_FOLLOWS_FOCUS), Mouse_Follows_Focus_Intr)) {
-                    CenterMouseInWindow(ClosestWindow);
+                    if (StringEquals(CVarStringValue(CVAR_MOUSE_FOLLOWS_FOCUS), Mouse_Follows_Focus_Intr)) {
+                        CenterMouseInWindow(ClosestWindow);
+                    }
+                } else if ((StringEquals(Direction, "east")) ||
+                           (StringEquals(Direction, "next"))) {
+                    FocusMonitor("next");
+                } else if ((StringEquals(Direction, "west")) ||
+                           (StringEquals(Direction, "prev"))) {
+                    FocusMonitor("prev");
                 }
-            } else if ((StringEquals(Direction, "east")) ||
-                       (StringEquals(Direction, "next"))) {
-                FocusMonitor("next");
-            } else if ((StringEquals(Direction, "west")) ||
-                       (StringEquals(Direction, "prev"))) {
-                FocusMonitor("prev");
-            }
-        } else {
-            bool WrapMonitor = StringEquals(FocusCycleMode, Window_Focus_Cycle_Monitor);
-            macos_window *ClosestWindow;
-            if ((FindWindowUndirected(Space, VirtualSpace, WindowNode, &ClosestWindow, Direction, WrapMonitor)) ||
-                (FindClosestWindow(Space, VirtualSpace, Window, &ClosestWindow, Direction, WrapMonitor))) {
-                AXLibSetFocusedWindow(ClosestWindow->Ref);
-                AXLibSetFocusedApplication(ClosestWindow->Owner->PSN);
+            } else {
+                bool WrapMonitor = StringEquals(FocusCycleMode, Window_Focus_Cycle_Monitor);
+                macos_window *ClosestWindow;
+                if ((FindWindowUndirected(Space, VirtualSpace, WindowNode, &ClosestWindow, Direction, WrapMonitor)) ||
+                    (FindClosestWindow(Space, VirtualSpace, Window, &ClosestWindow, Direction, WrapMonitor))) {
+                    AXLibSetFocusedWindow(ClosestWindow->Ref);
+                    AXLibSetFocusedApplication(ClosestWindow->Owner->PSN);
 
-                if (StringEquals(CVarStringValue(CVAR_MOUSE_FOLLOWS_FOCUS), Mouse_Follows_Focus_Intr)) {
-                    CenterMouseInWindow(ClosestWindow);
+                    if (StringEquals(CVarStringValue(CVAR_MOUSE_FOLLOWS_FOCUS), Mouse_Follows_Focus_Intr)) {
+                        CenterMouseInWindow(ClosestWindow);
+                    }
                 }
             }
         }
