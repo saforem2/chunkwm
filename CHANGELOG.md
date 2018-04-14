@@ -1,5 +1,9 @@
 ### HEAD -  not yet released
 
+#### other changes
+
+- fixed an issue that caused chunkwm to crash if the user tried to query a non-existing cvar (#378)
+
 ----------
 
 ### version 0.3.4

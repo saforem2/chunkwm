@@ -2,6 +2,8 @@
 
 #### other changes
 
+- replace an incorrectly assumed assertion with a guard (#377)
+
 - fixed an issue that could lead to a segfault in certain situations (#367)
 
 - added command to query id of focused window: `chunkc tiling::query --window id`
