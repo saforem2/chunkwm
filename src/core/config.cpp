@@ -225,7 +225,9 @@ GetCVar(const char **Message, int SockFD)
     if (ValidToken(&NameToken)) {
         char *Name = TokenToString(NameToken);
         char *Value = CVarStringValue(Name);
-        WriteToSocket(Value, SockFD);
+        if (Value) {
+            WriteToSocket(Value, SockFD);
+        }
         free(Name);
     } else {
         c_log(C_LOG_LEVEL_WARN, "chunkwm: missing cvar name.\n");
