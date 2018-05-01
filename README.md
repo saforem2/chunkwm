@@ -2,8 +2,8 @@
 
 | NAME            | RELEASE | VERSION | CHANGELOG |
 |-----------------|:-------:|:-------:|:---------:|
-| chunkwm-core    | Alpha   | 0.3.4   | [what's new](https://github.com/koekeishiya/chunkwm/blob/master/CHANGELOG.md)      |
-| chunkwm-tiling  | Alpha   | 0.3.4   | [what's new](https://github.com/koekeishiya/chunkwm/blob/master/src/plugins/tiling/CHANGELOG.md)  |
+| chunkwm-core    | Alpha   | 0.3.5   | [what's new](https://github.com/koekeishiya/chunkwm/blob/master/CHANGELOG.md)      |
+| chunkwm-tiling  | Alpha   | 0.3.5   | [what's new](https://github.com/koekeishiya/chunkwm/blob/master/src/plugins/tiling/CHANGELOG.md)  |
 | chunkwm-border  | Alpha   | 0.3.1   | [what's new](https://github.com/koekeishiya/chunkwm/blob/master/src/plugins/border/CHANGELOG.md)  |
 | chunkwm-ffm     | Alpha   | 0.3.1   | [what's new](https://github.com/koekeishiya/chunkwm/blob/master/src/plugins/ffm/CHANGELOG.md)     |
 
@@ -18,7 +18,7 @@ It represents windows as the leaves of a binary tree, and supports binary space 
 
 A third party program (e.g: [*skhd*](https://github.com/koekeishiya/skhd) or [*khd*](https://github.com/koekeishiya/khd)) is needed to map keyboard events to *chunkwm* actions.
 
-Development is happening on macOS High Sierra (10.13.2), but OSX El Capitan (10.11.6) and newer should work fine.
+Development is happening on macOS High Sierra (10.13.4), but OSX El Capitan (10.11.6) and newer should work fine.
 
 Older versions may or may not be compatible and will not be officially supported.
 

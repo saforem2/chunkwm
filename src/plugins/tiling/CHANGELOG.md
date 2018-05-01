@@ -1,5 +1,9 @@
 ### HEAD -  not yet released
 
+----------
+
+### version 0.3.5
+
 #### other changes
 
 - improve detection of windows that are moved between monitors using methods external to chunkwm (#385)
