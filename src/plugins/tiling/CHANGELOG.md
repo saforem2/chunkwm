@@ -2,6 +2,8 @@
 
 #### other changes
 
+- improve detection of windows that are moved between monitors using methods external to chunkwm (#385)
+
 - replace an incorrectly assumed assertion with a guard (#377)
 
 - fixed an issue that could lead to a segfault in certain situations (#367)

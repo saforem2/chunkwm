@@ -1593,6 +1593,13 @@ bool SendWindowToDesktop(macos_window *Window, char *Op)
     AXLibSetWindowPosition(Window->Ref, NormalizedWindow.origin.x, NormalizedWindow.origin.y);
     AXLibSetWindowSize(Window->Ref, NormalizedWindow.size.width, NormalizedWindow.size.height);
 
+    // NOTE(koekeishiya): We need to update our cached window dimensions, as they are
+    // used when we attempt to tile the window on the new monitor. If we don't update
+    // these values, we will tile the window on the old monitor. This only happens
+    // when the window is being created as the root window, using 'Region_Full'.
+    Window->Position = NormalizedWindow.origin;
+    Window->Size = NormalizedWindow.size;
+
     if (!ValidWindow) {
         goto monitor_free;
     }
