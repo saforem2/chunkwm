@@ -139,9 +139,17 @@ CenterWindowInRegion(macos_window *Window, region Region)
 
 void ResizeWindowToRegionSize(node *Node, bool Center)
 {
-    // NOTE(koekeishiya): GetWindowByID should not be able to fail!
     macos_window *Window = GetWindowByID(Node->WindowId);
-    ASSERT(Window);
+    if (!Window) {
+
+        /*
+         * NOTE(koekeishiya): Sometimes we appear to have a node with reference to a windowid
+         * that is no longer in our cache for whatever reason. We ignore this and return for now,
+         * until we figure out why this is happening / can happen..
+         */
+
+        return;
+    }
 
     bool WindowMoved  = AXLibSetWindowPosition(Window->Ref, Node->Region.X, Node->Region.Y);
     bool WindowResized = AXLibSetWindowSize(Window->Ref, Node->Region.Width, Node->Region.Height);
