@@ -77,6 +77,13 @@ CFStringRef AXLibGetDisplayIdentifierForBottomMostDisplay();
 
 #include <AvailabilityMacros.h>
 #if MAC_OS_X_VERSION_MAX_ALLOWED < 101200
+#define __AppleGetDisplayIdentifierFromMacOSWindowO(Window, DisplayRef) \
+            bool ShouldFreeDisplayRef = false; \
+            DisplayRef = AXLibGetDisplayIdentifierFromWindow(Window->Id); \
+            if (!DisplayRef) { \
+                DisplayRef = AXLibGetDisplayIdentifierFromWindowRect(Window->Position, Window->Size); \
+                ShouldFreeDisplayRef = true; \
+            }
 #define __AppleGetDisplayIdentifierFromMacOSWindow(Window) \
             bool ShouldFreeDisplayRef = false; \
             CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromWindow(Window->Id); \
@@ -92,12 +99,21 @@ CFStringRef AXLibGetDisplayIdentifierForBottomMostDisplay();
                 CGSize Size = AXLibGetWindowSize(WindowRef); \
                 DisplayRef = AXLibGetDisplayIdentifierFromWindowRect(Position, Size); \
                 ShouldFreeDisplayRef = true; \
+            }
+#define __AppleFreeDisplayIdentifierFromWindowO(DisplayRef) \
+            if (ShouldFreeDisplayRef) { \
+                CFRelease(DisplayRef); \
             }
 #define __AppleFreeDisplayIdentifierFromWindow() \
             if (ShouldFreeDisplayRef) { \
                 CFRelease(DisplayRef); \
             }
 #else
+#define __AppleGetDisplayIdentifierFromMacOSWindowO(Window, DisplayRef) \
+            DisplayRef = AXLibGetDisplayIdentifierFromWindow(Window->Id); \
+            if (!DisplayRef) { \
+                DisplayRef = AXLibGetDisplayIdentifierFromWindowRect(Window->Position, Window->Size); \
+            }
 #define __AppleGetDisplayIdentifierFromMacOSWindow(Window) \
             CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromWindow(Window->Id); \
             if (!DisplayRef) { \
@@ -110,6 +126,8 @@ CFStringRef AXLibGetDisplayIdentifierForBottomMostDisplay();
                 CGSize Size = AXLibGetWindowSize(WindowRef); \
                 DisplayRef = AXLibGetDisplayIdentifierFromWindowRect(Position, Size); \
             }
+#define __AppleFreeDisplayIdentifierFromWindowO(DisplayRef) \
+            CFRelease(DisplayRef);
 #define __AppleFreeDisplayIdentifierFromWindow() \
             CFRelease(DisplayRef);
 #endif

@@ -293,7 +293,8 @@ void CloseWindow(char *Unused)
     }
 }
 
-void FocusWindowInFullscreenSpace(macos_space *Space, char *Direction)
+internal void
+FocusWindowInFullscreenSpace(macos_space *Space, char *Direction)
 {
     macos_window *Window = GetFocusedWindow();
     if (!Window) return;
@@ -314,14 +315,15 @@ void FocusWindowInFullscreenSpace(macos_space *Space, char *Direction)
     }
 }
 
-void FocusWindow(char *Direction)
+internal void
+FocusWindowNoFocus(char *Direction)
 {
     bool Success;
     macos_space *Space;
-    macos_window *Window;
     virtual_space *VirtualSpace;
+    macos_window *Window;
+    node *Node = NULL;
 
-    Window = GetWindowByID(CVarUnsignedValue(CVAR_BSP_INSERTION_POINT));
     Success = AXLibActiveSpace(&Space);
     ASSERT(Success);
 
@@ -337,30 +339,60 @@ void FocusWindow(char *Direction)
         goto vspace_release;
     }
 
-    if (!Window) {
-        node *Node = NULL;
-        if ((StringEquals(Direction, "prev")) ||
-            (StringEquals(Direction, "west")) ||
-            (StringEquals(Direction, "north"))) {
-            Node = GetLastLeafNode(VirtualSpace->Tree);
-        } else if ((StringEquals(Direction, "next")) ||
-                   (StringEquals(Direction, "east")) ||
-                   (StringEquals(Direction, "south"))) {
-            Node = GetFirstLeafNode(VirtualSpace->Tree);
+    if ((StringEquals(Direction, "prev")) ||
+        (StringEquals(Direction, "west")) ||
+        (StringEquals(Direction, "north"))) {
+        Node = GetLastLeafNode(VirtualSpace->Tree);
+    } else if ((StringEquals(Direction, "next")) ||
+               (StringEquals(Direction, "east")) ||
+               (StringEquals(Direction, "south"))) {
+        Node = GetFirstLeafNode(VirtualSpace->Tree);
+    }
+
+    if (Node) {
+        Window = GetWindowByID(Node->WindowId);
+        ASSERT(Window);
+
+        AXLibSetFocusedWindow(Window->Ref);
+        AXLibSetFocusedApplication(Window->Owner->PSN);
+
+        if (StringEquals(CVarStringValue(CVAR_MOUSE_FOLLOWS_FOCUS), Mouse_Follows_Focus_Intr)) {
+            CenterMouseInWindow(Window);
         }
+    }
 
-        if (Node) {
-            Window = GetWindowByID(Node->WindowId);
-            ASSERT(Window);
+vspace_release:
+    ReleaseVirtualSpace(VirtualSpace);
 
-            AXLibSetFocusedWindow(Window->Ref);
-            AXLibSetFocusedApplication(Window->Owner->PSN);
+space_free:
+    AXLibDestroySpace(Space);
+}
 
-            if (StringEquals(CVarStringValue(CVAR_MOUSE_FOLLOWS_FOCUS), Mouse_Follows_Focus_Intr)) {
-                CenterMouseInWindow(Window);
-            }
+internal void
+FocusWindowFocus(char *Direction, macos_window *Window)
+{
+    macos_space *Space;
+    virtual_space *VirtualSpace;
+
+    __AppleGetDisplayIdentifierFromMacOSWindow(Window);
+    ASSERT(DisplayRef);
+
+    Space = AXLibActiveSpace(DisplayRef);
+    ASSERT(Space);
+
+    if (Space->Type != kCGSSpaceUser) {
+        if (Space->Type == kCGSSpaceFullscreen) {
+            FocusWindowInFullscreenSpace(Space, Direction);
         }
-    } else if (VirtualSpace->Mode == Virtual_Space_Bsp) {
+        goto space_free;
+    }
+
+    VirtualSpace = AcquireVirtualSpace(Space);
+    if ((!VirtualSpace->Tree) || (VirtualSpace->Mode == Virtual_Space_Float)) {
+        goto vspace_release;
+    }
+
+    if (VirtualSpace->Mode == Virtual_Space_Bsp) {
         char *FocusCycleMode = CVarStringValue(CVAR_WINDOW_FOCUS_CYCLE);
         ASSERT(FocusCycleMode);
 
@@ -453,12 +485,22 @@ vspace_release:
     ReleaseVirtualSpace(VirtualSpace);
 
 space_free:
+    __AppleFreeDisplayIdentifierFromWindow();
     AXLibDestroySpace(Space);
+}
+
+void FocusWindow(char *Direction)
+{
+    macos_window *Window = GetWindowByID(CVarUnsignedValue(CVAR_BSP_INSERTION_POINT));
+    if (Window) {
+        FocusWindowFocus(Direction, Window);
+    } else {
+        FocusWindowNoFocus(Direction);
+    }
 }
 
 void SwapWindow(char *Direction)
 {
-    bool Success;
     macos_space *Space;
     virtual_space *VirtualSpace;
     node *WindowNode, *ClosestNode;
@@ -466,11 +508,14 @@ void SwapWindow(char *Direction)
 
     Window = GetWindowByID(CVarUnsignedValue(CVAR_BSP_INSERTION_POINT));
     if (!Window) {
-        goto out;
+        return;
     }
 
-    Success = AXLibActiveSpace(&Space);
-    ASSERT(Success);
+    __AppleGetDisplayIdentifierFromMacOSWindow(Window);
+    ASSERT(DisplayRef);
+
+    Space = AXLibActiveSpace(DisplayRef);
+    ASSERT(Space);
 
     if (Space->Type != kCGSSpaceUser) {
         goto space_free;
@@ -532,13 +577,12 @@ vspace_release:
     ReleaseVirtualSpace(VirtualSpace);
 
 space_free:
+    __AppleFreeDisplayIdentifierFromWindow();
     AXLibDestroySpace(Space);
-out:;
 }
 
 void WarpWindow(char *Direction)
 {
-    bool Success;
     macos_space *Space;
     virtual_space *VirtualSpace;
     macos_window *Window, *ClosestWindow;
@@ -546,11 +590,14 @@ void WarpWindow(char *Direction)
 
     Window = GetWindowByID(CVarUnsignedValue(CVAR_BSP_INSERTION_POINT));
     if (!Window) {
-        goto out;
+        return;
     }
 
-    Success = AXLibActiveSpace(&Space);
-    ASSERT(Success);
+    __AppleGetDisplayIdentifierFromMacOSWindow(Window);
+    ASSERT(DisplayRef);
+
+    Space = AXLibActiveSpace(DisplayRef);
+    ASSERT(Space);
 
     if (Space->Type != kCGSSpaceUser) {
         goto space_free;
@@ -624,8 +671,8 @@ vspace_release:
     ReleaseVirtualSpace(VirtualSpace);
 
 space_free:
+    __AppleFreeDisplayIdentifierFromWindow();
     AXLibDestroySpace(Space);
-out:;
 }
 
 void TemporaryRatio(char *Ratio)
@@ -816,13 +863,20 @@ internal void
 ToggleWindowFullscreenZoom()
 {
     node *Node;
-    bool Success;
     macos_window *Window;
     macos_space *Space;
     virtual_space *VirtualSpace;
 
-    Success = AXLibActiveSpace(&Space);
-    ASSERT(Success);
+    Window = GetFocusedWindow();
+    if (!Window) {
+        return;
+    }
+
+    __AppleGetDisplayIdentifierFromMacOSWindow(Window);
+    ASSERT(DisplayRef);
+
+    Space = AXLibActiveSpace(DisplayRef);
+    ASSERT(Space);
 
     if (Space->Type != kCGSSpaceUser) {
         goto space_free;
@@ -830,11 +884,6 @@ ToggleWindowFullscreenZoom()
 
     VirtualSpace = AcquireVirtualSpace(Space);
     if ((!VirtualSpace->Tree) || (VirtualSpace->Mode != Virtual_Space_Bsp)) {
-        goto vspace_release;
-    }
-
-    Window = GetFocusedWindow();
-    if (!Window) {
         goto vspace_release;
     }
 
@@ -869,6 +918,7 @@ vspace_release:
     ReleaseVirtualSpace(VirtualSpace);
 
 space_free:
+    __AppleFreeDisplayIdentifierFromWindow();
     AXLibDestroySpace(Space);
 }
 
@@ -876,13 +926,20 @@ internal void
 ToggleWindowParentZoom()
 {
     node *Node;
-    bool Success;
     macos_window *Window;
     macos_space *Space;
     virtual_space *VirtualSpace;
 
-    Success = AXLibActiveSpace(&Space);
-    ASSERT(Success);
+    Window = GetFocusedWindow();
+    if (!Window) {
+        return;
+    }
+
+    __AppleGetDisplayIdentifierFromMacOSWindow(Window);
+    ASSERT(DisplayRef);
+
+    Space = AXLibActiveSpace(DisplayRef);
+    ASSERT(Space);
 
     if (Space->Type != kCGSSpaceUser) {
         goto space_free;
@@ -890,11 +947,6 @@ ToggleWindowParentZoom()
 
     VirtualSpace = AcquireVirtualSpace(Space);
     if ((!VirtualSpace->Tree) || (VirtualSpace->Mode != Virtual_Space_Bsp)) {
-        goto vspace_release;
-    }
-
-    Window = GetFocusedWindow();
-    if (!Window) {
         goto vspace_release;
     }
 
@@ -929,6 +981,7 @@ vspace_release:
     ReleaseVirtualSpace(VirtualSpace);
 
 space_free:
+    __AppleFreeDisplayIdentifierFromWindow();
     AXLibDestroySpace(Space);
 }
 
@@ -936,13 +989,20 @@ internal void
 ToggleWindowSplitMode()
 {
     node *Node;
-    bool Success;
-    uint32_t WindowId;
     macos_space *Space;
     virtual_space *VirtualSpace;
+    macos_window *Window;
 
-    Success = AXLibActiveSpace(&Space);
-    ASSERT(Success);
+    Window = GetWindowByID(CVarUnsignedValue(CVAR_BSP_INSERTION_POINT));
+    if (!Window) {
+        return;
+    }
+
+    __AppleGetDisplayIdentifierFromMacOSWindow(Window);
+    ASSERT(DisplayRef);
+
+    Space = AXLibActiveSpace(DisplayRef);
+    ASSERT(Space);
 
     if (Space->Type != kCGSSpaceUser) {
         goto space_free;
@@ -953,8 +1013,7 @@ ToggleWindowSplitMode()
         goto vspace_release;
     }
 
-    WindowId = CVarUnsignedValue(CVAR_BSP_INSERTION_POINT);
-    Node = GetNodeWithId(VirtualSpace->Tree, WindowId, VirtualSpace->Mode);
+    Node = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
     if (!Node || !Node->Parent) {
         goto vspace_release;
     }
@@ -972,6 +1031,7 @@ vspace_release:
     ReleaseVirtualSpace(VirtualSpace);
 
 space_free:
+    __AppleFreeDisplayIdentifierFromWindow();
     AXLibDestroySpace(Space);
 }
 
@@ -991,7 +1051,6 @@ void ToggleWindow(char *Type)
 
 void UseInsertionPoint(char *Direction)
 {
-    bool Success;
     macos_space *Space;
     virtual_space *VirtualSpace;
     macos_window *Window;
@@ -1003,11 +1062,14 @@ void UseInsertionPoint(char *Direction)
 
     Window = GetFocusedWindow();
     if (!Window) {
-        goto out;
+        return;
     }
 
-    Success = AXLibActiveSpace(&Space);
-    ASSERT(Success);
+    __AppleGetDisplayIdentifierFromMacOSWindow(Window);
+    ASSERT(DisplayRef);
+
+    Space = AXLibActiveSpace(DisplayRef);
+    ASSERT(Space);
 
     if (Space->Type != kCGSSpaceUser) {
         goto space_free;
@@ -1096,8 +1158,8 @@ vspace_release:
     ReleaseVirtualSpace(VirtualSpace);
 
 space_free:
+    __AppleFreeDisplayIdentifierFromWindow();
     AXLibDestroySpace(Space);
-out:;
 }
 
 internal void
@@ -1204,7 +1266,6 @@ space_free:
 
 void AdjustWindowRatio(char *Direction)
 {
-    bool Success;
     macos_space *Space;
     float Offset, Ratio;
     virtual_space *VirtualSpace;
@@ -1213,11 +1274,14 @@ void AdjustWindowRatio(char *Direction)
 
     Window = GetWindowByID(CVarUnsignedValue(CVAR_BSP_INSERTION_POINT));
     if (!Window) {
-        goto out;
+        return;
     }
 
-    Success = AXLibActiveSpace(&Space);
-    ASSERT(Success);
+    __AppleGetDisplayIdentifierFromMacOSWindow(Window);
+    ASSERT(DisplayRef);
+
+    Space = AXLibActiveSpace(DisplayRef);
+    ASSERT(Space);
 
     if (Space->Type != kCGSSpaceUser) {
         goto space_free;
@@ -1265,8 +1329,8 @@ vspace_release:
     ReleaseVirtualSpace(VirtualSpace);
 
 space_free:
+    __AppleFreeDisplayIdentifierFromWindow();
     AXLibDestroySpace(Space);
-out:;
 }
 
 void ActivateSpaceLayout(char *Layout)
@@ -1478,44 +1542,16 @@ bool SendWindowToDesktop(macos_window *Window, char *Op)
     CGRect NormalizedWindow;
     CGSSpaceID DestinationSpaceId;
     std::vector<uint32_t> WindowIds;
-    macos_space **SpacesForWindow, **List;
     unsigned SourceMonitor, DestinationMonitor;
     unsigned SourceDesktopId, DestinationDesktopId;
     macos_space *Space, *DestinationMonitorActiveSpace;
     CFStringRef SourceMonitorRef, DestinationMonitorRef;
 
-    if ((StringEquals(Op, "prev")) || (StringEquals(Op, "next"))) {
+    __AppleGetDisplayIdentifierFromMacOSWindowO(Window, SourceMonitorRef);
+    ASSERT(SourceMonitorRef);
 
-        //
-        // NOTE(koekeishiya): If the target desktop is relative to the desktop of the window,
-        // we need to figure out the exact desktop the window is currently on.
-        //
-        // 'AXLibSpacesForWindow(..)' relies on the private API CGSCopySpacesForWindow which sometimes
-        // returns null for windows that have recently been created (probably because the internal state
-        // that the CGS-APis query has yet to be updated). This path is never taken when a window is moved
-        // through a rule and this specific instance should NOT be a problem for user-issued moves !!!
-        //
-
-        SpacesForWindow = List = AXLibSpacesForWindow(Window->Id);
-        Space = *List++;
-        ASSERT(Space);
-        ASSERT(!(*List));
-        free(SpacesForWindow);
-    } else {
-
-        //
-        // NOTE(koekeishiya): The destination desktop is given as an absolute value. Because of this
-        // we can blindly assume that the active desktop is the one that contains the window we are operating on.
-        //
-        // The reason for this is that this path is always taken by windows that are moved through the use of
-        // a rule, and if the operation was initiated by the user - the window we operate on will ALWAYS be the
-        // focused window. This resolves the problem mentioned in issue #236.
-        //
-
-        Success = AXLibActiveSpace(&Space);
-        ASSERT(Success);
-        ASSERT(Space);
-    }
+    Space = AXLibActiveSpace(SourceMonitorRef);
+    ASSERT(Space);
 
     if (Space->Type != kCGSSpaceUser) {
         goto space_free;
@@ -1583,9 +1619,6 @@ bool SendWindowToDesktop(macos_window *Window, char *Op)
      * NOTE(koekeishiya): If the destination space is on a different monitor,
      * we need to normalize the window x and y position, or it will be out of bounds.
      */
-    SourceMonitorRef = AXLibGetDisplayIdentifierFromSpace(Space->Id);
-    ASSERT(SourceMonitorRef);
-
     DestinationMonitorRef = AXLibGetDisplayIdentifierFromSpace(DestinationSpaceId);
     ASSERT(DestinationMonitorRef);
 
@@ -1615,9 +1648,9 @@ bool SendWindowToDesktop(macos_window *Window, char *Op)
 
 monitor_free:
     CFRelease(DestinationMonitorRef);
-    CFRelease(SourceMonitorRef);
 
 space_free:
+    __AppleFreeDisplayIdentifierFromWindowO(SourceMonitorRef);
     AXLibDestroySpace(Space);
 
     return Success;
@@ -1646,8 +1679,11 @@ void SendWindowToMonitor(char *Op)
         goto out;
     }
 
-    Success = AXLibActiveSpace(&Space);
-    ASSERT(Success);
+    __AppleGetDisplayIdentifierFromMacOSWindowO(Window, SourceMonitorRef);
+    ASSERT(SourceMonitorRef);
+
+    Space = AXLibActiveSpace(SourceMonitorRef);
+    ASSERT(Space);
 
     if (Space->Type != kCGSSpaceUser) {
         goto space_free;
@@ -1717,9 +1753,6 @@ void SendWindowToMonitor(char *Op)
         break;
     }
 
-    SourceMonitorRef = AXLibGetDisplayIdentifierFromSpace(Space->Id);
-    ASSERT(SourceMonitorRef);
-
     /* NOTE(koekeishiya): We need to normalize the window x and y position, or it will be out of bounds. */
     NormalizedWindow = NormalizeWindowRect(Window->Ref, SourceMonitorRef, DestinationMonitorRef);
     AXLibSetWindowPosition(Window->Ref, NormalizedWindow.origin.x, NormalizedWindow.origin.y);
@@ -1738,7 +1771,7 @@ void SendWindowToMonitor(char *Op)
         ReleaseVirtualSpace(DestinationVirtualSpace);
     }
 
-    CFRelease(SourceMonitorRef);
+    __AppleFreeDisplayIdentifierFromWindowO(SourceMonitorRef);
 
 dest_space_free:
     AXLibDestroySpace(DestinationSpace);
