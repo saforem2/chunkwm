@@ -1,4 +1,5 @@
 #include <Cocoa/Cocoa.h>
+#include "workspace.h"
 #include "assert.h"
 
 char *WorkspaceCopyProcessNameAndPolicy(pid_t PID, uint32_t *ProcessPolicy)
@@ -38,4 +39,20 @@ char *WorkspaceCopyProcessName(pid_t PID)
     }
 
     return ProcessName;
+}
+
+application_launch_state WorkspaceGetApplicationLaunchState(pid_t PID)
+{
+    application_launch_state Result = Application_State_Failed;
+    NSRunningApplication *Application = [NSRunningApplication runningApplicationWithProcessIdentifier:PID];
+
+    if (Application) {
+        if ([Application isFinishedLaunching]) {
+            Result = Application_State_Launched;
+        } else {
+            Result = Application_State_Launching;
+        }
+    }
+
+    return Result;
 }

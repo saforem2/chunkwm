@@ -6,6 +6,7 @@
 #include "../common/accessibility/application.h"
 #include "../common/accessibility/window.h"
 #include "../common/accessibility/element.h"
+#include "../common/misc/workspace.h"
 #include "../common/misc/assert.h"
 
 #include <pthread.h>
@@ -267,6 +268,12 @@ ConstructAndAddApplicationDispatch(macos_application *Application, carbon_applic
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, Delay * NSEC_PER_SEC), dispatch_get_main_queue(),
     ^{
         if (Info->State == Carbon_Application_State_In_Progress) {
+            application_launch_state LaunchState = WorkspaceGetApplicationLaunchState(Info->PID);
+            if (LaunchState != Application_State_Launched) {
+                ConstructAndAddApplicationDispatch(Application, Info, OBSERVER_DELAY);
+                return;
+            }
+
             bool Success = AXLibAddApplicationObserver(Application, ApplicationCallback);
             if (Success) {
                 c_log(C_LOG_LEVEL_DEBUG, "%d:%s successfully registered window notifications\n", Application->PID, Application->Name);
