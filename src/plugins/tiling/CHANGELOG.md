@@ -1,8 +1,14 @@
 ### HEAD -  not yet released
 
+----------
+
+### version 0.3.6
+
 #### other changes
 
 - better calculation of region used for preselection-borders (#395)
+
+- change how active desktop is decided for window operations (#385)
 
 ----------
 

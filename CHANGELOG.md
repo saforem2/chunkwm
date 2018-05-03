@@ -1,5 +1,9 @@
 ### HEAD -  not yet released
 
+----------
+
+### version 0.3.6
+
 #### other changes
 
 - fixed an issue that caused applications to be ignored by chunkwm due to slow startup-time (#329)
