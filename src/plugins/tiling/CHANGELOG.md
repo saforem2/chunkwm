@@ -1,5 +1,9 @@
 ### HEAD -  not yet released
 
+#### other changes
+
+- better calculation of region used for preselection-borders (#395)
+
 ----------
 
 ### version 0.3.5
