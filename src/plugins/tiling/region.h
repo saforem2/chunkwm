@@ -34,6 +34,7 @@ struct macos_space;
 struct virtual_space;
 
 region CGRectToRegion(CGRect Rect);
+region RoundPreselRegion(region Region, CGPoint Position, CGSize Size);
 void ConstrainRegion(CFStringRef DisplayRef, region *Region);
 
 void CreateNodeRegion(node *Node, region_type Type, macos_space *Space, virtual_space *VirtualSpace);

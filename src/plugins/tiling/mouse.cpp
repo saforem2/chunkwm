@@ -54,6 +54,7 @@ struct resize_border
 {
     border_window *Border;
     node *Node;
+    macos_window *Window;
 };
 
 enum mouse_binding_flag
@@ -121,24 +122,27 @@ MatchMouseBinding(mouse_binding *Binding, uint32_t Flags, uint32_t Button)
 }
 
 internal resize_border
-CreateResizeBorder(node *Node)
+CreateResizeBorder(node *Node, macos_window *Window)
 {
     unsigned PreselectBorderColor = CVarUnsignedValue(CVAR_PRE_BORDER_COLOR);
     int PreselectBorderWidth = CVarIntegerValue(CVAR_PRE_BORDER_WIDTH);
     int PreselectBorderRadius = CVarIntegerValue(CVAR_PRE_BORDER_RADIUS);
-    int InvertY = FuckingMacOSMonitorBoundsChangingBetweenPrimaryAndMainMonitor(Node->Region.Y, Node->Region.Height);
-    border_window *Border = CreateBorderWindow(Node->Region.X, InvertY,
-                                               Node->Region.Width, Node->Region.Height,
+    region PreselRegion = RoundPreselRegion(Node->Region, Window->Position, Window->Size);
+    int InvertY = FuckingMacOSMonitorBoundsChangingBetweenPrimaryAndMainMonitor(PreselRegion.Y, PreselRegion.Height);
+    border_window *Border = CreateBorderWindow(PreselRegion.X, InvertY,
+                                               PreselRegion.Width, PreselRegion.Height,
                                                PreselectBorderWidth, PreselectBorderRadius,
                                                PreselectBorderColor);
-    return (resize_border) { Border, Node };
+    return (resize_border) { Border, Node, Window };
 }
 
 internal void
 CreateResizeBorders(node *Node)
 {
     if ((Node->WindowId) && (Node->WindowId != Node_PseudoLeaf)) {
-        ResizeBorders.push_back(CreateResizeBorder(Node));
+        macos_window *Window = GetWindowByID(Node->WindowId);
+        ASSERT(Window);
+        ResizeBorders.push_back(CreateResizeBorder(Node, Window));
     }
 
     if (Node->Left)  CreateResizeBorders(Node->Left);
@@ -150,12 +154,13 @@ UpdateResizeBorders()
 {
     std::vector<resize_border>::iterator It;
     for (It = ResizeBorders.begin(); It != ResizeBorders.end(); ++It) {
-        int InvertY = FuckingMacOSMonitorBoundsChangingBetweenPrimaryAndMainMonitor(It->Node->Region.Y, It->Node->Region.Height);
+        region PreselRegion = RoundPreselRegion(It->Node->Region, It->Window->Position, It->Window->Size);
+        int InvertY = FuckingMacOSMonitorBoundsChangingBetweenPrimaryAndMainMonitor(PreselRegion.Y, PreselRegion.Height);
         UpdateBorderWindowRect(It->Border,
-                               It->Node->Region.X,
+                               PreselRegion.X,
                                InvertY,
-                               It->Node->Region.Width,
-                               It->Node->Region.Height);
+                               PreselRegion.Width,
+                               PreselRegion.Height);
     }
 }
 
@@ -225,27 +230,28 @@ BeginFloatingWindow(virtual_space *VirtualSpace, drag_mode DragMode)
 internal bool
 BeginTiledWindow(macos_space *Space, virtual_space *VirtualSpace, drag_mode DragMode)
 {
+    macos_window *WindowBelowCursor;
     node *Root, *NodeBelowCursor;
     CGPoint Cursor = AXLibGetCursorPos();
 
     if (VirtualSpace->Mode != Virtual_Space_Bsp) return false;
     if (!(Root = VirtualSpace->Tree)) return false;
     if (!(NodeBelowCursor = GetNodeForPoint(Root, &Cursor))) return false;
+    if (!(WindowBelowCursor = GetWindowByID(NodeBelowCursor->WindowId))) return false;
 
     if (DragMode == Drag_Mode_Swap) {
         ResizeState.Mode = Drag_Mode_Swap;
         ResizeState.Horizontal = NodeBelowCursor;
         ResizeState.Space = Space;
         ResizeState.VirtualSpace = VirtualSpace;
-        ResizeBorders.push_back(CreateResizeBorder(NodeBelowCursor));
+        ResizeState.Window = WindowBelowCursor;
+        ResizeBorders.push_back(CreateResizeBorder(NodeBelowCursor, WindowBelowCursor));
         return true;
     } else if (DragMode == Drag_Mode_Resize) {
         node *Ancestor;
         bool North, East, South, West;
-        macos_window *WindowBelowCursor;
         macos_window *VerticalWindow, *HorizontalWindow;
         macos_window *NorthWindow, *EastWindow, *SouthWindow, *WestWindow;
-        if (!(WindowBelowCursor = GetWindowByID(NodeBelowCursor->WindowId))) return false;
 
         ResizeState.Mode = Drag_Mode_Resize;
         ResizeState.InitialCursor = Cursor;
@@ -329,15 +335,20 @@ MouseMoveWindowTick()
         if (NewNode && NewNode != ResizeState.Vertical) {
             ResizeState.Vertical = NewNode;
             if (ResizeBorders.size() == 2) {
-                border_window *Border = ResizeBorders.back().Border;
-                int InvertY = FuckingMacOSMonitorBoundsChangingBetweenPrimaryAndMainMonitor(NewNode->Region.Y, NewNode->Region.Height);
+                resize_border ResizeBorder = ResizeBorders.back();
+                border_window *Border = ResizeBorder.Border;
+                macos_window *Window = ResizeBorder.Window;
+                region PreselRegion = RoundPreselRegion(NewNode->Region, Window->Position, Window->Size);
+                int InvertY = FuckingMacOSMonitorBoundsChangingBetweenPrimaryAndMainMonitor(PreselRegion.Y, PreselRegion.Height);
                 UpdateBorderWindowRect(Border,
-                                       NewNode->Region.X,
+                                       PreselRegion.X,
                                        InvertY,
-                                       NewNode->Region.Width,
-                                       NewNode->Region.Height);
+                                       PreselRegion.Width,
+                                       PreselRegion.Height);
             } else {
-                ResizeBorders.push_back(CreateResizeBorder(NewNode));
+                macos_window *Window = GetWindowByID(NewNode->WindowId);
+                ASSERT(Window);
+                ResizeBorders.push_back(CreateResizeBorder(NewNode, Window));
             }
         }
     } else if (ResizeState.Mode == Drag_Mode_Move_Floating) {

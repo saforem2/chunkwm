@@ -1060,6 +1060,8 @@ void UseInsertionPoint(char *Direction)
     int PreselectBorderWidth;
     int PreselectBorderType;
 
+    region PreselRegion;
+
     Window = GetFocusedWindow();
     if (!Window) {
         return;
@@ -1146,11 +1148,12 @@ void UseInsertionPoint(char *Direction)
     PreselectBorderColor = CVarUnsignedValue(CVAR_PRE_BORDER_COLOR);
     PreselectBorderWidth = CVarIntegerValue(CVAR_PRE_BORDER_WIDTH);
 
+    PreselRegion = RoundPreselRegion(VirtualSpace->Preselect->Region, Window->Position, Window->Size);
     VirtualSpace->Preselect->Border = CreatePreselWindow(PreselectBorderType,
-                                                         VirtualSpace->Preselect->Region.X,
-                                                         VirtualSpace->Preselect->Region.Y,
-                                                         VirtualSpace->Preselect->Region.Width,
-                                                         VirtualSpace->Preselect->Region.Height,
+                                                         PreselRegion.X,
+                                                         PreselRegion.Y,
+                                                         PreselRegion.Width,
+                                                         PreselRegion.Height,
                                                          PreselectBorderWidth,
                                                          PreselectBorderColor);
 

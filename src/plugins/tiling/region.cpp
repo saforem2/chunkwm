@@ -19,6 +19,39 @@ region CGRectToRegion(CGRect Rect)
     return Result;
 }
 
+region RoundPreselRegion(region Region, CGPoint Position, CGSize Size)
+{
+    region Result = {
+        roundf(Region.X),
+        roundf(Region.Y),
+        roundf(Region.Width),
+        roundf(Region.Height)
+    };
+
+    float DiffX = abs(Region.X - Position.x);
+    float DiffY = abs(Region.Y - Position.y);
+    float DiffW = abs(Region.Width - Size.width);
+    float DiffH = abs(Region.Height - Size.height);
+
+    if ((DiffX >= 0.5) && (DiffX <= 2.5)) {
+        Result.X = Position.x;
+    }
+
+    if ((DiffY >= 0.5) && (DiffY <= 2.5)) {
+        Result.Y = Position.y;
+    }
+
+    if ((DiffW >= 0.5) && (DiffW <= 2.5)) {
+        Result.Width = Size.width;
+    }
+
+    if ((DiffH >= 0.5) && (DiffH <= 2.5)) {
+        Result.Height = Size.height;
+    }
+
+    return Result;
+}
+
 #define OSX_MENU_BAR_HEIGHT 22.0f
 void ConstrainRegion(CFStringRef DisplayRef, region *Region)
 {
