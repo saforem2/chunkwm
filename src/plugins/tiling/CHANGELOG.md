@@ -1,10 +1,8 @@
 ### HEAD -  not yet released
 
-----------
-
-### version 0.3.7
-
 #### other changes
+
+- only consider rules using the name or except filter when reapplynig rules due to window-title changes (#398)
 
 - add window-rules /modifier/ for following focus to desktop assigned to a window (#397)
 

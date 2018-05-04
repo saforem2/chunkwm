@@ -25,6 +25,7 @@ void AddWindowRule(window_rule *Rule);
 
 struct macos_window;
 void ApplyRulesForWindow(macos_window *Window);
+void ApplyRulesForWindowOnTitleChanged(macos_window *Window);
 void FreeWindowRules();
 
 static inline bool

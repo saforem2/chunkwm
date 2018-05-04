@@ -125,6 +125,16 @@ void ApplyRulesForWindow(macos_window *Window)
     }
 }
 
+void ApplyRulesForWindowOnTitleChanged(macos_window *Window)
+{
+    for (size_t Index = 0; Index < WindowRules.size(); ++Index) {
+        window_rule *Rule = WindowRules[Index];
+        if (Rule->Name || Rule->Except) {
+            ApplyWindowRule(Window, Rule);
+        }
+    }
+}
+
 internal void
 ApplyRuleToExistingWindows(window_rule *Rule)
 {

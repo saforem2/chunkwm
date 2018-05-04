@@ -1339,7 +1339,7 @@ WindowTitleChangedHandler(void *Data)
         }
 
         Copy->Name = strdup(Window->Name);
-        ApplyRulesForWindow(Copy);
+        ApplyRulesForWindowOnTitleChanged(Copy);
     }
 }
 
