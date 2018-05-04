@@ -38,7 +38,7 @@ void ToggleSpace(char *Op);
 void AdjustSpacePadding(char *Op);
 void AdjustSpaceGap(char *Op);
 
-bool SendWindowToDesktop(macos_window *Window, char *Op);
+bool SendWindowToDesktop(macos_window *Window, char *Op, bool RetainFocus);
 void SendWindowToDesktop(char *Op);
 void SendWindowToMonitor(char *Op);
 

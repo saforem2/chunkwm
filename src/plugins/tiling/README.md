@@ -390,11 +390,15 @@ See the following sections for how to retrieve information about an open window:
 | --state    | -s         | native-fullscreen  | automatically enter native-fullscreen  |
 | --desktop  | -d         | index              | send window to desktop                 |
 
+| modifiers        | short flag | affected property | description                          |
+|------------------|:----------:|:-----------------:|:------------------------------------:|
+| --follow-desktop | -D         | desktop           | follow focus to the assigned desktop |
+
 ##### sample rules
 
     chunkc tiling::rule --owner \"System Preferences\" --subrole AXStandardWindow --state tile
     chunkc tiling::rule --owner Finder --name Copy --state float
-    chunkc tiling::rule --owner Spotify --desktop 5
+    chunkc tiling::rule --owner Spotify --desktop 5 --follow-desktop
 
 ---
 

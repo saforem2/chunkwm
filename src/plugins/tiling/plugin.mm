@@ -370,6 +370,9 @@ void TileWindowOnSpace(macos_window *Window, macos_space *Space, virtual_space *
 
         node *Node = NULL;
         uint32_t InsertionPoint = CVarUnsignedValue(CVAR_BSP_INSERTION_POINT);
+        if (!InsertionPoint) {
+            InsertionPoint = CVarUnsignedValue(CVAR_FOCUSED_WINDOW);
+        }
 
         if (VirtualSpace->Mode == Virtual_Space_Bsp) {
 
@@ -1068,15 +1071,12 @@ WindowFocusedHandler(uint32_t WindowId)
             FadeWindows(WindowId);
         }
 
-        BroadcastFocusedWindowFloating(Window);
-        if (!AXLibHasFlags(Window, Window_Float)) {
-            UpdateCVar(CVAR_BSP_INSERTION_POINT, Window->Id);
-        }
-
         if ((FocusedWindowId != WindowId) &&
             (StringEquals(CVarStringValue(CVAR_MOUSE_FOLLOWS_FOCUS), Mouse_Follows_Focus_All))) {
             CenterMouseInWindow(Window);
         }
+
+        BroadcastFocusedWindowFloating(Window);
 
 space_free:
 

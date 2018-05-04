@@ -18,6 +18,7 @@ struct window_rule
     char *Except;
     char *State;
     char *Desktop;
+    bool FollowDesktop;
 };
 
 void AddWindowRule(window_rule *Rule);

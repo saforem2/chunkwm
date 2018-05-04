@@ -73,8 +73,12 @@ ApplyWindowRuleState(macos_window *Window, window_rule *Rule)
 internal inline void
 ApplyWindowRuleDesktop(macos_window *Window, window_rule *Rule)
 {
-    if (SendWindowToDesktop(Window, Rule->Desktop)) {
+    if (SendWindowToDesktop(Window, Rule->Desktop, false)) {
         AXLibAddFlags(Window, Rule_Desktop_Changed);
+        if (Rule->FollowDesktop) {
+            AXLibSetFocusedWindow(Window->Ref);
+            AXLibSetFocusedApplication(Window->Owner->PSN);
+        }
     }
 }
 

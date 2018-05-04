@@ -491,7 +491,7 @@ space_free:
 
 void FocusWindow(char *Direction)
 {
-    macos_window *Window = GetWindowByID(CVarUnsignedValue(CVAR_BSP_INSERTION_POINT));
+    macos_window *Window = GetFocusedWindow();
     if (Window) {
         FocusWindowFocus(Direction, Window);
     } else {
@@ -506,7 +506,7 @@ void SwapWindow(char *Direction)
     node *WindowNode, *ClosestNode;
     macos_window *Window, *ClosestWindow;
 
-    Window = GetWindowByID(CVarUnsignedValue(CVAR_BSP_INSERTION_POINT));
+    Window = GetFocusedWindow();
     if (!Window) {
         return;
     }
@@ -588,7 +588,7 @@ void WarpWindow(char *Direction)
     macos_window *Window, *ClosestWindow;
     node *WindowNode, *ClosestNode, *FocusedNode;
 
-    Window = GetWindowByID(CVarUnsignedValue(CVAR_BSP_INSERTION_POINT));
+    Window = GetFocusedWindow();
     if (!Window) {
         return;
     }
@@ -632,7 +632,7 @@ void WarpWindow(char *Direction)
             UntileWindowFromSpace(Window, Space, VirtualSpace);
             UpdateCVar(CVAR_BSP_INSERTION_POINT, ClosestWindow->Id);
             TileWindowOnSpace(Window, Space, VirtualSpace);
-            UpdateCVar(CVAR_BSP_INSERTION_POINT, Window->Id);
+            UpdateCVar(CVAR_BSP_INSERTION_POINT, 0);
 
             FocusedNode = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
         }
@@ -993,7 +993,7 @@ ToggleWindowSplitMode()
     virtual_space *VirtualSpace;
     macos_window *Window;
 
-    Window = GetWindowByID(CVarUnsignedValue(CVAR_BSP_INSERTION_POINT));
+    Window = GetFocusedWindow();
     if (!Window) {
         return;
     }
@@ -1037,9 +1037,6 @@ space_free:
 
 void ToggleWindow(char *Type)
 {
-    // NOTE(koekeishiya): We cannot use our CVAR_BSP_INSERTION_POINT here
-    // because the window that we toggle options for may not be in a tree,
-    // and we will not be able to perform an operation in that case.
     if      (StringEquals(Type, "float"))               ToggleWindowFloat();
     else if (StringEquals(Type, "sticky"))              ToggleWindowSticky();
     else if (StringEquals(Type, "native-fullscreen"))   ToggleWindowNativeFullscreen();
@@ -1275,7 +1272,7 @@ void AdjustWindowRatio(char *Direction)
     macos_window *Window, *ClosestWindow;
     node *WindowNode, *ClosestNode, *Ancestor;
 
-    Window = GetWindowByID(CVarUnsignedValue(CVAR_BSP_INSERTION_POINT));
+    Window = GetFocusedWindow();
     if (!Window) {
         return;
     }
@@ -1539,7 +1536,7 @@ NormalizeWindowRect(AXUIElementRef WindowRef, CFStringRef SourceMonitor, CFStrin
     return Result;
 }
 
-bool SendWindowToDesktop(macos_window *Window, char *Op)
+bool SendWindowToDesktop(macos_window *Window, char *Op, bool RetainFocus)
 {
     bool Success = false, ValidWindow;
     CGRect NormalizedWindow;
@@ -1605,13 +1602,15 @@ bool SendWindowToDesktop(macos_window *Window, char *Op)
     // We retain focus on this space by giving focus to the window with the highest
     // priority as reported by MacOS. If there are no windows left on the source space,
     // we still experience desync. Not exactly sure what can be done about that.
-    WindowIds = GetAllVisibleWindowsForSpace(Space, false, true);
-    for (int Index = 0; Index < WindowIds.size(); ++Index) {
-        if (WindowIds[Index] == Window->Id) continue;
-        macos_window *Window = GetWindowByID(WindowIds[Index]);
-        AXLibSetFocusedWindow(Window->Ref);
-        AXLibSetFocusedApplication(Window->Owner->PSN);
-        break;
+    if (RetainFocus) {
+        WindowIds = GetAllVisibleWindowsForSpace(Space, false, true);
+        for (int Index = 0; Index < WindowIds.size(); ++Index) {
+            if (WindowIds[Index] == Window->Id) continue;
+            macos_window *Window = GetWindowByID(WindowIds[Index]);
+            AXLibSetFocusedWindow(Window->Ref);
+            AXLibSetFocusedApplication(Window->Owner->PSN);
+            break;
+        }
     }
 
     if (DestinationMonitor == SourceMonitor) {
@@ -1663,7 +1662,7 @@ void SendWindowToDesktop(char *Op)
 {
     macos_window *Window = GetFocusedWindow();
     if (Window) {
-        SendWindowToDesktop(Window, Op);
+        SendWindowToDesktop(Window, Op, true);
     }
 }
 
