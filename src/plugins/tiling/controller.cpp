@@ -1536,7 +1536,7 @@ NormalizeWindowRect(AXUIElementRef WindowRef, CFStringRef SourceMonitor, CFStrin
     return Result;
 }
 
-bool SendWindowToDesktop(macos_window *Window, char *Op, bool RetainFocus)
+bool SendWindowToDesktop(macos_window *Window, char *Op)
 {
     bool Success = false, ValidWindow;
     CGRect NormalizedWindow;
@@ -1602,15 +1602,13 @@ bool SendWindowToDesktop(macos_window *Window, char *Op, bool RetainFocus)
     // We retain focus on this space by giving focus to the window with the highest
     // priority as reported by MacOS. If there are no windows left on the source space,
     // we still experience desync. Not exactly sure what can be done about that.
-    if (RetainFocus) {
-        WindowIds = GetAllVisibleWindowsForSpace(Space, false, true);
-        for (int Index = 0; Index < WindowIds.size(); ++Index) {
-            if (WindowIds[Index] == Window->Id) continue;
-            macos_window *Window = GetWindowByID(WindowIds[Index]);
-            AXLibSetFocusedWindow(Window->Ref);
-            AXLibSetFocusedApplication(Window->Owner->PSN);
-            break;
-        }
+    WindowIds = GetAllVisibleWindowsForSpace(Space, false, true);
+    for (int Index = 0; Index < WindowIds.size(); ++Index) {
+        if (WindowIds[Index] == Window->Id) continue;
+        macos_window *Window = GetWindowByID(WindowIds[Index]);
+        AXLibSetFocusedWindow(Window->Ref);
+        AXLibSetFocusedApplication(Window->Owner->PSN);
+        break;
     }
 
     if (DestinationMonitor == SourceMonitor) {
@@ -1662,7 +1660,7 @@ void SendWindowToDesktop(char *Op)
 {
     macos_window *Window = GetFocusedWindow();
     if (Window) {
-        SendWindowToDesktop(Window, Op, true);
+        SendWindowToDesktop(Window, Op);
     }
 }
 
