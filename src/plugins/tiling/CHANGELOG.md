@@ -2,6 +2,14 @@
 
 ----------
 
+### version 0.3.7
+
+#### other changes
+
+- add window-rules /modifier/ for following focus to desktop assigned to a window (#397)
+
+----------
+
 ### version 0.3.6
 
 #### other changes
