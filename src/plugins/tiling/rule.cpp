@@ -43,28 +43,33 @@ internal inline void
 ApplyWindowRuleState(macos_window *Window, window_rule *Rule)
 {
     if (StringEquals(Rule->State, "float")) {
-        UntileWindow(Window);
-        AXLibClearFlags(Window, Window_ForceTile);
-        FloatWindow(Window);
+        if (!AXLibHasFlags(Window, Window_Float)) {
+            UntileWindow(Window);
+            FloatWindow(Window);
+        }
     } else if (StringEquals(Rule->State, "tile")) {
-        UnfloatWindow(Window);
-        AXLibAddFlags(Window, Window_ForceTile);
+        if (!AXLibHasFlags(Window, Window_ForceTile)) {
+            UnfloatWindow(Window);
+            AXLibAddFlags(Window, Window_ForceTile);
 
-        if (!AXLibHasFlags(Window, Window_Minimized)) {
-            macos_space *Space;
-            bool Success = AXLibActiveSpace(&Space);
-            ASSERT(Success);
+            if (!AXLibHasFlags(Window, Window_Minimized)) {
+                macos_space *Space;
+                bool Success = AXLibActiveSpace(&Space);
+                ASSERT(Success);
 
-            if (AXLibSpaceHasWindow(Space->Id, Window->Id)) {
-                TileWindow(Window);
-                AXLibAddFlags(Window, Rule_State_Tiled);
+                if (AXLibSpaceHasWindow(Space->Id, Window->Id)) {
+                    TileWindow(Window);
+                    AXLibAddFlags(Window, Rule_State_Tiled);
+                }
+
+                AXLibDestroySpace(Space);
             }
-
-            AXLibDestroySpace(Space);
         }
     } else if (StringEquals(Rule->State, "native-fullscreen")) {
-        AXLibSetWindowFullscreen(Window->Ref, true);
-        AXLibAddFlags(Window, Rule_Desktop_Changed);
+        if (!AXLibIsWindowFullscreen(Window->Ref)) {
+            AXLibSetWindowFullscreen(Window->Ref, true);
+            AXLibAddFlags(Window, Rule_Desktop_Changed);
+        }
     } else {
         c_log(C_LOG_LEVEL_WARN, "chunkwm-tiling: window rule - invalid state '%s', ignored..\n", Rule->State);
     }

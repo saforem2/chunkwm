@@ -2,6 +2,8 @@
 
 #### other changes
 
+- do not apply the *--state tile* rule if it has already been applied to this window before (#408)
+
 - only consider rules using the name or except filter when reapplynig rules due to window-title changes (#398)
 
 - add window-rules /modifier/ for following focus to desktop assigned to a window (#397)
