@@ -5,6 +5,9 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
 #include <Carbon/Carbon.h>
 #include <OpenGL/CGLTypes.h>
 #include <OpenGL/CGLCurrent.h>
@@ -47,6 +50,16 @@ const char *vertex_shader_code =
     "void main(void) {\n"
     "  gl_Position = vec4(coord.xy, 0, 1);\n"
     "  tex_coord = coord.zw;\n"
+    "}\n\0";
+
+const char *img_fragment_shader_code =
+    "#version 330 core\n"
+    "in vec2 tex_coord;\n"
+    "out vec4 frag_color;\n"
+    "uniform sampler2D tex;\n"
+    "uniform vec4 color;\n"
+    "void main(void) {\n"
+    "  frag_color = texture(tex, tex_coord) * vec4(1.0, 1.0, 1.0, 1.0)\n;"
     "}\n\0";
 
 const char *fragment_shader_code =
@@ -166,6 +179,34 @@ init_gl_for_window(struct window_render_state *render_state)
     glBindVertexArray(0);
 }
 
+internal void
+render_test_image(char *path)
+{
+    int w;
+    int h;
+    int comp;
+    unsigned char *image = stbi_load(path, &w, &h, &comp, STBI_rgb_alpha);
+    if (!image) return;
+    if(comp == 3) glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
+    else if(comp == 4) glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, image);
+
+    float x = -0.0f;
+    float y = -1.0f;
+
+    w = 1.0f;
+    h = 2.0f;
+
+    GLfloat box[4][4] = {
+        {x, -y, 0, 0},
+        {x + w, -y, 1, 0},
+        {x, -y - h, 0, 1},
+        {x + w, -y - h, 1, 1},
+    };
+
+    glBufferData(GL_ARRAY_BUFFER, sizeof(box), box, GL_DYNAMIC_DRAW);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+}
+
 internal char *focused_application;
 void *BarMainThreadProcedure(void*)
 {
@@ -174,21 +215,26 @@ void *BarMainThreadProcedure(void*)
     GLenum gl_err;
 
     struct shader text_shader;
-    GLfloat color1[4] = {hexf(0xcd), hexf(0x95), hexf(0x0d), 1};
+    struct shader img_shader;
+    GLfloat color1[4] = {hexf(0xa5), hexf(0xa5), hexf(0xa5), 1};
     GLfloat color2[4] = {hexf(0xd7), hexf(0x5f), hexf(0x5f), 1};
     GLfloat color3[4] = {hexf(0x22), hexf(0xc3), hexf(0xa1), 1};
+    GLfloat color4[4] = {hexf(0xff), hexf(0xff), hexf(0xff), 1};
 
     struct window_render_state left_state = { &left_window };
     init_gl_for_window(&left_state);
     shader_init_buffer(&text_shader, vertex_shader_code, fragment_shader_code);
+    shader_init_buffer(&img_shader, vertex_shader_code, img_fragment_shader_code);
 
     struct window_render_state mid_state = { &mid_window };
     init_gl_for_window(&mid_state);
     shader_init_buffer(&text_shader, vertex_shader_code, fragment_shader_code);
+    shader_init_buffer(&img_shader, vertex_shader_code, img_fragment_shader_code);
 
     struct window_render_state right_state = { &right_window };
     init_gl_for_window(&right_state);
     shader_init_buffer(&text_shader, vertex_shader_code, fragment_shader_code);
+    shader_init_buffer(&img_shader, vertex_shader_code, img_fragment_shader_code);
 
     CGLGetVersion(&cgl_major, &cgl_minor);
     printf("CGL Version: %d.%d\nOpenGL Version: %s\n",
@@ -239,6 +285,14 @@ void *BarMainThreadProcedure(void*)
 
         glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        shader_enable(&img_shader);
+        glBindVertexArray(left_state.vao);
+
+        render_test_image(CVarStringValue("bar_test_img"));
+
+        glBindVertexArray(0);
+        shader_disable();
 
         shader_enable(&text_shader);
         glBindVertexArray(mid_state.vao);
@@ -316,6 +370,7 @@ PLUGIN_BOOL_FUNC(PluginInit)
     BeginCVars(&api);
 
     CreateCVar("bar_font", "/Library/Fonts/Georgia.ttf");
+    CreateCVar("bar_test_img", "/Users/Koe/Documents/programming/C++/chunkwm/src/plugins/bar/image.png");
 
     int left_x = 15;
     int left_width = 100;
