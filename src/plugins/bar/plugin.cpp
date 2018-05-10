@@ -399,15 +399,15 @@ PLUGIN_BOOL_FUNC(PluginInit)
         return false;
     }
 
-    if (!cgl_window_init(&left_window, left_x, y, left_width, height, kCGMaximumWindowLevelKey, CGL_WINDOW_GL_CORE, 1)) {
+    if (!cgl_window_init(&left_window, left_x, y, left_width, height, kCGNormalWindowLevelKey, CGL_WINDOW_GL_CORE, 1)) {
         return false;
     }
 
-    if (!cgl_window_init(&mid_window, x, y, width, height, kCGMaximumWindowLevelKey, CGL_WINDOW_GL_CORE, 1)) {
+    if (!cgl_window_init(&mid_window, x, y, width, height, kCGNormalWindowLevelKey, CGL_WINDOW_GL_CORE, 1)) {
         return false;
     }
 
-    if (!cgl_window_init(&right_window, right_x, y, right_width, height, kCGMaximumWindowLevelKey, CGL_WINDOW_GL_CORE, 1)) {
+    if (!cgl_window_init(&right_window, right_x, y, right_width, height, kCGNormalWindowLevelKey, CGL_WINDOW_GL_CORE, 1)) {
         return false;
     }
 
@@ -426,6 +426,8 @@ PLUGIN_VOID_FUNC(PluginDeInit)
     cgl_window_destroy(&left_window);
     cgl_window_destroy(&mid_window);
     cgl_window_destroy(&right_window);
+    if (test_image) stbi_image_free(test_image);
+    if (focused_application) free(focused_application);
 }
 
 CHUNKWM_PLUGIN_VTABLE(PluginInit, PluginDeInit, PluginMain)
