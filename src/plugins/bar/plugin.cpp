@@ -59,6 +59,7 @@ const char *fragment_shader_code =
 
 float width_of_rendered_text(const char *text, float sx)
 {
+    float x = 0.0f;
     float total_width = 0.0f;
     for (const char *p = text; *p; p++) {
         if (FT_Load_Char(face, *p, FT_LOAD_RENDER)) {
@@ -66,8 +67,9 @@ float width_of_rendered_text(const char *text, float sx)
         }
 
         total_width += face->glyph->bitmap.width * sx;
+        if (p[1]) x += (face->glyph->advance.x / 192) * sx;
     }
-    return total_width;
+    return total_width + x;
 }
 
 void render_text(const char *text, float x, float y, float sx, float sy, GLfloat *color) {
@@ -187,6 +189,9 @@ void *BarMainThreadProcedure(void*)
         CFRelease(application);
     }
 
+    char buffer[128];
+    float width_of_buffer;
+
     while (!quit) {
         glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -195,12 +200,12 @@ void *BarMainThreadProcedure(void*)
         glBindVertexArray(vao);
 
         if (focused_application) {
-            render_text(focused_application, -0.95f, -0.3f, sx, sy, color1);
+            width_of_buffer = width_of_rendered_text(focused_application, sx);
+            render_text(focused_application, -0.95, -0.3f, sx, sy, color1);
         }
 
-        char buffer[128];
         get_current_date(buffer, sizeof(buffer));
-        float width_of_buffer = width_of_rendered_text(buffer, sx);
+        width_of_buffer = width_of_rendered_text(buffer, sx);
         render_text(buffer, 0.0f - width_of_buffer / 2.0f, -0.3f, sx, sy, color2);
 
         get_current_time(buffer, sizeof(buffer));
