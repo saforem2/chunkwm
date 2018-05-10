@@ -179,22 +179,21 @@ init_gl_for_window(struct window_render_state *render_state)
     glBindVertexArray(0);
 }
 
+unsigned char *test_image;
+int test_img_w, test_img_h, test_img_comp;
 internal void
 render_test_image(char *path)
 {
-    int w;
-    int h;
-    int comp;
-    unsigned char *image = stbi_load(path, &w, &h, &comp, STBI_rgb_alpha);
-    if (!image) return;
-    if(comp == 3) glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
-    else if(comp == 4) glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, image);
+    if (!test_image) test_image = stbi_load(path, &test_img_w, &test_img_h, &test_img_comp, STBI_rgb_alpha);
+    if (!test_image) return;
+    if(test_img_comp == 3) glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, test_img_w, test_img_h, 0, GL_RGB, GL_UNSIGNED_BYTE, test_image);
+    else if(test_img_comp == 4) glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, test_img_w, test_img_h, 0, GL_RGBA, GL_UNSIGNED_BYTE, test_image);
 
     float x = -0.0f;
     float y = -1.0f;
 
-    w = 1.0f;
-    h = 2.0f;
+    float w = 1.0f;
+    float h = 2.0f;
 
     GLfloat box[4][4] = {
         {x, -y, 0, 0},
