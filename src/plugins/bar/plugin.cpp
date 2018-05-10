@@ -17,6 +17,7 @@
 #include "../../common/accessibility/window.h"
 #include "../../common/accessibility/window.cpp"
 #include "../../common/accessibility/element.cpp"
+#include "../../common/config/cvar.cpp"
 
 #include "cgl_window.h"
 #include "cgl_window.c"
@@ -56,6 +57,19 @@ const char *fragment_shader_code =
     "  frag_color = vec4(1, 1, 1, texture(tex, tex_coord).r) * color;\n"
     "}\n\0";
 
+float width_of_rendered_text(const char *text, float sx)
+{
+    float total_width = 0.0f;
+    for (const char *p = text; *p; p++) {
+        if (FT_Load_Char(face, *p, FT_LOAD_RENDER)) {
+            continue;
+        }
+
+        total_width += face->glyph->bitmap.width * sx;
+    }
+    return total_width;
+}
+
 void render_text(const char *text, float x, float y, float sx, float sy, GLfloat *color) {
     for (const char *p = text; *p; p++) {
         if (FT_Load_Char(face, *p, FT_LOAD_RENDER)) {
@@ -93,7 +107,28 @@ void render_text(const char *text, float x, float y, float sx, float sy, GLfloat
     }
 }
 
-internal char *text;
+internal void
+get_current_date(char *buffer, int buffer_size)
+{
+    time_t time_epoch = time(NULL);
+    struct tm *local_time = localtime(&time_epoch);
+    buffer[strftime(buffer, buffer_size, "%b %d", local_time)] = '\0';
+}
+
+internal void
+get_current_time(char *buffer, int buffer_size)
+{
+    time_t time_epoch = time(NULL);
+    struct tm *local_time = localtime(&time_epoch);
+    buffer[strftime(buffer, buffer_size, "%H:%M:%S", local_time)] = '\0';
+}
+
+float hexf(uint32_t hex)
+{
+    return hex / 255.0f;
+}
+
+internal char *focused_application;
 void *BarMainThreadProcedure(void*)
 {
     CGLError cgl_err;
@@ -103,8 +138,9 @@ void *BarMainThreadProcedure(void*)
     GLuint vao, vbo, tex;
 
     struct shader text_shader;
-    GLfloat color1[4] = {0.75, 0.75, 0.30, 1};
-    GLfloat color2[4] = {0.57, 0.79, 0.79, 1};
+    GLfloat color1[4] = {hexf(0xcd), hexf(0x95), hexf(0x0d), 1};
+    GLfloat color2[4] = {hexf(0xd7), hexf(0x5f), hexf(0x5f), 1};
+    GLfloat color3[4] = {hexf(0x22), hexf(0xc3), hexf(0xa1), 1};
 
     float sx = 2.0 / window.width;
     float sy = 2.0 / window.height;
@@ -141,6 +177,16 @@ void *BarMainThreadProcedure(void*)
     glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, 0);
     glBindVertexArray(0);
 
+    AXUIElementRef application = AXLibGetFocusedApplication();
+    if (application) {
+        CFTypeRef title_ref = AXLibGetWindowProperty(application, kAXTitleAttribute);
+        if (title_ref) {
+            focused_application = CopyCFStringToC((CFStringRef)title_ref);
+            CFRelease(title_ref);
+        }
+        CFRelease(application);
+    }
+
     while (!quit) {
         glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -148,11 +194,18 @@ void *BarMainThreadProcedure(void*)
         shader_enable(&text_shader);
         glBindVertexArray(vao);
 
-        // char text[256] = {};
-        // snprintf(text, sizeof(text), "sx = %.2f and sy = %.2f å", sx, sy);
-        if (text) {
-            render_text(text, -0.95f, -0.3, sx, sy, color2);
+        if (focused_application) {
+            render_text(focused_application, -0.95f, -0.3f, sx, sy, color1);
         }
+
+        char buffer[128];
+        get_current_date(buffer, sizeof(buffer));
+        float width_of_buffer = width_of_rendered_text(buffer, sx);
+        render_text(buffer, 0.0f - width_of_buffer / 2.0f, -0.3f, sx, sy, color2);
+
+        get_current_time(buffer, sizeof(buffer));
+        width_of_buffer = width_of_rendered_text(buffer, sx);
+        render_text(buffer, 0.95f - width_of_buffer, -0.3f, sx, sy, color3);
 
         glBindVertexArray(0);
         shader_disable();
@@ -178,11 +231,8 @@ PLUGIN_MAIN_FUNC(PluginMain)
 {
     if (strcmp(Node, "chunkwm_export_application_activated") == 0) {
         macos_application *application = (macos_application *) Data;
-        text = strdup(application->Name);
-        return true;
-    } else if (strcmp(Node, "chunkwm_export_window_focused") == 0) {
-        macos_window *window = (macos_window *) Data;
-        text = strdup(window->Name);
+        if (focused_application) free(focused_application);
+        focused_application = strdup(application->Name);
         return true;
     }
     return false;
@@ -191,29 +241,32 @@ PLUGIN_MAIN_FUNC(PluginMain)
 PLUGIN_BOOL_FUNC(PluginInit)
 {
     api = ChunkwmAPI;
+    BeginCVars(&api);
 
-    int x = 0;
-    int y = 0;
-    int width = 600;
-    int height = 20;
-    int font_size = 12;
+    CreateCVar("bar_font", "/Library/Fonts/Georgia.ttf");
+
+    int x = 510;
+    int y = 10;
+    int width = 900;
+    int height = 40;
+    int font_size = 18;
 
     if (FT_Init_FreeType(&ft)) {
         fprintf(stderr, "Could not init freetype library\n");
         return false;
     }
 
-    if (FT_New_Face(ft, "/Library/Fonts/Courier New.ttf", 0, &face)) {
+    if (FT_New_Face(ft, CVarStringValue("bar_font"), 0, &face)) {
         fprintf(stderr, "Could not open font\n");
         return false;
     }
 
-    FT_Set_Pixel_Sizes(face, 0, font_size);
-
-    if (!cgl_window_init(&window, x, y, width, height, kCGMaximumWindowLevelKey)) {
+    if (!cgl_window_init(&window, x, y, width, height, kCGMaximumWindowLevelKey, CGL_WINDOW_GL_CORE, 1)) {
         return false;
     }
 
+    FT_Set_Pixel_Sizes(face, 0, font_size);
+    cgl_window_set_sticky(&window, 1);
     pthread_create(&bar_thread, NULL, &BarMainThreadProcedure, NULL);
     return true;
 }
@@ -228,7 +281,6 @@ PLUGIN_VOID_FUNC(PluginDeInit)
 CHUNKWM_PLUGIN_VTABLE(PluginInit, PluginDeInit, PluginMain)
 chunkwm_plugin_export subscriptions[] =
 {
-    chunkwm_export_window_focused,
     chunkwm_export_application_activated,
 };
 CHUNKWM_PLUGIN_SUBSCRIBE(subscriptions)
