@@ -371,15 +371,21 @@ PLUGIN_BOOL_FUNC(PluginInit)
     CreateCVar("bar_font", "/Library/Fonts/Georgia.ttf");
     CreateCVar("bar_test_img", "/Users/Koe/Documents/programming/C++/chunkwm/src/plugins/bar/image.png");
 
-    int left_x = 15;
+    CGDirectDisplayID display = kCGDirectMainDisplay;
+    CGRect display_bounds = CGDisplayBounds(display);
+
+    int edge_space = 15;
+    int spacer = 500;
+
     int left_width = 100;
+    int left_x = edge_space;
 
-    int right_x = 1805;
     int right_width = 100;
+    int right_x = display_bounds.size.width - right_width - edge_space;
 
-    int x = 510;
+    int x = left_x + left_width + spacer;
     int y = 15;
-    int width = 900;
+    int width = right_x - x - spacer;
     int height = 40;
     int font_size = 18;
 
