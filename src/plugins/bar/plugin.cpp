@@ -378,13 +378,13 @@ PLUGIN_BOOL_FUNC(PluginInit)
     int spacer = 500;
 
     int left_width = 100;
-    int left_x = edge_space;
+    int left_x = display_bounds.origin.x + edge_space;
 
     int right_width = 100;
     int right_x = display_bounds.size.width - right_width - edge_space;
 
     int x = left_x + left_width + spacer;
-    int y = 15;
+    int y = display_bounds.origin.y + edge_space;
     int width = right_x - x - spacer;
     int height = 40;
     int font_size = 18;
