@@ -5,7 +5,7 @@ BINS			= $(BUILD_PATH)/bar.so
 INCLUDE         = -I/opt/local/include -I/opt/local/include/freetype2
 LINK			= -L/opt/local/lib -shared -fPIC -framework Carbon -framework ApplicationServices -framework OpenGL -lfreetype
 
-all: $(BINS)
+all: clean $(BINS)
 
 install: BUILD_FLAGS=-O2 -std=c++11 -Wall
 install: clean $(BINS)
