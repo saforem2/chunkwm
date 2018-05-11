@@ -352,6 +352,31 @@ void *BarMainThreadProcedure(void*)
     return NULL;
 }
 
+internal void
+update_window_dimensions()
+{
+    CGDirectDisplayID display = kCGDirectMainDisplay;
+    CGRect display_bounds = CGDisplayBounds(display);
+
+    int edge_space = 15;
+    int spacer = 500;
+
+    int left_width = 100;
+    int left_x = display_bounds.origin.x + edge_space;
+
+    int right_width = 100;
+    int right_x = display_bounds.size.width - right_width - edge_space;
+
+    int x = left_x + left_width + spacer;
+    int y = display_bounds.origin.y + edge_space;
+    int width = right_x - x - spacer;
+    int height = 40;
+
+    cgl_window_resize(&left_window, left_x, y, left_width, height);
+    cgl_window_resize(&mid_window, x, y, width, height);
+    cgl_window_resize(&right_window, right_x, y, right_width, height);
+}
+
 PLUGIN_MAIN_FUNC(PluginMain)
 {
     if (strcmp(Node, "chunkwm_export_application_activated") == 0) {
@@ -359,6 +384,10 @@ PLUGIN_MAIN_FUNC(PluginMain)
         if (focused_application) free(focused_application);
         focused_application = strdup(application->Name);
         return true;
+    } else if (strcmp(Node, "chunkwm_export_display_moved") == 0) {
+        update_window_dimensions();
+    } else if (strcmp(Node, "chunkwm_export_display_resized") == 0) {
+        update_window_dimensions();
     }
     return false;
 }
@@ -434,6 +463,8 @@ CHUNKWM_PLUGIN_VTABLE(PluginInit, PluginDeInit, PluginMain)
 chunkwm_plugin_export subscriptions[] =
 {
     chunkwm_export_application_activated,
+    chunkwm_export_display_moved,
+    chunkwm_export_display_resized,
 };
 CHUNKWM_PLUGIN_SUBSCRIBE(subscriptions)
 CHUNKWM_PLUGIN(plugin_name, plugin_version);
