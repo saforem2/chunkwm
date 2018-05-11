@@ -82,7 +82,7 @@ float width_of_rendered_text(const char *text, float sx)
         }
 
         total_width += face->glyph->bitmap.width * sx;
-        if (p[1]) x += (face->glyph->advance.x / 192) * sx;
+        x += (face->glyph->advance.x / 256) * sx;
     }
     return total_width + x;
 }
