@@ -1676,7 +1676,7 @@ void SendWindowToMonitor(char *Op)
 
     Window = GetFocusedWindow();
     if (!Window) {
-        goto out;
+        return;
     }
 
     __AppleGetDisplayIdentifierFromMacOSWindowO(Window, SourceMonitorRef);
@@ -1779,7 +1779,6 @@ dest_space_free:
 
 space_free:
     AXLibDestroySpace(Space);
-out:;
 }
 
 internal bool
