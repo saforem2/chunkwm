@@ -2,6 +2,8 @@
 
 #### other changes
 
+- when displays are moved, re-create all window-regions to fit the new arrangement (#414, #368)
+
 - do not apply the *--state tile* rule if it has already been applied to this window before (#408)
 
 - only consider rules using the name or except filter when reapplynig rules due to window-title changes (#398)

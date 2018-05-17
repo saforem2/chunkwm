@@ -1413,12 +1413,8 @@ space_free:
 }
 
 internal void
-DisplayResizedHandler(void *Data)
+RecreateVirtualSpaceRegionsForDisplay(CFStringRef DisplayRef)
 {
-    CGDirectDisplayID DisplayId = *(CGDirectDisplayID *) Data;
-    CFStringRef DisplayRef = AXLibGetDisplayIdentifier(DisplayId);
-    ASSERT(DisplayRef);
-
     macos_space *ActiveSpace = AXLibActiveSpace(DisplayRef);
     ASSERT(ActiveSpace);
 
@@ -1454,6 +1450,41 @@ DisplayResizedHandler(void *Data)
 
     AXLibDestroySpace(ActiveSpace);
     free(Spaces);
+}
+
+internal void
+DisplayResizedHandler(void *Data)
+{
+    CGDirectDisplayID DisplayId = *(CGDirectDisplayID *) Data;
+    CFStringRef DisplayRef = AXLibGetDisplayIdentifier(DisplayId);
+    ASSERT(DisplayRef);
+
+    RecreateVirtualSpaceRegionsForDisplay(DisplayRef);
+    CFRelease(DisplayRef);
+}
+
+internal void
+DisplayMovedHandler(void *Data)
+{
+    CFStringRef DisplayRef;
+    CGDirectDisplayID DisplayId = *(CGDirectDisplayID *) Data;
+    CGDirectDisplayID MainDisplayId = CGMainDisplayID();
+
+    if (DisplayId == MainDisplayId) {
+        DisplayRef = AXLibGetDisplayIdentifier(MainDisplayId);
+        ASSERT(DisplayRef);
+        RecreateVirtualSpaceRegionsForDisplay(DisplayRef);
+        CFRelease(DisplayRef);
+    } else {
+        DisplayRef = AXLibGetDisplayIdentifier(MainDisplayId);
+        ASSERT(DisplayRef);
+        RecreateVirtualSpaceRegionsForDisplay(DisplayRef);
+        CFRelease(DisplayRef);
+        DisplayRef = AXLibGetDisplayIdentifier(DisplayId);
+        ASSERT(DisplayRef);
+        RecreateVirtualSpaceRegionsForDisplay(DisplayRef);
+        CFRelease(DisplayRef);
+    }
 }
 
 #if 0
@@ -1620,6 +1651,9 @@ PLUGIN_MAIN_FUNC(PluginMain)
         return true;
     } else if (StringEquals(Node, "chunkwm_export_display_resized")) {
         DisplayResizedHandler(Data);
+        return true;
+    } else if (StringEquals(Node, "chunkwm_export_display_moved")) {
+        DisplayMovedHandler(Data);
         return true;
 #if 0
     } else if (StringEquals(Node, "chunkwm_export_display_added")) {
@@ -1812,6 +1846,7 @@ chunkwm_plugin_export Subscriptions[] =
     chunkwm_export_display_changed,
 
     chunkwm_export_display_resized,
+    chunkwm_export_display_moved,
 
 #if 0
     chunkwm_export_display_added,
