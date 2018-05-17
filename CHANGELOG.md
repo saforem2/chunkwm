@@ -4,6 +4,13 @@
 
  - fixed an issue with *chunkc* reading socket response (#376)
 
+ - any 'chunkc' command that is run from the config file
+   that is NOT 'chunkc core::<..>' or 'chunkc set ..'
+   MUST be put in the background using &
+
+   e.g: `chunkc tiling::rule --owner Finder --name Copy --state float &`
+
+
 ----------
 
 ### version 0.3.6

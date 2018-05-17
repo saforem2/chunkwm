@@ -1,8 +1,17 @@
 #!/bin/bash
 
 #
+# NOTE: any 'chunkc' command that is run from this config file
+#       that is NOT 'chunkc core::<..>' or 'chunkc set ..'
+#       MUST be put in the background using &
+#
+#       e.g:
+#       chunkc tiling::rule --owner Finder --name Copy --state float &
+#
+
+#
 # NOTE: specify the absolutepath of the file to use for logging.
-#       'stdout' and 'stderr' are valid values.
+#       'stdout' or 'stderr' can be used instead of an actual filepath.
 #
 
 chunkc core::log_file stdout
@@ -16,8 +25,7 @@ chunkc core::log_file stdout
 chunkc core::log_level warn
 
 #
-# NOTE: specify the absolutepath to the directory to use when
-#       loading a plugin. '~' expansion is supported.
+# NOTE: specify the absolutepath to the directory to use when loading a plugin.
 #
 
 chunkc core::plugin_dir ~/.chunkwm_plugins
@@ -102,7 +110,6 @@ chunkc set ffm_bypass_modifier           fn
 
 #
 # NOTE: specify plugins to load when chunkwm starts.
-#       if chunkc plugin_dir is not set, the absolutepath is necessary.
 #
 
 chunkc core::load border.so
@@ -113,6 +120,6 @@ chunkc core::load ffm.so
 # NOTE: sample rules for the tiling plugin
 #
 
-chunkc tiling::rule --owner Finder --name Copy --state float
-chunkc tiling::rule --owner \"App Store\" --state float
-chunkc tiling::rule --owner Emacs --except "^$" --state tile
+chunkc tiling::rule --owner Finder --name Copy --state float &
+chunkc tiling::rule --owner \"App Store\" --state float &
+chunkc tiling::rule --owner Emacs --except "^$" --state tile &
