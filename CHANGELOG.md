@@ -1,5 +1,9 @@
 ### HEAD -  not yet released
 
+----------
+
+### version 0.3.7
+
 #### other changes
 
  - fixed an issue with *chunkc* reading socket response (#376)
@@ -9,7 +13,6 @@
    MUST be put in the background using &
 
    e.g: `chunkc tiling::rule --owner Finder --name Copy --state float &`
-
 
 ----------
 

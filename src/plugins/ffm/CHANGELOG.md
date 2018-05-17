@@ -1,5 +1,9 @@
 ### HEAD - not yet released
 
+---------------
+
+### version 0.3.2
+
 #### cvar changes
 
  - uses *mouse_motion_interval* to set the time between two motion events, in milliseconds.
