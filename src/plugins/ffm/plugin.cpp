@@ -30,6 +30,8 @@ internal bool volatile IsActive;
 internal uint32_t volatile FocusedWindowId;
 internal chunkwm_api API;
 internal AXUIElementRef SystemWideElement;
+internal float MouseMotionInterval;
+internal float LastEventTime;
 
 internal bool
 IsWindowLevelAllowed(int WindowLevel)
@@ -93,6 +95,16 @@ FocusFollowsMouse(CGEventRef Event)
     CFRelease(WindowRef);
 }
 
+internal bool
+ShouldProcessEvent(CGEventRef Event)
+{
+    uint64_t CurrentEventTime = CGEventGetTimestamp(Event);
+    float DeltaEventTime = ((float)CurrentEventTime  - LastEventTime) * (1.0f / 1E6);
+    if (DeltaEventTime < MouseMotionInterval) return false;
+    LastEventTime = CurrentEventTime;
+    return true;
+}
+
 EVENTTAP_CALLBACK(EventTapCallback)
 {
     event_tap *EventTap = (event_tap *) Reference;
@@ -102,6 +114,7 @@ EVENTTAP_CALLBACK(EventTapCallback)
         CGEventTapEnable(EventTap->Handle, true);
     } break;
     case kCGEventMouseMoved: {
+        if (!ShouldProcessEvent(Event)) break;
         if (!IsActive) break;
 
         CGEventFlags Flags = CGEventGetFlags(Event);
@@ -190,7 +203,9 @@ PLUGIN_BOOL_FUNC(PluginInit)
     if (Result) {
         BeginCVars(&API);
         CreateCVar("ffm_bypass_modifier", "fn");
+        CreateCVar("mouse_motion_interval", 35.0f);
         SetMouseModifier(CVarStringValue("ffm_bypass_modifier"));
+        MouseMotionInterval = CVarFloatingPointValue("mouse_motion_interval");
     }
     return Result;
 }
