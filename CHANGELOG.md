@@ -1,5 +1,9 @@
 ### HEAD -  not yet released
 
+#### other changes
+
+ - fixed an issue with *chunkc* reading socket response (#376)
+
 ----------
 
 ### version 0.3.6

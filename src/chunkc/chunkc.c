@@ -1,5 +1,5 @@
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <libproc.h>
@@ -7,94 +7,95 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <netdb.h>
+#include <poll.h>
 #include <fcntl.h>
 #include <unistd.h>
 
 // NOTE(koekeishiya): 3920 is the port used by chunkwm.
 #define FALLBACK_PORT 3920
 
-int main(int Argc, char **Argv)
+int main(int argc, char **argv)
 {
-    if (Argc < 2) {
+    if (argc < 2) {
         fprintf(stderr, "chunkc: no arguments found!\n");
         exit(1);
     }
 
-    int Port;
+    int port;
 
-    char *PortEnv = getenv("CHUNKC_SOCKET");
-    if (PortEnv) {
-        sscanf(PortEnv, "%d", &Port);
+    char *port_env = getenv("CHUNKC_SOCKET");
+    if (port_env) {
+        sscanf(port_env, "%d", &port);
     } else {
-        Port = FALLBACK_PORT;
+        port = FALLBACK_PORT;
     }
 
-    int SockFD;
-    struct sockaddr_in SrvAddr;
-    struct hostent *Server;
+    int sock_fd;
+    struct sockaddr_in srv_addr;
+    struct hostent *server;
 
-    if ((SockFD = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
+    if ((sock_fd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
         fprintf(stderr, "chunkc: could not create socket!\n");
         exit(1);
     }
 
-    Server = gethostbyname("localhost");
-    SrvAddr.sin_family = AF_INET;
-    SrvAddr.sin_port = htons(Port);
-    memcpy(&SrvAddr.sin_addr.s_addr, Server->h_addr, Server->h_length);
-    memset(&SrvAddr.sin_zero, '\0', 8);
+    server = gethostbyname("localhost");
+    srv_addr.sin_family = AF_INET;
+    srv_addr.sin_port = htons(port);
+    memcpy(&srv_addr.sin_addr.s_addr, server->h_addr, server->h_length);
+    memset(&srv_addr.sin_zero, '\0', 8);
 
-    if (connect(SockFD, (struct sockaddr*) &SrvAddr, sizeof(struct sockaddr)) == -1) {
+    if (connect(sock_fd, (struct sockaddr*) &srv_addr, sizeof(struct sockaddr)) == -1) {
         fprintf(stderr, "chunkc: connection failed!\n");
         exit(1);
     }
 
-    size_t MessageLength = Argc - 1;
-    size_t Argl[Argc];
+    size_t message_length = argc - 1;
+    size_t argl[argc];
 
-    for (size_t Index = 1; Index < Argc; ++Index) {
-        Argl[Index] = strlen(Argv[Index]);
-        MessageLength += Argl[Index];
+    for (size_t i = 1; i < argc; ++i) {
+        argl[i] = strlen(argv[i]);
+        message_length += argl[i];
     }
 
-    char Message[MessageLength];
-    char *Temp = Message;
+    char message[message_length];
+    char *temp = message;
 
-    for (size_t Index = 1; Index < Argc; ++Index) {
-        memcpy(Temp, Argv[Index], Argl[Index]);
-        Temp += Argl[Index];
-        *Temp++ = ' ';
+    for (size_t i = 1; i < argc; ++i) {
+        memcpy(temp, argv[i], argl[i]);
+        temp += argl[i];
+        *temp++ = ' ';
     }
-    *(Temp - 1) = '\0';
+    *(temp - 1) = '\0';
 
-    if (send(SockFD, Message, MessageLength, 0) == -1) {
+    if (send(sock_fd, message, message_length, 0) == -1) {
         fprintf(stderr, "chunkc: failed to send data!\n");
     } else {
-        // NOTE(koekeishiya): Should we read and print a response ??
-        struct timeval TimeVal;
-        fd_set ReadFDs;
+        int num_bytes;
+        char response[BUFSIZ];
+        struct pollfd fds[] = {
+            { sock_fd, POLLIN, 0 },
+            { STDOUT_FILENO, POLLHUP, 0 },
+        };
 
-        TimeVal.tv_sec = 0;
-        TimeVal.tv_usec = 10000;
-
-        FD_ZERO(&ReadFDs);
-        FD_SET(SockFD, &ReadFDs);
-
-        select(SockFD + 1, &ReadFDs, NULL, NULL, &TimeVal);
-        if (FD_ISSET(SockFD, &ReadFDs)) {
-            char Response[BUFSIZ];
-            int BytesRead;
-
-            while ((BytesRead = recv(SockFD, Response, sizeof(Response) - 1, 0)) > 0) {
-                Response[BytesRead] = '\0';
-                printf("%s", Response);
-                fflush(stdout);
+        while (poll(fds, 2, -1) > 0) {
+            if (fds[1].revents & (POLLERR | POLLHUP)) {
+                break;
+            }
+            if (fds[0].revents & POLLIN) {
+                if ((num_bytes = recv(sock_fd, response, sizeof(response) - 1, 0)) > 0) {
+                    response[num_bytes] = '\0';
+                    printf("%s", response);
+                    fflush(stdout);
+                } else {
+                    break;
+                }
             }
         }
     }
 
-    shutdown(SockFD, SHUT_RDWR);
-    close(SockFD);
+    shutdown(sock_fd, SHUT_RDWR);
+    close(sock_fd);
 
     return 0;
 }
