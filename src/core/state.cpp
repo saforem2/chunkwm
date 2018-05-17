@@ -121,8 +121,8 @@ AddApplicationWindowsToCollection(macos_application *Application)
         macos_window **List = WindowList;
 
         while ((Window = *List++)) {
-            if(GetWindowByID(Window->Id))      goto win_dupe;
-            if(!AddWindowToCollection(Window)) goto win_invalid;
+            if (GetWindowByID(Window->Id))      goto win_dupe;
+            if (!AddWindowToCollection(Window)) goto win_invalid;
             goto success;
 
 win_invalid:
