@@ -101,6 +101,7 @@ chunkc set focused_border_color          0xff0f6288
 chunkc set focused_border_width          5
 chunkc set focused_border_radius         0
 chunkc set focused_border_skip_floating  0
+chunkc set focused_border_skip_monocle   0
 
 #
 # NOTE: the following are config variables for the chunkwm-ffm plugin.
