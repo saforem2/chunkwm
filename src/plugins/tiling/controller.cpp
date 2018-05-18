@@ -36,6 +36,7 @@ extern void UntileWindow(macos_window *Window);
 extern void UntileWindowFromSpace(macos_window *Window, macos_space *Space, virtual_space *VirtualSpace);
 extern bool IsWindowValid(macos_window *Window);
 extern void BroadcastFocusedWindowFloating(macos_window *Window);
+extern void BroadcastFocusedDesktopMode(virtual_space *VirtualSpace);
 
 internal bool
 IsCursorInRegion(region *Region)
@@ -1368,6 +1369,7 @@ void ActivateSpaceLayout(char *Layout)
     } else {
         CreateWindowTreeForSpace(Space, VirtualSpace);
     }
+    BroadcastFocusedDesktopMode(VirtualSpace);
 
 vspace_release:
     ReleaseVirtualSpace(VirtualSpace);

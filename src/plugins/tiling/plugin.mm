@@ -294,6 +294,12 @@ void BroadcastFocusedWindowFloating(macos_window *Window)
     API.Broadcast(PluginName, "focused_window_float", (char *) Data, sizeof(Data));
 }
 
+void BroadcastFocusedDesktopMode(virtual_space *VirtualSpace)
+{
+    char *Data = virtual_space_mode_str[VirtualSpace->Mode];
+    API.Broadcast(PluginName, "focused_desktop_mode", (char *) Data, strlen(Data) + 1);
+}
+
 bool IsWindowValid(macos_window *Window)
 {
     bool Result;
@@ -1346,19 +1352,22 @@ WindowTitleChangedHandler(void *Data)
 internal void
 SpaceAndDisplayChangedHandler(void *Data)
 {
+    unsigned DesktopId, CachedDesktopId;
+    std::vector<uint32_t> Windows;
+    virtual_space *VirtualSpace;
+    macos_space *Space;
+    uint32_t WindowId;
+    bool Success;
+
     UpdateWindowCollection();
 
-    std::vector<uint32_t> Windows;
-
-    macos_space *Space;
-    bool Success = AXLibActiveSpace(&Space);
+    Success = AXLibActiveSpace(&Space);
     ASSERT(Success);
 
     if (Space->Type != kCGSSpaceUser) {
         goto space_free;
     }
 
-    unsigned DesktopId, CachedDesktopId;
     Success = AXLibCGSSpaceIDToDesktopID(Space->Id, NULL, &DesktopId);
     ASSERT(Success);
 
@@ -1368,45 +1377,44 @@ SpaceAndDisplayChangedHandler(void *Data)
         UpdateCVar(CVAR_ACTIVE_DESKTOP, (int)DesktopId);
     }
 
-    Windows = GetAllVisibleWindowsForSpace(Space);
-    if (Windows.empty()) {
-        goto space_free;
-    }
-
-    virtual_space *VirtualSpace;
     VirtualSpace = AcquireVirtualSpace(Space);
-    if (VirtualSpace->Mode != Virtual_Space_Float) {
-        if (VirtualSpace->Tree) {
-            //
-            // NOTE(koekeishiya): If the activated virtual_space is flagged for resize,
-            // we update the dimensions of all existing nodes in our window-tree.
-            //
-            if (VirtualSpaceHasFlags(VirtualSpace, Virtual_Space_Require_Resize)) {
-                VirtualSpaceRecreateRegions(Space, VirtualSpace);
-            }
+    Windows = GetAllVisibleWindowsForSpace(Space);
 
-            //
-            // NOTE(koekeishiya): If the activated virtual_space is flagged for region update,
-            // we re-apply all the region of all existing nodes in our window-tree.
-            //
-            if (VirtualSpaceHasFlags(VirtualSpace, Virtual_Space_Require_Region_Update)) {
-                VirtualSpaceUpdateRegions(VirtualSpace);
-            }
+    if (!Windows.empty()) {
+        if (VirtualSpace->Mode != Virtual_Space_Float) {
+            if (VirtualSpace->Tree) {
+                //
+                // NOTE(koekeishiya): If the activated virtual_space is flagged for resize,
+                // we update the dimensions of all existing nodes in our window-tree.
+                //
+                if (VirtualSpaceHasFlags(VirtualSpace, Virtual_Space_Require_Resize)) {
+                    VirtualSpaceRecreateRegions(Space, VirtualSpace);
+                }
 
-            RebalanceWindowTreeForSpaceWithWindows(Space, VirtualSpace, Windows);
-        } else if (ShouldDeserializeVirtualSpace(VirtualSpace)) {
-            CreateDeserializedWindowTreeForSpaceWithWindows(Space, VirtualSpace, Windows);
-        } else {
-            CreateWindowTreeForSpaceWithWindows(Space, VirtualSpace, Windows);
+                //
+                // NOTE(koekeishiya): If the activated virtual_space is flagged for region update,
+                // we re-apply all the region of all existing nodes in our window-tree.
+                //
+                if (VirtualSpaceHasFlags(VirtualSpace, Virtual_Space_Require_Region_Update)) {
+                    VirtualSpaceUpdateRegions(VirtualSpace);
+                }
+
+                RebalanceWindowTreeForSpaceWithWindows(Space, VirtualSpace, Windows);
+            } else if (ShouldDeserializeVirtualSpace(VirtualSpace)) {
+                CreateDeserializedWindowTreeForSpaceWithWindows(Space, VirtualSpace, Windows);
+            } else {
+                CreateWindowTreeForSpaceWithWindows(Space, VirtualSpace, Windows);
+            }
         }
     }
 
+    BroadcastFocusedDesktopMode(VirtualSpace);
     ReleaseVirtualSpace(VirtualSpace);
 
 space_free:
     AXLibDestroySpace(Space);
 
-    uint32_t WindowId = GetFocusedWindowId();
+    WindowId = GetFocusedWindowId();
     if (WindowId) {
         WindowFocusedHandler(WindowId);
     }
