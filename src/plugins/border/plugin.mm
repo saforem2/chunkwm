@@ -20,11 +20,16 @@
 #include "../../common/border/border.mm"
 
 #define internal static
+#define DESKTOP_MODE_BSP      0
+#define DESKTOP_MODE_MONOCLE  1
+#define DESKTOP_MODE_FLOATING 2
 
 internal macos_application *Application;
 internal border_window *Border;
 internal bool SkipFloating;
+internal bool SkipMonocle;
 internal bool DrawBorder;
+internal int DesktopMode;
 internal chunkwm_api API;
 
 internal AXUIElementRef
@@ -186,7 +191,7 @@ NewWindowHandler(macos_space *Space)
                 if (Border) {
                     ClearBorderWindow(Border);
                 }
-            } else {
+            } else if (DrawBorder) {
                 FuckingMacOSMonitorBoundsChangingBetweenPrimaryAndMainMonitor(WindowRef);
             }
         } else if (Border) {
@@ -214,7 +219,7 @@ NewWindowHandler()
                 if (Border) {
                     ClearBorderWindow(Border);
                 }
-            } else {
+            } else if (DrawBorder) {
                 FuckingMacOSMonitorBoundsChangingBetweenPrimaryAndMainMonitor(WindowRef);
             }
 
@@ -335,17 +340,54 @@ IsFocusedWindowStandard(uint32_t WindowId)
     return Result;
 }
 
+internal inline bool
+ShouldDrawBorder(int IsWindowFloating)
+{
+    if (SkipMonocle) {
+        return !IsWindowFloating && DesktopMode == DESKTOP_MODE_BSP;
+    } else {
+        return !IsWindowFloating && DesktopMode != DESKTOP_MODE_FLOATING;
+    }
+}
+
 internal inline void
 TilingFocusedWindowFloatStatus(void *Data)
 {
     uint32_t WindowId = *(uint32_t *) Data;
     uint32_t Status = *((uint32_t *) Data + 1);
 
-    if (!Status) {
+    if (ShouldDrawBorder(Status)) {
         DrawBorder = true;
         UpdateToFocusedWindow();
     } else {
         if (!WindowId || IsFocusedWindowStandard(WindowId)) {
+            DrawBorder = false;
+            if (Border) {
+                ClearBorderWindow(Border);
+            }
+        }
+    }
+}
+
+internal inline void
+TilingFocusedDesktopMode(void *Data)
+{
+    char *Mode = (char *) Data;
+    if (StringEquals(Mode, "bsp")) {
+        DesktopMode = DESKTOP_MODE_BSP;
+        DrawBorder = true;
+        UpdateToFocusedWindow();
+    } else if (StringEquals(Mode, "monocle")) {
+        DesktopMode = DESKTOP_MODE_MONOCLE;
+        if (SkipMonocle) {
+            DrawBorder = false;
+            if (Border) {
+                ClearBorderWindow(Border);
+            }
+        }
+    } else if (StringEquals(Mode, "float")) {
+        DesktopMode = DESKTOP_MODE_FLOATING;
+        if (SkipFloating) {
             DrawBorder = false;
             if (Border) {
                 ClearBorderWindow(Border);
@@ -395,6 +437,9 @@ PLUGIN_MAIN_FUNC(PluginMain)
     } else if ((StringEquals(Node, "Tiling_focused_window_float")) && (SkipFloating)) {
         TilingFocusedWindowFloatStatus(Data);
         return true;
+    } else if (StringEquals(Node, "Tiling_focused_desktop_mode")) {
+        TilingFocusedDesktopMode(Data);
+        return true;
     }
 
     return false;
@@ -409,9 +454,11 @@ PLUGIN_BOOL_FUNC(PluginInit)
     CreateCVar("focused_border_width", 4);
     CreateCVar("focused_border_radius", 4);
     CreateCVar("focused_border_skip_floating", 0);
+    CreateCVar("focused_border_skip_monocle", 0);
 
     SkipFloating = CVarIntegerValue("focused_border_skip_floating");
-    DrawBorder = !SkipFloating;
+    SkipMonocle = CVarIntegerValue("focused_border_skip_monocle");
+    DrawBorder = true;
     CreateBorder(0, 0, 0, 0);
     return true;
 }
