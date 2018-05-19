@@ -74,7 +74,6 @@ CacheRunningProcesses()
     while (GetNextProcess(&PSN) == noErr) {
         carbon_application_details *Info = BeginCarbonApplicationDetails(PSN);
         Info->State = Carbon_Application_State_Finished;
-        PrintCarbonApplicationDetails(Info);
         CarbonApplicationCache[PSN] = Info;
     }
 }

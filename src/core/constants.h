@@ -5,7 +5,7 @@
 
 #define CHUNKWM_MAJOR           0
 #define CHUNKWM_MINOR           3
-#define CHUNKWM_PATCH           7
+#define CHUNKWM_PATCH           8
 
 #define CHUNKWM_THREAD_COUNT    4
 

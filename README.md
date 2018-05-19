@@ -2,7 +2,7 @@
 
 | NAME            | RELEASE | VERSION | CHANGELOG |
 |-----------------|:-------:|:-------:|:---------:|
-| chunkwm-core    | Alpha   | 0.3.7   | [what's new](https://github.com/koekeishiya/chunkwm/blob/master/CHANGELOG.md)      |
+| chunkwm-core    | Alpha   | 0.3.8   | [what's new](https://github.com/koekeishiya/chunkwm/blob/master/CHANGELOG.md)      |
 | chunkwm-tiling  | Alpha   | 0.3.7   | [what's new](https://github.com/koekeishiya/chunkwm/blob/master/src/plugins/tiling/CHANGELOG.md)  |
 | chunkwm-border  | Alpha   | 0.3.1   | [what's new](https://github.com/koekeishiya/chunkwm/blob/master/src/plugins/border/CHANGELOG.md)  |
 | chunkwm-ffm     | Alpha   | 0.3.2   | [what's new](https://github.com/koekeishiya/chunkwm/blob/master/src/plugins/ffm/CHANGELOG.md)     |

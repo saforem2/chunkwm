@@ -56,7 +56,7 @@
 internal carbon_event_handler Carbon;
 internal char *ConfigAbsolutePath;
 
-inline void
+internal inline void
 Fail(const char *Format, ...)
 {
     va_list Args;
@@ -64,19 +64,6 @@ Fail(const char *Format, ...)
     vfprintf(stderr, Format, Args);
     va_end(Args);
     exit(EXIT_FAILURE);
-}
-
-inline AXUIElementRef
-SystemWideElement()
-{
-    local_persist AXUIElementRef Element;
-    local_persist dispatch_once_t Token;
-
-    dispatch_once(&Token, ^{
-        Element = AXUIElementCreateSystemWide();
-    });
-
-    return Element;
 }
 
 internal void
@@ -98,7 +85,46 @@ ForkExecWait(char *Command)
     }
 }
 
-inline bool
+internal inline void
+SetConfigFile(char *ConfigFile, size_t Size)
+{
+    if (ConfigAbsolutePath) {
+        snprintf(ConfigFile, Size, "%s", ConfigAbsolutePath);
+    } else {
+        const char *HomeEnv = getenv("HOME");
+        if (!HomeEnv) {
+            Fail("chunkwm: 'env HOME' not set! abort..\n");
+        }
+
+        snprintf(ConfigFile, Size, "%s/%s", HomeEnv, CHUNKWM_CONFIG);
+    }
+
+}
+
+internal void
+ExecConfigFile()
+{
+    char ConfigFile[MAX_LEN];
+    ConfigFile[0] = '\0';
+    SetConfigFile(ConfigFile, MAX_LEN);
+
+    struct stat Buffer;
+    if (stat(ConfigFile, &Buffer) != 0) {
+        Fail("chunkwm: config '%s' not found!\n", ConfigFile);
+    }
+
+    // NOTE(koekeishiya): The config file is just an executable bash script!
+    ForkExecWait(ConfigFile);
+
+    // NOTE(koekeishiya): Read plugin directory from cvar.
+    char *PluginDirectory = CVarStringValue(CVAR_PLUGIN_DIR);
+    if (PluginDirectory && CVarIntegerValue(CVAR_PLUGIN_HOTLOAD)) {
+        HotloaderAddPath(PluginDirectory);
+        HotloaderInit();
+    }
+}
+
+internal inline bool
 CheckAccessibilityPrivileges()
 {
     const void *Keys[] = { kAXTrustedCheckOptionPrompt };
@@ -115,22 +141,6 @@ CheckAccessibilityPrivileges()
     CFRelease(Options);
 
     return Result;
-}
-
-inline void
-SetConfigFile(char *ConfigFile, size_t Size)
-{
-    if (ConfigAbsolutePath) {
-        snprintf(ConfigFile, Size, "%s", ConfigAbsolutePath);
-    } else {
-        const char *HomeEnv = getenv("HOME");
-        if (!HomeEnv) {
-            Fail("chunkwm: 'env HOME' not set! abort..\n");
-        }
-
-        snprintf(ConfigFile, Size, "%s/%s", HomeEnv, CHUNKWM_CONFIG);
-    }
-
 }
 
 internal bool
@@ -189,29 +199,6 @@ int main(int Count, char **Args)
         Fail("chunkwm: could not initialize event-loop! abort..\n");
     }
 
-    NSApplicationLoad();
-    AXUIElementSetMessagingTimeout(SystemWideElement(), 1.0);
-
-    char ConfigFile[MAX_LEN];
-    ConfigFile[0] = '\0';
-    SetConfigFile(ConfigFile, MAX_LEN);
-
-    struct stat Buffer;
-    if (stat(ConfigFile, &Buffer) != 0) {
-        Fail("chunkwm: config '%s' not found!\n", ConfigFile);
-    }
-
-    // NOTE(koekeishiya): The config file is just an executable bash script!
-    ForkExecWait(ConfigFile);
-
-    if (!InitState()) {
-        Fail("chunkwm: failed to initialize critical mutex! abort..\n");
-    }
-
-    if (!BeginCallbackThreads(CHUNKWM_THREAD_COUNT)) {
-        c_log(C_LOG_LEVEL_WARN, "chunkwm: could not get semaphore, callback multi-threading disabled..\n");
-    }
-
     if (!BeginCarbonEventHandler(&Carbon)) {
         Fail("chunkwm: failed to install carbon eventhandler! abort..\n");
     }
@@ -220,15 +207,17 @@ int main(int Count, char **Args)
         c_log(C_LOG_LEVEL_WARN, "chunkwm: could not register for display notifications..\n");
     }
 
-    // NOTE(koekeishiya): Read plugin directory from cvar.
-    char *PluginDirectory = CVarStringValue(CVAR_PLUGIN_DIR);
-    if (PluginDirectory && CVarIntegerValue(CVAR_PLUGIN_HOTLOAD)) {
-        HotloaderAddPath(PluginDirectory);
-        HotloaderInit();
+    if (!BeginCallbackThreads(CHUNKWM_THREAD_COUNT)) {
+        c_log(C_LOG_LEVEL_WARN, "chunkwm: could not get semaphore, callback multi-threading disabled..\n");
+    }
+
+    if (!InitState()) {
+        Fail("chunkwm: failed to initialize critical mutex! abort..\n");
     }
 
     BeginSharedWorkspace();
     StartEventLoop();
+    ExecConfigFile();
     CFRunLoopRun();
 
     return EXIT_SUCCESS;

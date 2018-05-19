@@ -2,6 +2,14 @@
 
 ----------
 
+### version 0.3.8
+
+#### other changes
+
+ - don't force 'chunkc' invocations to require backgrounded processes when ran from config-file (#376)
+
+----------
+
 ### version 0.3.7
 
 #### other changes

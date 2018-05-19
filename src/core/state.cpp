@@ -27,6 +27,19 @@ internal macos_application_map Applications;
 internal macos_window_map Windows;
 internal pthread_mutex_t WindowsLock;
 
+internal inline AXUIElementRef
+SystemWideElement()
+{
+    local_persist AXUIElementRef Element;
+    local_persist dispatch_once_t Token;
+
+    dispatch_once(&Token, ^{
+        Element = AXUIElementCreateSystemWide();
+    });
+
+    return Element;
+}
+
 /*
  * NOTE(koekeishiya): We need a way to retrieve AXUIElementRef from a CGWindowID.
  * There is no way to do this, without caching AXUIElementRef references.
@@ -338,6 +351,9 @@ bool InitState()
 {
     bool Result = pthread_mutex_init(&WindowsLock, NULL) == 0;
     if (Result) {
+        NSApplicationLoad();
+        AXUIElementSetMessagingTimeout(SystemWideElement(), 1.0);
+
         uint32_t ProcessPolicy = Process_Policy_Regular;
         std::vector<macos_application *> RunningApplications = AXLibRunningProcesses(ProcessPolicy);
 
