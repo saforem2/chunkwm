@@ -1,5 +1,9 @@
 ### HEAD - not yet released
 
+----------
+
+### version 0.3.2
+
 #### cvar changes
 
 - new cvar `focused_border_skip_monocle` to hide border when a monocle desktop is active (#405).

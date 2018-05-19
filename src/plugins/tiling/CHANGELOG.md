@@ -1,5 +1,9 @@
 ### HEAD -  not yet released
 
+----------
+
+### version 0.3.8
+
 #### other changes
 
 - send event when the virtual-space mode of the focused desktop is changed
