@@ -1,5 +1,12 @@
 ### HEAD -  not yet released
 
+#### feature
+
+- add command to focus a desktop WITHOUT going through space animations (#127)
+
+  IMPORTANT: requires injecting code into the dock (https://github.com/koekeishiya/chwm-sa)
+  IMPORTANT: this feature will only work on Sierra and High Sierra
+
 ----------
 
 ### version 0.3.8

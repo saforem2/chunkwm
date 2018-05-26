@@ -39,6 +39,7 @@
   * [toggle various window options](#toggle-various-window-options)
 * [desktop commands](#desktop-commands)
   * [desktop layout](#desktop-layout)
+  * [focus desktop](#focus-desktop)
   * [rotate desktop](#rotate-desktop)
   * [mirror desktop](#mirror-desktop)
   * [equalize desktop](#equalize-size-of-all-windows-on-desktop)
@@ -302,6 +303,13 @@
     chunkc tiling::desktop --layout <option>
     <option>: bsp | monocle | float
     short flag: -l
+
+##### focus desktop
+
+    chunkc tiling::desktop --focus <option>
+    <option>: mission-control index | prev | next
+    short flag: -f
+    desc: requires chwm-sa (https://github.com/koekeishiya/chwm-sa) and Sierra or High Sierra
 
 ##### rotate desktop
 

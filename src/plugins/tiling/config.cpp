@@ -276,6 +276,7 @@ command_func SpaceCommandDispatch(char Flag)
     case 'e': return EqualizeWindowTree;     break;
     case 's': return SerializeDesktop;       break;
     case 'd': return DeserializeDesktop;     break;
+    case 'f': return FocusDesktop;           break;
 
     // NOTE(koekeishiya): silence compiler warning.
     default: return 0; break;
@@ -290,7 +291,7 @@ ParseSpaceCommand(const char *Message, command *Chain)
 
     int Option;
     bool Success = true;
-    const char *Short = "r:l:t:m:p:g:e";
+    const char *Short = "r:l:t:m:p:g:ef:";
 
     struct option Long[] = {
         { "rotate", required_argument, NULL, 'r' },
@@ -302,12 +303,28 @@ ParseSpaceCommand(const char *Message, command *Chain)
         { "equalize", no_argument, NULL, 'e' },
         { "serialize", required_argument, NULL, 's' },
         { "deserialize", required_argument, NULL, 'd' },
+        { "focus", required_argument, NULL, 'f' },
         { NULL, 0, NULL, 0 }
     };
 
     command *Command = Chain;
     while ((Option = getopt_long(Count, Args, Short, Long, NULL)) != -1) {
         switch (Option) {
+        case 'f': {
+            unsigned Unsigned;
+            if ((StringEquals(optarg, "prev")) ||
+                (StringEquals(optarg, "next")) ||
+                (sscanf(optarg, "%d", &Unsigned) == 1)) {
+                command *Entry = ConstructCommand(Option, optarg);
+                Command->Next = Entry;
+                Command = Entry;
+            } else {
+                c_log(C_LOG_LEVEL_WARN, "    invalid selector '%s' for desktop flag '%c'\n", optarg, Option);
+                Success = false;
+                FreeCommandChain(Chain);
+                goto End;
+            }
+        } break;
         case 'r': {
             if ((StringEquals(optarg, "90")) ||
                 (StringEquals(optarg, "180")) ||

@@ -2056,6 +2056,52 @@ space_free:
     AXLibDestroySpace(Space);
 }
 
+internal inline void
+CurrentDesktopId(unsigned *DesktopId, unsigned *Arrangement)
+{
+    macos_space *Space;
+    bool Success = AXLibActiveSpace(&Space);
+    if (Success) {
+        AXLibCGSSpaceIDToDesktopID(Space->Id, Arrangement, DesktopId);
+        AXLibDestroySpace(Space);
+    }
+}
+
+void FocusDesktop(char *Op)
+{
+    bool CheckMonitor = false;
+    unsigned DesktopId = 0;
+    unsigned Arrangement = 0;
+    if (StringEquals(Op, "prev")) {
+        CurrentDesktopId(&DesktopId, &Arrangement);
+        DesktopId -= 1;
+        CheckMonitor = true;
+    } else if (StringEquals(Op, "next")) {
+        CurrentDesktopId(&DesktopId, &Arrangement);
+        DesktopId += 1;
+        CheckMonitor = true;
+    } else if (sscanf(Op, "%d", &DesktopId) != 1) {
+        return;
+    }
+
+    CGSSpaceID SpaceId;
+    unsigned DestArrangement = 0;
+    bool Success = AXLibCGSSpaceIDFromDesktopID(DesktopId, &DestArrangement, &SpaceId);
+    if (Success) {
+        if (CheckMonitor && DestArrangement != Arrangement) {
+            return;
+        }
+
+        int SockFD;
+        if (ConnectToDaemon(&SockFD, 5050)) {
+            char Message[64];
+            sprintf(Message, "space %d", SpaceId);
+            WriteToSocket(Message, SockFD);
+        }
+        CloseSocket(SockFD);
+    }
+}
+
 internal void
 QueryFocusedWindowFloat(int SockFD)
 {

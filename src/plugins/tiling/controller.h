@@ -48,6 +48,7 @@ void FocusMonitor(char *Op);
 
 void SerializeDesktop(char *Op);
 void DeserializeDesktop(char *Op);
+void FocusDesktop(char *Op);
 
 void QueryWindow(char *Op, int SockFD);
 void QueryDesktop(char *Op, int SockFD);
