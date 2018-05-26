@@ -17,6 +17,7 @@
 
 #include <math.h>
 #include <vector>
+#include <poll.h>
 
 #define internal static
 
@@ -2069,18 +2070,17 @@ CurrentDesktopId(unsigned *DesktopId, unsigned *Arrangement)
 
 void FocusDesktop(char *Op)
 {
-    bool CheckMonitor = false;
     unsigned DesktopId = 0;
     unsigned Arrangement = 0;
     if (StringEquals(Op, "prev")) {
         CurrentDesktopId(&DesktopId, &Arrangement);
         DesktopId -= 1;
-        CheckMonitor = true;
     } else if (StringEquals(Op, "next")) {
         CurrentDesktopId(&DesktopId, &Arrangement);
         DesktopId += 1;
-        CheckMonitor = true;
-    } else if (sscanf(Op, "%d", &DesktopId) != 1) {
+    } else if (sscanf(Op, "%d", &DesktopId) == 1) {
+        CurrentDesktopId(NULL, &Arrangement);
+    } else {
         return;
     }
 
@@ -2088,17 +2088,45 @@ void FocusDesktop(char *Op)
     unsigned DestArrangement = 0;
     bool Success = AXLibCGSSpaceIDFromDesktopID(DesktopId, &DestArrangement, &SpaceId);
     if (Success) {
-        if (CheckMonitor && DestArrangement != Arrangement) {
-            return;
-        }
-
         int SockFD;
         if (ConnectToDaemon(&SockFD, 5050)) {
             char Message[64];
             sprintf(Message, "space %d", SpaceId);
             WriteToSocket(Message, SockFD);
+
+            /*
+             *  NOTE(koekeishiya): If the target desktop is not on the same monitor
+             *  as the source desktop we switched from, the call to the Dock will not
+             *  actually make that monitor get focus. We fake a monitor focus ourselves
+             *  in these cases, after the Dock has finished processing our command.
+             */
+
+            struct pollfd fds[] = {
+                { SockFD, POLLIN, 0 },
+                { STDOUT_FILENO, POLLHUP, 0 },
+            };
+
+            char dummy[1];
+            int dummy_bytes = 0;
+
+            while (poll(fds, 2, -1) > 0) {
+                if (fds[1].revents & (POLLERR | POLLHUP)) {
+                    break;
+                }
+
+                if (fds[0].revents & POLLIN) {
+                    if ((dummy_bytes = recv(SockFD, dummy, sizeof(dummy) - 1, 0)) <= 0) {
+                        break;
+                    }
+                }
+            }
+
+            if (DestArrangement != Arrangement) {
+                FocusMonitor(DestArrangement);
+            }
         }
         CloseSocket(SockFD);
+
     }
 }
 
