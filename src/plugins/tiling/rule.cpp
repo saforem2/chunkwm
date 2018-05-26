@@ -81,6 +81,7 @@ ApplyWindowRuleDesktop(macos_window *Window, window_rule *Rule)
     if (SendWindowToDesktop(Window, Rule->Desktop)) {
         AXLibAddFlags(Window, Rule_Desktop_Changed);
         if (Rule->FollowDesktop) {
+            FocusDesktop(Rule->Desktop);
             AXLibSetFocusedWindow(Window->Ref);
             AXLibSetFocusedApplication(Window->Owner->PSN);
         }
