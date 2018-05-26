@@ -2094,39 +2094,40 @@ void FocusDesktop(char *Op)
             sprintf(Message, "space %d", SpaceId);
             WriteToSocket(Message, SockFD);
 
-            /*
-             *  NOTE(koekeishiya): If the target desktop is not on the same monitor
-             *  as the source desktop we switched from, the call to the Dock will not
-             *  actually make that monitor get focus. We fake a monitor focus ourselves
-             *  in these cases, after the Dock has finished processing our command.
-             */
-
-            struct pollfd fds[] = {
-                { SockFD, POLLIN, 0 },
-                { STDOUT_FILENO, POLLHUP, 0 },
-            };
-
-            char dummy[1];
-            int dummy_bytes = 0;
-
-            while (poll(fds, 2, -1) > 0) {
-                if (fds[1].revents & (POLLERR | POLLHUP)) {
-                    break;
-                }
-
-                if (fds[0].revents & POLLIN) {
-                    if ((dummy_bytes = recv(SockFD, dummy, sizeof(dummy) - 1, 0)) <= 0) {
-                        break;
-                    }
-                }
-            }
 
             if (DestArrangement != Arrangement) {
+                /*
+                 *  NOTE(koekeishiya): If the target desktop is not on the same monitor
+                 *  as the source desktop we switched from, the call to the Dock will not
+                 *  actually make that monitor get focus. We fake a monitor focus ourselves
+                 *  in these cases, after the Dock has finished processing our command.
+                 */
+
+                struct pollfd fds[] = {
+                    { SockFD, POLLIN, 0 },
+                    { STDOUT_FILENO, POLLHUP, 0 },
+                };
+
+                char dummy[1];
+                int dummy_bytes = 0;
+
+                while (poll(fds, 2, -1) > 0) {
+                    if (fds[1].revents & (POLLERR | POLLHUP)) {
+                        break;
+                    }
+
+                    if (fds[0].revents & POLLIN) {
+                        if ((dummy_bytes = recv(SockFD, dummy, sizeof(dummy) - 1, 0)) <= 0) {
+                            break;
+                        }
+                    }
+                }
+
                 FocusMonitor(DestArrangement);
             }
         }
-        CloseSocket(SockFD);
 
+        CloseSocket(SockFD);
     }
 }
 
