@@ -2,6 +2,14 @@
 
 ----------
 
+### version 0.3.9
+
+#### other changes
+
+ - check if 'displays have separate spaces' is enabled, and fail with an error message if not (#424)
+
+----------
+
 ### version 0.3.8
 
 #### other changes

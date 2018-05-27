@@ -84,7 +84,7 @@ extern "C" CGError CGSGetOnScreenWindowCount(const CGSConnectionID CID, CGSConne
 extern "C" CGError CGSGetOnScreenWindowList(const CGSConnectionID CID, CGSConnectionID TID, int Count, int *List, int *OutCount);
 
 internal const char *PluginName = "Tiling";
-internal const char *PluginVersion = "0.3.8";
+internal const char *PluginVersion = "0.3.9";
 
 internal macos_application_map Applications;
 internal macos_window_map Windows;
@@ -1704,12 +1704,6 @@ Init(chunkwm_api ChunkwmAPI)
     API = ChunkwmAPI;
     c_log = API.Log;
     BeginCVars(&API);
-
-    if (!AXLibDisplayHasSeparateSpaces()) {
-        c_log(C_LOG_LEVEL_ERROR, "chunkwm-tiling: displays have separate spaces is disabled! abort..\n");
-        Success = false;
-        goto out;
-    }
 
     Success = (pthread_mutex_init(&WindowsLock, NULL) == 0);
     if (!Success) goto out;

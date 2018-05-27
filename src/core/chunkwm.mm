@@ -28,6 +28,7 @@
 #include "../common/misc/carbon.cpp"
 #include "../common/misc/workspace.mm"
 
+#include "../common/accessibility/display.mm"
 #include "../common/accessibility/observer.cpp"
 #include "../common/accessibility/application.cpp"
 #include "../common/accessibility/window.cpp"
@@ -213,6 +214,10 @@ int main(int Count, char **Args)
 
     if (!InitState()) {
         Fail("chunkwm: failed to initialize critical mutex! abort..\n");
+    }
+
+    if (!AXLibDisplayHasSeparateSpaces()) {
+        Fail("chunkwm: displays have separate spaces is disabled! abort..\n");
     }
 
     BeginSharedWorkspace();
