@@ -384,7 +384,7 @@ void AXLibDestroySpace(macos_space *Space)
  *
  * The function returns a bool specifying if the CGSSpaceID was properly translated.
  */
-bool AXLibCGSSpaceIDToDesktopID(CGSSpaceID SpaceId, unsigned *OutArrangement, unsigned *OutDesktopId)
+bool AXLibCGSSpaceIDToDesktopID(CGSSpaceID SpaceId, unsigned *OutArrangement, unsigned *OutDesktopId, bool IncludeFullscreenSpaces)
 {
     bool Result = false;
     unsigned Arrangement = 0;
@@ -400,12 +400,16 @@ bool AXLibCGSSpaceIDToDesktopID(CGSSpaceID SpaceId, unsigned *OutArrangement, un
             bool UserCreatedSpace = (CurrentSpaceType == kCGSSpaceUser);
 
             if (SpaceId == CurrentSpaceId) {
-                DesktopId = UserCreatedSpace ? SpaceIndex : 0;
+                if (IncludeFullscreenSpaces || UserCreatedSpace) {
+                    DesktopId = SpaceIndex;
+                } else {
+                    DesktopId = 0;
+                }
                 Result = true;
                 goto End;
             }
 
-            if (UserCreatedSpace) {
+            if (IncludeFullscreenSpaces || UserCreatedSpace) {
                 ++SpaceIndex;
             }
         }
@@ -426,6 +430,11 @@ End:
     return Result;
 }
 
+bool AXLibCGSSpaceIDToDesktopID(CGSSpaceID SpaceId, unsigned *OutArrangement, unsigned *OutDesktopId)
+{
+    return AXLibCGSSpaceIDToDesktopID(SpaceId, OutArrangement, OutDesktopId, false);
+}
+
 /*
  * NOTE(koekeishiya): Translate the space index shown in mission control to a CGSSpaceID.
  * Also assign the arrangement index of the display that the space belongs to.
@@ -435,7 +444,7 @@ End:
  *
  * The function returns a bool specifying if the index was properly translated.
  */
-bool AXLibCGSSpaceIDFromDesktopID(unsigned DesktopId, unsigned *OutArrangement, CGSSpaceID *OutSpaceId)
+bool AXLibCGSSpaceIDFromDesktopID(unsigned DesktopId, unsigned *OutArrangement, CGSSpaceID *OutSpaceId, bool IncludeFullscreenSpaces)
 {
     bool Result = false;
     CGSSpaceID SpaceId = 0;
@@ -449,8 +458,10 @@ bool AXLibCGSSpaceIDFromDesktopID(unsigned DesktopId, unsigned *OutArrangement, 
             CGSSpaceID CurrentSpaceId = [SpaceDictionary[@"id64"] intValue];
             CGSSpaceType CurrentSpaceType = CGSSpaceGetType(CGSDefaultConnection, CurrentSpaceId);
 
-            if (CurrentSpaceType != kCGSSpaceUser) {
-                continue;
+            if (!IncludeFullscreenSpaces) {
+                if (CurrentSpaceType != kCGSSpaceUser) {
+                    continue;
+                }
             }
 
             if (SpaceIndex == DesktopId) {
@@ -476,6 +487,11 @@ End:
 
     CFRelease(ScreenDictionaries);
     return Result;
+}
+
+bool AXLibCGSSpaceIDFromDesktopID(unsigned DesktopId, unsigned *OutArrangement, CGSSpaceID *OutSpaceId)
+{
+    return AXLibCGSSpaceIDFromDesktopID(DesktopId, OutArrangement, OutSpaceId, false);
 }
 
 void AXLibSpaceAddWindow(CGSSpaceID SpaceId, uint32_t WindowId)

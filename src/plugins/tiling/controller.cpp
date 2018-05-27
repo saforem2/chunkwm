@@ -1789,6 +1789,7 @@ FocusMonitor(unsigned MonitorId)
 {
     bool Result = false;
     std::vector<uint32_t> WindowIds;
+    bool IncludeInvalidWindows;
     CFStringRef MonitorRef;
     macos_window *Window;
     macos_space *Space;
@@ -1804,11 +1805,10 @@ FocusMonitor(unsigned MonitorId)
 
     Space = AXLibActiveSpace(MonitorRef);
     ASSERT(Space);
-    if (Space->Type != kCGSSpaceUser) {
-        goto space_free;
-    }
 
-    WindowIds = GetAllVisibleWindowsForSpace(Space, false, true);
+    IncludeInvalidWindows = (Space->Type != kCGSSpaceUser);
+
+    WindowIds = GetAllVisibleWindowsForSpace(Space, IncludeInvalidWindows, true);
     if (WindowIds.empty()) {
         goto space_free;
     }
@@ -2058,12 +2058,12 @@ space_free:
 }
 
 internal inline void
-CurrentDesktopId(unsigned *DesktopId, unsigned *Arrangement)
+CurrentDesktopId(unsigned *DesktopId, unsigned *Arrangement, bool IncludeFullscreenSpaces)
 {
     macos_space *Space;
     bool Success = AXLibActiveSpace(&Space);
     if (Success) {
-        AXLibCGSSpaceIDToDesktopID(Space->Id, Arrangement, DesktopId);
+        AXLibCGSSpaceIDToDesktopID(Space->Id, Arrangement, DesktopId, IncludeFullscreenSpaces);
         AXLibDestroySpace(Space);
     }
 }
@@ -2072,21 +2072,24 @@ void FocusDesktop(char *Op)
 {
     unsigned DesktopId = 0;
     unsigned Arrangement = 0;
+    bool IncludeFullscreenSpaces = 0;
     if (StringEquals(Op, "prev")) {
-        CurrentDesktopId(&DesktopId, &Arrangement);
+        IncludeFullscreenSpaces = true;
+        CurrentDesktopId(&DesktopId, &Arrangement, IncludeFullscreenSpaces);
         DesktopId -= 1;
     } else if (StringEquals(Op, "next")) {
-        CurrentDesktopId(&DesktopId, &Arrangement);
+        IncludeFullscreenSpaces = true;
+        CurrentDesktopId(&DesktopId, &Arrangement, IncludeFullscreenSpaces);
         DesktopId += 1;
     } else if (sscanf(Op, "%d", &DesktopId) == 1) {
-        CurrentDesktopId(NULL, &Arrangement);
+        CurrentDesktopId(NULL, &Arrangement, IncludeFullscreenSpaces);
     } else {
         return;
     }
 
     CGSSpaceID SpaceId;
     unsigned DestArrangement = 0;
-    bool Success = AXLibCGSSpaceIDFromDesktopID(DesktopId, &DestArrangement, &SpaceId);
+    bool Success = AXLibCGSSpaceIDFromDesktopID(DesktopId, &DestArrangement, &SpaceId, IncludeFullscreenSpaces);
     if (Success) {
         int SockFD;
         if (ConnectToDaemon(&SockFD, 5050)) {

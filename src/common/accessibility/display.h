@@ -137,7 +137,9 @@ CGRect AXLibGetDisplayBounds(CFStringRef DisplayRef);
 bool AXLibIsDisplayChangingSpaces(CFStringRef DisplayRef);
 
 bool AXLibCGSSpaceIDToDesktopID(CGSSpaceID SpaceId, unsigned *OutArrangement, unsigned *OutDesktopId);
+bool AXLibCGSSpaceIDToDesktopID(CGSSpaceID SpaceId, unsigned *OutArrangement, unsigned *OutDesktopId, bool IncludeFullscreenSpaces);
 bool AXLibCGSSpaceIDFromDesktopID(unsigned DesktopId, unsigned *OutArrangement, CGSSpaceID *OutSpaceId);
+bool AXLibCGSSpaceIDFromDesktopID(CGSSpaceID SpaceId, unsigned *OutArrangement, unsigned *OutDesktopId, bool IncludeFullscreenSpaces);
 
 int *AXLibSpacesForDisplay(CFStringRef DisplayRef, int *Count);
 macos_space **AXLibSpacesForDisplay(CFStringRef DisplayRef);
