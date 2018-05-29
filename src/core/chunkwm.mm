@@ -163,18 +163,26 @@ ParseArguments(int Count, char **Args)
     while ((Option = getopt_long(Count, Args, Short, Long, NULL)) != -1) {
         switch (Option) {
         case 'i': {
-            if (InstallSA()) {
-                printf("chunkwm: successfully installed sa! you can now reenable SIP.\n");
+            if (IsRoot()) {
+                if (InstallSA()) {
+                    printf("chunkwm: successfully installed sa! you can now reenable SIP.\n");
+                } else {
+                    printf("chunkwm: failed to install sa! make sure SIP is disabled.\n");
+                }
             } else {
-                printf("chunkwm: failed to install sa! make sure SIP is disabled.\n");
+                printf("chunkwm: sudo privileges are required to install sa!\n");
             }
             return true;
         } break;
         case 'u': {
-            if (UninstallSA()) {
-                printf("chunkwm: successfully uninstalled sa! you can now reenable SIP.\n");
+            if (IsRoot()) {
+                if (UninstallSA()) {
+                    printf("chunkwm: successfully uninstalled sa! you can now reenable SIP.\n");
+                } else {
+                    printf("chunkwm: failed to uninstall sa! make sure SIP is disabled.\n");
+                }
             } else {
-                printf("chunkwm: failed to uninstall sa! make sure SIP is disabled.\n");
+                printf("chunkwm: sudo privileges are required to uninstall sa!\n");
             }
             return true;
         } break;

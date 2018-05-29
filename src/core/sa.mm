@@ -1,9 +1,15 @@
 #import <ScriptingBridge/ScriptingBridge.h>
 #include <string.h>
 
+static inline bool IsRoot(void)
+{
+    return geteuid() == 0 || getuid() == 0;
+}
+
 static inline bool IsSIPEnabled(void)
 {
     // TODO(koekeishiya): Is there an API for this or do we need to parse the output of 'csrutil status' ?..
+    return true;
 }
 
 static bool InstallSA(void)
