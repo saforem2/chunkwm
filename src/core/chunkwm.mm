@@ -51,6 +51,8 @@
 #include "config.cpp"
 #include "cvar.cpp"
 
+#include "sa.mm"
+
 #define internal static
 #define local_persist static
 
@@ -148,15 +150,42 @@ internal bool
 ParseArguments(int Count, char **Args)
 {
     int Option;
-    const char *Short = "vc:";
+    const char *Short = "iulvc:";
     struct option Long[] = {
         { "version", no_argument, NULL, 'v' },
         { "config", required_argument, NULL, 'c' },
+        { "install-sa", no_argument, NULL, 'i' },
+        { "uninstall-sa", no_argument, NULL, 'u' },
+        { "load-sa", no_argument, NULL, 'l' },
         { NULL, 0, NULL, 0 }
     };
 
     while ((Option = getopt_long(Count, Args, Short, Long, NULL)) != -1) {
         switch (Option) {
+        case 'i': {
+            if (InstallSA()) {
+                printf("chunkwm: successfully installed sa! you can now reenable SIP.\n");
+            } else {
+                printf("chunkwm: failed to install sa! make sure SIP is disabled.\n");
+            }
+            return true;
+        } break;
+        case 'u': {
+            if (UninstallSA()) {
+                printf("chunkwm: successfully uninstalled sa! you can now reenable SIP.\n");
+            } else {
+                printf("chunkwm: failed to uninstall sa! make sure SIP is disabled.\n");
+            }
+            return true;
+        } break;
+        case 'l': {
+            if (InjectSA()) {
+                printf("chunkwm: successfully loaded sa!\n");
+            } else {
+                printf("chunkwm: failed to load sa!\n");
+            }
+            return true;
+        } break;
         case 'v': {
             printf("chunkwm %d.%d.%d\n",
                     CHUNKWM_MAJOR,

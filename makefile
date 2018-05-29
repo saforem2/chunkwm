@@ -1,8 +1,8 @@
-BUILD_FLAGS		= -O0 -g -DCHUNKWM_DEBUG -std=c++11 -Wall -Wno-deprecated
-BUILD_PATH		= ./bin
-SRC				= ./src/core/chunkwm.mm
-BINS			= $(BUILD_PATH)/chunkwm
-LINK			= -rdynamic -ldl -lpthread -framework Carbon -framework Cocoa
+BUILD_FLAGS     = -O0 -g -DCHUNKWM_DEBUG -std=c++11 -Wall -Wno-deprecated
+BUILD_PATH      = ./bin
+SRC             = ./src/core/chunkwm.mm
+BINS            = $(BUILD_PATH)/chunkwm
+LINK            = -rdynamic -ldl -lpthread -framework Carbon -framework Cocoa -framework ScriptingBridge
 
 all: $(BINS)
 
