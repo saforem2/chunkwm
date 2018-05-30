@@ -51,6 +51,9 @@
 #include "config.cpp"
 #include "cvar.cpp"
 
+#include "sa_text.cpp"
+#include "sa_core.cpp"
+#include "sa_bundle.cpp"
 #include "sa.mm"
 
 #define internal static
@@ -215,6 +218,10 @@ int main(int Count, char **Args)
 {
     if (ParseArguments(Count, Args)) {
         return EXIT_SUCCESS;
+    }
+
+    if (IsRoot()) {
+        Fail("chunkwm: running as root is not allowed! abort..\n");
     }
 
     if (!CheckAccessibilityPrivileges()) {
