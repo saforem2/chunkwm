@@ -164,10 +164,6 @@ static bool UninstallSA(void)
 
 static bool InjectSA(void)
 {
-    if (!IsSAInstalled()) {
-        return false;
-    }
-
     for (NSRunningApplication *Application in [[NSWorkspace sharedWorkspace] runningApplications]) {
         pid_t PID = Application.processIdentifier;
         const char *Name = [[Application localizedName] UTF8String];
