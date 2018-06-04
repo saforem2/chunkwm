@@ -765,7 +765,7 @@ void FloatWindow(macos_window *Window)
     BroadcastFocusedWindowFloating(Window);
 
     if (CVarIntegerValue(CVAR_WINDOW_FLOAT_TOPMOST)) {
-        ExtendedDockSetWindowLevel(Window, kCGFloatingWindowLevelKey);
+        ExtendedDockSetWindowLevel(Window, kCGModalPanelWindowLevelKey);
     }
 }
 

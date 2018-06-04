@@ -562,6 +562,20 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_WindowDeminimized)
     }
 }
 
+CHUNKWM_CALLBACK(Callback_ChunkWM_WindowSheetCreated)
+{
+    macos_window *Window = (macos_window *) Event->Context;
+    ASSERT(Window);
+
+    c_log(C_LOG_LEVEL_DEBUG, "%s:%s:%d window sheet created\n", Window->Owner->Name, Window->Name, Window->Id);
+#if 0
+    ProcessPluginList(chunkwm_export_window_sheet_created, Window);
+#else
+    ProcessPluginListThreaded(chunkwm_export_window_sheet_created, Window);
+#endif
+    AXLibDestroyWindow(Window);
+}
+
 /*
  * NOTE(koekeishiya): If a plugin has stored a pointer to our macos_window structs
  * and tries to access the 'name' member outside of 'PLUGIN_MAIN_FUNC', there will

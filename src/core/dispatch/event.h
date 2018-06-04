@@ -33,6 +33,7 @@ extern CHUNKWM_CALLBACK(Callback_ChunkWM_WindowResized);
 extern CHUNKWM_CALLBACK(Callback_ChunkWM_WindowMinimized);
 extern CHUNKWM_CALLBACK(Callback_ChunkWM_WindowDeminimized);
 extern CHUNKWM_CALLBACK(Callback_ChunkWM_WindowTitleChanged);
+extern CHUNKWM_CALLBACK(Callback_ChunkWM_WindowSheetCreated);
 
 // NOTE(koekeishiya): This property is not exposed to plugins
 extern CHUNKWM_CALLBACK(Callback_ChunkWM_PluginCommand);
@@ -63,8 +64,7 @@ enum event_type
     ChunkWM_WindowResized,
     ChunkWM_WindowMinimized,
     ChunkWM_WindowDeminimized,
-
-    // NOTE(koekeishiya): This property is not exposed to plugins
+    ChunkWM_WindowSheetCreated,
     ChunkWM_WindowTitleChanged,
 
     // NOTE(koekeishiya): This property is not exposed to plugins

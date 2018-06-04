@@ -1334,6 +1334,15 @@ WindowResizedHandler(void *Data)
 }
 
 internal void
+WindowSheetCreatedHandler(void *Data)
+{
+    macos_window *Window = (macos_window *) Data;
+    if (CVarIntegerValue(CVAR_WINDOW_FLOAT_TOPMOST)) {
+        ExtendedDockSetWindowLevel(Window, kCGModalPanelWindowLevelKey);
+    }
+}
+
+internal void
 WindowTitleChangedHandler(void *Data)
 {
     macos_window *Window = (macos_window *) Data;
@@ -1650,6 +1659,9 @@ PLUGIN_MAIN_FUNC(PluginMain)
     } else if (StringEquals(Node, "chunkwm_export_window_resized")) {
         WindowResizedHandler(Data);
         return true;
+    } else if (StringEquals(Node, "chunkwm_export_window_sheet_created")) {
+        WindowSheetCreatedHandler(Data);
+        return true;
     } else if (StringEquals(Node, "chunkwm_export_window_title_changed")) {
         WindowTitleChangedHandler(Data);
         return true;
@@ -1843,6 +1855,7 @@ chunkwm_plugin_export Subscriptions[] =
     chunkwm_export_window_moved,
     chunkwm_export_window_resized,
     chunkwm_export_window_title_changed,
+    chunkwm_export_window_sheet_created,
 
     chunkwm_export_space_changed,
     chunkwm_export_display_changed,
