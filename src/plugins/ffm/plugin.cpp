@@ -32,6 +32,7 @@ internal chunkwm_api API;
 internal AXUIElementRef SystemWideElement;
 internal float MouseMotionInterval;
 internal float LastEventTime;
+internal bool StandbyOnFloat;
 
 internal bool
 IsWindowLevelAllowed(int WindowLevel)
@@ -115,7 +116,7 @@ EVENTTAP_CALLBACK(EventTapCallback)
     } break;
     case kCGEventMouseMoved: {
         if (!ShouldProcessEvent(Event)) break;
-        if (!IsActive) break;
+        if (StandbyOnFloat && !IsActive) break;
 
         CGEventFlags Flags = CGEventGetFlags(Event);
         if ((Flags & MouseModifier) == MouseModifier) break;
@@ -203,8 +204,10 @@ PLUGIN_BOOL_FUNC(PluginInit)
     if (Result) {
         BeginCVars(&API);
         CreateCVar("ffm_bypass_modifier", "fn");
+        CreateCVar("ffm_standby_on_float", 1);
         CreateCVar("mouse_motion_interval", 35.0f);
         SetMouseModifier(CVarStringValue("ffm_bypass_modifier"));
+        StandbyOnFloat = CVarIntegerValue("ffm_standby_on_float");
         MouseMotionInterval = CVarFloatingPointValue("mouse_motion_interval");
     }
     return Result;

@@ -1,5 +1,11 @@
 ### HEAD - not yet released
 
+#### cvar changes
+
+ - new cvar *ffm_standby_on_float* (#437)
+
+   causes ffm to temporarily be disabled when a floating window is focused.
+
 ---------------
 
 ### version 0.3.2
