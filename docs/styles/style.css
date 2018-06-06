@@ -1,0 +1,93 @@
+body {
+    width: 900px;
+    margin: 0 auto;
+    font-family: "Lucida Console", Monaco, monospace;
+    background-color: #202020;
+}
+
+#header {
+    width: 100%;
+}
+
+#logo {
+    float: left;
+    padding-top: 10px;
+}
+
+#logo-img {
+    width: 150px;
+}
+
+#navbar-text {
+    float: left;
+    margin-top: 0px;
+    padding-left: 20px;
+    padding-top: 60px;
+}
+
+#navbar-text h4 {
+    font-size: 20px;
+    margin-bottom: 0px;
+    color: #dfdfdf;
+}
+
+#navbar-text p {
+    font-size: 14px;
+    margin-top: 0px;
+    color: #8fee96;
+}
+
+#navbar-menu {
+    float: left;
+    padding-top: 40px;
+    padding-left: 60px;
+}
+
+#navbar-menu li {
+    display: block;
+    float: left;
+}
+
+#navbar-menu li:after {
+    content: '|';
+    color: #775759;
+    padding: 5px;
+}
+
+#navbar-menu li:last-child:after {
+    content: '';
+}
+
+#navbar-menu a {
+    color: #707070;
+    font-weight: bold;
+    text-decoration: none;
+    padding: 7px;
+}
+
+#navbar-menu a:hover {
+    color: #8fee96;
+    font-weight: bold;
+    text-decoration: none;
+    padding: 7px;
+}
+
+#tmp {
+    font-size: 14px;
+    color: #d5c4a1;
+    overflow: hidden;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
+
+#footer {
+    font-size: 8px;
+    color: #8fee96;
+    overflow: hidden;
+    position: absolute;
+    left: 50%;
+    top: 95%;
+    transform: translate(-50%, -50%);
+}
