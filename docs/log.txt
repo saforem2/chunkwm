@@ -1,0 +1,35 @@
+NanoWeb 0.0.1 is now running..
+Request from 127.0.0.1:51064 'GET / HTTP/1.1'
+Opening './index.html' 200 OK
+Request from 127.0.0.1:51066 'GET /styles/style.css HTTP/1.1'
+Opening './styles/style.css' 200 OK
+Request from 127.0.0.1:51068 'GET /images/chunkwm-logo.png HTTP/1.1'
+Opening './images/chunkwm-logo.png' 200 OK
+Request from 127.0.0.1:51070 'GET /favicon.ico HTTP/1.1'
+Opening './favicon.ico' 404 Not Found
+Request from 127.0.0.1:51074 'GET /favicon.ico HTTP/1.1'
+Opening './favicon.ico' 404 Not Found
+Request from 127.0.0.1:51081 'GET / HTTP/1.1'
+Opening './index.html' 200 OK
+Request from 127.0.0.1:51083 'GET /styles/style.css HTTP/1.1'
+Opening './styles/style.css' 200 OK
+Request from 127.0.0.1:51085 'GET /images/chunkwm-logo.png HTTP/1.1'
+Opening './images/chunkwm-logo.png' 200 OK
+Request from 127.0.0.1:51087 'GET /favicon.ico HTTP/1.1'
+Opening './favicon.ico' 404 Not Found
+Request from 127.0.0.1:51091 'GET / HTTP/1.1'
+Opening './index.html' 200 OK
+Request from 127.0.0.1:51093 'GET /styles/style.css HTTP/1.1'
+Opening './styles/style.css' 200 OK
+Request from 127.0.0.1:51095 'GET /images/chunkwm-logo.png HTTP/1.1'
+Opening './images/chunkwm-logo.png' 200 OK
+Request from 127.0.0.1:51097 'GET /favicon.ico HTTP/1.1'
+Opening './favicon.ico' 404 Not Found
+Request from 127.0.0.1:51101 'GET / HTTP/1.1'
+Opening './index.html' 200 OK
+Request from 127.0.0.1:51104 'GET /styles/style.css HTTP/1.1'
+Opening './styles/style.css' 200 OK
+Request from 127.0.0.1:51105 'GET /images/chunkwm-logo.png HTTP/1.1'
+Opening './images/chunkwm-logo.png' 200 OK
+Request from 127.0.0.1:51107 'GET /favicon.ico HTTP/1.1'
+Opening './favicon.ico' 404 Not Found

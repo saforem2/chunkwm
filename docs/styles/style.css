@@ -72,6 +72,10 @@ body {
     padding: 7px;
 }
 
+.active {
+    color: #dfdfdf;
+}
+
 #tmp {
     font-size: 14px;
     color: #d5c4a1;
