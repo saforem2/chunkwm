@@ -1,5 +1,5 @@
 body {
-    width: 820px;
+    width: 850px;
     margin: 0 auto;
     font-family: "Lucida Console", Monaco, monospace;
     background-color: #202020;
@@ -85,9 +85,8 @@ body {
     color: #d5c4a1;
     position: absolute;
     overflow-y: scroll;
-    top: 20%;
     width: 820px;
-    height: 70%;
+    height: 77%;
 }
 
 #contents h2, h3, h4 {
@@ -112,6 +111,6 @@ body {
     overflow: hidden;
     position: absolute;
     left: 50%;
-    top: 95%;
+    top: 97%;
     transform: translate(-50%, -50%);
 }
