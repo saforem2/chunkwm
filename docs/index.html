@@ -106,7 +106,8 @@
         repository, they are free to do so.</p>
         <p>The <strong>chunkwm</strong> port installs <em>chunkwm-core</em> together with <em>chunkwm-tiling</em> and <em>chunkwm-border</em>.
         Plugins to install can be modified through the <em>variants</em> system.</p>
-        <pre><code>git clone http<span class="hljs-variable">s:</span>//github.<span class="hljs-keyword">com</span>/koekeishiya/portfiles /<span class="hljs-keyword">opt</span>/koekeishiya/portfiles
+        <pre><code>
+        git clone http<span class="hljs-variable">s:</span>//github.<span class="hljs-keyword">com</span>/koekeishiya/portfiles /<span class="hljs-keyword">opt</span>/koekeishiya/portfiles
         # manually <span class="hljs-built_in">add</span> /<span class="hljs-keyword">opt</span>/koekeishiya/portfiles <span class="hljs-keyword">to</span> /<span class="hljs-keyword">opt</span>/local/etc/macports/sources.<span class="hljs-keyword">conf</span>
 
         # <span class="hljs-keyword">update</span> the ports tree
@@ -119,7 +120,8 @@
         The repository can be found <a href="https://github.com/crisidev/homebrew-chunkwm">here</a>.</p>
         <p>The <strong>chunkwm</strong> formulae installs <em>chunkwm-core</em> together with <em>chunkwm-tiling</em> and <em>chunkwm-border</em>.
         Plugins to install can be modified through the <em>options</em> system.</p>
-        <pre><code><span class="hljs-meta"># clone tap</span>
+        <pre><code>
+        <span class="hljs-meta"># clone tap</span>
         brew tap crisidev/homebrew-chunkwm
 
         <span class="hljs-meta"># install latest stable version</span>
@@ -129,9 +131,11 @@
         brew install --HEAD chunkwm
         </code></pre><h4 id="source">Source</h4>
         <p>Requires xcode-8 command line tools.</p>
-        <pre><code>git <span class="hljs-keyword">clone</span> <span class="hljs-title">https</span>://github.com/koekeishiya/chunkwm
+        <pre><code>
+        git <span class="hljs-keyword">clone</span> <span class="hljs-title">https</span>://github.com/koekeishiya/chunkwm
         </code></pre><p><strong>chunkwm-core</strong>:</p>
-        <pre><code>cd chunkwm
+        <pre><code>
+        cd chunkwm
         make <span class="hljs-keyword">install</span>
         cp <span class="hljs-keyword">bin</span>/chunkwm /usr/<span class="hljs-keyword">local</span>/<span class="hljs-keyword">bin</span>
         cp examples/chunkwmrc ~/.chunkwmrc
@@ -143,17 +147,20 @@
 
         launchctl <span class="hljs-keyword">load</span> -w ~/<span class="hljs-keyword">Library</span>/LaunchAgents/com.koekeishiya.chunkwm.plist
         </code></pre><p><strong>chunkwm-tiling</strong>:</p>
-        <pre><code>cd chunkwm/src/plugins/tiling
+        <pre><code>
+        cd chunkwm/src/plugins/tiling
         make install
         mkdir -<span class="hljs-selector-tag">p</span> ~/<span class="hljs-selector-class">.chunkwm_plugins</span>
         cp ../../../plugins/tiling<span class="hljs-selector-class">.so</span> ~/.chunkwm_plugins
         </code></pre><p><strong>chunkwm-border</strong>:</p>
-        <pre><code><span class="hljs-keyword">cd</span> chunkwm/src/plugins/border
+        <pre><code>
+        <span class="hljs-keyword">cd</span> chunkwm/src/plugins/border
         <span class="hljs-keyword">make</span> install
         <span class="hljs-built_in">mkdir</span> -<span class="hljs-keyword">p</span> ~/.chunkwm_plugins
         <span class="hljs-keyword">cp</span> ../../../plugins/border.<span class="hljs-keyword">so</span> ~/.chunkwm_plugins
         </code></pre><p><strong>chunkwm-ffm</strong>:</p>
-        <pre><code>cd chunkwm/src/plugins/ffm
+        <pre><code>
+        cd chunkwm/src/plugins/ffm
         make install
         mkdir -<span class="hljs-selector-tag">p</span> ~/<span class="hljs-selector-class">.chunkwm_plugins</span>
         cp ../../../plugins/ffm<span class="hljs-selector-class">.so</span> ~/.chunkwm_plugins
@@ -165,7 +172,8 @@
         <p>Both the <em>chunkwm-core</em> and all plugins are configured in this file.</p>
         <p>Plugin settings should be set before the command to load said plugin.</p>
         <p>The valid config-options for <em>chunkwm-core</em> are as follows:</p>
-        <pre><code>chunkc <span class="hljs-symbol">core::</span>log_file <span class="hljs-params">&lt;/path/to/log/file&gt;</span>
+        <pre><code>
+        chunkc <span class="hljs-symbol">core::</span>log_file <span class="hljs-params">&lt;/path/to/log/file&gt;</span>
         chunkc <span class="hljs-symbol">core::</span>log_level <span class="hljs-params">&lt;none | debug | warn | error&gt;</span>
         chunkc <span class="hljs-symbol">core::</span>plugin_dir <span class="hljs-params">&lt;/path/to/plugins&gt;</span>
         chunkc <span class="hljs-symbol">core::</span>hotload <span class="hljs-params">&lt;<span class="hljs-number">1</span> | <span class="hljs-number">0</span>&gt;</span>
@@ -193,7 +201,8 @@
         <li><em>bsp_split_ratio</em></li>
         </ul>
         <p>Consider the following scenario:</p>
-        <pre><code>             a                          a                          a
+        <pre><code>
+                     a                          a                          a
                     / \                        / \                        / \
                    1   b         ---&gt;         1   b         ---&gt;         1   b
                       / \                        / \                        / \
@@ -222,7 +231,8 @@
         <p>The <em>\<direction></em> argument specifies how the insertion point should be split (horizontally or vertically) and if the new window should be the left or the right child of the new internal node.</p>
         <p>After doing so, the insertion point goes into <em>manual</em> mode.</p>
         <p>Consider the following scenario:</p>
-        <pre><code>            a                          a                          a
+        <pre><code>
+                    a                          a                          a
                    / \                        / \                        / \
                   1   b         ---&gt;         c   b         ---&gt;         c   b
                   ^  / \                    / \ / \                    / \ / \

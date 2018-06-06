@@ -90,6 +90,10 @@ body {
     height: 70%;
 }
 
+#contents h2, h3, h4 {
+    color: #dfdfdf;
+}
+
 #contents a {
     color: #707070;
     font-weight: bold;
