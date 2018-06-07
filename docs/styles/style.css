@@ -7,6 +7,15 @@ body {
     overflow: hidden;
 }
 
+pre {
+    border: 1px solid #404040;
+    background-color: #252525;
+}
+
+code {
+    background-color: #252525;
+}
+
 .clear {
     clear: both;
 }

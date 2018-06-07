@@ -1,3 +1,7 @@
-### chunkwm - tiling wm for macOS [![Build Status](https://travis-ci.org/koekeishiya/chunkwm.svg?branch=master)](https://travis-ci.org/koekeishiya/chunkwm) [Project Status](https://github.com/koekeishiya/chunkwm/issues/16)
+[![Build Status](https://travis-ci.org/koekeishiya/chunkwm.svg?branch=master)](https://travis-ci.org/koekeishiya/chunkwm)
 
+### chunkwm - tiling wm for macOS
 See https://koekeishiya.github.io/chunkwm
+
+If you have any questions which are not answered by the documentation,
+feel free to come by the #chunkwm IRC support channel at freenode.net: [#chunkwm](https://webchat.freenode.net/?channels=#chunkwm)
