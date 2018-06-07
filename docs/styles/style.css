@@ -12,7 +12,7 @@ body {
 }
 
 .scale-img {
-    width: 100vmin;
+    width: 98vmin;
 }
 
 .build-img {
@@ -96,6 +96,7 @@ body {
     top: 18vmin;
     height: 80vh;
     overflow: hidden;
+    padding-left: 1vmin;
 }
 
 #contents {
