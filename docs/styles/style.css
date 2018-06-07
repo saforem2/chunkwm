@@ -53,9 +53,8 @@ body {
 }
 
 #navbar-menu {
-    float: left;
+    float: right;
     padding-top: 4.4vmin;
-    padding-left: 5.8vmin;
     font-size: 1.75vmin;
 }
 
