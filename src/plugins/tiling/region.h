@@ -36,6 +36,7 @@ struct virtual_space;
 region CGRectToRegion(CGRect Rect);
 region RoundPreselRegion(region Region, CGPoint Position, CGSize Size);
 void ConstrainRegion(CFStringRef DisplayRef, region *Region);
+region FullscreenRegion(CFStringRef DisplayRef, virtual_space *VirtualSpace);
 
 void CreateNodeRegion(node *Node, region_type Type, macos_space *Space, virtual_space *VirtualSpace);
 void CreateNodeRegionRecursive(node *Node, bool Optimal, macos_space *Space, virtual_space *VirtualSpace);

@@ -1925,8 +1925,7 @@ void GridLayout(char *Op)
         goto space_free;
     }
 
-    Region = CGRectToRegion(AXLibGetDisplayBounds(DisplayRef));
-    ConstrainRegion(DisplayRef, &Region);
+    Region = FullscreenRegion(DisplayRef, VirtualSpace);
 
     if (sscanf(Op, "%d:%d:%d:%d:%d:%d", &GridRows, &GridCols, &WinX, &WinY, &WinWidth, &WinHeight) == 6) {
         WinX = WinX >= GridCols ? GridCols - 1 : WinX;

@@ -102,8 +102,7 @@ void ConstrainRegion(CFStringRef DisplayRef, region *Region)
     }
 }
 
-internal region
-FullscreenRegion(CFStringRef DisplayRef, virtual_space *VirtualSpace)
+region FullscreenRegion(CFStringRef DisplayRef, virtual_space *VirtualSpace)
 {
     region Result = CGRectToRegion(AXLibGetDisplayBounds(DisplayRef));
     ConstrainRegion(DisplayRef, &Result);
