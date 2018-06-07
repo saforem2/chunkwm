@@ -4,6 +4,8 @@
 
 - fixes an issue that made it impossible to interact with modal windows when "float topmost" was enabled (#229)
 
+- remove wrongly assumed method of detecting when windows are moved between monitors using methods external to chunkwm (#385, #403)
+
 ----------
 
 ### version 0.3.9

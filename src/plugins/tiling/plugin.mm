@@ -499,22 +499,6 @@ void TileWindow(macos_window *Window)
     }
 }
 
-void TileWindowOnDisplay(CFStringRef DisplayRef, macos_window *Window)
-{
-    if (TileWindowPreValidation(Window)) {
-        macos_space *Space = AXLibActiveSpace(DisplayRef);
-        ASSERT(Space);
-
-        if (Space->Type == kCGSSpaceUser) {
-            virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
-            TileWindowOnSpace(Window, Space, VirtualSpace);
-            ReleaseVirtualSpace(VirtualSpace);
-        }
-
-        AXLibDestroySpace(Space);
-    }
-}
-
 internal bool
 UntileWindowPreValidation(macos_window *Window)
 {
@@ -641,22 +625,6 @@ void UntileWindow(macos_window *Window)
 
         AXLibDestroySpace(Space);
         __AppleFreeDisplayIdentifierFromWindow();
-    }
-}
-
-void UntileWindowFromDisplay(CFStringRef DisplayRef, macos_window *Window)
-{
-    if (UntileWindowPreValidation(Window)) {
-        macos_space *Space = AXLibActiveSpace(DisplayRef);
-        ASSERT(Space);
-
-        if (Space->Type == kCGSSpaceUser) {
-            virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
-            UntileWindowFromSpace(Window, Space, VirtualSpace);
-            ReleaseVirtualSpace(VirtualSpace);
-        }
-
-        AXLibDestroySpace(Space);
     }
 }
 
@@ -1276,40 +1244,13 @@ internal void
 WindowMovedHandler(void *Data)
 {
     macos_window *Window = (macos_window *) Data;
-
     macos_window *Copy = GetWindowByID(Window->Id);
     if (Copy) {
         if (Copy->Position != Window->Position) {
-            CFStringRef OldDisplay = AXLibGetDisplayIdentifierFromWindowRect(Copy->Position, Copy->Size);
-            CFStringRef NewDisplay = AXLibGetDisplayIdentifierFromWindowRect(Window->Position, Window->Size);
-            ASSERT(OldDisplay);
-            ASSERT(NewDisplay);
-
             Copy->Position = Window->Position;
-
-            if (CFStringCompare(OldDisplay, NewDisplay, 0) == kCFCompareEqualTo) {
-
-                /*
-                 * NOTE(koekeishiya): The window was moved, but did not leave its current monitor.
-                 * Revert back to the previous position if REGION_LOCKED is enabled.
-                 */
-
-                if (CVarIntegerValue(CVAR_WINDOW_REGION_LOCKED)) {
-                    ConstrainWindowToRegion(Copy);
-                }
-            } else {
-
-                /*
-                 * NOTE(koekeishiya): The window was moved to a different monitor.
-                 * Untile the window from the current monitor, and re-tile it on the destination monitor.
-                 */
-
-                UntileWindowFromDisplay(OldDisplay, Copy);
-                TileWindowOnDisplay(NewDisplay, Copy);
+            if (CVarIntegerValue(CVAR_WINDOW_REGION_LOCKED)) {
+                ConstrainWindowToRegion(Copy);
             }
-
-            CFRelease(OldDisplay);
-            CFRelease(NewDisplay);
         }
     }
 }
