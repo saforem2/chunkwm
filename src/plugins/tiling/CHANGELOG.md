@@ -6,6 +6,8 @@
 
 - remove wrongly assumed method of detecting when windows are moved between monitors using methods external to chunkwm (#385, #403)
 
+- *--grid-layout* should now properly apply desktop padding (#440)
+
 ----------
 
 ### version 0.3.9
