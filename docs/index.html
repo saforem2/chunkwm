@@ -27,241 +27,243 @@
         </div>
     </div>
     <div class="clear"></div>
-    <div id="contents">
-        <p>
-        <h2 id="description-build-status-https-travis-ci-org-koekeishiya-chunkwm-svg-branch-master-https-travis-ci-org-koekeishiya-chunkwm-project-status-https-github-com-koekeishiya-chunkwm-issues-16-">Description <a href="https://travis-ci.org/koekeishiya/chunkwm"><img src="https://travis-ci.org/koekeishiya/chunkwm.svg?branch=master" alt="Build Status"></a> <a href="https://github.com/koekeishiya/chunkwm/issues/16">Project Status</a></h2>
-        <table>
-        <thead>
-        <tr>
-        <th>NAME</th>
-        <th style="text-align:center">RELEASE</th>
-        <th style="text-align:center">VERSION</th>
-        <th style="text-align:center">CHANGELOG</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr>
-        <td>chunkwm-core</td>
-        <td style="text-align:center">Alpha</td>
-        <td style="text-align:center">0.3.9</td>
-        <td style="text-align:center"><a href="https://github.com/koekeishiya/chunkwm/blob/master/CHANGELOG.md">what&#39;s new</a></td>
-        </tr>
-        <tr>
-        <td>chunkwm-tiling</td>
-        <td style="text-align:center">Alpha</td>
-        <td style="text-align:center">0.3.9</td>
-        <td style="text-align:center"><a href="https://github.com/koekeishiya/chunkwm/blob/master/src/plugins/tiling/CHANGELOG.md">what&#39;s new</a></td>
-        </tr>
-        <tr>
-        <td>chunkwm-border</td>
-        <td style="text-align:center">Alpha</td>
-        <td style="text-align:center">0.3.2</td>
-        <td style="text-align:center"><a href="https://github.com/koekeishiya/chunkwm/blob/master/src/plugins/border/CHANGELOG.md">what&#39;s new</a></td>
-        </tr>
-        <tr>
-        <td>chunkwm-ffm</td>
-        <td style="text-align:center">Alpha</td>
-        <td style="text-align:center">0.3.2</td>
-        <td style="text-align:center"><a href="https://github.com/koekeishiya/chunkwm/blob/master/src/plugins/ffm/CHANGELOG.md">what&#39;s new</a></td>
-        </tr>
-        </tbody>
-        </table>
-        <p><strong>chunkwm</strong> is a tiling window manager for macOS that uses a plugin architecture, successor to <a href="https://github.com/koekeishiya/kwm"><strong>kwm</strong></a>.
-        It represents windows as the leaves of a binary tree, and supports binary space partitioned, monocle and floating desktops.</p>
-        <p><strong>chunkwm</strong> runs a local daemon to receive messages on a dedicated socket.</p>
-        <p><strong>chunkc</strong> is a program that writes messages on <em>chunkwm&#39;s</em> socket.</p>
-        <p><strong>chunkwm</strong> does not handle any keyboard input.</p>
-        <p>A third party program (e.g: <a href="https://github.com/koekeishiya/skhd"><em>skhd</em></a> or <a href="https://github.com/koekeishiya/khd"><em>khd</em></a>) is needed to map keyboard events to <em>chunkwm</em> actions.</p>
-        <p>Development is happening on macOS High Sierra (10.13.4), but OSX El Capitan (10.11.6) and newer should work fine.</p>
-        <p>Older versions may or may not be compatible and will not be officially supported.</p>
-        <p><img src="https://user-images.githubusercontent.com/6175959/40588289-8c0824f2-61db-11e8-91e4-7ec111ae6420.png" alt="chunkwm_img" width="800px"></p>
-        <p>Click <a href="https://github.com/koekeishiya/chunkwm/issues/21">here</a> for more screenshots.</p>
-        <h2 id="beginner-s-guide">Beginner&#39;s Guide</h2>
-        <p>The instructions that follow further in the README can be perceived as hard to understand for people that are new to the concept
-        of a tiling window manager and the client -&gt; server architecture that <strong>chunkwm</strong> uses.</p>
-        <p><a href="https://github.com/shihanng">shihanng</a> has written a guide that is more friendly to beginners; check it out <a href="http://hde-advent-2017.hatenadiary.jp/entry/2017/12/24/000000">here</a>.</p>
-        <p>There is also a wiki page explaining the interaction of chunkwm &amp; skhd and how to get started <a href="https://github.com/koekeishiya/chunkwm/wiki/Instructions:-chunkwm-with-(s)khd-on-macOS-High-Sierra">here</a>.</p>
-        <p>I highly recommend coming back and reading the later sections of this README once you have become more comfortable with this idea.</p>
-        <h2 id="install">Install</h2>
-        <p>The installation process consists of multiple steps, due to how <strong>chunkwm</strong> is structured.</p>
-        <p>The required steps are as follows:</p>
-        <ul>
-        <li>install chunkwm-core</li>
-        <li>install desired plugins</li>
-        </ul>
-        <p>There are currently three plugins available, developed alongside the <strong>chunkwm-core</strong>.</p>
-        <ul>
-        <li>chunkwm-tiling</li>
-        <li>chunkwm-border</li>
-        <li>chunkwm-ffm</li>
-        </ul>
-        <p>These deliver the basic functionality expected of a window manager.</p>
-        <p><strong>IMPORTANT</strong>:</p>
-        <p>The first time <strong>chunkwm-core</strong> is ran, it will request access to the <em>accessibility API</em>.</p>
-        <p>After access has been granted, the application must be restarted.</p>
-        <p>The <strong>chunkwm-tiling</strong> plugin requires <a href="https://support.apple.com/library/content/dam/edam/applecare/images/en_US/osx/separate_spaces.png">&#39;displays have separate spaces&#39;</a> to be enabled.</p>
-        <h4 id="macports">MacPorts</h4>
-        <p>There are no officially maintained ports in the MacPorts repository, however, <a href="https://github.com/terinjokes">terinjokes</a> has created
-        a port that can be added locally. If someone is interested in maintaining ports in the official
-        repository, they are free to do so.</p>
-        <p>The <strong>chunkwm</strong> port installs <em>chunkwm-core</em> together with <em>chunkwm-tiling</em> and <em>chunkwm-border</em>.
-        Plugins to install can be modified through the <em>variants</em> system.</p>
-        <pre><code>
-        git clone http<span class="hljs-variable">s:</span>//github.<span class="hljs-keyword">com</span>/koekeishiya/portfiles /<span class="hljs-keyword">opt</span>/koekeishiya/portfiles
-        # manually <span class="hljs-built_in">add</span> /<span class="hljs-keyword">opt</span>/koekeishiya/portfiles <span class="hljs-keyword">to</span> /<span class="hljs-keyword">opt</span>/local/etc/macports/sources.<span class="hljs-keyword">conf</span>
+    <div id="body">
+        <div id="contents">
+            <p>
+            <h2 id="description-build-status-https-travis-ci-org-koekeishiya-chunkwm-svg-branch-master-https-travis-ci-org-koekeishiya-chunkwm-project-status-https-github-com-koekeishiya-chunkwm-issues-16-">Description <a href="https://travis-ci.org/koekeishiya/chunkwm"><img class="build-img" src="https://travis-ci.org/koekeishiya/chunkwm.svg?branch=master" alt="Build Status"></a> <a href="https://github.com/koekeishiya/chunkwm/issues/16">Project Status</a></h2>
+            <table>
+            <thead>
+            <tr>
+            <th>NAME</th>
+            <th style="text-align:center">RELEASE</th>
+            <th style="text-align:center">VERSION</th>
+            <th style="text-align:center">CHANGELOG</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+            <td>chunkwm-core</td>
+            <td style="text-align:center">Alpha</td>
+            <td style="text-align:center">0.3.9</td>
+            <td style="text-align:center"><a href="https://github.com/koekeishiya/chunkwm/blob/master/CHANGELOG.md">what&#39;s new</a></td>
+            </tr>
+            <tr>
+            <td>chunkwm-tiling</td>
+            <td style="text-align:center">Alpha</td>
+            <td style="text-align:center">0.3.9</td>
+            <td style="text-align:center"><a href="https://github.com/koekeishiya/chunkwm/blob/master/src/plugins/tiling/CHANGELOG.md">what&#39;s new</a></td>
+            </tr>
+            <tr>
+            <td>chunkwm-border</td>
+            <td style="text-align:center">Alpha</td>
+            <td style="text-align:center">0.3.2</td>
+            <td style="text-align:center"><a href="https://github.com/koekeishiya/chunkwm/blob/master/src/plugins/border/CHANGELOG.md">what&#39;s new</a></td>
+            </tr>
+            <tr>
+            <td>chunkwm-ffm</td>
+            <td style="text-align:center">Alpha</td>
+            <td style="text-align:center">0.3.2</td>
+            <td style="text-align:center"><a href="https://github.com/koekeishiya/chunkwm/blob/master/src/plugins/ffm/CHANGELOG.md">what&#39;s new</a></td>
+            </tr>
+            </tbody>
+            </table>
+            <p><strong>chunkwm</strong> is a tiling window manager for macOS that uses a plugin architecture, successor to <a href="https://github.com/koekeishiya/kwm"><strong>kwm</strong></a>.
+            It represents windows as the leaves of a binary tree, and supports binary space partitioned, monocle and floating desktops.</p>
+            <p><strong>chunkwm</strong> runs a local daemon to receive messages on a dedicated socket.</p>
+            <p><strong>chunkc</strong> is a program that writes messages on <em>chunkwm&#39;s</em> socket.</p>
+            <p><strong>chunkwm</strong> does not handle any keyboard input.</p>
+            <p>A third party program (e.g: <a href="https://github.com/koekeishiya/skhd"><em>skhd</em></a> or <a href="https://github.com/koekeishiya/khd"><em>khd</em></a>) is needed to map keyboard events to <em>chunkwm</em> actions.</p>
+            <p>Development is happening on macOS High Sierra (10.13.4), but OSX El Capitan (10.11.6) and newer should work fine.</p>
+            <p>Older versions may or may not be compatible and will not be officially supported.</p>
+            <p><img class="scale-img" src="https://user-images.githubusercontent.com/6175959/40588289-8c0824f2-61db-11e8-91e4-7ec111ae6420.png" alt="chunkwm_img"></p>
+            <p>Click <a href="https://github.com/koekeishiya/chunkwm/issues/21">here</a> for more screenshots.</p>
+            <h2 id="beginner-s-guide">Beginner&#39;s Guide</h2>
+            <p>The instructions that follow further in the README can be perceived as hard to understand for people that are new to the concept
+            of a tiling window manager and the client -&gt; server architecture that <strong>chunkwm</strong> uses.</p>
+            <p><a href="https://github.com/shihanng">shihanng</a> has written a guide that is more friendly to beginners; check it out <a href="http://hde-advent-2017.hatenadiary.jp/entry/2017/12/24/000000">here</a>.</p>
+            <p>There is also a wiki page explaining the interaction of chunkwm &amp; skhd and how to get started <a href="https://github.com/koekeishiya/chunkwm/wiki/Instructions:-chunkwm-with-(s)khd-on-macOS-High-Sierra">here</a>.</p>
+            <p>I highly recommend coming back and reading the later sections of this README once you have become more comfortable with this idea.</p>
+            <h2 id="install">Install</h2>
+            <p>The installation process consists of multiple steps, due to how <strong>chunkwm</strong> is structured.</p>
+            <p>The required steps are as follows:</p>
+            <ul>
+            <li>install chunkwm-core</li>
+            <li>install desired plugins</li>
+            </ul>
+            <p>There are currently three plugins available, developed alongside the <strong>chunkwm-core</strong>.</p>
+            <ul>
+            <li>chunkwm-tiling</li>
+            <li>chunkwm-border</li>
+            <li>chunkwm-ffm</li>
+            </ul>
+            <p>These deliver the basic functionality expected of a window manager.</p>
+            <p><strong>IMPORTANT</strong>:</p>
+            <p>The first time <strong>chunkwm-core</strong> is ran, it will request access to the <em>accessibility API</em>.</p>
+            <p>After access has been granted, the application must be restarted.</p>
+            <p>The <strong>chunkwm-tiling</strong> plugin requires <a href="https://support.apple.com/library/content/dam/edam/applecare/images/en_US/osx/separate_spaces.png">&#39;displays have separate spaces&#39;</a> to be enabled.</p>
+            <h4 id="macports">MacPorts</h4>
+            <p>There are no officially maintained ports in the MacPorts repository, however, <a href="https://github.com/terinjokes">terinjokes</a> has created
+            a port that can be added locally. If someone is interested in maintaining ports in the official
+            repository, they are free to do so.</p>
+            <p>The <strong>chunkwm</strong> port installs <em>chunkwm-core</em> together with <em>chunkwm-tiling</em> and <em>chunkwm-border</em>.
+            Plugins to install can be modified through the <em>variants</em> system.</p>
+            <pre><code>
+            git clone http<span class="hljs-variable">s:</span>//github.<span class="hljs-keyword">com</span>/koekeishiya/portfiles /<span class="hljs-keyword">opt</span>/koekeishiya/portfiles
+            # manually <span class="hljs-built_in">add</span> /<span class="hljs-keyword">opt</span>/koekeishiya/portfiles <span class="hljs-keyword">to</span> /<span class="hljs-keyword">opt</span>/local/etc/macports/sources.<span class="hljs-keyword">conf</span>
 
-        # <span class="hljs-keyword">update</span> the ports tree
-        sudo port -v selfupdate
+            # <span class="hljs-keyword">update</span> the ports tree
+            sudo port -v selfupdate
 
-        # install latest stable <span class="hljs-keyword">version</span>
-        sudo port install chunkwm
-        </code></pre><h4 id="homebrew">Homebrew</h4>
-        <p>Thanks to <a href="https://github.com/crisidev">crisidev</a> for providing and maintaining a homebrew formulae.
-        The repository can be found <a href="https://github.com/crisidev/homebrew-chunkwm">here</a>.</p>
-        <p>The <strong>chunkwm</strong> formulae installs <em>chunkwm-core</em> together with <em>chunkwm-tiling</em> and <em>chunkwm-border</em>.
-        Plugins to install can be modified through the <em>options</em> system.</p>
-        <pre><code>
-        <span class="hljs-meta"># clone tap</span>
-        brew tap crisidev/homebrew-chunkwm
+            # install latest stable <span class="hljs-keyword">version</span>
+            sudo port install chunkwm
+            </code></pre><h4 id="homebrew">Homebrew</h4>
+            <p>Thanks to <a href="https://github.com/crisidev">crisidev</a> for providing and maintaining a homebrew formulae.
+            The repository can be found <a href="https://github.com/crisidev/homebrew-chunkwm">here</a>.</p>
+            <p>The <strong>chunkwm</strong> formulae installs <em>chunkwm-core</em> together with <em>chunkwm-tiling</em> and <em>chunkwm-border</em>.
+            Plugins to install can be modified through the <em>options</em> system.</p>
+            <pre><code>
+            <span class="hljs-meta"># clone tap</span>
+            brew tap crisidev/homebrew-chunkwm
 
-        <span class="hljs-meta"># install latest stable version</span>
-        brew install chunkwm
+            <span class="hljs-meta"># install latest stable version</span>
+            brew install chunkwm
 
-        <span class="hljs-meta"># install from git repo</span>
-        brew install --HEAD chunkwm
-        </code></pre><h4 id="source">Source</h4>
-        <p>Requires xcode-8 command line tools.</p>
-        <pre><code>
-        git <span class="hljs-keyword">clone</span> <span class="hljs-title">https</span>://github.com/koekeishiya/chunkwm
-        </code></pre><p><strong>chunkwm-core</strong>:</p>
-        <pre><code>
-        cd chunkwm
-        make <span class="hljs-keyword">install</span>
-        cp <span class="hljs-keyword">bin</span>/chunkwm /usr/<span class="hljs-keyword">local</span>/<span class="hljs-keyword">bin</span>
-        cp examples/chunkwmrc ~/.chunkwmrc
-        cp examples/com.koekeishiya.chunkwm.plist ~/<span class="hljs-keyword">Library</span>/LaunchAgents
+            <span class="hljs-meta"># install from git repo</span>
+            brew install --HEAD chunkwm
+            </code></pre><h4 id="source">Source</h4>
+            <p>Requires xcode-8 command line tools.</p>
+            <pre><code>
+            git <span class="hljs-keyword">clone</span> <span class="hljs-title">https</span>://github.com/koekeishiya/chunkwm
+            </code></pre><p><strong>chunkwm-core</strong>:</p>
+            <pre><code>
+            cd chunkwm
+            make <span class="hljs-keyword">install</span>
+            cp <span class="hljs-keyword">bin</span>/chunkwm /usr/<span class="hljs-keyword">local</span>/<span class="hljs-keyword">bin</span>
+            cp examples/chunkwmrc ~/.chunkwmrc
+            cp examples/com.koekeishiya.chunkwm.plist ~/<span class="hljs-keyword">Library</span>/LaunchAgents
 
-        cd chunkwm/src/chunkc
-        make
-        cp <span class="hljs-keyword">bin</span>/chunkc /usr/<span class="hljs-keyword">local</span>/<span class="hljs-keyword">bin</span>
+            cd chunkwm/src/chunkc
+            make
+            cp <span class="hljs-keyword">bin</span>/chunkc /usr/<span class="hljs-keyword">local</span>/<span class="hljs-keyword">bin</span>
 
-        launchctl <span class="hljs-keyword">load</span> -w ~/<span class="hljs-keyword">Library</span>/LaunchAgents/com.koekeishiya.chunkwm.plist
-        </code></pre><p><strong>chunkwm-tiling</strong>:</p>
-        <pre><code>
-        cd chunkwm/src/plugins/tiling
-        make install
-        mkdir -<span class="hljs-selector-tag">p</span> ~/<span class="hljs-selector-class">.chunkwm_plugins</span>
-        cp ../../../plugins/tiling<span class="hljs-selector-class">.so</span> ~/.chunkwm_plugins
-        </code></pre><p><strong>chunkwm-border</strong>:</p>
-        <pre><code>
-        <span class="hljs-keyword">cd</span> chunkwm/src/plugins/border
-        <span class="hljs-keyword">make</span> install
-        <span class="hljs-built_in">mkdir</span> -<span class="hljs-keyword">p</span> ~/.chunkwm_plugins
-        <span class="hljs-keyword">cp</span> ../../../plugins/border.<span class="hljs-keyword">so</span> ~/.chunkwm_plugins
-        </code></pre><p><strong>chunkwm-ffm</strong>:</p>
-        <pre><code>
-        cd chunkwm/src/plugins/ffm
-        make install
-        mkdir -<span class="hljs-selector-tag">p</span> ~/<span class="hljs-selector-class">.chunkwm_plugins</span>
-        cp ../../../plugins/ffm<span class="hljs-selector-class">.so</span> ~/.chunkwm_plugins
-        </code></pre><h2 id="configuration">Configuration</h2>
-        <p><strong>chunkwm</strong> uses a shell script as its configuration file and is located at <code>$HOME/.chunkwmrc</code>.</p>
-        <p>This implies that the <code>.chunkwmrc</code> file needs executable permissions; <code>chmod +x ~/.chunkwmrc</code>.</p>
-        <p>A different location can be specified with the <code>--config | -c</code> argument.</p>
-        <p>e.g: <code>chunkwm --config /opt/local/etc/chunkwm/chunkwmrc</code>.</p>
-        <p>Both the <em>chunkwm-core</em> and all plugins are configured in this file.</p>
-        <p>Plugin settings should be set before the command to load said plugin.</p>
-        <p>The valid config-options for <em>chunkwm-core</em> are as follows:</p>
-        <pre><code>
-        chunkc <span class="hljs-symbol">core::</span>log_file <span class="hljs-params">&lt;/path/to/log/file&gt;</span>
-        chunkc <span class="hljs-symbol">core::</span>log_level <span class="hljs-params">&lt;none | debug | warn | error&gt;</span>
-        chunkc <span class="hljs-symbol">core::</span>plugin_dir <span class="hljs-params">&lt;/path/to/plugins&gt;</span>
-        chunkc <span class="hljs-symbol">core::</span>hotload <span class="hljs-params">&lt;<span class="hljs-number">1</span> | <span class="hljs-number">0</span>&gt;</span>
-        chunkc <span class="hljs-symbol">core::</span>load <span class="hljs-params">&lt;plugin&gt;</span>
-        chunkc <span class="hljs-symbol">core::</span>unload <span class="hljs-params">&lt;plugin&gt;</span>
-        </code></pre><p>Plugins can be loaded and unloaded at any time, without having to restart <em>chunkwm</em>.</p>
-        <p>See <a href="https://github.com/koekeishiya/chunkwm/blob/master/examples/chunkwmrc"><strong>sample config</strong></a> for further information.</p>
-        <p>Visit <a href="https://github.com/koekeishiya/chunkwm/tree/master/src/plugins/tiling/README.md"><strong>chunkwm-tiling reference</strong></a>.</p>
-        <p>Visit <a href="https://github.com/koekeishiya/chunkwm/tree/master/src/plugins/border/README.md"><strong>chunkwm-border reference</strong></a>.</p>
-        <p>Visit <a href="https://github.com/koekeishiya/chunkwm/tree/master/src/plugins/ffm/README.md"><strong>chunkwm-ffm reference</strong></a>.</p>
-        <p>A sample keybinding config file for <a href="https://github.com/koekeishiya/skhd"><strong>skhd</strong></a> is available <a href="https://github.com/koekeishiya/chunkwm/tree/master/src/plugins/tiling/examples/skhdrc"><strong>here</strong></a>.</p>
-        <p>A sample keybinding config file for <a href="https://github.com/koekeishiya/khd"><strong>khd</strong></a> is available <a href="https://github.com/koekeishiya/chunkwm/tree/master/src/plugins/tiling/examples/khdrc"><strong>here</strong></a>.</p>
-        <h2 id="insertion-modes">Insertion Modes</h2>
-        <h4 id="prelude">Prelude</h4>
-        <p>When <strong>chunkwm</strong> detects a new window, it inserts it into a window tree at the specified insertion point, using the insertion mode specified for that insertion point.</p>
-        <p>The insertion mode tells <strong>chunkwm</strong> how it should alter the tree in order to insert new windows on a given insertion point.</p>
-        <p>The insertion point is the focused window and its default insertion mode is <em>automatic</em>.</p>
-        <p>If the focused window is not eligible for any reason, the minimum-depth leaf node is chosen instead.</p>
-        <h4 id="automatic-mode">Automatic Mode</h4>
-        <p>The <em>automatic</em> mode, as opposed to the <em>manual</em> mode, doesn&#39;t require any user choice: the new window will <em>split the focused window</em>
-        using the parameters set in the config file:</p>
-        <ul>
-        <li><em>bsp_split_mode</em></li>
-        <li><em>bsp_spawn_left</em></li>
-        <li><em>bsp_split_ratio</em></li>
-        </ul>
-        <p>Consider the following scenario:</p>
-        <pre><code>
-                     a                          a                          a
-                    / \                        / \                        / \
-                   1   b         ---&gt;         1   b         ---&gt;         1   b
-                      / \                        / \                        / \
-                     2   3                      c   3                      c   3
-                     ^                         / \                        / \
-                                              4   2                      d   2
-                                              ^                         / \
-                                                                       5   4
+            launchctl <span class="hljs-keyword">load</span> -w ~/<span class="hljs-keyword">Library</span>/LaunchAgents/com.koekeishiya.chunkwm.plist
+            </code></pre><p><strong>chunkwm-tiling</strong>:</p>
+            <pre><code>
+            cd chunkwm/src/plugins/tiling
+            make install
+            mkdir -<span class="hljs-selector-tag">p</span> ~/<span class="hljs-selector-class">.chunkwm_plugins</span>
+            cp ../../../plugins/tiling<span class="hljs-selector-class">.so</span> ~/.chunkwm_plugins
+            </code></pre><p><strong>chunkwm-border</strong>:</p>
+            <pre><code>
+            <span class="hljs-keyword">cd</span> chunkwm/src/plugins/border
+            <span class="hljs-keyword">make</span> install
+            <span class="hljs-built_in">mkdir</span> -<span class="hljs-keyword">p</span> ~/.chunkwm_plugins
+            <span class="hljs-keyword">cp</span> ../../../plugins/border.<span class="hljs-keyword">so</span> ~/.chunkwm_plugins
+            </code></pre><p><strong>chunkwm-ffm</strong>:</p>
+            <pre><code>
+            cd chunkwm/src/plugins/ffm
+            make install
+            mkdir -<span class="hljs-selector-tag">p</span> ~/<span class="hljs-selector-class">.chunkwm_plugins</span>
+            cp ../../../plugins/ffm<span class="hljs-selector-class">.so</span> ~/.chunkwm_plugins
+            </code></pre><h2 id="configuration">Configuration</h2>
+            <p><strong>chunkwm</strong> uses a shell script as its configuration file and is located at <code>$HOME/.chunkwmrc</code>.</p>
+            <p>This implies that the <code>.chunkwmrc</code> file needs executable permissions; <code>chmod +x ~/.chunkwmrc</code>.</p>
+            <p>A different location can be specified with the <code>--config | -c</code> argument.</p>
+            <p>e.g: <code>chunkwm --config /opt/local/etc/chunkwm/chunkwmrc</code>.</p>
+            <p>Both the <em>chunkwm-core</em> and all plugins are configured in this file.</p>
+            <p>Plugin settings should be set before the command to load said plugin.</p>
+            <p>The valid config-options for <em>chunkwm-core</em> are as follows:</p>
+            <pre><code>
+            chunkc <span class="hljs-symbol">core::</span>log_file <span class="hljs-params">&lt;/path/to/log/file&gt;</span>
+            chunkc <span class="hljs-symbol">core::</span>log_level <span class="hljs-params">&lt;none | debug | warn | error&gt;</span>
+            chunkc <span class="hljs-symbol">core::</span>plugin_dir <span class="hljs-params">&lt;/path/to/plugins&gt;</span>
+            chunkc <span class="hljs-symbol">core::</span>hotload <span class="hljs-params">&lt;<span class="hljs-number">1</span> | <span class="hljs-number">0</span>&gt;</span>
+            chunkc <span class="hljs-symbol">core::</span>load <span class="hljs-params">&lt;plugin&gt;</span>
+            chunkc <span class="hljs-symbol">core::</span>unload <span class="hljs-params">&lt;plugin&gt;</span>
+            </code></pre><p>Plugins can be loaded and unloaded at any time, without having to restart <em>chunkwm</em>.</p>
+            <p>See <a href="https://github.com/koekeishiya/chunkwm/blob/master/examples/chunkwmrc"><strong>sample config</strong></a> for further information.</p>
+            <p>Visit <a href="https://github.com/koekeishiya/chunkwm/tree/master/src/plugins/tiling/README.md"><strong>chunkwm-tiling reference</strong></a>.</p>
+            <p>Visit <a href="https://github.com/koekeishiya/chunkwm/tree/master/src/plugins/border/README.md"><strong>chunkwm-border reference</strong></a>.</p>
+            <p>Visit <a href="https://github.com/koekeishiya/chunkwm/tree/master/src/plugins/ffm/README.md"><strong>chunkwm-ffm reference</strong></a>.</p>
+            <p>A sample keybinding config file for <a href="https://github.com/koekeishiya/skhd"><strong>skhd</strong></a> is available <a href="https://github.com/koekeishiya/chunkwm/tree/master/src/plugins/tiling/examples/skhdrc"><strong>here</strong></a>.</p>
+            <p>A sample keybinding config file for <a href="https://github.com/koekeishiya/khd"><strong>khd</strong></a> is available <a href="https://github.com/koekeishiya/chunkwm/tree/master/src/plugins/tiling/examples/khdrc"><strong>here</strong></a>.</p>
+            <h2 id="insertion-modes">Insertion Modes</h2>
+            <h4 id="prelude">Prelude</h4>
+            <p>When <strong>chunkwm</strong> detects a new window, it inserts it into a window tree at the specified insertion point, using the insertion mode specified for that insertion point.</p>
+            <p>The insertion mode tells <strong>chunkwm</strong> how it should alter the tree in order to insert new windows on a given insertion point.</p>
+            <p>The insertion point is the focused window and its default insertion mode is <em>automatic</em>.</p>
+            <p>If the focused window is not eligible for any reason, the minimum-depth leaf node is chosen instead.</p>
+            <h4 id="automatic-mode">Automatic Mode</h4>
+            <p>The <em>automatic</em> mode, as opposed to the <em>manual</em> mode, doesn&#39;t require any user choice: the new window will <em>split the focused window</em>
+            using the parameters set in the config file:</p>
+            <ul>
+            <li><em>bsp_split_mode</em></li>
+            <li><em>bsp_spawn_left</em></li>
+            <li><em>bsp_split_ratio</em></li>
+            </ul>
+            <p>Consider the following scenario:</p>
+            <pre><code>
+                         a                          a                          a
+                        / \                        / \                        / \
+                       1   b         ---&gt;         1   b         ---&gt;         1   b
+                          / \                        / \                        / \
+                         2   3                      c   3                      c   3
+                         ^                         / \                        / \
+                                                  4   2                      d   2
+                                                  ^                         / \
+                                                                           5   4
 
-         +-----------------------+  +-----------------------+  +-----------------------+
-         |<span class="hljs-string">           </span>|<span class="hljs-string">           </span>|<span class="hljs-string">  </span>|<span class="hljs-string">           </span>|<span class="hljs-string">     </span>|<span class="hljs-string">     </span>|<span class="hljs-string">  </span>|<span class="hljs-string">           </span>|<span class="hljs-string">  5  </span>|<span class="hljs-string">     </span>|
-         |<span class="hljs-string">           </span>|<span class="hljs-string">     2     </span>|<span class="hljs-string">  </span>|<span class="hljs-string">           </span>|<span class="hljs-string">  4  </span>|<span class="hljs-string">  2  </span>|<span class="hljs-string">  </span>|<span class="hljs-string">           </span>|<span class="hljs-string">-----</span>|<span class="hljs-string">  2  </span>|
-         |<span class="hljs-string">           </span>|<span class="hljs-string">     ^     </span>|<span class="hljs-string">  </span>|<span class="hljs-string">           </span>|<span class="hljs-string">  ^  </span>|<span class="hljs-string">     </span>|<span class="hljs-string">  </span>|<span class="hljs-string">           </span>|<span class="hljs-string">  4  </span>|<span class="hljs-string">     </span>|
-         |<span class="hljs-string">     1     </span>|<span class="hljs-string">-----------</span>|<span class="hljs-string">  </span>|<span class="hljs-string">     1     </span>|<span class="hljs-string">-----------</span>|<span class="hljs-string">  </span>|<span class="hljs-string">     1     </span>|<span class="hljs-string">-----------</span>|
-         |<span class="hljs-string">           </span>|<span class="hljs-string">           </span>|<span class="hljs-string">  </span>|<span class="hljs-string">           </span>|<span class="hljs-string">           </span>|<span class="hljs-string">  </span>|<span class="hljs-string">           </span>|<span class="hljs-string">           </span>|
-         |<span class="hljs-string">           </span>|<span class="hljs-string">     3     </span>|<span class="hljs-string">  </span>|<span class="hljs-string">           </span>|<span class="hljs-string">     3     </span>|<span class="hljs-string">  </span>|<span class="hljs-string">           </span>|<span class="hljs-string">     3     </span>|
-         |<span class="hljs-string">           </span>|<span class="hljs-string">           </span>|<span class="hljs-string">  </span>|<span class="hljs-string">           </span>|<span class="hljs-string">           </span>|<span class="hljs-string">  </span>|<span class="hljs-string">           </span>|<span class="hljs-string">           </span>|
-         +-----------------------+  +-----------------------+  +-----------------------+
+             +-----------------------+  +-----------------------+  +-----------------------+
+             |<span class="hljs-string">           </span>|<span class="hljs-string">           </span>|<span class="hljs-string">  </span>|<span class="hljs-string">           </span>|<span class="hljs-string">     </span>|<span class="hljs-string">     </span>|<span class="hljs-string">  </span>|<span class="hljs-string">           </span>|<span class="hljs-string">  5  </span>|<span class="hljs-string">     </span>|
+             |<span class="hljs-string">           </span>|<span class="hljs-string">     2     </span>|<span class="hljs-string">  </span>|<span class="hljs-string">           </span>|<span class="hljs-string">  4  </span>|<span class="hljs-string">  2  </span>|<span class="hljs-string">  </span>|<span class="hljs-string">           </span>|<span class="hljs-string">-----</span>|<span class="hljs-string">  2  </span>|
+             |<span class="hljs-string">           </span>|<span class="hljs-string">     ^     </span>|<span class="hljs-string">  </span>|<span class="hljs-string">           </span>|<span class="hljs-string">  ^  </span>|<span class="hljs-string">     </span>|<span class="hljs-string">  </span>|<span class="hljs-string">           </span>|<span class="hljs-string">  4  </span>|<span class="hljs-string">     </span>|
+             |<span class="hljs-string">     1     </span>|<span class="hljs-string">-----------</span>|<span class="hljs-string">  </span>|<span class="hljs-string">     1     </span>|<span class="hljs-string">-----------</span>|<span class="hljs-string">  </span>|<span class="hljs-string">     1     </span>|<span class="hljs-string">-----------</span>|
+             |<span class="hljs-string">           </span>|<span class="hljs-string">           </span>|<span class="hljs-string">  </span>|<span class="hljs-string">           </span>|<span class="hljs-string">           </span>|<span class="hljs-string">  </span>|<span class="hljs-string">           </span>|<span class="hljs-string">           </span>|
+             |<span class="hljs-string">           </span>|<span class="hljs-string">     3     </span>|<span class="hljs-string">  </span>|<span class="hljs-string">           </span>|<span class="hljs-string">     3     </span>|<span class="hljs-string">  </span>|<span class="hljs-string">           </span>|<span class="hljs-string">     3     </span>|
+             |<span class="hljs-string">           </span>|<span class="hljs-string">           </span>|<span class="hljs-string">  </span>|<span class="hljs-string">           </span>|<span class="hljs-string">           </span>|<span class="hljs-string">  </span>|<span class="hljs-string">           </span>|<span class="hljs-string">           </span>|
+             +-----------------------+  +-----------------------+  +-----------------------+
 
-                      X                         Y                          Z
-        </code></pre><p>In state <em>X</em>, the insertion point, <em>2</em> is in automatic mode.</p>
-        <p>When we add a new window, <em>4</em>, the insertion point is split, and becomes the right child of a new internal node, <em>c</em>.</p>
-        <p>Then the insertion of <em>5</em>, with <em>4</em> as insertion point, leads to <em>Z</em>.</p>
-        <h4 id="manual-mode">Manual Mode</h4>
-        <p>The user can specify a region in the insertion point where the next new window should appear by sending a <code>chunkc tiling::window -i | --use-insertion-point &lt;direction&gt;</code> message.</p>
-        <p>The <em>\<direction></em> argument specifies how the insertion point should be split (horizontally or vertically) and if the new window should be the left or the right child of the new internal node.</p>
-        <p>After doing so, the insertion point goes into <em>manual</em> mode.</p>
-        <p>Consider the following scenario:</p>
-        <pre><code>
-                    a                          a                          a
-                   / \                        / \                        / \
-                  1   b         ---&gt;         c   b         ---&gt;         c   b
-                  ^  / \                    / \ / \                    / \ / \
-                    2   3                  1  4 2  3                  1  d 2  3
-                                              ^                         / \
-                                                                       4   5
-                                                                           ^
+                          X                         Y                          Z
+            </code></pre><p>In state <em>X</em>, the insertion point, <em>2</em> is in automatic mode.</p>
+            <p>When we add a new window, <em>4</em>, the insertion point is split, and becomes the right child of a new internal node, <em>c</em>.</p>
+            <p>Then the insertion of <em>5</em>, with <em>4</em> as insertion point, leads to <em>Z</em>.</p>
+            <h4 id="manual-mode">Manual Mode</h4>
+            <p>The user can specify a region in the insertion point where the next new window should appear by sending a <code>chunkc tiling::window -i | --use-insertion-point &lt;direction&gt;</code> message.</p>
+            <p>The <em>\<direction></em> argument specifies how the insertion point should be split (horizontally or vertically) and if the new window should be the left or the right child of the new internal node.</p>
+            <p>After doing so, the insertion point goes into <em>manual</em> mode.</p>
+            <p>Consider the following scenario:</p>
+            <pre><code>
+                        a                          a                          a
+                       / \                        / \                        / \
+                      1   b         ---&gt;         c   b         ---&gt;         c   b
+                      ^  / \                    / \ / \                    / \ / \
+                        2   3                  1  4 2  3                  1  d 2  3
+                                                  ^                         / \
+                                                                           4   5
+                                                                               ^
 
-        +-----------------------+  +-----------------------+  +-----------------------+
-        |<span class="hljs-string">           </span>|<span class="hljs-string">           </span>|<span class="hljs-string">  </span>|<span class="hljs-string">           </span>|<span class="hljs-string">           </span>|<span class="hljs-string">  </span>|<span class="hljs-string">           </span>|<span class="hljs-string">           </span>|
-        |<span class="hljs-string">           </span>|<span class="hljs-string">     2     </span>|<span class="hljs-string">  </span>|<span class="hljs-string">     1     </span>|<span class="hljs-string">     2     </span>|<span class="hljs-string">  </span>|<span class="hljs-string">     1     </span>|<span class="hljs-string">     2     </span>|
-        |<span class="hljs-string">           </span>|<span class="hljs-string">           </span>|<span class="hljs-string">  </span>|<span class="hljs-string">           </span>|<span class="hljs-string">           </span>|<span class="hljs-string">  </span>|<span class="hljs-string">           </span>|<span class="hljs-string">           </span>|
-        |<span class="hljs-string">     1     </span>|<span class="hljs-string">-----------</span>|<span class="hljs-string">  </span>|<span class="hljs-string">-----------</span>|<span class="hljs-string">-----------</span>|<span class="hljs-string">  </span>|<span class="hljs-string">-----------</span>|<span class="hljs-string">-----------</span>|
-        |<span class="hljs-string">     ^     </span>|<span class="hljs-string">           </span>|<span class="hljs-string">  </span>|<span class="hljs-string">           </span>|<span class="hljs-string">           </span>|<span class="hljs-string">  </span>|<span class="hljs-string">     </span>|<span class="hljs-string">     </span>|<span class="hljs-string">           </span>|
-        |<span class="hljs-string">           </span>|<span class="hljs-string">     3     </span>|<span class="hljs-string">  </span>|<span class="hljs-string">     4     </span>|<span class="hljs-string">     3     </span>|<span class="hljs-string">  </span>|<span class="hljs-string">  4  </span>|<span class="hljs-string">  5  </span>|<span class="hljs-string">     3     </span>|
-        |<span class="hljs-string">           </span>|<span class="hljs-string">           </span>|<span class="hljs-string">  </span>|<span class="hljs-string">     ^     </span>|<span class="hljs-string">           </span>|<span class="hljs-string">  </span>|<span class="hljs-string">     </span>|<span class="hljs-string">     </span>|<span class="hljs-string">           </span>|
-        +-----------------------+  +-----------------------+  +-----------------------+
+            +-----------------------+  +-----------------------+  +-----------------------+
+            |<span class="hljs-string">           </span>|<span class="hljs-string">           </span>|<span class="hljs-string">  </span>|<span class="hljs-string">           </span>|<span class="hljs-string">           </span>|<span class="hljs-string">  </span>|<span class="hljs-string">           </span>|<span class="hljs-string">           </span>|
+            |<span class="hljs-string">           </span>|<span class="hljs-string">     2     </span>|<span class="hljs-string">  </span>|<span class="hljs-string">     1     </span>|<span class="hljs-string">     2     </span>|<span class="hljs-string">  </span>|<span class="hljs-string">     1     </span>|<span class="hljs-string">     2     </span>|
+            |<span class="hljs-string">           </span>|<span class="hljs-string">           </span>|<span class="hljs-string">  </span>|<span class="hljs-string">           </span>|<span class="hljs-string">           </span>|<span class="hljs-string">  </span>|<span class="hljs-string">           </span>|<span class="hljs-string">           </span>|
+            |<span class="hljs-string">     1     </span>|<span class="hljs-string">-----------</span>|<span class="hljs-string">  </span>|<span class="hljs-string">-----------</span>|<span class="hljs-string">-----------</span>|<span class="hljs-string">  </span>|<span class="hljs-string">-----------</span>|<span class="hljs-string">-----------</span>|
+            |<span class="hljs-string">     ^     </span>|<span class="hljs-string">           </span>|<span class="hljs-string">  </span>|<span class="hljs-string">           </span>|<span class="hljs-string">           </span>|<span class="hljs-string">  </span>|<span class="hljs-string">     </span>|<span class="hljs-string">     </span>|<span class="hljs-string">           </span>|
+            |<span class="hljs-string">           </span>|<span class="hljs-string">     3     </span>|<span class="hljs-string">  </span>|<span class="hljs-string">     4     </span>|<span class="hljs-string">     3     </span>|<span class="hljs-string">  </span>|<span class="hljs-string">  4  </span>|<span class="hljs-string">  5  </span>|<span class="hljs-string">     3     </span>|
+            |<span class="hljs-string">           </span>|<span class="hljs-string">           </span>|<span class="hljs-string">  </span>|<span class="hljs-string">     ^     </span>|<span class="hljs-string">           </span>|<span class="hljs-string">  </span>|<span class="hljs-string">     </span>|<span class="hljs-string">     </span>|<span class="hljs-string">           </span>|
+            +-----------------------+  +-----------------------+  +-----------------------+
 
-                    X                          Y                          Z
-        </code></pre><p>In state <em>X</em>, the insertion point is <em>1</em>.</p>
-        <p>We send the following message to <strong>chunkwm</strong>: <code>chunkc tiling::window -i south</code>.</p>
-        <p>Then add a new window: <em>4</em>, this leads to state <em>Y</em>: the new internal node, <em>c</em> becomes <em>a</em>&#39;s left child.</p>
-        <p>Finally we send another message: <code>chunkc tiling::window -i east</code> and add window <em>5</em>.</p>
-        <p>The ratio of the preselection can be set by including the <code>-r | --use-temporary-ratio &lt;ratio&gt;</code> flag in the message.
-        e.g: <code>chunkc tiling::window -r 0.3 -i east</code>.</p>
-        <h2 id="a-tribute">A tribute</h2>
-        <p>Both of my tiling window managers (<em>kwm</em> and <em>chunkwm</em>) have been heavily inspired by <a href="https://github.com/baskerville/bspwm">bspwm</a>,
-        and I&#39;d like to thank <a href="https://github.com/baskerville">baskerville</a> for his project and for introducing me to an interesting tiling concept.</p>
-        </p>
+                        X                          Y                          Z
+            </code></pre><p>In state <em>X</em>, the insertion point is <em>1</em>.</p>
+            <p>We send the following message to <strong>chunkwm</strong>: <code>chunkc tiling::window -i south</code>.</p>
+            <p>Then add a new window: <em>4</em>, this leads to state <em>Y</em>: the new internal node, <em>c</em> becomes <em>a</em>&#39;s left child.</p>
+            <p>Finally we send another message: <code>chunkc tiling::window -i east</code> and add window <em>5</em>.</p>
+            <p>The ratio of the preselection can be set by including the <code>-r | --use-temporary-ratio &lt;ratio&gt;</code> flag in the message.
+            e.g: <code>chunkc tiling::window -r 0.3 -i east</code>.</p>
+            <h2 id="a-tribute">A tribute</h2>
+            <p>Both of my tiling window managers (<em>kwm</em> and <em>chunkwm</em>) have been heavily inspired by <a href="https://github.com/baskerville/bspwm">bspwm</a>,
+            and I&#39;d like to thank <a href="https://github.com/baskerville">baskerville</a> for his project and for introducing me to an interesting tiling concept.</p>
+            </p>
+        </div>
     </div>
     <div id="footer">
         <p>2018 © Åsmund Vikane</p>

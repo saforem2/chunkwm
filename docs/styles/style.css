@@ -1,50 +1,62 @@
 body {
-    width: 850px;
+    width: 100vmin;
     margin: 0 auto;
     font-family: "Lucida Console", Monaco, monospace;
     background-color: #202020;
+    height: 100vh;
+    overflow: hidden;
 }
 
 .clear {
     clear: both;
 }
 
+.scale-img {
+    width: 100vmin;
+}
+
+.build-img {
+    width: 10vmin;
+}
+
 #header {
-    width: 100%;
+    width: 100vmin;
+    height: 10vh;
 }
 
 #logo {
     float: left;
-    padding-top: 10px;
+    padding-top: 1vmin;
 }
 
 #logo-img {
-    width: 150px;
+    width: 17.0vmin;
 }
 
 #navbar-text {
     float: left;
-    margin-top: 0px;
-    padding-left: 20px;
-    padding-top: 60px;
+    margin-top: 3.4vmin;
+    padding-top: 3.4vmin;
+    padding-left: 2.5vmin;
 }
 
 #navbar-text h4 {
-    font-size: 20px;
-    margin-bottom: 0px;
+    font-size: 2.19vmin;
+    margin-bottom: 0;
     color: #dfdfdf;
 }
 
 #navbar-text p {
-    font-size: 14px;
-    margin-top: 0px;
+    font-size: 1.44vmin;
+    margin-top: 0;
     color: #8fee96;
 }
 
 #navbar-menu {
     float: left;
-    padding-top: 40px;
-    padding-left: 60px;
+    padding-top: 4.4vmin;
+    padding-left: 5.8vmin;
+    font-size: 1.75vmin;
 }
 
 #navbar-menu li {
@@ -55,7 +67,7 @@ body {
 #navbar-menu li:after {
     content: '|';
     color: #775759;
-    padding: 5px;
+    padding: 0.68vmin;
 }
 
 #navbar-menu li:last-child:after {
@@ -66,27 +78,36 @@ body {
     color: #707070;
     font-weight: bold;
     text-decoration: none;
-    padding: 7px;
+    padding: 0.68vmin;
 }
 
 #navbar-menu a:hover {
     color: #8fee96;
     font-weight: bold;
     text-decoration: none;
-    padding: 7px;
+    padding: 0.68vmin;
 }
 
 .active {
     color: #dfdfdf;
 }
 
+#body {
+    width: 100vmin;
+    top: 18vmin;
+    height: 80vh;
+    overflow: hidden;
+}
+
 #contents {
-    font-size: 12px;
+    font-size: 1.5vmin;
     color: #d5c4a1;
-    position: absolute;
-    overflow-y: scroll;
-    width: 820px;
-    height: 77%;
+    overflow: scroll;
+    top: 18vmin;
+    height: 80vh;
+    width: 100vmin;
+    margin-right: -50px;
+    padding-right: 50px;
 }
 
 #contents h2, h3, h4 {
@@ -106,11 +127,11 @@ body {
 }
 
 #footer {
-    font-size: 8px;
+    font-size: 1.08vmin;
     color: #8fee96;
     overflow: hidden;
     position: absolute;
     left: 50%;
-    top: 97%;
-    transform: translate(-50%, -50%);
+    bottom: 0;
+    transform: translate(-50%, 0);
 }
