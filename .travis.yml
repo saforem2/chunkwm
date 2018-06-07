@@ -9,7 +9,7 @@ script: cd $BUILD_DIR && make install
 notifications:
     irc:
         channels:
-            - "chat.freenode.net#chunkwm"
+            - "irc.freenode.net#chunkwm"
         template:
             - "%{repository_slug} (%{commit}) : %{commit_message} "
             - "Build details (%{result}): %{build_url}"
