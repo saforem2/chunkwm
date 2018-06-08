@@ -1,5 +1,9 @@
 ### HEAD -  not yet released
 
+----------
+
+### version 0.4.0
+
 #### ABI Change
 
  - Add new event `chunkwm_export_window_sheet_created` (#229)

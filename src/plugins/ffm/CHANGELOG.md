@@ -1,5 +1,9 @@
 ### HEAD - not yet released
 
+---------------
+
+### version 0.3.3
+
 #### cvar changes
 
  - new cvar *ffm_standby_on_float* (#437)

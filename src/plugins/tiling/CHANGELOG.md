@@ -1,5 +1,9 @@
 ### HEAD -  not yet released
 
+----------
+
+### version 0.3.10
+
 #### other changes
 
 - fixes an issue that made it impossible to interact with modal windows when "float topmost" was enabled (#229)
