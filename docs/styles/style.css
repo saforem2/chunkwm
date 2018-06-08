@@ -16,12 +16,29 @@ code {
     background-color: #252525;
 }
 
+a {
+    color: #707070;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+a:hover {
+    color: #8fee96;
+    font-weight: bold;
+    text-decoration: none;
+}
+
 .clear {
     clear: both;
 }
 
 .scale-img {
     width: 98vmin;
+}
+
+.scale-img-half {
+    width: 46vmin;
+    border: 1px solid #404040;
 }
 
 .build-img {
@@ -83,16 +100,10 @@ code {
 }
 
 #navbar-menu a {
-    color: #707070;
-    font-weight: bold;
-    text-decoration: none;
     padding: 0.68vmin;
 }
 
 #navbar-menu a:hover {
-    color: #8fee96;
-    font-weight: bold;
-    text-decoration: none;
     padding: 0.68vmin;
 }
 
@@ -123,16 +134,14 @@ code {
     color: #dfdfdf;
 }
 
-#contents a {
-    color: #707070;
-    font-weight: bold;
-    text-decoration: none;
+#left-contents {
+    width: 48vmin;
+    float: left;
 }
 
-#contents a:hover {
-    color: #8fee96;
-    font-weight: bold;
-    text-decoration: none;
+#right-contents {
+    width: 48vmin;
+    float: right;
 }
 
 #footer {

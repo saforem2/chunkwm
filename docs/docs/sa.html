@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset=utf-8 />
+<link rel="stylesheet" type="text/css" href="../styles/style.css" />
+<title>$ chunkwm - tiling wm</title>
+</head>
+<body>
+    <div id="header">
+        <div id="logo">
+            <img id="logo-img" src="../images/chunkwm-logo.png" alt="logo" />
+        </div>
+        <div id="navbar">
+            <div id="navbar-text">
+                <h4>chunkwm</h4>
+                <p>tiling wm for macOS</p>
+            </div>
+            <div id="navbar-menu">
+                <ul>
+                    <li><a href="../index.html">Home</a></li>
+                    <li><a href="../docs.html"><span class="active">Docs</span></a></li>
+                    <li><a href="../screens.html">Screens</a></li>
+                    <li><a href="#">FAQ</a></li>
+                    <li><a href="../contact.html">Contact</a></li>
+                    <li><a target="_blank" href="https://github.com/koekeishiya/chunkwm">Github</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="clear"></div>
+    <div id="body">
+        <div id="contents">
+            <h2>Scripting addition</h2>
+            <p>
+                <strong>chunkwm</strong> offer advanced functionality that is achieved by injecting code into the Dock process.</br>
+                This gives us elevated privileges, which allow for more control of other application's windows.
+            </p>
+
+            <p>Installing the scripting addition allows for the following functionality:</p>
+            <ul>
+                <li>ability to switch active desktop instantly, bypassing the animation</li>
+                <li>option to lower the opacity of inactive windows, through smooth alpha fading</li>
+                <li>make floating windows always stay on top</li>
+                <li>tag a window as "sticky", making it appear on all desktops</li>
+            </ul>
+
+            <p>
+                The scripting addition injects code into Dock.app, which is a system application. </br>
+                Because of this you need to disable <a href="#">SIP</a> to install or uninstall this extension.
+                SIP can safely be reenabled after you have installed the scripting addition.
+            </p>
+            <p>
+                To change the status of SIP, you need to reboot into recovery mode. On newer MBPs this can be done
+                by restarting your mac and hold down "cmd + r" during boot, until you see a white progress bar.
+            </p>
+            <p>
+                Once recovery mode has booted up, click the utilites menu in the menubar and open a Terminal.
+
+                <pre><code>
+                    # to disable SIP:
+                    csrutil disable
+
+                    # to enable SIP:
+                    csrutil enable
+                </code></pre>
+
+                Reboot your mac.
+            </p>
+
+            <p>
+                After you have disabled SIP, you can use the following commands to install / uninstall the scripting addition.
+                <pre><code>
+                    # to install scripting-addition
+                    sudo chunkwm --install-sa
+
+                    # to remove scripting-addition
+                    sudo chunkwm --uninstall-sa
+                </code></pre>
+            </p>
+
+            <p>
+                When the scripting-ddition has been installed, you can load it by running: <em>chunkwm --load-sa</em></br>
+                Simply put the command at the end of your <em>.chunkwmrc</em> to have it load automatically when starting chunkwm.
+            </p>
+
+            <p>
+                The scripting-addition is open source and can be found on my github: <a href="https://github.com/koekeishiya/chwm-sa">chunkwm-sa</a>
+            </p>
+        </div>
+    </div>
+    <div id="footer">
+        <p>© 2018 Åsmund Vikane</p>
+    </div>
+</body>
+</html>

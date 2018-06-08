@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset=utf-8 />
+<link rel="stylesheet" type="text/css" href="../styles/style.css" />
+<title>$ chunkwm - tiling wm</title>
+</head>
+<body>
+    <div id="header">
+        <div id="logo">
+            <img id="logo-img" src="../images/chunkwm-logo.png" alt="logo" />
+        </div>
+        <div id="navbar">
+            <div id="navbar-text">
+                <h4>chunkwm</h4>
+                <p>tiling wm for macOS</p>
+            </div>
+            <div id="navbar-menu">
+                <ul>
+                    <li><a href="../index.html">Home</a></li>
+                    <li><a href="../docs.html"><span class="active">Docs</span></a></li>
+                    <li><a href="../screens.html">Screens</a></li>
+                    <li><a href="#">FAQ</a></li>
+                    <li><a href="../contact.html">Contact</a></li>
+                    <li><a target="_blank" href="https://github.com/koekeishiya/chunkwm">Github</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="clear"></div>
+    <div id="body">
+        <div id="contents">
+            <h2>Building chunkwm and plugins from source</h2>
+            </code></pre>
+            <p>Requires xcode-8 command line tools.</p>
+            <pre><code>
+            git <span class="hljs-keyword">clone</span> <span class="hljs-title">https</span>://github.com/koekeishiya/chunkwm
+            </code></pre><p><strong>chunkwm-core</strong>:</p>
+            <pre><code>
+            cd chunkwm
+            make <span class="hljs-keyword">install</span>
+            cp <span class="hljs-keyword">bin</span>/chunkwm /usr/<span class="hljs-keyword">local</span>/<span class="hljs-keyword">bin</span>
+            cp examples/chunkwmrc ~/.chunkwmrc
+            cp examples/com.koekeishiya.chunkwm.plist ~/<span class="hljs-keyword">Library</span>/LaunchAgents
+
+            cd chunkwm/src/chunkc
+            make
+            cp <span class="hljs-keyword">bin</span>/chunkc /usr/<span class="hljs-keyword">local</span>/<span class="hljs-keyword">bin</span>
+
+            launchctl <span class="hljs-keyword">load</span> -w ~/<span class="hljs-keyword">Library</span>/LaunchAgents/com.koekeishiya.chunkwm.plist
+            </code></pre><p><strong>chunkwm-tiling</strong>:</p>
+            <pre><code>
+            cd chunkwm/src/plugins/tiling
+            make install
+            mkdir -<span class="hljs-selector-tag">p</span> ~/<span class="hljs-selector-class">.chunkwm_plugins</span>
+            cp ../../../plugins/tiling<span class="hljs-selector-class">.so</span> ~/.chunkwm_plugins
+            </code></pre><p><strong>chunkwm-border</strong>:</p>
+            <pre><code>
+            <span class="hljs-keyword">cd</span> chunkwm/src/plugins/border
+            <span class="hljs-keyword">make</span> install
+            <span class="hljs-built_in">mkdir</span> -<span class="hljs-keyword">p</span> ~/.chunkwm_plugins
+            <span class="hljs-keyword">cp</span> ../../../plugins/border.<span class="hljs-keyword">so</span> ~/.chunkwm_plugins
+            </code></pre><p><strong>chunkwm-ffm</strong>:</p>
+            <pre><code>
+            cd chunkwm/src/plugins/ffm
+            make install
+            mkdir -<span class="hljs-selector-tag">p</span> ~/<span class="hljs-selector-class">.chunkwm_plugins</span>
+            cp ../../../plugins/ffm<span class="hljs-selector-class">.so</span> ~/.chunkwm_plugins
+            </code></pre>
+        </div>
+    </div>
+    <div id="footer">
+        <p>© 2018 Åsmund Vikane</p>
+    </div>
+</body>
+</html>
