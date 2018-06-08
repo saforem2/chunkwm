@@ -8,12 +8,6 @@ static inline bool IsRoot(void)
     return geteuid() == 0 || getuid() == 0;
 }
 
-static inline bool IsSIPEnabled(void)
-{
-    // TODO(koekeishiya): Is there an API for this or do we need to parse the output of 'csrutil status' ?..
-    return false;
-}
-
 static bool
 CreateDirectoryStruct(void)
 {
@@ -86,6 +80,14 @@ static void PrepBinaries(void)
     system("codesign -f -s - \"/System/Library/ScriptingAdditions/CHWMInjector.osax/Contents/Resources/chunkwm-sa.bundle/Contents/MacOS/chunkwm-sa\" 2>/dev/null");
 }
 
+static bool RemoveSA(void)
+{
+    int code = system("rm -rf /System/Library/ScriptingAdditions/CHWMInjector.osax 2>/dev/null");
+    if (code == -1)  return false;
+    if (code == 127) return false;
+    return code == 0;
+}
+
 static bool IsSAInstalled(void)
 {
     DIR *dir = opendir("/System/Library/ScriptingAdditions/CHWMInjector.osax");
@@ -98,72 +100,67 @@ static bool IsSAInstalled(void)
 
 static bool InstallSA(void)
 {
-    if (IsSIPEnabled()) {
-        return false;
+    if (IsSAInstalled()) {
+        if (!RemoveSA()) {
+            return false;
+        }
     }
 
-    DIR *dir = opendir("/System/Library/ScriptingAdditions/CHWMInjector.osax");
-    if (dir) {
-        closedir(dir);
-        return false;
-    } else if (ENOENT == errno) {
-        if (!CreateDirectoryStruct()) {
-            goto cleanup;
-        }
-
-        if (!WriteTextFile(SASPlist, strlen(SASPlist), "/System/Library/ScriptingAdditions/CHWMInjector.osax/Contents/Info.plist")) {
-            goto cleanup;
-        }
-
-        if (!WriteTextFile(SASDef, strlen(SASDef), "/System/Library/ScriptingAdditions/CHWMInjector.osax/Contents/Resources/CHWMInjector.sdef")) {
-            goto cleanup;
-        }
-
-        if (!WriteTextFile(SABPlist, strlen(SABPlist), "/System/Library/ScriptingAdditions/CHWMInjector.osax/Contents/Resources/chunkwm-sa.bundle/Contents/Info.plist")) {
-            goto cleanup;
-        }
-
-        if (!WriteBinaryFile(bin_CHWMInjector_osax_Contents_MacOS_CHWMInjector,
-                             bin_CHWMInjector_osax_Contents_MacOS_CHWMInjector_len,
-                             "/System/Library/ScriptingAdditions/CHWMInjector.osax/Contents/MacOS/CHWMInjector")) {
-            goto cleanup;
-        }
-
-        if (!WriteBinaryFile(bin_CHWMInjector_osax_Contents_Resources_chunkwm_sa_bundle_Contents_MacOS_chunkwm_sa,
-                             bin_CHWMInjector_osax_Contents_Resources_chunkwm_sa_bundle_Contents_MacOS_chunkwm_sa_len,
-                             "/System/Library/ScriptingAdditions/CHWMInjector.osax/Contents/Resources/chunkwm-sa.bundle/Contents/MacOS/chunkwm-sa")) {
-            goto cleanup;
-        }
-
-        PrepBinaries();
-        return true;
-    } else {
-        return false;
+    if (!CreateDirectoryStruct()) {
+        goto cleanup;
     }
+
+    if (!WriteTextFile(SASPlist, strlen(SASPlist), "/System/Library/ScriptingAdditions/CHWMInjector.osax/Contents/Info.plist")) {
+        goto cleanup;
+    }
+
+    if (!WriteTextFile(SASDef, strlen(SASDef), "/System/Library/ScriptingAdditions/CHWMInjector.osax/Contents/Resources/CHWMInjector.sdef")) {
+        goto cleanup;
+    }
+
+    if (!WriteTextFile(SABPlist, strlen(SABPlist), "/System/Library/ScriptingAdditions/CHWMInjector.osax/Contents/Resources/chunkwm-sa.bundle/Contents/Info.plist")) {
+        goto cleanup;
+    }
+
+    if (!WriteBinaryFile(bin_CHWMInjector_osax_Contents_MacOS_CHWMInjector,
+                         bin_CHWMInjector_osax_Contents_MacOS_CHWMInjector_len,
+                         "/System/Library/ScriptingAdditions/CHWMInjector.osax/Contents/MacOS/CHWMInjector")) {
+        goto cleanup;
+    }
+
+    if (!WriteBinaryFile(bin_CHWMInjector_osax_Contents_Resources_chunkwm_sa_bundle_Contents_MacOS_chunkwm_sa,
+                         bin_CHWMInjector_osax_Contents_Resources_chunkwm_sa_bundle_Contents_MacOS_chunkwm_sa_len,
+                         "/System/Library/ScriptingAdditions/CHWMInjector.osax/Contents/Resources/chunkwm-sa.bundle/Contents/MacOS/chunkwm-sa")) {
+        goto cleanup;
+    }
+
+    PrepBinaries();
+    return true;
 
 cleanup:
-    // NOTE(koekeishiya): We just call cp using system to do removal for now..
-    system("rm -rf /System/Library/ScriptingAdditions/CHWMInjector.osax 2>/dev/null");
+    RemoveSA();
     return false;
 }
 
-static bool UninstallSA(void)
+static int UninstallSA(void)
 {
-    if (IsSIPEnabled()) {
-        return false;
-    }
-
     if (!IsSAInstalled()) {
-        return false;
+        return 0;
     }
 
-    // NOTE(koekeishiya): We just call cp using system to do removal for now..
-    system("rm -rf /System/Library/ScriptingAdditions/CHWMInjector.osax 2>/dev/null");
-    return true;
+    if (!RemoveSA()) {
+        return -1;
+    }
+
+    return 1;
 }
 
-static bool InjectSA(void)
+static int InjectSA(void)
 {
+    if (!IsSAInstalled()) {
+        return 0;
+    }
+
     for (NSRunningApplication *Application in [[NSWorkspace sharedWorkspace] runningApplications]) {
         pid_t PID = Application.processIdentifier;
         const char *Name = [[Application localizedName] UTF8String];
@@ -174,9 +171,9 @@ static bool InjectSA(void)
             [SBApp sendEvent:'ascr' id:'gdut' parameters:0];
             [SBApp setSendMode:kAENoReply];
             [SBApp sendEvent:'CHWM' id:'injc' parameters:0];
-            return true;
+            return 1;
         }
     }
 
-    return false;
+    return -1;
 }

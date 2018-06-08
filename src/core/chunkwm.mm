@@ -179,10 +179,13 @@ ParseArguments(int Count, char **Args)
         } break;
         case 'u': {
             if (IsRoot()) {
-                if (UninstallSA()) {
-                    printf("chunkwm: successfully uninstalled sa! you can now reenable SIP.\n");
-                } else {
+                int Result = UninstallSA();
+                if (Result == -1) {
                     printf("chunkwm: failed to uninstall sa! make sure SIP is disabled.\n");
+                } else if (Result == 0) {
+                    printf("chunkwm: sa is not installed!\n");
+                } else if (Result == 1) {
+                    printf("chunkwm: successfully uninstalled sa! you can now reenable SIP.\n");
                 }
             } else {
                 printf("chunkwm: sudo privileges are required to uninstall sa!\n");
@@ -190,10 +193,13 @@ ParseArguments(int Count, char **Args)
             return true;
         } break;
         case 'l': {
-            if (InjectSA()) {
-                printf("chunkwm: successfully loaded sa!\n");
-            } else {
+            int Result = InjectSA();
+            if (Result == -1) {
                 printf("chunkwm: failed to load sa!\n");
+            } else if (Result == 0) {
+                printf("chunkwm: sa is not installed!\n");
+            } else if (Result == 1) {
+                printf("chunkwm: successfully loaded sa!\n");
             }
             return true;
         } break;
