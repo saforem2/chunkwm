@@ -3,6 +3,13 @@
 
 #define BUFFER_SIZE                 256
 
+#define CVAR_BAR_ENABLED            "custom_bar_enabled"
+#define CVAR_BAR_ALL_MONITORS       "custom_bar_all_monitors"
+#define CVAR_BAR_OFFSET_TOP         "custom_bar_offset_top"
+#define CVAR_BAR_OFFSET_BOTTOM      "custom_bar_offset_bottom"
+#define CVAR_BAR_OFFSET_LEFT        "custom_bar_offset_left"
+#define CVAR_BAR_OFFSET_RIGHT       "custom_bar_offset_right"
+
 #define _CVAR_SPACE_MODE            "desktop_mode"
 #define _CVAR_SPACE_OFFSET_TOP      "desktop_offset_top"
 #define _CVAR_SPACE_OFFSET_BOTTOM   "desktop_offset_bottom"

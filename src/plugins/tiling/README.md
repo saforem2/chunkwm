@@ -4,6 +4,7 @@
   * [global tiling mode](#set-global-tiling-mode)
   * [specific desktop tiling mode](#set-tiling-mode-for-a-specific-desktop)
   * [default desktop bsp layout](#set-default-bsp-layout-for-a-specific-desktop)
+  * [set custom bar offset](#set-custom-bar-offset)
   * [global offset and window gap](#set-global-desktop-offset-and-window-gap)
   * [specific desktop offset and window gap](#set-desktop-offset-and-window-gap-for-a-specific-desktop)
   * [global offset and window gap incremental step](#set-desktop-offset-and-window-gap-incremental-step)
@@ -90,6 +91,21 @@
     chunkc set <index>_desktop_tree <file>
     <index>: mission-control index
     <file>: /path/to/file (e.g: ~/.chunkwm_layouts/dev_1)
+
+##### set custom bar offset
+
+    chunkc set custom_bar_enabled        <option>
+    <option>: 1 | 0
+    desc: if enabled, apply offsets
+
+    chunkc set custom_bar_all_monitors   <option>
+    <option>: 1 | 0
+    desc: if enabled, apply offsets for desktops on ALL monitors
+
+    chunkc set custom_bar_offset_top     20
+    chunkc set custom_bar_offset_bottom  0
+    chunkc set custom_bar_offset_left    0
+    chunkc set custom_bar_offset_right   0
 
 ##### set global desktop offset and window gap
 

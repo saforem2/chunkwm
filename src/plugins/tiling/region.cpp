@@ -61,6 +61,31 @@ void ConstrainRegion(CFStringRef DisplayRef, region *Region)
         Region->Height -= OSX_MENU_BAR_HEIGHT;
     }
 
+    if (CVarIntegerValue(CVAR_BAR_ENABLED)) {
+        bool ShouldApplyOffset = true;
+        if (!CVarIntegerValue(CVAR_BAR_ALL_MONITORS)) {
+            CFStringRef MainDisplayRef = AXLibGetDisplayIdentifierForMainDisplay();
+            ASSERT(MainDisplayRef);
+
+            if (CFStringCompare(DisplayRef, MainDisplayRef, 0) != kCFCompareEqualTo) {
+                ShouldApplyOffset = false;
+            }
+
+            CFRelease(MainDisplayRef);
+        }
+
+        if (ShouldApplyOffset) {
+            Region->X += CVarFloatingPointValue(CVAR_BAR_OFFSET_LEFT);
+            Region->Width -= CVarFloatingPointValue(CVAR_BAR_OFFSET_LEFT);
+
+            Region->Y += CVarFloatingPointValue(CVAR_BAR_OFFSET_TOP);
+            Region->Height -= CVarFloatingPointValue(CVAR_BAR_OFFSET_TOP);
+
+            Region->Width -= CVarFloatingPointValue(CVAR_BAR_OFFSET_RIGHT);
+            Region->Height -= CVarFloatingPointValue(CVAR_BAR_OFFSET_BOTTOM);
+        }
+    }
+
     if (!AXLibIsDockAutoHideEnabled()) {
         macos_dock_orientation Orientation = AXLibGetDockOrientation();
         size_t TileSize = AXLibGetDockTileSize() + 16;

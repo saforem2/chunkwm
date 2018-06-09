@@ -1663,6 +1663,13 @@ Init(chunkwm_api ChunkwmAPI)
 
     CreateCVar(CVAR_SPACE_MODE, virtual_space_mode_str[Virtual_Space_Bsp]);
 
+    CreateCVar(CVAR_BAR_ENABLED, 0);
+    CreateCVar(CVAR_BAR_ALL_MONITORS, 0);
+    CreateCVar(CVAR_BAR_OFFSET_TOP, 22.0f);
+    CreateCVar(CVAR_BAR_OFFSET_BOTTOM, 0.0f);
+    CreateCVar(CVAR_BAR_OFFSET_LEFT, 0.0f);
+    CreateCVar(CVAR_BAR_OFFSET_RIGHT, 0.0f);
+
     CreateCVar(CVAR_SPACE_OFFSET_TOP, 60.0f);
     CreateCVar(CVAR_SPACE_OFFSET_BOTTOM, 50.0f);
     CreateCVar(CVAR_SPACE_OFFSET_LEFT, 50.0f);
