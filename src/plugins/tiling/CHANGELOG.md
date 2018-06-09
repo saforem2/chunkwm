@@ -1,5 +1,9 @@
 ### HEAD -  not yet released
 
+----------
+
+### version 0.3.11
+
 #### cvar changes
 
 - add ability to specify padding for custom bars (#443)

@@ -2,6 +2,14 @@
 
 ----------
 
+### version 0.4.1
+
+#### other changes
+
+ - update bundled version of chunkwm-sa (#431)
+
+----------
+
 ### version 0.4.0
 
 #### ABI Change
