@@ -161,19 +161,15 @@ static int InjectSA(void)
         return 0;
     }
 
-    for (NSRunningApplication *Application in [[NSWorkspace sharedWorkspace] runningApplications]) {
-        pid_t PID = Application.processIdentifier;
-        const char *Name = [[Application localizedName] UTF8String];
-        if (Name && strcmp(Name, "Dock") == 0) {
-            SBApplication *SBApp = [SBApplication applicationWithProcessIdentifier:PID];
-            [SBApp setTimeout:10*60];
-            [SBApp setSendMode:kAEWaitReply];
-            [SBApp sendEvent:'ascr' id:'gdut' parameters:0];
-            [SBApp setSendMode:kAENoReply];
-            [SBApp sendEvent:'CHWM' id:'injc' parameters:0];
-            return 1;
-        }
-    }
+    SBApplication *SBApp = [SBApplication applicationWithBundleIdentifier:@"com.apple.Dock"];
+    if (SBApp == nil) return -1;
 
-    return -1;
+    [SBApp setTimeout:10*60];
+    [SBApp setSendMode:kAEWaitReply];
+    [SBApp sendEvent:'ascr' id:'gdut' parameters:0];
+    [SBApp setSendMode:kAENoReply];
+    [SBApp sendEvent:'CHWM' id:'injc' parameters:0];
+    [SBApp release];
+
+    return 1;
 }
