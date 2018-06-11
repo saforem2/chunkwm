@@ -122,7 +122,8 @@ a:hover {
 #contents {
     font-size: 1.5vmin;
     color: #d5c4a1;
-    overflow: scroll;
+    overflow-y: scroll;
+    overflow-x: hidden;
     top: 18vmin;
     height: 80vh;
     width: 100vmin;
