@@ -1,5 +1,9 @@
 ### HEAD - not yet released
 
+#### other changes
+
+- changing border color using runtime command should also update cvar `focused_border_color`
+
 ----------
 
 ### version 0.3.2

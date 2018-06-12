@@ -300,6 +300,7 @@ CommandHandler(void *Data)
         token Token = GetToken(&Payload->Message);
         if (Token.Length > 0) {
             unsigned Color = TokenToUnsigned(Token);
+            UpdateCVar("focused_border_color", Color);
             if (Border) {
                 UpdateBorderWindowColor(Border, Color);
             }
