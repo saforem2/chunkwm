@@ -1157,6 +1157,15 @@ WindowCreatedHandler(void *Data)
 }
 
 internal void
+WindowSheetCreatedHandler(void *Data)
+{
+    macos_window *Window = (macos_window *) Data;
+    macos_window *Copy = AXLibCopyWindow(Window);
+    AddWindowToCollection(Copy);
+    FloatWindow(Copy);
+}
+
+internal void
 WindowDestroyedHandler(void *Data)
 {
     macos_window *Window = (macos_window *) Data;
@@ -1592,7 +1601,7 @@ PLUGIN_MAIN_FUNC(PluginMain)
         WindowResizedHandler(Data);
         return true;
     } else if (StringEquals(Node, "chunkwm_export_window_sheet_created")) {
-        WindowCreatedHandler(Data);
+        WindowSheetCreatedHandler(Data);
         return true;
     } else if (StringEquals(Node, "chunkwm_export_window_title_changed")) {
         WindowTitleChangedHandler(Data);
