@@ -78,13 +78,6 @@ CacheRunningProcesses()
     }
 }
 
-internal bool
-IsProcessInteractive(carbon_application_details *Info)
-{
-    bool Result = ((!Info->ProcessBackground) && (Info->ProcessPolicy == PROCESS_POLICY_REGULAR));
-    return Result;
-}
-
 internal OSStatus
 CarbonApplicationEventHandler(EventHandlerCallRef HandlerCallRef, EventRef Event, void *Refcon)
 {
@@ -106,10 +99,7 @@ CarbonApplicationEventHandler(EventHandlerCallRef HandlerCallRef, EventRef Event
         carbon_application_details *Info = BeginCarbonApplicationDetails(PSN);
         CarbonApplicationCache[PSN] = Info;
         PrintCarbonApplicationDetails(Info);
-
-        if (IsProcessInteractive(Info)) {
-            ConstructAndAddApplication(Info);
-        }
+        ConstructAndAddApplication(Info);
     } break;
     case kEventAppTerminated: {
         carbon_application_details *Info = SearchCarbonApplicationDetailsCache(PSN);

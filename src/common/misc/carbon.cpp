@@ -11,8 +11,8 @@
 
 carbon_application_details *BeginCarbonApplicationDetails(ProcessSerialNumber PSN)
 {
-    carbon_application_details *Info =
-        (carbon_application_details *) malloc(sizeof(carbon_application_details));
+    carbon_application_details *Info = (carbon_application_details *) malloc(sizeof(carbon_application_details));
+    memset(Info, 0, sizeof(carbon_application_details));
 
     ProcessInfoRec ProcessInfo = {};
     ProcessInfo.processInfoLength = sizeof(ProcessInfoRec);

@@ -1,5 +1,11 @@
 ### HEAD -  not yet released
 
+#### cvar changes
+
+- we no longer need to filter based on process policy (#108)
+
+- treat sheet-windows as we do regular windows (#229)
+
 ----------
 
 ### version 0.3.11

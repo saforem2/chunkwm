@@ -567,13 +567,24 @@ CHUNKWM_CALLBACK(Callback_ChunkWM_WindowSheetCreated)
     macos_window *Window = (macos_window *) Event->Context;
     ASSERT(Window);
 
-    c_log(C_LOG_LEVEL_DEBUG, "%s:%s:%d window sheet created\n", Window->Owner->Name, Window->Name, Window->Id);
+    if (AddWindowToCollection(Window)) {
+        c_log(C_LOG_LEVEL_DEBUG, "%s:%s%d window sheet created\n", Window->Owner->Name, Window->Name, Window->Id);
 #if 0
-    ProcessPluginList(chunkwm_export_window_sheet_created, Window);
+        ProcessPluginList(chunkwm_export_window_sheet_created, Window);
 #else
-    ProcessPluginListThreaded(chunkwm_export_window_sheet_created, Window);
+        ProcessPluginListThreaded(chunkwm_export_window_sheet_created, Window);
 #endif
-    AXLibDestroyWindow(Window);
+        /*
+         * NOTE(koekeishiya): When a new window is created, we incorrectly
+         * receive the kAXFocusedWindowChangedNotification first, We discard
+         * that notification and restore it when we have the window to work with.
+         */
+        ConstructEvent(ChunkWM_WindowFocused, Window);
+    } else {
+        c_log(C_LOG_LEVEL_DEBUG, "%s:%s:%d window sheet is not destructible, ignore!\n", Window->Owner->Name, Window->Name, Window->Id);
+        AXLibRemoveObserverNotification(&Window->Owner->Observer, Window->Ref, kAXUIElementDestroyedNotification);
+        AXLibDestroyWindow(Window);
+    }
 }
 
 /*

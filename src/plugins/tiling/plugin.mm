@@ -1275,15 +1275,6 @@ WindowResizedHandler(void *Data)
 }
 
 internal void
-WindowSheetCreatedHandler(void *Data)
-{
-    macos_window *Window = (macos_window *) Data;
-    if (CVarIntegerValue(CVAR_WINDOW_FLOAT_TOPMOST)) {
-        ExtendedDockSetWindowLevel(Window, kCGModalPanelWindowLevelKey);
-    }
-}
-
-internal void
 WindowTitleChangedHandler(void *Data)
 {
     macos_window *Window = (macos_window *) Data;
@@ -1601,7 +1592,7 @@ PLUGIN_MAIN_FUNC(PluginMain)
         WindowResizedHandler(Data);
         return true;
     } else if (StringEquals(Node, "chunkwm_export_window_sheet_created")) {
-        WindowSheetCreatedHandler(Data);
+        WindowCreatedHandler(Data);
         return true;
     } else if (StringEquals(Node, "chunkwm_export_window_title_changed")) {
         WindowTitleChangedHandler(Data);
@@ -1718,7 +1709,11 @@ Init(chunkwm_api ChunkwmAPI)
 
     /*   ---------------------------------------------------------   */
 
-    ProcessPolicy = Process_Policy_Regular;
+    ProcessPolicy = Process_Policy_Regular |
+                    Process_Policy_LSUIElement |
+                    Process_Policy_LSBackgroundOnly |
+                    Process_Policy_CarbonBackgroundOnly;
+
     Applications = AXLibRunningProcesses(ProcessPolicy);
     for (size_t Index = 0; Index < Applications.size(); ++Index) {
         macos_application *Application = Applications[Index];
