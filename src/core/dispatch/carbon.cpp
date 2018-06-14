@@ -62,6 +62,13 @@ PrintCarbonApplicationDetails(carbon_application_details *Info)
           Info->ProcessBackground);
 }
 
+internal inline bool
+IsProcessInteractive(carbon_application_details *Info)
+{
+    bool Result = ((!Info->ProcessBackground) && (Info->ProcessPolicy != PROCESS_POLICY_LSBACKGROUND_ONLY));
+    return Result;
+}
+
 /*
  * NOTE(koekeishiya): We have to cache information about processes that have
  * already been launched before us, such that we can properly perform our lookup
@@ -99,7 +106,9 @@ CarbonApplicationEventHandler(EventHandlerCallRef HandlerCallRef, EventRef Event
         carbon_application_details *Info = BeginCarbonApplicationDetails(PSN);
         CarbonApplicationCache[PSN] = Info;
         PrintCarbonApplicationDetails(Info);
-        ConstructAndAddApplication(Info);
+        if (IsProcessInteractive(Info)) {
+            ConstructAndAddApplication(Info);
+        }
     } break;
     case kEventAppTerminated: {
         carbon_application_details *Info = SearchCarbonApplicationDetailsCache(PSN);

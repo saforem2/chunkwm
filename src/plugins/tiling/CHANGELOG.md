@@ -2,7 +2,7 @@
 
 #### cvar changes
 
-- we no longer need to filter based on process policy (#108)
+- loosen filter applied to launched applications based on process type (#108)
 
 - treat sheet-windows as we do regular windows (#229)
 

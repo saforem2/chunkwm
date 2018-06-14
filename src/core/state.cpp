@@ -300,6 +300,8 @@ ConstructAndAddApplicationDispatch(macos_application *Application, carbon_applic
             application_launch_state LaunchState = WorkspaceGetApplicationLaunchState(Info->PID);
             if (LaunchState == Application_State_Failed) {
                 c_log(C_LOG_LEVEL_WARN, "%d:%s could not register window notifications!!!\n", Application->PID, Application->Name);
+                Info->State = Carbon_Application_State_Failed;
+                AXLibDestroyApplication(Application);
                 return;
             } else if (LaunchState == Application_State_Launching) {
                 c_log(C_LOG_LEVEL_DEBUG, "%d:%s waiting for application to be ready for notifications\n", Application->PID, Application->Name);
@@ -374,10 +376,7 @@ bool InitState()
         NSApplicationLoad();
         AXUIElementSetMessagingTimeout(SystemWideElement(), 1.0);
 
-        uint32_t ProcessPolicy = Process_Policy_Regular |
-                                 Process_Policy_LSUIElement |
-                                 Process_Policy_LSBackgroundOnly |
-                                 Process_Policy_CarbonBackgroundOnly;
+        uint32_t ProcessPolicy = Process_Policy_Regular | Process_Policy_LSUIElement;
         std::vector<macos_application *> RunningApplications = AXLibRunningProcesses(ProcessPolicy);
 
         for (size_t Index = 0; Index < RunningApplications.size(); ++Index) {

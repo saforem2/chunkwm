@@ -1709,11 +1709,7 @@ Init(chunkwm_api ChunkwmAPI)
 
     /*   ---------------------------------------------------------   */
 
-    ProcessPolicy = Process_Policy_Regular |
-                    Process_Policy_LSUIElement |
-                    Process_Policy_LSBackgroundOnly |
-                    Process_Policy_CarbonBackgroundOnly;
-
+    ProcessPolicy = Process_Policy_Regular | Process_Policy_LSUIElement;
     Applications = AXLibRunningProcesses(ProcessPolicy);
     for (size_t Index = 0; Index < Applications.size(); ++Index) {
         macos_application *Application = Applications[Index];

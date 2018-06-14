@@ -2,8 +2,7 @@
 
 #### other changes
 
- - filtering launched applications based on process type is no longer strictly necessary.
-   by removing this, we are guaranteed that chunkwm will catch ALL applications we may care about (#108)
+ - loosen filter applied to launched applications based on process type (#108)
 
  - we try to subscribe to notifications for sheet-windows (#229)
 
