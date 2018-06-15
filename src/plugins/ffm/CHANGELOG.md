@@ -1,5 +1,9 @@
 ### HEAD - not yet released
 
+#### other changes
+
+ - do not incorrectly trigger standby-on-float on some tooltip windows etc (#432)
+
 ---------------
 
 ### version 0.3.3
