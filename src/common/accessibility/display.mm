@@ -163,21 +163,29 @@ AXLibGetDisplayIdentifierForEdgeDisplay(int Side)
     unsigned Count = 0;
     CGGetActiveDisplayList(MAX_DISPLAY_COUNT, CGDisplayList, &Count);
 
-    CGPoint Position = {};
+    CGRect Frame = CGDisplayBounds(CGDisplayList[0]);
     CGDirectDisplayID BestResult = 0;
 
     for (unsigned Index = 0; Index < Count; ++Index) {
         CGDirectDisplayID DisplayId = CGDisplayList[Index];
         CGRect DisplayFrame = CGDisplayBounds(DisplayId);
 
+        if (Frame.origin.y + Frame.size.height <= DisplayFrame.origin.y) {
+            continue;
+        }
+
+        if (DisplayFrame.origin.y + DisplayFrame.size.height <= Frame.origin.y) {
+            continue;
+        }
+
         if (Side == -1) {
-            if (DisplayFrame.origin.x < Position.x) {
-                Position = DisplayFrame.origin;
+            if (CGRectGetMidX(DisplayFrame) < CGRectGetMidX(Frame)) {
+                Frame = DisplayFrame;
                 BestResult = DisplayId;
             }
         } else if (Side == 1) {
-            if (DisplayFrame.origin.x > Position.x) {
-                Position = DisplayFrame.origin;
+            if (CGRectGetMidX(DisplayFrame) > CGRectGetMidX(Frame)) {
+                Frame = DisplayFrame;
                 BestResult = DisplayId;
             }
         }
@@ -200,16 +208,23 @@ CFStringRef AXLibGetDisplayIdentifierForBottomMostDisplay()
     unsigned Count = 0;
     CGGetActiveDisplayList(MAX_DISPLAY_COUNT, CGDisplayList, &Count);
 
+    CGRect Frame = CGDisplayBounds(CGDisplayList[0]);
     CGDirectDisplayID BestResult = 0;
-    int LargestYCoordinate = 0;
 
     for (unsigned Index = 0; Index < Count; ++Index) {
         CGDirectDisplayID DisplayId = CGDisplayList[Index];
         CGRect DisplayFrame = CGDisplayBounds(DisplayId);
-        int YCoordinate = DisplayFrame.origin.y + DisplayFrame.size.height;
 
-        if (YCoordinate > LargestYCoordinate) {
-            LargestYCoordinate = YCoordinate;
+        if (Frame.origin.x + Frame.size.width <= DisplayFrame.origin.x) {
+            continue;
+        }
+
+        if (DisplayFrame.origin.x + DisplayFrame.size.width <= Frame.origin.x) {
+            continue;
+        }
+
+        if (CGRectGetMidY(DisplayFrame) > CGRectGetMidY(Frame)) {
+            Frame = DisplayFrame;
             BestResult = DisplayId;
         }
     }

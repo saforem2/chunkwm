@@ -6,6 +6,8 @@
 
 - treat sheet-windows as we do regular windows (#229)
 
+- fix issue with detecting Dock padding in different monitor arrangements (#445)
+
 ----------
 
 ### version 0.3.11
