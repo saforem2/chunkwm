@@ -106,8 +106,15 @@ CarbonApplicationEventHandler(EventHandlerCallRef HandlerCallRef, EventRef Event
         carbon_application_details *Info = BeginCarbonApplicationDetails(PSN);
         CarbonApplicationCache[PSN] = Info;
         PrintCarbonApplicationDetails(Info);
+
         if (IsProcessInteractive(Info)) {
             ConstructAndAddApplication(Info);
+        }
+
+        if (strcmp(Info->ProcessName, "Dock") == 0) {
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+                InjectSA();
+            });
         }
     } break;
     case kEventAppTerminated: {

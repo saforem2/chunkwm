@@ -161,7 +161,7 @@ static int InjectSA(void)
         return 0;
     }
 
-    SBApplication *SBApp = [SBApplication applicationWithBundleIdentifier:@"com.apple.Dock"];
+    SBApplication *SBApp = [[SBApplication applicationWithBundleIdentifier:@"com.apple.Dock"] retain];
     if (SBApp == nil) return -1;
 
     [SBApp setTimeout:10*60];

@@ -6,6 +6,8 @@
 
  - we try to subscribe to notifications for sheet-windows (#229)
 
+ - automatically load chunkwm-sa (if installed) on startup or if the Dock is restarted (#448)
+
 ----------
 
 ### version 0.4.2

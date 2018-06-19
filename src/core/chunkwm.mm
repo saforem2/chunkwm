@@ -9,6 +9,7 @@
 #include <signal.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <sys/stat.h>
 
 #include "dispatch/carbon.h"
 #include "dispatch/workspace.h"
@@ -38,6 +39,11 @@
 #include "../common/config/tokenize.cpp"
 #include "../common/config/cvar.cpp"
 
+#include "sa_text.cpp"
+#include "sa_core.cpp"
+#include "sa_bundle.cpp"
+#include "sa.mm"
+
 #include "dispatch/carbon.cpp"
 #include "dispatch/workspace.mm"
 #include "dispatch/event.cpp"
@@ -50,11 +56,6 @@
 #include "wqueue.cpp"
 #include "config.cpp"
 #include "cvar.cpp"
-
-#include "sa_text.cpp"
-#include "sa_core.cpp"
-#include "sa_bundle.cpp"
-#include "sa.mm"
 
 #define internal static
 #define local_persist static
@@ -273,6 +274,7 @@ int main(int Count, char **Args)
     BeginSharedWorkspace();
     StartEventLoop();
     ExecConfigFile();
+    InjectSA();
     CFRunLoopRun();
 
     return EXIT_SUCCESS;
