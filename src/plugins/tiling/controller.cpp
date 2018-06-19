@@ -2155,6 +2155,10 @@ void DestroyDesktop(char *Unused)
     bool Success = AXLibActiveSpace(&Space);
     if (!Success) return;
 
+    // NOTE(koekeishiya): Fullscreened application-spaces require special treatment
+    // and can not be destroyed using this method, so we guard for inproper usage.
+    if (Space->Type != kCGSSpaceUser) return;
+
     if (ConnectToDaemon(&SockFD, 5050)) {
         char Message[64];
         sprintf(Message, "space_destroy %d", Space->Id);
