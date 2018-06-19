@@ -2133,6 +2133,36 @@ void FocusDesktop(char *Op)
     }
 }
 
+void CreateDesktop(char *Unused)
+{
+    int SockFD;
+    macos_space *Space;
+    bool Success = AXLibActiveSpace(&Space);
+    if (!Success) return;
+
+    if (ConnectToDaemon(&SockFD, 5050)) {
+        char Message[64];
+        sprintf(Message, "space_create %d", Space->Id);
+        WriteToSocket(Message, SockFD);
+    }
+    CloseSocket(SockFD);
+}
+
+void DestroyDesktop(char *Unused)
+{
+    int SockFD;
+    macos_space *Space;
+    bool Success = AXLibActiveSpace(&Space);
+    if (!Success) return;
+
+    if (ConnectToDaemon(&SockFD, 5050)) {
+        char Message[64];
+        sprintf(Message, "space_destroy %d", Space->Id);
+        WriteToSocket(Message, SockFD);
+    }
+    CloseSocket(SockFD);
+}
+
 internal void
 QueryFocusedWindowFloat(int SockFD)
 {

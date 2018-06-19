@@ -8,6 +8,8 @@
 
 - fix issue with detecting Dock padding in different monitor arrangements (#445)
 
+- implement support for creating and destroying spaces (#425)
+
 ----------
 
 ### version 0.3.11

@@ -277,6 +277,8 @@ command_func SpaceCommandDispatch(char Flag)
     case 's': return SerializeDesktop;       break;
     case 'd': return DeserializeDesktop;     break;
     case 'f': return FocusDesktop;           break;
+    case 'c': return CreateDesktop;          break;
+    case 'a': return DestroyDesktop;         break;
 
     // NOTE(koekeishiya): silence compiler warning.
     default: return 0; break;
@@ -291,7 +293,7 @@ ParseSpaceCommand(const char *Message, command *Chain)
 
     int Option;
     bool Success = true;
-    const char *Short = "r:l:t:m:p:g:ef:";
+    const char *Short = "r:l:t:m:p:g:ef:ca";
 
     struct option Long[] = {
         { "rotate", required_argument, NULL, 'r' },
@@ -304,6 +306,8 @@ ParseSpaceCommand(const char *Message, command *Chain)
         { "serialize", required_argument, NULL, 's' },
         { "deserialize", required_argument, NULL, 'd' },
         { "focus", required_argument, NULL, 'f' },
+        { "create", no_argument, NULL, 'c' },
+        { "annihilate", no_argument, NULL, 'a' },
         { NULL, 0, NULL, 0 }
     };
 
@@ -392,8 +396,10 @@ ParseSpaceCommand(const char *Message, command *Chain)
                 goto End;
             }
         } break;
+        case 'c':
+        case 'a':
         case 'e': {
-            // NOTE(koekeishiya): This option takes no arguments
+            // NOTE(koekeishiya): These options take no arguments
             command *Entry = ConstructCommand(Option, NULL);
             Command->Next = Entry;
             Command = Entry;

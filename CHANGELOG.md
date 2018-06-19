@@ -8,6 +8,8 @@
 
  - automatically load chunkwm-sa (if installed) on startup or if the Dock is restarted (#448)
 
+ - update bundled chunkwm-sa (#425)
+
 ----------
 
 ### version 0.4.2
