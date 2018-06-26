@@ -1,5 +1,9 @@
 ### HEAD - not yet released
 
+---------------
+
+### version 0.3.4
+
 #### other changes
 
  - do not incorrectly trigger standby-on-float on some tooltip windows etc (#432)
@@ -28,7 +32,7 @@
 
 #### cvar changes
 
-- *mouse_modifier* has been renamed to *ffm_bypass_modifier*
+ - *mouse_modifier* has been renamed to *ffm_bypass_modifier*
 
 ---------------
 
@@ -36,7 +40,7 @@
 
 #### other changes
 
-- improved performance of focus-follows-mouse by reducing the number of calls to the *accessibility API*.
+ - improved performance of focus-follows-mouse by reducing the number of calls to the *accessibility API*.
 
 ---------------
 

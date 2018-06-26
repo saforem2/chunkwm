@@ -1,5 +1,9 @@
 ### HEAD -  not yet released
 
+----------
+
+### version 0.4.3
+
 #### other changes
 
  - loosen filter applied to launched applications based on process type (#108)

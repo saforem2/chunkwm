@@ -1,14 +1,18 @@
 ### HEAD -  not yet released
 
+----------
+
+### version 0.3.12
+
 #### cvar changes
 
-- loosen filter applied to launched applications based on process type (#108)
+ - loosen filter applied to launched applications based on process type (#108)
 
-- treat sheet-windows as we do regular windows (#229)
+ - treat sheet-windows as we do regular windows (#229)
 
-- fix issue with detecting Dock padding in different monitor arrangements (#445)
+ - fix issue with detecting Dock padding in different monitor arrangements (#445)
 
-- implement support for creating and destroying spaces (#425)
+ - implement support for creating and destroying spaces (#425)
 
 ----------
 
@@ -16,7 +20,7 @@
 
 #### cvar changes
 
-- add ability to specify padding for custom bars (#443)
+ - add ability to specify padding for custom bars (#443)
 
 ----------
 
@@ -24,11 +28,11 @@
 
 #### other changes
 
-- fixes an issue that made it impossible to interact with modal windows when "float topmost" was enabled (#229)
+ - fixes an issue that made it impossible to interact with modal windows when "float topmost" was enabled (#229)
 
-- remove wrongly assumed method of detecting when windows are moved between monitors using methods external to chunkwm (#385, #403)
+ - remove wrongly assumed method of detecting when windows are moved between monitors using methods external to chunkwm (#385, #403)
 
-- *--grid-layout* should now properly apply desktop padding (#440)
+ - *--grid-layout* should now properly apply desktop padding (#440)
 
 ----------
 
@@ -36,14 +40,14 @@
 
 #### feature
 
-- add command to focus a desktop WITHOUT going through space animations (#127)
+ - add command to focus a desktop WITHOUT going through space animations (#127)
 
   IMPORTANT: requires injecting code into the dock (https://github.com/koekeishiya/chwm-sa)
   IMPORTANT: this feature will only work on High Sierra
 
 #### other changes
 
-- check for 'displays have separate spaces' have been moved into chunkwm-core (#424)
+ - check for 'displays have separate spaces' have been moved into chunkwm-core (#424)
 
 ----------
 
@@ -51,7 +55,7 @@
 
 #### other changes
 
-- send event when the virtual-space mode of the focused desktop is changed
+ - send event when the virtual-space mode of the focused desktop is changed
 
 ----------
 
@@ -59,13 +63,13 @@
 
 #### other changes
 
-- when displays are moved, re-create all window-regions to fit the new arrangement (#414, #368)
+ - when displays are moved, re-create all window-regions to fit the new arrangement (#414, #368)
 
-- do not apply the *--state tile* rule if it has already been applied to this window before (#408)
+ - do not apply the *--state tile* rule if it has already been applied to this window before (#408)
 
-- only consider rules using the name or except filter when reapplying rules due to window-title changes (#398)
+ - only consider rules using the name or except filter when reapplying rules due to window-title changes (#398)
 
-- add window-rules /modifier/ for following focus to desktop assigned to a window (#397)
+ - add window-rules /modifier/ for following focus to desktop assigned to a window (#397)
 
 ----------
 
@@ -73,9 +77,9 @@
 
 #### other changes
 
-- better calculation of region used for preselection-borders (#395)
+ - better calculation of region used for preselection-borders (#395)
 
-- change how active desktop is decided for window operations (#385)
+ - change how active desktop is decided for window operations (#385)
 
 ----------
 
@@ -83,13 +87,13 @@
 
 #### other changes
 
-- improve detection of windows that are moved between monitors using methods external to chunkwm (#385)
+ - improve detection of windows that are moved between monitors using methods external to chunkwm (#385)
 
-- replace an incorrectly assumed assertion with a guard (#377)
+ - replace an incorrectly assumed assertion with a guard (#377)
 
-- fixed an issue that could lead to a segfault in certain situations (#367)
+ - fixed an issue that could lead to a segfault in certain situations (#367)
 
-- added command to query id of focused window: `chunkc tiling::query --window id`
+ - added command to query id of focused window: `chunkc tiling::query --window id`
 
 ----------
 
@@ -97,37 +101,37 @@
 
 #### cvar changes
 
-- *mouse_modifier* is no longer used by the tiling plugin, and has been replaced with a more flexible system.
+ - *mouse_modifier* is no longer used by the tiling plugin, and has been replaced with a more flexible system.
 
-- *mouse_move_window* is a new cvar that is used to set the binding to use to move windows using the mouse.
-  previously set by *mouse_modifier*.
+ - *mouse_move_window* is a new cvar that is used to set the binding to use to move windows using the mouse.
+   previously set by *mouse_modifier*.
 
-  to get the same behaviour as before this change, use: `chunkc set mouse_move_window \"fn 1\"`
+   to get the same behaviour as before this change, use: `chunkc set mouse_move_window \"fn 1\"`
 
-- *mouse_resize_window* is a new cvar that is used to set the binding to use to resize windows using the mouse.
-  previously set by *mouse_modifier*.
+ - *mouse_resize_window* is a new cvar that is used to set the binding to use to resize windows using the mouse.
+   previously set by *mouse_modifier*.
 
-  to get the same behaviour as before this change, use: `chunkc set mouse_resize_window \"fn 2\"`
+   to get the same behaviour as before this change, use: `chunkc set mouse_resize_window \"fn 2\"`
 
-- *mouse_motion_interval* is a new cvar that is used to set the time between two motion events in milliseconds.
+ - *mouse_motion_interval* is a new cvar that is used to set the time between two motion events in milliseconds.
 
 See updated README for the tiling plugin for more information.
 
 #### other changes
 
-- expand information sent with the custom event *tiling_focused_window_floating*
+ - expand information sent with the custom event *tiling_focused_window_floating*
 
-- *--use-insertion-point* command now applies to the current desktop, instead of the current node.
+ - *--use-insertion-point* command now applies to the current desktop, instead of the current node.
 
-- *--toggle* now has a new option `chunkc tiling::window --toggle fade` to enable or disable the effect of
-  fading inactive windows, properly restoring alpha values when deactivated.
+ - *--toggle* now has a new option `chunkc tiling::window --toggle fade` to enable or disable the effect of
+   fading inactive windows, properly restoring alpha values when deactivated.
 
-- *mouse_resize_window* has been extended to also allow resizing of floating windows.
+ - *mouse_resize_window* has been extended to also allow resizing of floating windows.
 
-- *mouse_move_window* is now rate-limited by the *mouse_motion_interval* cvar
-  and should make for an improved experience for people who does not utilize chwm-sa.
+ - *mouse_move_window* is now rate-limited by the *mouse_motion_interval* cvar
+   and should make for an improved experience for people who does not utilize chwm-sa.
 
-- added command to query the uuid of the focused desktop (*chunkc tiling::query --desktop uuid*)
+ - added command to query the uuid of the focused desktop (*chunkc tiling::query --desktop uuid*)
 
 ----------
 
@@ -135,7 +139,7 @@ See updated README for the tiling plugin for more information.
 
 #### other changes
 
-- fixed a double-free issue caused by memory-ownership differences on El Capitan and new macOS versions.
+ - fixed a double-free issue caused by memory-ownership differences on El Capitan and new macOS versions.
 
 ----------
 
@@ -143,9 +147,9 @@ See updated README for the tiling plugin for more information.
 
 #### other changes
 
-- fixed an issue with identifying monitors by arrangement.
+ - fixed an issue with identifying monitors by arrangement.
 
-- don't segfault, but fail to load plugin and print an error if `displays have separate spaces` is disabled.
+ - don't segfault, but fail to load plugin and print an error if `displays have separate spaces` is disabled.
 
 ----------
 
@@ -153,9 +157,9 @@ See updated README for the tiling plugin for more information.
 
 #### other changes
 
-- fix memory ownership issue in El Capitan, causing a segfault (double-free).
+ - fix memory ownership issue in El Capitan, causing a segfault (double-free).
 
-- fix an invalid access attempt for some windows when initiating mouse-drag on floating windows.
+ - fix an invalid access attempt for some windows when initiating mouse-drag on floating windows.
 
 ----------
 
@@ -163,20 +167,20 @@ See updated README for the tiling plugin for more information.
 
 #### cvar changes
 
-- mouse_follows_focus has been changed to be of type string, formerly a boolean value.
-  the new values are as follows: `off`, `intrinsic` and `all`.
+ - mouse_follows_focus has been changed to be of type string, formerly a boolean value.
+   the new values are as follows: `off`, `intrinsic` and `all`.
 
-- window_float_center has been removed in favour of a new feature. see provided sample config
-  for an example of how to reproduce this using the newly added command.
+ - window_float_center has been removed in favour of a new feature. see provided sample config
+   for an example of how to reproduce this using the newly added command.
 
 #### new features
 
-- better support for managing floating windows. now features grid functionality (like Moom).
-  accessed through the *--grid-layout* command. see updated README for the tiling plugin for more information.
+ - better support for managing floating windows. now features grid functionality (like Moom).
+   accessed through the *--grid-layout* command. see updated README for the tiling plugin for more information.
 
 #### removed features
 
-- removed command *--warp-floating*. replaced by *--grid-layout*.
+ - removed command *--warp-floating*. replaced by *--grid-layout*.
 
 ----------
 

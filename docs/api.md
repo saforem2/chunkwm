@@ -1,4 +1,4 @@
-#### chunkwm plugin api v6
+#### chunkwm plugin api v7
 --------------------------
 
 ### Plugin Structure
@@ -176,6 +176,12 @@ fired: when an application is unhidden.
 
 ```
 event: chunkwm_export_window_created
+param: macos_window *
+fired: when a window is created.
+```
+
+```
+event: chunkwm_export_window_sheet_created
 param: macos_window *
 fired: when a window is created.
 ```
