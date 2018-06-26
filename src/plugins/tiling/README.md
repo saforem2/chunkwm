@@ -325,6 +325,18 @@
     chunkc tiling::desktop --focus <option>
     <option>: mission-control index | prev | next
     short flag: -f
+    desc: requires chwm-sa (https://github.com/koekeishiya/chwm-sa) and High Sierra / Mojave
+
+##### create desktop
+
+    chunkc tiling::desktop --create
+    short flag: -c
+    desc: requires chwm-sa (https://github.com/koekeishiya/chwm-sa) and High Sierra
+
+##### destroy desktop
+
+    chunkc tiling::desktop --annihilate
+    short flag: -a
     desc: requires chwm-sa (https://github.com/koekeishiya/chwm-sa) and High Sierra
 
 ##### rotate desktop
