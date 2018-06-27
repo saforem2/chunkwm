@@ -153,13 +153,7 @@ TilingWindowFloatHandler(void *Data)
 {
     uint32_t WindowId = *(uint32_t *) Data;
     uint32_t Status = *((uint32_t *) Data + 1);
-    if (!Status) {
-        IsActive = true;
-    } else {
-        if (!WindowId || WindowId == FocusedWindowId) {
-            IsActive = false;
-        }
-    }
+    IsActive = !(Status & 0x1);
 }
 
 internal inline void
