@@ -331,13 +331,13 @@
 
     chunkc tiling::desktop --create
     short flag: -c
-    desc: requires chwm-sa (https://github.com/koekeishiya/chwm-sa) and High Sierra
+    desc: requires chwm-sa (https://github.com/koekeishiya/chwm-sa) and High Sierra / Mojave
 
 ##### destroy desktop
 
     chunkc tiling::desktop --annihilate
     short flag: -a
-    desc: requires chwm-sa (https://github.com/koekeishiya/chwm-sa) and High Sierra
+    desc: requires chwm-sa (https://github.com/koekeishiya/chwm-sa) and High Sierra / Mojave
 
 ##### rotate desktop
 

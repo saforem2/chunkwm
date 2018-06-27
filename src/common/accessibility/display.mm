@@ -27,6 +27,8 @@ extern "C" Boolean CoreDockGetAutoHideEnabled(void);
 extern "C" float CoreDockGetTileSize(void);
 extern "C" void  CoreDockGetOrientationAndPinning(macos_dock_orientation *Orientation, int *Pinning);
 
+extern "C" CFUUIDRef CGDisplayCreateUUIDFromDisplayID(uint32_t DisplayID);
+
 /* NOTE(koekeishiya): Find the UUID associated with a CGDirectDisplayID. */
 CFStringRef AXLibGetDisplayIdentifier(CGDirectDisplayID Id)
 {

@@ -2,6 +2,14 @@
 
 ----------
 
+### version 0.4.4
+
+#### other changes
+
+ - add full spaces support for macOS Mojave (fast-switch, create and destroy) (#425)
+
+----------
+
 ### version 0.4.3
 
 #### other changes
