@@ -1,5 +1,9 @@
 ### HEAD - not yet released
 
+---------------
+
+### version 0.3.5
+
 #### other changes
 
  - undo fix made in previous version because it causes other more annoying issues (#455, #432)
