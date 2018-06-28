@@ -114,6 +114,8 @@ InitPreselWindow(presel_window_internal *Window, int X, int Y, int W, int H)
     [Window->Handle setLevel:NSFloatingWindowLevel];
     [Window->Handle makeKeyAndOrderFront:nil];
     [Window->Handle setReleasedWhenClosed:YES];
+
+    [Window->View display];
 }
 
 presel_window *CreatePreselWindow(int Type, int X, int Y, int W, int H, int Width, unsigned Color)
