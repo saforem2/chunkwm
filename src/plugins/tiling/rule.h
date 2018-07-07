@@ -19,6 +19,9 @@ struct window_rule
     char *State;
     char *Desktop;
     bool FollowDesktop;
+    char *Level;
+    char *Alpha;
+    char *GridLayout;
 };
 
 void AddWindowRule(window_rule *Rule);

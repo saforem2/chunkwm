@@ -404,6 +404,8 @@
 
 [Available window subroles](https://developer.apple.com/documentation/applicationservices/carbon_accessibility/subroles?language=objc)
 
+[Available window levels](https://github.com/koekeishiya/chunkwm/issues/461)
+
 Remove the lowercase 'k' in front of the role constant to get the string to specify in a rule. The string IS case sensitive.
 
 See the following sections for how to retrieve information about an open window:
@@ -419,12 +421,16 @@ See the following sections for how to retrieve information about an open window:
 | --subrole | -R         | FIXED CMP | window subrole equals role         |
 | --except  | -e         | POSIX ERE | window name does not match pattern |
 
-| properties | short flag | value              | description                            |
-|------------|:----------:|:------------------:|:--------------------------------------:|
-| --state    | -s         | float              | automatically float window             |
-| --state    | -s         | tile               | force-tile window regardless of AXRole |
-| --state    | -s         | native-fullscreen  | automatically enter native-fullscreen  |
-| --desktop  | -d         | index              | send window to desktop                 |
+| properties    | short flag | value                        | description                             |
+|---------------|:----------:|:----------------------------:|:---------------------------------------:|
+| --state       | -s         | float                        | automatically float window              |
+| --state       | -s         | tile                         | force-tile window regardless of AXRole  |
+| --state       | -s         | sticky                       | show on all desktops (implicit float)   |
+| --state       | -s         | native-fullscreen            | automatically enter native-fullscreen   |
+| --desktop     | -d         | mission-control index        | send window to desktop                  |
+| --level       | -l         | integer (see link above)     | set window level based on the given key |
+| --alpha       | -a         | floating-point (0 <= a <= 1) | set window alpha                        |
+| --grid-layout | -g         | same as grid-layout command  | set window alpha                        |
 
 | modifiers        | short flag | affected property | description                          |
 |------------------|:----------:|:-----------------:|:------------------------------------:|
@@ -435,6 +441,8 @@ See the following sections for how to retrieve information about an open window:
     chunkc tiling::rule --owner \"System Preferences\" --subrole AXStandardWindow --state tile
     chunkc tiling::rule --owner Finder --name Copy --state float
     chunkc tiling::rule --owner Spotify --desktop 5 --follow-desktop
+    chunkc tiling::rule --owner mpv --state sticky --alpha 0.65 --grid-layout 5:5:4:0:1:1
+    chunkc tiling::rule --owner Terminal --state sticky --level 3 --grid-layout 1:1:0:0:1:1
 
 ---
 

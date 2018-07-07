@@ -695,6 +695,17 @@ void ExtendedDockSetWindowAlpha(uint32_t WindowId, float Value, float Duration)
     CloseSocket(SockFD);
 }
 
+void ExtendedDockSetWindowAlpha(uint32_t WindowId, float Value)
+{
+    int SockFD;
+    if (ConnectToDaemon(&SockFD, 5050)) {
+        char Message[64];
+        sprintf(Message, "window_alpha %d %f", WindowId, Value);
+        WriteToSocket(Message, SockFD);
+    }
+    CloseSocket(SockFD);
+}
+
 void EnableWindowFading(uint32_t FocusedWindowId)
 {
     float Alpha = CVarFloatingPointValue(CVAR_WINDOW_FADE_ALPHA);
@@ -735,8 +746,7 @@ void ExtendedDockSetWindowPosition(uint32_t WindowId, int X, int Y)
     CloseSocket(SockFD);
 }
 
-internal void
-ExtendedDockSetWindowLevel(macos_window *Window, int WindowLevelKey)
+void ExtendedDockSetWindowLevel(macos_window *Window, int WindowLevelKey)
 {
     int SockFD;
     if (ConnectToDaemon(&SockFD, 5050)) {
@@ -747,8 +757,7 @@ ExtendedDockSetWindowLevel(macos_window *Window, int WindowLevelKey)
     CloseSocket(SockFD);
 }
 
-internal void
-ExtendedDockSetWindowSticky(macos_window *Window, int Value)
+void ExtendedDockSetWindowSticky(macos_window *Window, int Value)
 {
     int SockFD;
     if (ConnectToDaemon(&SockFD, 5050)) {
@@ -1898,54 +1907,44 @@ space_free:
     AXLibDestroySpace(Space);
 }
 
-void GridLayout(char *Op)
+void GridLayout(macos_window *Window, char *Op)
 {
-    region Region;
-    macos_space *Space;
-    macos_window *Window;
-    CFStringRef DisplayRef;
-    virtual_space *VirtualSpace;
-    unsigned GridRows,GridCols,WinX,WinY,WinWidth,WinHeight;
-
-    Window = GetFocusedWindow();
-    if (!Window) {
-        goto out;
-    }
-
-    DisplayRef = AXLibGetDisplayIdentifierFromWindowRect(Window->Position, Window->Size);
+    CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromWindowRect(Window->Position, Window->Size);
     ASSERT(DisplayRef);
 
-    Space = AXLibActiveSpace(DisplayRef);
+    macos_space *Space = AXLibActiveSpace(DisplayRef);
     ASSERT(Space);
 
-    VirtualSpace = AcquireVirtualSpace(Space);
+    virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
+    if ((AXLibHasFlags(Window, Window_Float)) || (VirtualSpace->Mode == Virtual_Space_Float)) {
+        unsigned GridRows, GridCols, WinX, WinY, WinWidth, WinHeight;
+        if (sscanf(Op, "%d:%d:%d:%d:%d:%d", &GridRows, &GridCols, &WinX, &WinY, &WinWidth, &WinHeight) == 6) {
+            WinX = WinX >= GridCols ? GridCols - 1 : WinX;
+            WinY = WinY >= GridRows ? GridRows - 1 : WinY;
+            WinWidth = WinWidth <= 0 ? 1 : WinWidth;
+            WinHeight = WinHeight <= 0 ? 1 : WinHeight;
+            WinWidth = WinWidth > GridCols - WinX ? GridCols - WinX : WinWidth;
+            WinHeight = WinHeight > GridRows - WinY ? GridRows - WinY : WinHeight;
 
-    if ((!AXLibHasFlags(Window, Window_Float)) &&
-        (VirtualSpace->Mode != Virtual_Space_Float)) {
-        goto space_free;
+            region Region = FullscreenRegion(DisplayRef, VirtualSpace);
+            float CellWidth = Region.Width / GridCols;
+            float CellHeight = Region.Height / GridRows;
+            AXLibSetWindowPosition(Window->Ref,
+                                   Region.X + Region.Width - CellWidth * (GridCols - WinX),
+                                   Region.Y + Region.Height - CellHeight * (GridRows - WinY));
+            AXLibSetWindowSize(Window->Ref, CellWidth * WinWidth, CellHeight * WinHeight);
+        }
     }
 
-    Region = FullscreenRegion(DisplayRef, VirtualSpace);
-
-    if (sscanf(Op, "%d:%d:%d:%d:%d:%d", &GridRows, &GridCols, &WinX, &WinY, &WinWidth, &WinHeight) == 6) {
-        WinX = WinX >= GridCols ? GridCols - 1 : WinX;
-        WinY = WinY >= GridRows ? GridRows - 1 : WinY;
-        WinWidth = WinWidth <= 0 ? 1 : WinWidth;
-        WinHeight = WinHeight <= 0 ? 1 : WinHeight;
-        WinWidth = WinWidth > GridCols - WinX ? GridCols - WinX : WinWidth;
-        WinHeight = WinHeight > GridRows - WinY ? GridRows - WinY : WinHeight;
-        c_log(C_LOG_LEVEL_DEBUG, "    GridRows:%d, GridCols:%d, WinX:%d, WinY:%d, WinWidth:%d, WinHeight:%d\n", GridRows, GridCols, WinX, WinY, WinWidth, WinHeight);
-        float CellWidth = Region.Width/GridCols;
-        float CellHeight = Region.Height/GridRows;
-        AXLibSetWindowPosition(Window->Ref, (Region.X + Region.Width) - CellWidth * (GridCols - WinX), (Region.Y + Region.Height) - CellHeight * (GridRows - WinY));
-        AXLibSetWindowSize(Window->Ref, CellWidth * WinWidth, CellHeight * WinHeight);
-    }
-
-space_free:
     ReleaseVirtualSpace(VirtualSpace);
     AXLibDestroySpace(Space);
     CFRelease(DisplayRef);
-out:;
+}
+
+void GridLayout(char *Op)
+{
+    macos_window *Window = GetFocusedWindow();
+    if (Window) GridLayout(Window, Op);
 }
 
 void EqualizeWindowTree(char *Unused)

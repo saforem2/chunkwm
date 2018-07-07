@@ -47,6 +47,14 @@ ApplyWindowRuleState(macos_window *Window, window_rule *Rule)
             UntileWindow(Window);
             FloatWindow(Window);
         }
+    } else if (StringEquals(Rule->State, "sticky")) {
+        ExtendedDockSetWindowSticky(Window, 1);
+        AXLibAddFlags(Window, Window_Sticky);
+
+        if (!AXLibHasFlags(Window, Window_Float)) {
+            UntileWindow(Window);
+            FloatWindow(Window);
+        }
     } else if (StringEquals(Rule->State, "tile")) {
         if (!AXLibHasFlags(Window, Window_ForceTile)) {
             UnfloatWindow(Window);
@@ -89,6 +97,30 @@ ApplyWindowRuleDesktop(macos_window *Window, window_rule *Rule)
 }
 
 internal inline void
+ApplyWindowRuleLevel(macos_window *Window, window_rule *Rule)
+{
+    int LevelKey;
+    if (sscanf(Rule->Level, "%d", &LevelKey) == 1) {
+        ExtendedDockSetWindowLevel(Window, LevelKey);
+    }
+}
+
+internal inline void
+ApplyWindowRuleAlpha(macos_window *Window, window_rule *Rule)
+{
+    float Alpha;
+    if (sscanf(Rule->Alpha, "%f", &Alpha) == 1) {
+        ExtendedDockSetWindowAlpha(Window->Id, Alpha);
+    }
+}
+
+internal inline void
+ApplyWindowRuleGridLayout(macos_window *Window, window_rule *Rule)
+{
+    GridLayout(Window, Rule->GridLayout);
+}
+
+internal inline void
 ApplyWindowRule(macos_window *Window, window_rule *Rule)
 {
     regex_t Regex;
@@ -119,8 +151,11 @@ ApplyWindowRule(macos_window *Window, window_rule *Rule)
         if (!Match) return;
     }
 
-    if (Rule->Desktop)   ApplyWindowRuleDesktop(Window, Rule);
-    if (Rule->State)     ApplyWindowRuleState(Window, Rule);
+    if (Rule->Desktop)    ApplyWindowRuleDesktop(Window, Rule);
+    if (Rule->State)      ApplyWindowRuleState(Window, Rule);
+    if (Rule->Level)      ApplyWindowRuleLevel(Window, Rule);
+    if (Rule->Alpha)      ApplyWindowRuleAlpha(Window, Rule);
+    if (Rule->GridLayout) ApplyWindowRuleGridLayout(Window, Rule);
 }
 
 void ApplyRulesForWindow(macos_window *Window)
@@ -163,12 +198,15 @@ internal void
 FreeWindowRule(window_rule *Rule)
 {
     ASSERT(Rule);
-    if (Rule->Owner)     free(Rule->Owner);
-    if (Rule->Name)      free(Rule->Name);
-    if (Rule->Role)      CFRelease(Rule->Role);
-    if (Rule->Subrole)   CFRelease(Rule->Subrole);
-    if (Rule->Except)    free(Rule->Except);
-    if (Rule->State)     free(Rule->State);
+    if (Rule->Owner)      free(Rule->Owner);
+    if (Rule->Name)       free(Rule->Name);
+    if (Rule->Role)       CFRelease(Rule->Role);
+    if (Rule->Subrole)    CFRelease(Rule->Subrole);
+    if (Rule->Except)     free(Rule->Except);
+    if (Rule->State)      free(Rule->State);
+    if (Rule->Level)      free(Rule->Level);
+    if (Rule->Alpha)      free(Rule->Alpha);
+    if (Rule->GridLayout) free(Rule->GridLayout);
     free(Rule);
 }
 

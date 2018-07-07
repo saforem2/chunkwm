@@ -607,7 +607,7 @@ ParseRuleCommand(const char *Message, window_rule *Rule)
 
     int Option;
     bool Success = true;
-    const char *Short = "o:n:r:R:e:s:d:D";
+    const char *Short = "o:n:r:R:e:s:d:Dl:a:g:";
 
     struct option Long[] = {
         { "owner", required_argument, NULL, 'o' },
@@ -618,6 +618,9 @@ ParseRuleCommand(const char *Message, window_rule *Rule)
         { "state", required_argument, NULL, 's' },
         { "desktop", required_argument, NULL, 'd' },
         { "follow-desktop", no_argument, NULL, 'D' },
+        { "level", required_argument, NULL, 'l' },
+        { "alpha", required_argument, NULL, 'a' },
+        { "grid-layout", required_argument, NULL, 'g' },
         { NULL, 0, NULL, 0 }
     };
 
@@ -656,6 +659,18 @@ ParseRuleCommand(const char *Message, window_rule *Rule)
         } break;
         case 'D': {
             Rule->FollowDesktop = true;
+        } break;
+        case 'l': {
+            Rule->Level = strdup(optarg);
+            HasProperty = true;
+        } break;
+        case 'a': {
+            Rule->Alpha = strdup(optarg);
+            HasProperty = true;
+        } break;
+        case 'g': {
+            Rule->GridLayout = strdup(optarg);
+            HasProperty = true;
         } break;
         case '?': {
             Success = false;

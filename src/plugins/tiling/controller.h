@@ -9,6 +9,9 @@ struct virtual_space;
 
 void ExtendedDockSetWindowPosition(uint32_t WindowId, int X, int Y);
 void ExtendedDockSetWindowAlpha(uint32_t WindowId, float Value, float Duration);
+void ExtendedDockSetWindowAlpha(uint32_t WindowId, float Value);
+void ExtendedDockSetWindowLevel(macos_window *Window, int WindowLevelKey);
+void ExtendedDockSetWindowSticky(macos_window *Window, int Value);
 
 void EnableWindowFading(uint32_t FocusedWindowId);
 void DisableWindowFading();
@@ -18,6 +21,7 @@ bool FindClosestWindow(macos_space *Space, virtual_space *VirtualSpace,
                        char *Direction, bool Wrap);
 void CenterMouseInWindow(macos_window *Window);
 
+void GridLayout(macos_window *Window, char *Op);
 void GridLayout(char *Op);
 void CloseWindow(char *Unused);
 void FocusWindow(char *Direction);
