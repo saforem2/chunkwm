@@ -32,6 +32,7 @@ void AXLibSetFocusedApplication(pid_t PID);
 char *AXLibGetWindowTitle(AXUIElementRef WindowRef);
 CGPoint AXLibGetWindowPosition(AXUIElementRef WindowRef);
 CGSize AXLibGetWindowSize(AXUIElementRef WindowRef);
+CGRect AXLibGetWindowRect(AXUIElementRef WindowRef);
 
 bool AXLibGetWindowRole(AXUIElementRef WindowRef, CFStringRef *Role);
 bool AXLibGetWindowSubrole(AXUIElementRef WindowRef, CFStringRef *Subrole);

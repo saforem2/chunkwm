@@ -285,6 +285,13 @@ char *AXLibGetWindowTitle(AXUIElementRef WindowRef)
     return Result;
 }
 
+CGRect AXLibGetWindowRect(AXUIElementRef WindowRef)
+{
+    CGPoint WindowPos = AXLibGetWindowPosition(WindowRef);
+    CGSize WindowSize = AXLibGetWindowSize(WindowRef);
+    return CGRectMake(WindowPos.x, WindowPos.y, WindowSize.width, WindowSize.height);
+}
+
 /* NOTE(koekeishiya): Caller is responsible for passing a valid AXUIElementRef. */
 CGPoint AXLibGetWindowPosition(AXUIElementRef WindowRef)
 {

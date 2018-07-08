@@ -61,6 +61,13 @@ CenterMouseInRegion(region *Region)
 }
 
 internal void
+CenterMouseInWindowRef(AXUIElementRef WindowRef)
+{
+    region Region = CGRectToRegion(AXLibGetWindowRect(WindowRef));
+    CenterMouseInRegion(&Region);
+}
+
+internal void
 CenterMouseInRegionAndClick(region *Region)
 {
     if (!IsCursorInRegion(Region)) {
@@ -68,18 +75,27 @@ CenterMouseInRegionAndClick(region *Region)
                                      Region->Y + Region->Height / 2);
         pid_t WindowPid;
         AXUIElementRef WindowRef = AXLibGetWindowAtPoint(Center, &WindowPid);
-        if (WindowRef && AXLibGetWindowID(WindowRef)) {
-            AXLibSetFocusedWindow(WindowRef);
-            AXLibSetFocusedApplication(WindowPid);
-            CFRelease(WindowRef);
 
-            if (StringEquals(CVarStringValue(CVAR_MOUSE_FOLLOWS_FOCUS), Mouse_Follows_Focus_Intr)) {
-                CGWarpMouseCursorPosition(Center);
-            }
-        } else {
-            CGPostMouseEvent(Center, true, 1, true);
-            CGPostMouseEvent(Center, true, 1, false);
+        if (!WindowRef)                   goto do_click;
+        if (!AXLibGetWindowID(WindowRef)) goto free_and_do_click;
+
+        AXLibSetFocusedWindow(WindowRef);
+        AXLibSetFocusedApplication(WindowPid);
+
+        if (StringEquals(CVarStringValue(CVAR_MOUSE_FOLLOWS_FOCUS), Mouse_Follows_Focus_Intr)) {
+            CenterMouseInWindowRef(WindowRef);
         }
+
+        CFRelease(WindowRef);
+        goto out;
+
+free_and_do_click:
+        CFRelease(WindowRef);
+
+do_click:
+        CGPostMouseEvent(Center, true, 1, true);
+        CGPostMouseEvent(Center, true, 1, false);
+out:;
     }
 }
 
