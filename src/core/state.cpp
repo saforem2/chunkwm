@@ -74,7 +74,7 @@ bool AddWindowToCollection(macos_window *Window)
                                            (void *)(uintptr_t)Window->Id);
 
     if (Success != kAXErrorSuccess && Success != kAXErrorNotificationAlreadyRegistered) {
-        c_log(C_LOG_LEVEL_WARN, "%s:%s failed to add kAXUIElementDestroyedNotification '%s'\n", Window->Owner->Name, Window->Name, AXLibAXErrorToString(Success));
+        c_log(C_LOG_LEVEL_DEBUG, "%s:%s failed to add kAXUIElementDestroyedNotification '%s'\n", Window->Owner->Name, Window->Name, AXLibAXErrorToString(Success));
         goto err;
     }
 
@@ -151,7 +151,7 @@ AddApplicationWindowsToCollection(macos_application *Application)
             goto success;
 
 win_invalid:
-            c_log(C_LOG_LEVEL_WARN, "%s:%s is not destructible, ignore!\n", Window->Owner->Name, Window->Name);
+            c_log(C_LOG_LEVEL_DEBUG, "%s:%s is not destructible, ignore!\n", Window->Owner->Name, Window->Name);
             AXLibRemoveObserverNotification(&Window->Owner->Observer, Window->Ref, kAXUIElementDestroyedNotification);
 
 win_dupe:
@@ -299,7 +299,7 @@ ConstructAndAddApplicationDispatch(macos_application *Application, carbon_applic
         if (Info->State == Carbon_Application_State_In_Progress) {
             application_launch_state LaunchState = WorkspaceGetApplicationLaunchState(Info->PID);
             if (LaunchState == Application_State_Failed) {
-                c_log(C_LOG_LEVEL_WARN, "%d:%s could not register window notifications!!!\n", Application->PID, Application->Name);
+                c_log(C_LOG_LEVEL_DEBUG, "%d:%s could not register window notifications!!!\n", Application->PID, Application->Name);
                 Info->State = Carbon_Application_State_Failed;
                 AXLibDestroyApplication(Application);
                 return;
@@ -330,7 +330,7 @@ ConstructAndAddApplicationDispatch(macos_application *Application, carbon_applic
                 ConstructAndAddApplicationDispatch(Application, Info, OBSERVER_DELAY);
             }
         } else if (Info->State == Carbon_Application_State_Failed) {
-            c_log(C_LOG_LEVEL_WARN, "%d:%s could not register window notifications!!!\n", Application->PID, Application->Name);
+            c_log(C_LOG_LEVEL_DEBUG, "%d:%s could not register window notifications!!!\n", Application->PID, Application->Name);
             AXLibDestroyApplication(Application);
         } else if (Info->State == Carbon_Application_State_Invalid) {
             c_log(C_LOG_LEVEL_DEBUG, "%d:%s process terminated; cancel registration of window notifications!!!\n", Application->PID, Application->Name);
