@@ -1,5 +1,9 @@
 ### HEAD -  not yet released
 
+#### ABI Change
+
+ - Add new log-level *profile* and simple helper macros (#446)
+
 ----------
 
 ### version 0.4.4

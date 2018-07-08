@@ -11,9 +11,10 @@ struct chunkwm_payload
 #ifndef CHUNKWM_CORE
 enum c_log_level
 {
-    C_LOG_LEVEL_DEBUG =  0,
-    C_LOG_LEVEL_WARN  =  1,
-    C_LOG_LEVEL_ERROR =  2,
+    C_LOG_LEVEL_DEBUG   = 0,
+    C_LOG_LEVEL_PROFILE = 1,
+    C_LOG_LEVEL_WARN    = 2,
+    C_LOG_LEVEL_ERROR   = 3,
 };
 #endif
 

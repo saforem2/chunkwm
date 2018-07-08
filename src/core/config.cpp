@@ -153,6 +153,8 @@ HandleCore(chunkwm_delegate *Delegate)
             c_log_active_level = C_LOG_LEVEL_WARN;
         } else if (TokenEquals(Token, "error")) {
             c_log_active_level = C_LOG_LEVEL_ERROR;
+        } else if (TokenEquals(Token, "profile")) {
+            c_log_active_level = C_LOG_LEVEL_PROFILE;
         }
     } else if (StringEquals(Delegate->Command, "load")) {
         plugin_fs *PluginFS = (plugin_fs *) malloc(sizeof(plugin_fs));

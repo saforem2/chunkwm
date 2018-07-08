@@ -19,7 +19,7 @@ chunkc core::log_file stdout
 #
 # NOTE: specify the desired level of logging.
 #
-#       - none, debug, warn, error
+#       - none, debug, profile, warn, error
 #
 
 chunkc core::log_level warn

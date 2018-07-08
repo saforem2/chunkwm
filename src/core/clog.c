@@ -7,7 +7,7 @@ enum c_log_level c_log_active_level = C_LOG_LEVEL_ERROR;
 FILE *c_log_output_file = stdout;
 
 const char *c_log_level_str[] = {
-    "DEBUG", "WARN", "ERROR"
+    "DEBUG", "PROFILE", "WARN", "ERROR"
 };
 
 void c_log(enum c_log_level level, const char *format, ...)

@@ -5,10 +5,11 @@
 
 enum c_log_level
 {
-    C_LOG_LEVEL_DEBUG =  0,
-    C_LOG_LEVEL_WARN  =  1,
-    C_LOG_LEVEL_ERROR =  2,
-    C_LOG_LEVEL_NONE  = 10,
+    C_LOG_LEVEL_DEBUG   =  0,
+    C_LOG_LEVEL_PROFILE =  1,
+    C_LOG_LEVEL_WARN    =  2,
+    C_LOG_LEVEL_ERROR   =  3,
+    C_LOG_LEVEL_NONE    = 10,
 };
 
 extern enum c_log_level c_log_active_level;
