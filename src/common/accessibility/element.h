@@ -18,6 +18,7 @@ bool AXLibSetWindowSize(AXUIElementRef WindowRef, float Width, float Height);
 bool AXLibSetWindowFullscreen(AXUIElementRef WindowRef, bool Fullscreen);
 void AXLibCloseWindow(AXUIElementRef WindowRef);
 
+AXUIElementRef AXLibGetWindowAtPoint(CGPoint Point, pid_t *WindowPid);
 CFTypeRef AXLibGetWindowProperty(AXUIElementRef WindowRef, CFStringRef Property);
 AXError AXLibSetWindowProperty(AXUIElementRef WindowRef, CFStringRef Property, CFTypeRef Value);
 

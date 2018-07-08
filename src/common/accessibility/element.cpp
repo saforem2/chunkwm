@@ -338,3 +338,44 @@ bool AXLibGetWindowSubrole(AXUIElementRef WindowRef, CFStringRef *Subrole)
     *Subrole = (CFStringRef) AXLibGetWindowProperty(WindowRef, kAXSubroleAttribute);
     return *Subrole != NULL;
 }
+
+/*
+ * NOTE(koekeishiya): Caller is responsible for calling 'CFRelease()' if non-null is returned.
+ */
+
+extern "C" int CGSMainConnectionID(void);
+extern "C" CGError CGSConnectionGetPID(const int cid, pid_t *pid);
+extern "C" OSStatus CGSFindWindowByGeometry(int cid, int zero, int one, int zero_again, CGPoint *screen_point, CGPoint *window_coords_out, int *wid_out, int *cid_out);
+AXUIElementRef AXLibGetWindowAtPoint(CGPoint Point, pid_t *WindowPid)
+{
+    int WindowId;
+    int WindowConnection;
+    CGPoint WindowPosition;
+
+    static int Connection = CGSMainConnectionID();
+    CGSFindWindowByGeometry(Connection, 0, 1, 0, &Point, &WindowPosition, &WindowId, &WindowConnection);
+
+    if (WindowId == 0)                  return NULL;
+    if (Connection == WindowConnection) return NULL;
+    CGSConnectionGetPID(WindowConnection, WindowPid);
+
+    AXUIElementRef Element;
+    static AXUIElementRef SystemWideElement = AXUIElementCreateSystemWide();
+    AXUIElementCopyElementAtPosition(SystemWideElement, Point.x, Point.y, &Element);
+    if (!Element) return NULL;
+
+    CFStringRef Role;
+    AXUIElementRef WindowRef;
+    if (AXLibGetWindowRole(Element, &Role)) {
+        if (CFEqual(Role, kAXWindowRole)) {
+            WindowRef = Element;
+        } else {
+            AXUIElementCopyAttributeValue(Element, kAXWindowAttribute, (CFTypeRef*)&WindowRef);
+            CFRelease(Element);
+        }
+        CFRelease(Role);
+        return WindowRef;
+    }
+
+    return NULL;
+}

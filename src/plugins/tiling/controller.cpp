@@ -60,6 +60,30 @@ CenterMouseInRegion(region *Region)
     }
 }
 
+internal void
+CenterMouseInRegionAndClick(region *Region)
+{
+    if (!IsCursorInRegion(Region)) {
+        CGPoint Center = CGPointMake(Region->X + Region->Width / 2,
+                                     Region->Y + Region->Height / 2);
+        pid_t WindowPid;
+        AXUIElementRef WindowRef = AXLibGetWindowAtPoint(Center, &WindowPid);
+        if (WindowRef && AXLibGetWindowID(WindowRef)) {
+            AXLibSetFocusedWindow(WindowRef);
+            AXLibSetFocusedApplication(WindowPid);
+            CFRelease(WindowRef);
+
+            if (StringEquals(CVarStringValue(CVAR_MOUSE_FOLLOWS_FOCUS), Mouse_Follows_Focus_Intr)) {
+                CGWarpMouseCursorPosition(Center);
+            }
+        } else {
+            CGEnableEventStateCombining(false);
+            CGPostMouseEvent(Center, true, 1, true);
+            CGPostMouseEvent(Center, true, 1, false);
+        }
+    }
+}
+
 void CenterMouseInWindow(macos_window *Window)
 {
     region Region = { (float) Window->Position.x,
@@ -1819,6 +1843,8 @@ FocusMonitor(unsigned MonitorId)
 
     WindowIds = GetAllVisibleWindowsForSpace(Space, IncludeInvalidWindows, true);
     if (WindowIds.empty()) {
+        region Region = CGRectToRegion(AXLibGetDisplayBounds(MonitorRef));
+        CenterMouseInRegionAndClick(&Region);
         goto space_free;
     }
 
