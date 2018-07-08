@@ -1,4 +1,4 @@
-BUILD_FLAGS		= -O0 -g -DCHUNKWM_DEBUG -std=c++11 -Wall -Wno-deprecated -Wno-writable-strings
+BUILD_FLAGS		= -O0 -g -DCHUNKWM_DEBUG -DCHUNKWM_PROFILE -std=c++11 -Wall -Wno-deprecated -Wno-writable-strings
 BUILD_PATH		= ./../../../plugins
 BINS			= $(BUILD_PATH)/tiling.so
 DEV_BIN_PATH	= ./../../../plugins

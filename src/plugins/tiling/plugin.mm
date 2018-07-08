@@ -19,6 +19,7 @@
 #include "../../common/misc/carbon.h"
 #include "../../common/misc/workspace.h"
 #include "../../common/misc/assert.h"
+#include "../../common/misc/profile.h"
 #include "../../common/border/border.h"
 
 #include "../../common/accessibility/display.mm"
@@ -631,76 +632,53 @@ void UntileWindow(macos_window *Window)
 /* NOTE(koekeishiya): Returns a vector of CGWindowIDs. */
 std::vector<uint32_t> GetAllVisibleWindowsForSpace(macos_space *Space, bool IncludeInvalidWindows, bool IncludeFloatingWindows)
 {
-    bool Success;
-    CGError Error;
-    int WindowCount, *WindowList;
+    BEGIN_TIMED_BLOCK();
     std::vector<uint32_t> Result;
 
-    Error = CGSGetOnScreenWindowCount(CGSDefaultConnection, 0, &WindowCount);
-    if (Error != kCGErrorSuccess) {
-        c_log(C_LOG_LEVEL_ERROR, "CGSGetOnScreenWindowCount failed..\n");
-        goto out;
-    }
+    int WindowCount;
+    int *WindowList = AXLibSpaceWindows(Space->Id, &WindowCount);
+    if (WindowList) {
+        unsigned DesktopId;
+        bool Success = AXLibCGSSpaceIDToDesktopID(Space->Id, NULL, &DesktopId);
+        ASSERT(Success);
 
-    WindowList = (int *) malloc(sizeof(int) * WindowCount);
-    ASSERT(WindowList);
+        for (int Index = 0; Index < WindowCount; ++Index) {
+            uint32_t WindowId = WindowList[Index];
 
-    Error = CGSGetOnScreenWindowList(CGSDefaultConnection, 0, WindowCount, WindowList, &WindowCount);
-    if (Error != kCGErrorSuccess) {
-        c_log(C_LOG_LEVEL_ERROR, "CGSGetOnScreenWindowList failed..\n");
-        goto windowlist_free;
-    }
-
-    unsigned DesktopId;
-    Success = AXLibCGSSpaceIDToDesktopID(Space->Id, NULL, &DesktopId);
-    ASSERT(Success);
-
-    for (int Index = 0; Index < WindowCount; ++Index) {
-        uint32_t WindowId = WindowList[Index];
-
-        if (!AXLibSpaceHasWindow(Space->Id, WindowId)) {
-            /*
-             * NOTE(koekeishiya): The onscreenwindowlist can contain windowids
-             * that we do not care about. Check that the window in question is
-             * in our cache and on the correct monitor.
-             */
-            continue;
-        }
-
-        macos_window *Window = GetWindowByID(WindowId);
-        if (!Window) {
-            // NOTE(koekeishiya): The chunkwm core does not report these windows to
-            // plugins, and they are therefore never cached, we simply ignore them.
-            // DEBUG_PRINT("   %d:window not cached\n", WindowId);
-            continue;
-        }
-
-        if (IsWindowValid(Window) || IncludeInvalidWindows) {
-            c_log(C_LOG_LEVEL_DEBUG,
-                  "%d:desktop   %d:%d:%s:%s\n",
-                  DesktopId,
-                  Window->Id,
-                  Window->Level,
-                  Window->Owner->Name,
-                  Window->Name);
-            if ((!AXLibHasFlags(Window, Window_Float)) || (IncludeFloatingWindows)) {
-                Result.push_back(Window->Id);
+            macos_window *Window = GetWindowByID(WindowId);
+            if (!Window) {
+                // NOTE(koekeishiya): The chunkwm core does not report these windows to
+                // plugins, and they are therefore never cached, we simply ignore them.
+                // DEBUG_PRINT("   %d:window not cached\n", WindowId);
+                continue;
             }
-        } else {
-            c_log(C_LOG_LEVEL_DEBUG,
-                  "%d:desktop   %d:%d:invalid window:%s:%s\n",
-                  DesktopId,
-                  Window->Id,
-                  Window->Level,
-                  Window->Owner->Name,
-                  Window->Name);
+
+            if (IsWindowValid(Window) || IncludeInvalidWindows) {
+                c_log(C_LOG_LEVEL_DEBUG,
+                      "%d:desktop   %d:%d:%s:%s\n",
+                      DesktopId,
+                      Window->Id,
+                      Window->Level,
+                      Window->Owner->Name,
+                      Window->Name);
+                if ((!AXLibHasFlags(Window, Window_Float)) || (IncludeFloatingWindows)) {
+                    Result.push_back(Window->Id);
+                }
+            } else {
+                c_log(C_LOG_LEVEL_DEBUG,
+                      "%d:desktop   %d:%d:invalid window:%s:%s\n",
+                      DesktopId,
+                      Window->Id,
+                      Window->Level,
+                      Window->Owner->Name,
+                      Window->Name);
+            }
         }
+
+        free(WindowList);
     }
 
-windowlist_free:
-    free(WindowList);
-
-out:
+    END_TIMED_BLOCK();
     return Result;
 }
 

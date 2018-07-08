@@ -144,6 +144,8 @@ bool AXLibCGSSpaceIDFromDesktopID(CGSSpaceID SpaceId, unsigned *OutArrangement, 
 int *AXLibSpacesForDisplay(CFStringRef DisplayRef, int *Count);
 macos_space **AXLibSpacesForDisplay(CFStringRef DisplayRef);
 macos_space **AXLibSpacesForWindow(uint32_t WindowId);
+int *AXLibSpaceWindows(CGSSpaceID SpaceId, int *Count, bool FilterWindowLevels);
+int *AXLibSpaceWindows(CGSSpaceID SpaceId, int *Count);
 void AXLibSpaceMoveWindow(CGSSpaceID SpaceId, uint32_t WindowId);
 void AXLibSpaceAddWindow(CGSSpaceID SpaceId, uint32_t WindowId);
 void AXLibSpaceRemoveWindow(CGSSpaceID SpaceId, uint32_t WindowId);

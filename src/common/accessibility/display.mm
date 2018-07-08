@@ -16,6 +16,9 @@ extern "C" CFArrayRef CGSCopySpacesForWindows(CGSConnectionID Connection, CGSSpa
 extern "C" void CGSRemoveWindowsFromSpaces(CGSConnectionID Connection, CFArrayRef Windows, CFArrayRef Spaces);
 extern "C" void CGSAddWindowsToSpaces(CGSConnectionID Connection, CFArrayRef Windows, CFArrayRef Spaces);
 extern "C" void CGSMoveWindowsToManagedSpace(CGSConnectionID Connection, CFArrayRef Windows, CGSSpaceID SpaceId);
+extern "C" CFArrayRef CGSCopyWindowsWithOptionsAndTags(CGSConnectionID Connection, unsigned Owner, CFArrayRef Spaces, unsigned Options, unsigned long long *SetTags, unsigned long long *ClearTags);
+extern "C" CGError CGSGetWindowLevel(CGSConnectionID Connection, uint32_t WindowId, uint32_t *WindowLevel);
+
 
 extern "C" CGSSpaceID CGSManagedDisplayGetCurrentSpace(CGSConnectionID Connection, CFStringRef DisplayRef);
 extern "C" CFStringRef CGSCopyManagedDisplayForSpace(const CGSConnectionID Connection, CGSSpaceID SpaceId);
@@ -651,6 +654,73 @@ AXLibSpacesForWindow(uint32_t WindowId)
     }
 
     return Result;
+}
+
+internal bool
+IsWindowLevelAllowed(int WindowLevel)
+{
+    static int ValidWindowLevels[] = {
+        CGWindowLevelForKey(kCGBaseWindowLevelKey),
+        CGWindowLevelForKey(kCGMinimumWindowLevelKey),
+        CGWindowLevelForKey(kCGNormalWindowLevelKey),
+        CGWindowLevelForKey(kCGFloatingWindowLevelKey),
+        CGWindowLevelForKey(kCGModalPanelWindowLevelKey),
+        CGWindowLevelForKey(kCGDraggingWindowLevelKey),
+        CGWindowLevelForKey(kCGScreenSaverWindowLevelKey),
+        CGWindowLevelForKey(kCGMaximumWindowLevelKey),
+        CGWindowLevelForKey(kCGOverlayWindowLevelKey),
+        CGWindowLevelForKey(kCGHelpWindowLevelKey),
+        CGWindowLevelForKey(kCGUtilityWindowLevelKey),
+        CGWindowLevelForKey(kCGAssistiveTechHighWindowLevelKey),
+    };
+    static int Count = sizeof(ValidWindowLevels) / sizeof(*ValidWindowLevels);
+
+    for (int Index = 0; Index < Count; ++Index) {
+        if (WindowLevel == ValidWindowLevels[Index]) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+int *AXLibSpaceWindows(CGSSpaceID SpaceId, int *Count, bool FilterWindowLevels)
+{
+    int *Result = NULL;
+    NSArray *NSArraySpace = @[ @(SpaceId) ];
+    unsigned long long SetTags = 0;
+    unsigned long long ClearTags = 0;
+    CFArrayRef Windows = CGSCopyWindowsWithOptionsAndTags(CGSDefaultConnection, 0, (__bridge CFArrayRef) NSArraySpace, 1 << 1, &SetTags, &ClearTags);
+    int NumberOfWindows = CFArrayGetCount(Windows);
+    Result = (int *) malloc(sizeof(int *) * NumberOfWindows);
+    int Out = 0;
+
+    for (int Index = 0; Index < NumberOfWindows; ++Index) {
+        NSNumber *Id = (__bridge NSNumber *) CFArrayGetValueAtIndex(Windows, Index);
+        int WindowId = [Id intValue];
+        if (FilterWindowLevels) {
+            int WindowLevel = -1;
+            CGSGetWindowLevel(CGSDefaultConnection, (uint32_t)WindowId, (uint32_t*)&WindowLevel);
+            if (IsWindowLevelAllowed(WindowLevel)) {
+                Result[Out++] = WindowId;
+            }
+        } else {
+            Result[Out++] = WindowId;
+        }
+    }
+
+    if (!Out) {
+        free(Result);
+        Result = NULL;
+    }
+
+    *Count = Out;
+    return Result;
+}
+
+int *AXLibSpaceWindows(CGSSpaceID SpaceId, int *Count)
+{
+    return AXLibSpaceWindows(SpaceId, Count, false);
 }
 
 bool AXLibSpaceHasWindow(CGSSpaceID SpaceId, uint32_t WindowId)
