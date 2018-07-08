@@ -77,7 +77,6 @@ CenterMouseInRegionAndClick(region *Region)
                 CGWarpMouseCursorPosition(Center);
             }
         } else {
-            CGEnableEventStateCombining(false);
             CGPostMouseEvent(Center, true, 1, true);
             CGPostMouseEvent(Center, true, 1, false);
         }

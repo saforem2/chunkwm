@@ -1696,6 +1696,8 @@ Init(chunkwm_api ChunkwmAPI)
 
     /*   ---------------------------------------------------------   */
 
+    CGEnableEventStateCombining(false);
+
     ProcessPolicy = Process_Policy_Regular | Process_Policy_LSUIElement;
     Applications = AXLibRunningProcesses(ProcessPolicy);
     for (size_t Index = 0; Index < Applications.size(); ++Index) {
