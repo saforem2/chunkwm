@@ -1,5 +1,13 @@
 ### HEAD -  not yet released
 
+#### other changes
+
+ - allow *FocusMonitor* to work on empty monitors (#464)
+
+ - add additional properties to the *window rules* system (#460)
+
+ - fix space creation / removal for latest Mojave Beta (#439)
+
 ----------
 
 ### version 0.3.12
