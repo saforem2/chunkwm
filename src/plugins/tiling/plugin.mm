@@ -161,8 +161,7 @@ macos_window *GetWindowByID(uint32_t Id)
     return Result;
 }
 
-internal uint32_t
-GetFocusedWindowId()
+uint32_t GetFocusedWindowId()
 {
     AXUIElementRef ApplicationRef, WindowRef;
     uint32_t WindowId = 0;

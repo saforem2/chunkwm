@@ -27,6 +27,7 @@ typedef macos_window_map::iterator macos_window_map_it;
 extern macos_window_map CopyWindowCache();
 extern macos_window *GetWindowByID(uint32_t Id);
 extern macos_window *GetFocusedWindow();
+extern uint32_t GetFocusedWindowId();
 extern std::vector<uint32_t> GetAllVisibleWindowsForSpace(macos_space *Space);
 extern std::vector<uint32_t> GetAllVisibleWindowsForSpace(macos_space *Space, bool IncludeInvalidWindows, bool IncludeFloatingWindows);
 extern void CreateWindowTreeForSpace(macos_space *Space, virtual_space *VirtualSpace);
@@ -2455,6 +2456,69 @@ QueryWindowsForActiveSpace(int SockFD)
     free(Buffer);
 }
 
+internal void
+QueryMonocleDesktopWindowCount(int SockFD)
+{
+    virtual_space *VirtualSpace;
+    macos_space *Space;
+    char Message[512];
+    node *Node;
+
+    unsigned int Count = 0;
+
+    if (!AXLibActiveSpace(&Space)) {
+        goto out;
+    }
+
+    VirtualSpace = AcquireVirtualSpace(Space);
+    if (VirtualSpace->Mode == Virtual_Space_Monocle) {
+        Node = VirtualSpace->Tree;
+        while (Node) {
+            ++Count;
+            Node = Node->Right;
+        }
+    }
+    ReleaseVirtualSpace(VirtualSpace);
+
+out:;
+    snprintf(Message, sizeof(Message), "%d", Count);
+    WriteToSocket(Message, SockFD);
+}
+
+internal void
+QueryMonocleDesktopWindowIndex(int SockFD)
+{
+    virtual_space *VirtualSpace;
+    macos_space *Space;
+    char Message[512];
+    node *ActiveNode;
+    node *Node;
+
+    unsigned int Index = 0;
+
+    if (!AXLibActiveSpace(&Space)) {
+        goto out;
+    }
+
+    VirtualSpace = AcquireVirtualSpace(Space);
+    if (VirtualSpace->Mode == Virtual_Space_Monocle) {
+        ActiveNode = GetNodeWithId(VirtualSpace->Tree, GetFocusedWindowId(), VirtualSpace->Mode);
+        Node = VirtualSpace->Tree;
+        while (Node) {
+            ++Index;
+            if (ActiveNode == Node) {
+                break;
+            }
+            Node = Node->Right;
+        }
+    }
+    ReleaseVirtualSpace(VirtualSpace);
+
+out:;
+    snprintf(Message, sizeof(Message), "%d", Index);
+    WriteToSocket(Message, SockFD);
+}
+
 void QueryDesktop(char *Op, int SockFD)
 {
     if (StringEquals(Op, "id")) {
@@ -2465,6 +2529,10 @@ void QueryDesktop(char *Op, int SockFD)
         QueryFocusedVirtualSpaceMode(SockFD);
     } else if (StringEquals(Op, "windows")) {
         QueryWindowsForActiveSpace(SockFD);
+    } else if (StringEquals(Op, "monocle-index")) {
+        QueryMonocleDesktopWindowIndex(SockFD);
+    } else if (StringEquals(Op, "monocle-count")) {
+        QueryMonocleDesktopWindowCount(SockFD);
     }
 }
 

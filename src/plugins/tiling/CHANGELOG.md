@@ -2,6 +2,8 @@
 
 #### other changes
 
+ - commands to query index of active window, and number of windows, in a monocle desktop (#459)
+
  - allow *FocusMonitor* to work on empty monitors (#464)
 
  - add additional properties to the *window rules* system (#460)

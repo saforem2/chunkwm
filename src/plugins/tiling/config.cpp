@@ -545,7 +545,9 @@ ParseQueryCommand(const char *Message, command *Chain)
             if ((StringEquals(optarg, "id")) ||
                 (StringEquals(optarg, "mode")) ||
                 (StringEquals(optarg, "uuid")) ||
-                (StringEquals(optarg, "windows"))) {
+                (StringEquals(optarg, "windows")) ||
+                (StringEquals(optarg, "monocle-index")) ||
+                (StringEquals(optarg, "monocle-count"))) {
                 command *Entry = ConstructCommand(Option, optarg);
                 Command->Next = Entry;
                 Command = Entry;

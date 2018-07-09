@@ -66,6 +66,8 @@
       * [query focused desktop uuid](#query-focused-desktop-uuid)
       * [query focused desktop mode](#query-focused-desktop-mode)
       * [query list of windows on focused desktop](#query-list-of-windows-on-focused-desktop)
+      * [query index of active window in monocle mode](#query-index-of-active-window-in-monocle-mode)
+      * [query number of windows in monocle mode](#query-number-of-windows-in-monocle-mode)
   * [query monitor related](#query-monitor-related)
       * [query focused monitor](#query-focused-monitor-id)
       * [query monitor count](#query-monitor-count)
@@ -505,6 +507,16 @@ See the following sections for how to retrieve information about an open window:
 ##### query list of windows on focused desktop
 
     chunkc tiling::query --desktop windows
+    short flag: d
+
+##### query index of active window in monocle mode
+
+    chunkc tiling::query --desktop monocle-index
+    short flag: d
+
+##### query number of windows in monocle mode
+
+    chunkc tiling::query --desktop monocle-count
     short flag: d
 
 ---
