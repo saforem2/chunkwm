@@ -686,14 +686,20 @@ IsWindowLevelAllowed(int WindowLevel)
 
 int *AXLibSpaceWindows(CGSSpaceID SpaceId, int *Count, bool FilterWindowLevels)
 {
-    int *Result = NULL;
+    int NumberOfWindows;
     NSArray *NSArraySpace = @[ @(SpaceId) ];
     unsigned long long SetTags = 0;
     unsigned long long ClearTags = 0;
+    int *Result = NULL;
+    int Counter = 0;
+
     CFArrayRef Windows = CGSCopyWindowsWithOptionsAndTags(CGSDefaultConnection, 0, (__bridge CFArrayRef) NSArraySpace, 1 << 1, &SetTags, &ClearTags);
-    int NumberOfWindows = CFArrayGetCount(Windows);
+    if (!Windows) {
+        goto out;
+    }
+
+    NumberOfWindows = CFArrayGetCount(Windows);
     Result = (int *) malloc(sizeof(int *) * NumberOfWindows);
-    int Out = 0;
 
     for (int Index = 0; Index < NumberOfWindows; ++Index) {
         NSNumber *Id = (__bridge NSNumber *) CFArrayGetValueAtIndex(Windows, Index);
@@ -702,19 +708,22 @@ int *AXLibSpaceWindows(CGSSpaceID SpaceId, int *Count, bool FilterWindowLevels)
             int WindowLevel = -1;
             CGSGetWindowLevel(CGSDefaultConnection, (uint32_t)WindowId, (uint32_t*)&WindowLevel);
             if (IsWindowLevelAllowed(WindowLevel)) {
-                Result[Out++] = WindowId;
+                Result[Counter++] = WindowId;
             }
         } else {
-            Result[Out++] = WindowId;
+            Result[Counter++] = WindowId;
         }
     }
 
-    if (!Out) {
+    CFRelease(Windows);
+
+    if (!Counter) {
         free(Result);
         Result = NULL;
     }
 
-    *Count = Out;
+out:
+    *Count = Counter;
     return Result;
 }
 
