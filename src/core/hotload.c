@@ -24,7 +24,7 @@ internal char *
 copy_string(const char *s)
 {
     unsigned length = strlen(s);
-    char *result = malloc(length + 1);
+    char *result = (char *) malloc(length + 1);
     memcpy(result, s, length);
     result[length] = '\0';
     return result;
@@ -65,7 +65,7 @@ resolve_symlink(char *file)
     }
 
     ssize_t size = buffer.st_size + 1;
-    char *result = malloc(size);
+    char *result = (char *) malloc(size);
     ssize_t read = readlink(file, result, size);
 
     if (read != -1) {

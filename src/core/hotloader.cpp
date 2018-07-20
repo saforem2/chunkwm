@@ -33,7 +33,7 @@ internal HOTLOADER_CALLBACK(HotloadPluginCallback)
     PerformIOOperation("core::unload", filename);
 
     struct stat Buffer;
-    if (stat(Absolutepath, &Buffer) == 0) {
+    if (stat(absolutepath, &Buffer) == 0) {
         c_log(C_LOG_LEVEL_DEBUG, "hotloader: loading plugin '%s'\n", filename);
         PerformIOOperation("core::load", filename);
     }
@@ -43,8 +43,8 @@ void HotloadPlugins(hotloader *Hotloader, hotloader_callback Callback)
 {
     char *PluginDirectory = CVarStringValue(CVAR_PLUGIN_DIR);
     if (PluginDirectory && CVarIntegerValue(CVAR_PLUGIN_HOTLOAD)) {
-        if (hotloader_add_catalog(&Hotloader, PluginDirectory, ".so") &&
-            hotloader_begin(&Hotloader, Callback)) {
+        if (hotloader_add_catalog(Hotloader, PluginDirectory, ".so") &&
+            hotloader_begin(Hotloader, Callback)) {
             c_log(C_LOG_LEVEL_DEBUG, "chunkwm: watching '%s' for changes to plugins!\n", PluginDirectory);
         } else {
             c_log(C_LOG_LEVEL_WARN, "chunkwm: could not watch directory '%s' for changes to plugins!\n", PluginDirectory);
