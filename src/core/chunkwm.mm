@@ -16,6 +16,7 @@
 #include "dispatch/display.h"
 #include "dispatch/event.h"
 
+#include "hotload.h"
 #include "hotloader.h"
 #include "state.h"
 #include "plugin.h"
@@ -49,6 +50,7 @@
 #include "dispatch/event.cpp"
 #include "dispatch/display.cpp"
 
+#include "hotload.c"
 #include "hotloader.cpp"
 #include "state.cpp"
 #include "callback.cpp"
@@ -61,6 +63,7 @@
 #define local_persist static
 
 internal carbon_event_handler Carbon;
+internal hotloader Hotloader;
 internal char *ConfigAbsolutePath;
 
 internal inline void
@@ -123,12 +126,8 @@ ExecConfigFile()
     // NOTE(koekeishiya): The config file is just an executable bash script!
     ForkExecWait(ConfigFile);
 
-    // NOTE(koekeishiya): Read plugin directory from cvar.
-    char *PluginDirectory = CVarStringValue(CVAR_PLUGIN_DIR);
-    if (PluginDirectory && CVarIntegerValue(CVAR_PLUGIN_HOTLOAD)) {
-        HotloaderAddPath(PluginDirectory);
-        HotloaderInit();
-    }
+    // NOTE(koekeishiya): Init hotloader for watching changes to plugins
+    HotloadPlugins(&Hotloader, HotloadPluginCallback);
 }
 
 internal inline bool
