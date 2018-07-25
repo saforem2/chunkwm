@@ -2,6 +2,8 @@
 
 #### ABI Change
 
+ - Add "magic number" to exported plugin header to identify valid chunkwm plugin files
+
  - Add new log-level *profile* and simple helper macros (#446)
 
 ----------

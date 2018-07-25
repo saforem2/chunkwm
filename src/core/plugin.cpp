@@ -22,6 +22,18 @@ internal plugin_list ExportedPlugins[chunkwm_export_count];
 internal chunkwm_api API = { UpdateCVarAPI,  AcquireCVarAPI, FindCVarAPI, ChunkwmBroadcast, (chunkwm_log*)c_log };
 
 internal bool
+VerifyPluginFormat(plugin_details *Info)
+{
+    bool Result = ((Info->Magic[0] == 'c') &&
+                   (Info->Magic[1] == 'h') &&
+                   (Info->Magic[2] == 'w') &&
+                   (Info->Magic[3] == 'm') &&
+                   (Info->Magic[4] == 'p') &&
+                   (Info->Magic[5] == 'l'));
+    return Result;
+}
+
+internal bool
 VerifyPluginABI(plugin_details *Info)
 {
     bool Result = (Info->ApiVersion == CHUNKWM_PLUGIN_API_VERSION);
@@ -203,6 +215,11 @@ bool LoadPlugin(const char *Absolutepath, const char *Filename)
         goto info_err;
     }
 
+    if (!VerifyPluginFormat(Info)) {
+        c_log(C_LOG_LEVEL_ERROR, "chunkwm: '%s' (%s) is not a valid chunkwm plugin!\n", Absolutepath, Filename);
+        goto fmt_err;
+    }
+
     if (!VerifyPluginABI(Info)) {
         c_log(C_LOG_LEVEL_ERROR, "chunkwm: plugin '%s' ABI mismatch; expected %d, was %d\n",
               Info->PluginName, CHUNKWM_PLUGIN_API_VERSION, Info->ApiVersion);
@@ -231,6 +248,7 @@ bool LoadPlugin(const char *Absolutepath, const char *Filename)
 plugin_init_err:
     free(LoadedPlugin);
 
+fmt_err:
 abi_err:
 info_err:
     dlclose(Handle);

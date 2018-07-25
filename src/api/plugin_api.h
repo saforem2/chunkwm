@@ -7,7 +7,7 @@
 #define CHUNKWM_EXTERN extern "C"
 
 // NOTE(koekeishiya): Increment upon ABI breaking changes!
-#define CHUNKWM_PLUGIN_API_VERSION 7
+#define CHUNKWM_PLUGIN_API_VERSION 8
 
 // NOTE(koekeishiya): Forward-declare struct
 struct plugin;
@@ -36,6 +36,7 @@ struct plugin
 CHUNKWM_EXTERN typedef plugin *(*plugin_func)();
 struct plugin_details
 {
+    char Magic[6];
     int ApiVersion;
     const char *FileName;
     const char *PluginName;
@@ -74,6 +75,7 @@ struct plugin_details
           }                                                      \
           plugin_details Exports =                               \
           {                                                      \
+              { 'c', 'h', 'w', 'm', 'p', 'l' },                  \
               CHUNKWM_PLUGIN_API_VERSION,                        \
               __FILE__,                                          \
               PluginName,                                        \
