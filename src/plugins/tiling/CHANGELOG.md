@@ -2,6 +2,8 @@
 
 #### other changes
 
+ - extend 'window --focus' to support focusing by id (#472)
+
  - commands to query index of active window, and number of windows, in a monocle desktop (#459)
 
  - allow *FocusMonitor* to work on empty monitors (#464)
