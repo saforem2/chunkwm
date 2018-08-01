@@ -431,19 +431,21 @@ See the following sections for how to retrieve information about an open window:
 | --state       | -s         | sticky                       | show on all desktops (implicit float)   |
 | --state       | -s         | native-fullscreen            | automatically enter native-fullscreen   |
 | --desktop     | -d         | mission-control index        | send window to desktop                  |
+| --monitor     | -m         | monitor index                | send window to monitor                  |
 | --level       | -l         | integer (see link above)     | set window level based on the given key |
 | --alpha       | -a         | floating-point (0 <= a <= 1) | set window alpha                        |
 | --grid-layout | -g         | same as grid-layout command  | set window alpha                        |
 
 | modifiers        | short flag | affected property | description                          |
 |------------------|:----------:|:-----------------:|:------------------------------------:|
-| --follow-desktop | -D         | desktop           | follow focus to the assigned desktop |
+| --follow-desktop | -D         | desktop, monitor  | follow focus to the assigned desktop |
 
 ##### sample rules
 
     chunkc tiling::rule --owner \"System Preferences\" --subrole AXStandardWindow --state tile
     chunkc tiling::rule --owner Finder --name Copy --state float
     chunkc tiling::rule --owner Spotify --desktop 5 --follow-desktop
+    chunkc tiling::rule --owner Messages --monitor 2 --follow-desktop
     chunkc tiling::rule --owner mpv --state sticky --alpha 0.65 --grid-layout 5:5:4:0:1:1
     chunkc tiling::rule --owner Terminal --state sticky --level 3 --grid-layout 1:1:0:0:1:1
 

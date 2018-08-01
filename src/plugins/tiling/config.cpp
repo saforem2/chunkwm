@@ -638,6 +638,7 @@ ParseRuleCommand(const char *Message, window_rule *Rule)
         { "except", required_argument, NULL, 'e' },
         { "state", required_argument, NULL, 's' },
         { "desktop", required_argument, NULL, 'd' },
+        { "monitor", required_argument, NULL, 'm' },
         { "follow-desktop", no_argument, NULL, 'D' },
         { "level", required_argument, NULL, 'l' },
         { "alpha", required_argument, NULL, 'a' },
@@ -676,6 +677,10 @@ ParseRuleCommand(const char *Message, window_rule *Rule)
         } break;
         case 'd': {
             Rule->Desktop = strdup(optarg);
+            HasProperty = true;
+        } break;
+        case 'm': {
+            Rule->Monitor = strdup(optarg);
             HasProperty = true;
         } break;
         case 'D': {

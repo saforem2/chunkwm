@@ -44,6 +44,7 @@ void AdjustSpaceGap(char *Op);
 
 bool SendWindowToDesktop(macos_window *Window, char *Op);
 void SendWindowToDesktop(char *Op);
+bool SendWindowToMonitor(macos_window *Window, char *Op);
 void SendWindowToMonitor(char *Op);
 
 void FloatWindow(macos_window *Window);
