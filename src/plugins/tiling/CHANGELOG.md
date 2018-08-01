@@ -2,6 +2,8 @@
 
 #### other changes
 
+ - properly manage windows that are hidden before chunkwm is launched (#473)
+
  - extend 'window --focus' to support focusing by id (#472)
 
  - commands to query index of active window, and number of windows, in a monocle desktop (#459)

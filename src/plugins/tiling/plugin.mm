@@ -1108,11 +1108,15 @@ ApplicationUnhiddenHandler(void *Data)
     }
 
     while ((Window = *List++)) {
-        macos_window *Copy = GetWindowByID(Window->Id);
-        AXLibDestroyWindow(Window);
+        macos_window *Copy = RemoveWindowFromCollection(Window);
+        if (Copy) {
+            AXLibDestroyWindow(Copy);
+        }
 
-        if (Copy && AXLibSpaceHasWindow(Space->Id, Copy->Id)) {
-            TileWindow(Copy);
+        AddWindowToCollection(Window);
+
+        if (Window && AXLibSpaceHasWindow(Space->Id, Window->Id)) {
+            TileWindow(Window);
         }
     }
 
