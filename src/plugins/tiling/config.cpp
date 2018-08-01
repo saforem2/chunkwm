@@ -131,7 +131,26 @@ ParseWindowCommand(const char *Message, command *Chain)
     while ((Option = getopt_long(Count, Args, Short, Long, NULL)) != -1) {
         switch (Option) {
         // NOTE(koekeishiya): The '-f', '-s', '-w' flag support the same arguments.
-        case 'f':
+        case 'f': {
+            uint32_t WindowId;
+            if ((StringEquals(optarg, "biggest")) ||
+                (StringEquals(optarg, "west")) ||
+                (StringEquals(optarg, "east")) ||
+                (StringEquals(optarg, "north")) ||
+                (StringEquals(optarg, "south")) ||
+                (StringEquals(optarg, "prev")) ||
+                (StringEquals(optarg, "next")) ||
+                (sscanf(optarg, "%d", &WindowId) == 1)) {
+                command *Entry = ConstructCommand(Option, optarg);
+                Command->Next = Entry;
+                Command = Entry;
+            } else {
+                c_log(C_LOG_LEVEL_WARN, "    invalid selector '%s' for window flag '%c'\n", optarg, Option);
+                Success = false;
+                FreeCommandChain(Chain);
+                goto End;
+            }
+        } break;
         case 's':
         case 'w': {
             if ((StringEquals(optarg, "biggest")) ||

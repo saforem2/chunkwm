@@ -336,6 +336,17 @@ void CloseWindow(char *Unused)
 }
 
 internal void
+FocusWindow(macos_window *Window)
+{
+    AXLibSetFocusedWindow(Window->Ref);
+    AXLibSetFocusedApplication(Window->Owner->PSN);
+
+    if (StringEquals(CVarStringValue(CVAR_MOUSE_FOLLOWS_FOCUS), Mouse_Follows_Focus_Intr)) {
+        CenterMouseInWindow(Window);
+    }
+}
+
+internal void
 FocusWindowInFullscreenSpace(macos_space *Space, char *Direction)
 {
     macos_window *Window = GetFocusedWindow();
@@ -348,12 +359,7 @@ FocusWindowInFullscreenSpace(macos_space *Space, char *Direction)
 
     macos_window *ClosestWindow;
     if (FindClosestFullscreenWindow(Space, Window, &ClosestWindow, Direction, WrapMonitor)) {
-        AXLibSetFocusedWindow(ClosestWindow->Ref);
-        AXLibSetFocusedApplication(ClosestWindow->Owner->PSN);
-
-        if (StringEquals(CVarStringValue(CVAR_MOUSE_FOLLOWS_FOCUS), Mouse_Follows_Focus_Intr)) {
-            CenterMouseInWindow(ClosestWindow);
-        }
+        FocusWindow(ClosestWindow);
     }
 }
 
@@ -394,13 +400,7 @@ FocusWindowNoFocus(char *Direction)
     if (Node) {
         Window = GetWindowByID(Node->WindowId);
         ASSERT(Window);
-
-        AXLibSetFocusedWindow(Window->Ref);
-        AXLibSetFocusedApplication(Window->Owner->PSN);
-
-        if (StringEquals(CVarStringValue(CVAR_MOUSE_FOLLOWS_FOCUS), Mouse_Follows_Focus_Intr)) {
-            CenterMouseInWindow(Window);
-        }
+        FocusWindow(Window);
     }
 
 vspace_release:
@@ -445,12 +445,7 @@ FocusWindowFocus(char *Direction, macos_window *Window)
                 macos_window *ClosestWindow;
                 if ((FindWindowUndirected(Space, VirtualSpace, WindowNode, &ClosestWindow, Direction, WrapMonitor)) ||
                     (FindClosestWindow(Space, VirtualSpace, Window, &ClosestWindow, Direction, WrapMonitor))) {
-                    AXLibSetFocusedWindow(ClosestWindow->Ref);
-                    AXLibSetFocusedApplication(ClosestWindow->Owner->PSN);
-
-                    if (StringEquals(CVarStringValue(CVAR_MOUSE_FOLLOWS_FOCUS), Mouse_Follows_Focus_Intr)) {
-                        CenterMouseInWindow(ClosestWindow);
-                    }
+                    FocusWindow(ClosestWindow);
                 } else if ((StringEquals(Direction, "east")) ||
                            (StringEquals(Direction, "next"))) {
                     FocusMonitor("next");
@@ -463,12 +458,7 @@ FocusWindowFocus(char *Direction, macos_window *Window)
                 macos_window *ClosestWindow;
                 if ((FindWindowUndirected(Space, VirtualSpace, WindowNode, &ClosestWindow, Direction, WrapMonitor)) ||
                     (FindClosestWindow(Space, VirtualSpace, Window, &ClosestWindow, Direction, WrapMonitor))) {
-                    AXLibSetFocusedWindow(ClosestWindow->Ref);
-                    AXLibSetFocusedApplication(ClosestWindow->Owner->PSN);
-
-                    if (StringEquals(CVarStringValue(CVAR_MOUSE_FOLLOWS_FOCUS), Mouse_Follows_Focus_Intr)) {
-                        CenterMouseInWindow(ClosestWindow);
-                    }
+                    FocusWindow(ClosestWindow);
                 }
             }
         }
@@ -510,15 +500,9 @@ FocusWindowFocus(char *Direction, macos_window *Window)
             }
 
             if (Node) {
-                macos_window *FocusWindow = GetWindowByID(Node->WindowId);
-                ASSERT(FocusWindow);
-
-                AXLibSetFocusedWindow(FocusWindow->Ref);
-                AXLibSetFocusedApplication(FocusWindow->Owner->PSN);
-
-                if (StringEquals(CVarStringValue(CVAR_MOUSE_FOLLOWS_FOCUS), Mouse_Follows_Focus_Intr)) {
-                    CenterMouseInWindow(FocusWindow);
-                }
+                macos_window *WindowToFocus = GetWindowByID(Node->WindowId);
+                ASSERT(WindowToFocus);
+                FocusWindow(WindowToFocus);
             }
         }
     }
@@ -533,11 +517,19 @@ space_free:
 
 void FocusWindow(char *Direction)
 {
-    macos_window *Window = GetFocusedWindow();
-    if (Window) {
-        FocusWindowFocus(Direction, Window);
+    unsigned WindowId;
+    macos_window *Window;
+
+    if (sscanf(Direction, "%d", &WindowId) == 1) {
+        if ((Window = GetWindowByID(WindowId))) {
+            FocusWindow(Window);
+        }
     } else {
-        FocusWindowNoFocus(Direction);
+        if ((Window = GetFocusedWindow())) {
+            FocusWindowFocus(Direction, Window);
+        } else {
+            FocusWindowNoFocus(Direction);
+        }
     }
 }
 
@@ -1865,12 +1857,7 @@ FocusMonitor(unsigned MonitorId)
     }
 
     Window = GetWindowByID(WindowIds[0]);
-    AXLibSetFocusedWindow(Window->Ref);
-    AXLibSetFocusedApplication(Window->Owner->PSN);
-
-    if (StringEquals(CVarStringValue(CVAR_MOUSE_FOLLOWS_FOCUS), Mouse_Follows_Focus_Intr)) {
-        CenterMouseInWindow(Window);
-    }
+    FocusWindow(Window);
 
     Result = true;
 

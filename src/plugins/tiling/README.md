@@ -239,7 +239,8 @@
 ##### focus window
 
     chunkc tiling::window --focus <option>
-    <option>: north | east | south | west | prev | next | biggest
+    <option>: north | east | south | west | prev | next | biggest | <window_id>
+    <window_id>: internal id of a window, retrieved with `query desktop ..`
     short flag: -f
 
 ##### swap window
