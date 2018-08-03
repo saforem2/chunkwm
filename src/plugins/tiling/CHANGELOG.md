@@ -10,7 +10,7 @@
 
  - allow *FocusMonitor* to work on empty monitors (#464)
 
- - add additional properties to the *window rules* system (#460)
+ - add additional properties to the *window rules* system (#460, #474)
 
  - fix space creation / removal for latest Mojave Beta (#439)
 
