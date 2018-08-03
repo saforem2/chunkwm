@@ -18,6 +18,7 @@ struct window_rule
     char *Except;
     char *State;
     char *Desktop;
+    char *Monitor;
     bool FollowDesktop;
     char *Level;
     char *Alpha;

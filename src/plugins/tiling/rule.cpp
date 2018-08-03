@@ -97,6 +97,19 @@ ApplyWindowRuleDesktop(macos_window *Window, window_rule *Rule)
 }
 
 internal inline void
+ApplyWindowRuleMonitor(macos_window *Window, window_rule *Rule)
+{
+    if (SendWindowToMonitor(Window, Rule->Monitor)) {
+        AXLibAddFlags(Window, Rule_Desktop_Changed);
+        if (Rule->FollowDesktop) {
+            FocusMonitor(Rule->Monitor);
+            AXLibSetFocusedWindow(Window->Ref);
+            AXLibSetFocusedApplication(Window->Owner->PSN);
+        }
+    }
+}
+
+internal inline void
 ApplyWindowRuleLevel(macos_window *Window, window_rule *Rule)
 {
     int LevelKey;
@@ -152,6 +165,7 @@ ApplyWindowRule(macos_window *Window, window_rule *Rule)
     }
 
     if (Rule->Desktop)    ApplyWindowRuleDesktop(Window, Rule);
+    if (Rule->Monitor)    ApplyWindowRuleMonitor(Window, Rule);
     if (Rule->State)      ApplyWindowRuleState(Window, Rule);
     if (Rule->Level)      ApplyWindowRuleLevel(Window, Rule);
     if (Rule->Alpha)      ApplyWindowRuleAlpha(Window, Rule);

@@ -1708,20 +1708,14 @@ void SendWindowToDesktop(char *Op)
     }
 }
 
-void SendWindowToMonitor(char *Op)
+bool SendWindowToMonitor(macos_window *Window, char *Op)
 {
-    macos_window *Window;
     CGRect NormalizedWindow;
     bool Success, ValidWindow;
     std::vector<uint32_t> WindowIds;
     macos_space *Space, *DestinationSpace;
     unsigned SourceMonitor, DestinationMonitor;
     CFStringRef SourceMonitorRef, DestinationMonitorRef;
-
-    Window = GetFocusedWindow();
-    if (!Window) {
-        return;
-    }
 
     __AppleGetDisplayIdentifierFromMacOSWindowO(Window, SourceMonitorRef);
     ASSERT(SourceMonitorRef);
@@ -1730,6 +1724,7 @@ void SendWindowToMonitor(char *Op)
     ASSERT(Space);
 
     if (Space->Type != kCGSSpaceUser) {
+        Success = false;
         goto space_free;
     }
 
@@ -1745,6 +1740,7 @@ void SendWindowToMonitor(char *Op)
         --DestinationMonitor;
     } else {
         c_log(C_LOG_LEVEL_WARN, "invalid destination monitor specified '%s'!\n", Op);
+        Success = false;
         goto space_free;
     }
 
@@ -1753,6 +1749,7 @@ void SendWindowToMonitor(char *Op)
         c_log(C_LOG_LEVEL_WARN,
               "invalid destination monitor specified, source monitor and destination '%d' are the same!\n",
               DestinationMonitor + 1);
+        Success = false;
         goto space_free;
     }
 
@@ -1762,6 +1759,7 @@ void SendWindowToMonitor(char *Op)
         c_log(C_LOG_LEVEL_WARN,
               "invalid destination monitor specified, monitor '%d' does not exist!\n",
               DestinationMonitor + 1);
+        Success = false;
         goto space_free;
     }
 
@@ -1823,6 +1821,16 @@ dest_space_free:
 
 space_free:
     AXLibDestroySpace(Space);
+
+    return Success;
+}
+
+void SendWindowToMonitor(char *Op)
+{
+    macos_window *Window = GetFocusedWindow();
+    if (Window) {
+        SendWindowToMonitor(Window, Op);
+    }
 }
 
 internal bool
