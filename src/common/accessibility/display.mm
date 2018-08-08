@@ -386,6 +386,23 @@ bool AXLibActiveSpace(macos_space **Space)
     return Result;
 }
 
+/*
+ * NOTE(koekeishiya): Construct a macos_space representing the active space for the
+ * display that currently holds the given macos_window.
+ * Caller is responsible for calling 'AXLibDestroySpace()'.
+ */
+macos_space *AXLibActiveSpace(AXUIElementRef WindowRef, uint32_t WindowId)
+{
+    __AppleGetDisplayIdentifierFromWindow(WindowRef, WindowId);
+    ASSERT(DisplayRef);
+
+    macos_space *Space = AXLibActiveSpace(DisplayRef);
+    ASSERT(Space);
+
+    __AppleFreeDisplayIdentifierFromWindow();
+    return Space;
+}
+
 /* NOTE(koekeishiya): Caller is responsible for passing a valid space! */
 void AXLibDestroySpace(macos_space *Space)
 {

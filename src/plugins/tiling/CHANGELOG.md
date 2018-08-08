@@ -2,6 +2,8 @@
 
 #### other changes
 
+ - change how the active desktop is identified for operations that don't directly invole a window (#484)
+
  - properly manage windows that are hidden before chunkwm is launched (#473)
 
  - extend 'window --focus' to support focusing by id (#472)

@@ -40,6 +40,27 @@ extern bool IsWindowValid(macos_window *Window);
 extern void BroadcastFocusedWindowFloating(macos_window *Window);
 extern void BroadcastFocusedDesktopMode(virtual_space *VirtualSpace);
 
+internal inline macos_space *
+GetActiveSpace(macos_window *Window)
+{
+    macos_space *Space = NULL;;
+
+    if (Window) {
+        Space = AXLibActiveSpace(Window->Ref, Window->Id);
+    } else {
+        AXLibActiveSpace(&Space);
+    }
+
+    return Space;
+}
+
+internal inline macos_space *
+GetActiveSpace()
+{
+    macos_window *Window = GetFocusedWindow();
+    return GetActiveSpace(Window);
+}
+
 internal bool
 IsCursorInRegion(region *Region)
 {
@@ -366,14 +387,13 @@ FocusWindowInFullscreenSpace(macos_space *Space, char *Direction)
 internal void
 FocusWindowNoFocus(char *Direction)
 {
-    bool Success;
     macos_space *Space;
     virtual_space *VirtualSpace;
     macos_window *Window;
     node *Node = NULL;
 
-    Success = AXLibActiveSpace(&Space);
-    ASSERT(Success);
+    Space = GetActiveSpace();
+    ASSERT(Space);
 
     if (Space->Type != kCGSSpaceUser) {
         if (Space->Type == kCGSSpaceFullscreen) {
@@ -1230,12 +1250,11 @@ RotateBSPTree(node *Node, char *Degrees)
 
 void RotateWindowTree(char *Degrees)
 {
-    bool Success;
     macos_space *Space;
     virtual_space *VirtualSpace;
 
-    Success = AXLibActiveSpace(&Space);
-    ASSERT(Success);
+    Space = GetActiveSpace();
+    ASSERT(Space);
 
     if (Space->Type != kCGSSpaceUser) {
         goto space_free;
@@ -1275,12 +1294,11 @@ MirrorBSPTree(node *Tree, node_split Axis)
 
 void MirrorWindowTree(char *Direction)
 {
-    bool Success;
     macos_space *Space;
     virtual_space *VirtualSpace;
 
-    Success = AXLibActiveSpace(&Space);
-    ASSERT(Success);
+    Space = GetActiveSpace();
+    ASSERT(Space);
 
     if (Space->Type != kCGSSpaceUser) {
         goto space_free;
@@ -1378,13 +1396,12 @@ space_free:
 
 void ActivateSpaceLayout(char *Layout)
 {
-    bool Success;
     macos_space *Space;
     virtual_space *VirtualSpace;
     virtual_space_mode NewLayout;
 
-    Success = AXLibActiveSpace(&Space);
-    ASSERT(Success);
+    Space = GetActiveSpace();
+    ASSERT(Space);
 
     if (Space->Type != kCGSSpaceUser) {
         goto space_free;
@@ -1422,12 +1439,11 @@ space_free:
 
 void ToggleSpace(char *Op)
 {
-    bool Success;
     macos_space *Space;
     virtual_space *VirtualSpace;
 
-    Success = AXLibActiveSpace(&Space);
-    ASSERT(Success);
+    Space = GetActiveSpace();
+    ASSERT(Space);
 
     if (Space->Type != kCGSSpaceUser) {
         goto space_free;
@@ -1459,13 +1475,12 @@ space_free:
 
 void AdjustSpacePadding(char *Op)
 {
-    bool Success;
     macos_space *Space;
     virtual_space *VirtualSpace;
     float Delta, NewTop, NewBottom, NewLeft, NewRight;
 
-    Success = AXLibActiveSpace(&Space);
-    ASSERT(Success);
+    Space = GetActiveSpace();
+    ASSERT(Space);
 
     if (Space->Type != kCGSSpaceUser) {
         goto space_free;
@@ -1509,13 +1524,12 @@ space_free:
 
 void AdjustSpaceGap(char *Op)
 {
-    bool Success;
     macos_space *Space;
     float Delta, NewGap;
     virtual_space *VirtualSpace;
 
-    Success = AXLibActiveSpace(&Space);
-    ASSERT(Success);
+    Space = GetActiveSpace();
+    ASSERT(Space);
 
     if (Space->Type != kCGSSpaceUser) {
         goto space_free;
@@ -1884,8 +1898,8 @@ void FocusMonitor(char *Op)
     macos_space *Space;
     unsigned SourceMonitor, DestinationMonitor;
 
-    Success = AXLibActiveSpace(&Space);
-    ASSERT(Success);
+    Space = GetActiveSpace();
+    ASSERT(Space);
 
     Success = AXLibCGSSpaceIDToDesktopID(Space->Id, &SourceMonitor, NULL);
     ASSERT(Success);
@@ -1986,12 +2000,11 @@ void GridLayout(char *Op)
 
 void EqualizeWindowTree(char *Unused)
 {
-    bool Success;
     macos_space *Space;
     virtual_space *VirtualSpace;
 
-    Success = AXLibActiveSpace(&Space);
-    ASSERT(Success);
+    Space = GetActiveSpace();
+    ASSERT(Space);
 
     if (Space->Type != kCGSSpaceUser) {
         goto space_free;
@@ -2015,14 +2028,13 @@ space_free:
 
 void SerializeDesktop(char *Op)
 {
-    bool Success;
     char *Buffer;
     FILE *Handle;
     macos_space *Space;
     virtual_space *VirtualSpace;
 
-    Success = AXLibActiveSpace(&Space);
-    ASSERT(Success);
+    Space = GetActiveSpace();
+    ASSERT(Space);
 
     if (Space->Type != kCGSSpaceUser) {
         goto space_free;
@@ -2055,13 +2067,12 @@ space_free:
 
 void DeserializeDesktop(char *Op)
 {
-    bool Success;
     char *Buffer;
     macos_space *Space;
     virtual_space *VirtualSpace;
 
-    Success = AXLibActiveSpace(&Space);
-    ASSERT(Success);
+    Space = GetActiveSpace();
+    ASSERT(Space);
 
     if (Space->Type != kCGSSpaceUser) {
         goto space_free;
@@ -2095,9 +2106,8 @@ space_free:
 internal inline void
 CurrentDesktopId(unsigned *DesktopId, unsigned *Arrangement, bool IncludeFullscreenSpaces)
 {
-    macos_space *Space;
-    bool Success = AXLibActiveSpace(&Space);
-    if (Success) {
+    macos_space *Space = GetActiveSpace();
+    if (Space) {
         AXLibCGSSpaceIDToDesktopID(Space->Id, Arrangement, DesktopId, IncludeFullscreenSpaces);
         AXLibDestroySpace(Space);
     }
@@ -2173,8 +2183,9 @@ void CreateDesktop(char *Unused)
 {
     int SockFD;
     macos_space *Space;
-    bool Success = AXLibActiveSpace(&Space);
-    if (!Success) return;
+
+    Space = GetActiveSpace();
+    if (!Space) goto out;
 
     if (ConnectToDaemon(&SockFD, 5050)) {
         char Message[64];
@@ -2182,18 +2193,22 @@ void CreateDesktop(char *Unused)
         WriteToSocket(Message, SockFD);
     }
     CloseSocket(SockFD);
+
+    AXLibDestroySpace(Space);
+out:;
 }
 
 void DestroyDesktop(char *Unused)
 {
     int SockFD;
     macos_space *Space;
-    bool Success = AXLibActiveSpace(&Space);
-    if (!Success) return;
+
+    Space = GetActiveSpace();
+    if (!Space) goto out;
 
     // NOTE(koekeishiya): Fullscreened application-spaces require special treatment
-    // and can not be destroyed using this method, so we guard for inproper usage.
-    if (Space->Type != kCGSSpaceUser) return;
+    // and can not be destroyed using this method, so we guard for improper usage.
+    if (Space->Type != kCGSSpaceUser) goto space_free;
 
     if (ConnectToDaemon(&SockFD, 5050)) {
         char Message[64];
@@ -2201,6 +2216,10 @@ void DestroyDesktop(char *Unused)
         WriteToSocket(Message, SockFD);
     }
     CloseSocket(SockFD);
+
+space_free:
+    AXLibDestroySpace(Space);
+out:;
 }
 
 internal void
@@ -2347,8 +2366,8 @@ QueryFocusedDesktop(int SockFD)
     unsigned DesktopId;
     bool Success;
 
-    Success = AXLibActiveSpace(&Space);
-    if (!Success) {
+    Space = GetActiveSpace();
+    if (!Space) {
         snprintf(Message, sizeof(Message), "?");
         goto out;
     }
@@ -2369,10 +2388,9 @@ QueryFocusedSpaceUuid(int SockFD)
     char Message[512];
     macos_space *Space;
     char *IdentifierC;
-    bool Success;
 
-    Success = AXLibActiveSpace(&Space);
-    if (!Success) {
+    Space = GetActiveSpace();
+    if (!Space) {
         snprintf(Message, sizeof(Message), "?");
         goto out;
     }
@@ -2393,10 +2411,9 @@ QueryFocusedVirtualSpaceMode(int SockFD)
     char Message[512];
     macos_space *Space;
     virtual_space *VirtualSpace;
-    bool Success;
 
-    Success = AXLibActiveSpace(&Space);
-    if (!Success) {
+    Space = GetActiveSpace();
+    if (!Space) {
         snprintf(Message, sizeof(Message), "?");
         goto out;
     }
@@ -2414,9 +2431,7 @@ out:
 internal void
 QueryWindowsForActiveSpace(int SockFD)
 {
-    macos_space *Space;
-    bool Success = AXLibActiveSpace(&Space);
-    ASSERT(Success);
+    macos_space *Space = GetActiveSpace();
 
     char *Cursor, *Buffer, *EndOfBuffer;
     size_t BufferSize = sizeof(char) * 4096;
@@ -2449,19 +2464,19 @@ QueryWindowsForActiveSpace(int SockFD)
 
     WriteToSocket(Buffer, SockFD);
     free(Buffer);
+    AXLibDestroySpace(Space);
 }
 
 internal void
 QueryMonocleDesktopWindowCount(int SockFD)
 {
     virtual_space *VirtualSpace;
-    macos_space *Space;
     char Message[512];
     node *Node;
 
     unsigned int Count = 0;
-
-    if (!AXLibActiveSpace(&Space)) {
+    macos_space *Space = GetActiveSpace();
+    if (!Space) {
         goto out;
     }
 
@@ -2474,6 +2489,7 @@ QueryMonocleDesktopWindowCount(int SockFD)
         }
     }
     ReleaseVirtualSpace(VirtualSpace);
+    AXLibDestroySpace(Space);
 
 out:;
     snprintf(Message, sizeof(Message), "%d", Count);
@@ -2484,20 +2500,20 @@ internal void
 QueryMonocleDesktopWindowIndex(int SockFD)
 {
     virtual_space *VirtualSpace;
-    macos_space *Space;
     char Message[512];
     node *ActiveNode;
     node *Node;
 
     unsigned int Index = 0;
-
-    if (!AXLibActiveSpace(&Space)) {
+    macos_window *Window = GetFocusedWindow();
+    macos_space *Space = GetActiveSpace(Window);
+    if (!Space) {
         goto out;
     }
 
     VirtualSpace = AcquireVirtualSpace(Space);
     if (VirtualSpace->Mode == Virtual_Space_Monocle) {
-        ActiveNode = GetNodeWithId(VirtualSpace->Tree, GetFocusedWindowId(), VirtualSpace->Mode);
+        ActiveNode = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
         Node = VirtualSpace->Tree;
         while (Node) {
             ++Index;
@@ -2508,6 +2524,7 @@ QueryMonocleDesktopWindowIndex(int SockFD)
         }
     }
     ReleaseVirtualSpace(VirtualSpace);
+    AXLibDestroySpace(Space);
 
 out:;
     snprintf(Message, sizeof(Message), "%d", Index);
@@ -2539,8 +2556,8 @@ QueryFocusedMonitor(int SockFD)
     unsigned MonitorId;
     bool Success;
 
-    Success = AXLibActiveSpace(&Space);
-    if (!Success) {
+    Space = GetActiveSpace();
+    if (!Space) {
         snprintf(Message, sizeof(Message), "?");
         goto out;
     }
