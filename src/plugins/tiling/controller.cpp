@@ -421,6 +421,19 @@ FocusWindowNoFocus(char *Direction)
         Window = GetWindowByID(Node->WindowId);
         ASSERT(Window);
         FocusWindow(Window);
+    } else {
+        char *FocusCycleMode = CVarStringValue(CVAR_WINDOW_FOCUS_CYCLE);
+        ASSERT(FocusCycleMode);
+
+        if (StringEquals(FocusCycleMode, Window_Focus_Cycle_All)) {
+            if ((StringEquals(Direction, "east")) ||
+                       (StringEquals(Direction, "next"))) {
+                FocusMonitor("next");
+            } else if ((StringEquals(Direction, "west")) ||
+                       (StringEquals(Direction, "prev"))) {
+                FocusMonitor("prev");
+            }
+        }
     }
 
 vspace_release:
