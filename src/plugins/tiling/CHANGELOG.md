@@ -2,7 +2,9 @@
 
 #### other changes
 
- - change how the active desktop is identified for operations that don't directly invole a window (#484)
+ - query id of focused monitor should correctly work when a window is in macOS fullscreen mode (#462)
+
+ - change how the active desktop is identified for operations that don't directly involve a window (#484)
 
  - properly manage windows that are hidden before chunkwm is launched (#473)
 
