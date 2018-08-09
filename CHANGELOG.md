@@ -1,10 +1,19 @@
 ### HEAD -  not yet released
 
+----------
+
+### version 0.4.6
+
 #### ABI Change
 
  - Add "magic number" to exported plugin header to identify valid chunkwm plugin files
 
  - Add new log-level *profile* and simple helper macros (#446)
+
+----------
+
+### version 0.4.5
+
 
 ----------
 

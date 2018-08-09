@@ -1,5 +1,9 @@
 ### HEAD - not yet released
 
+----------
+
+### version 0.3.4
+
 #### other changes
 
  - fix border not drawing properly on Mojave (#439)

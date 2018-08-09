@@ -1,5 +1,9 @@
 ### HEAD -  not yet released
 
+----------
+
+### version 0.3.13
+
 #### other changes
 
  - query id of focused monitor should correctly work when a window is in macOS fullscreen mode (#462)
