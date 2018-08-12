@@ -1,5 +1,9 @@
 ### HEAD -  not yet released
 
+#### other changes
+
+ - fixed a potential null reference when querying index of active window in a monocle desktop (#486)
+
 ----------
 
 ### version 0.3.13

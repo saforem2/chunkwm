@@ -2513,14 +2513,18 @@ internal void
 QueryMonocleDesktopWindowIndex(int SockFD)
 {
     virtual_space *VirtualSpace;
+    macos_window *Window;
+    macos_space *Space;
     char Message[512];
     node *ActiveNode;
     node *Node;
-
     unsigned int Index = 0;
-    macos_window *Window = GetFocusedWindow();
-    macos_space *Space = GetActiveSpace(Window);
-    if (!Space) {
+
+    if (!(Window = GetFocusedWindow())) {
+        goto out;
+    }
+
+    if (!(Space = GetActiveSpace(Window))) {
         goto out;
     }
 
