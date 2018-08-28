@@ -43,12 +43,12 @@ enum carbon_application_state
 struct carbon_application_details
 {
     carbon_application_state volatile State;
+    float volatile TimeElapsed;
     char *ProcessName;
     uint32_t ProcessPolicy;
     bool ProcessBackground;
     ProcessSerialNumber PSN;
     pid_t PID;
-    float TimeElapsed;
 };
 
 carbon_application_details *BeginCarbonApplicationDetails(ProcessSerialNumber PSN);
