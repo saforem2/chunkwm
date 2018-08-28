@@ -1,5 +1,10 @@
 ### HEAD -  not yet released
 
+### other changes
+
+ - some applications are incorrectly classified as support GUI (windows) but do not respond correctly.
+   add a maximum wait-time so that we eventually timeout for these applications (#489)
+
 ----------
 
 ### version 0.4.6

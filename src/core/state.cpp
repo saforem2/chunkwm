@@ -288,8 +288,8 @@ OBSERVER_CALLBACK(ApplicationCallback)
     }
 }
 
-#define OBSERVER_RETRIES 20
-#define OBSERVER_DELAY 0.1f
+#define LAUNCH_STATE_TIMEOUT 15.0f
+#define LAUNCH_STATE_DELAY 0.1f
 #define MICROSEC_PER_SEC 1e6
 internal void
 ConstructAndAddApplicationDispatch(macos_application *Application, carbon_application_details *Info, float Delay)
@@ -297,6 +297,8 @@ ConstructAndAddApplicationDispatch(macos_application *Application, carbon_applic
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, Delay * NSEC_PER_SEC), dispatch_get_main_queue(),
     ^{
         if (Info->State == Carbon_Application_State_In_Progress) {
+            Info->TimeElapsed += Delay;
+
             application_launch_state LaunchState = WorkspaceGetApplicationLaunchState(Info->PID);
             if (LaunchState == Application_State_Failed) {
                 c_log(C_LOG_LEVEL_DEBUG, "%d:%s could not register window notifications!!!\n", Application->PID, Application->Name);
@@ -304,8 +306,14 @@ ConstructAndAddApplicationDispatch(macos_application *Application, carbon_applic
                 AXLibDestroyApplication(Application);
                 return;
             } else if (LaunchState == Application_State_Launching) {
-                c_log(C_LOG_LEVEL_DEBUG, "%d:%s waiting for application to be ready for notifications\n", Application->PID, Application->Name);
-                ConstructAndAddApplicationDispatch(Application, Info, OBSERVER_DELAY);
+                if (Info->TimeElapsed < LAUNCH_STATE_TIMEOUT) {
+                    c_log(C_LOG_LEVEL_DEBUG, "%d:%s waiting for application to be ready for notifications\n", Application->PID, Application->Name);
+                    ConstructAndAddApplicationDispatch(Application, Info, LAUNCH_STATE_DELAY);
+                } else {
+                    c_log(C_LOG_LEVEL_DEBUG, "%d:%s application didn't respond within allowed timeframe\n", Application->PID, Application->Name);
+                    Info->State = Carbon_Application_State_Failed;
+                    AXLibDestroyApplication(Application);
+                }
                 return;
             }
 
@@ -320,14 +328,7 @@ ConstructAndAddApplicationDispatch(macos_application *Application, carbon_applic
                 if (Application->Observer.Valid) {
                     AXLibDestroyObserver(&Application->Observer);
                 }
-
-                if (++Info->Attempts > OBSERVER_RETRIES) {
-                    if (Info->State != Carbon_Application_State_Invalid) {
-                        Info->State = Carbon_Application_State_Failed;
-                    }
-                }
-
-                ConstructAndAddApplicationDispatch(Application, Info, OBSERVER_DELAY);
+                ConstructAndAddApplicationDispatch(Application, Info, LAUNCH_STATE_DELAY);
             }
         } else if (Info->State == Carbon_Application_State_Failed) {
             c_log(C_LOG_LEVEL_DEBUG, "%d:%s could not register window notifications!!!\n", Application->PID, Application->Name);
@@ -345,7 +346,7 @@ void ConstructAndAddApplication(carbon_application_details *Info)
     macos_application *Application = AXLibConstructApplication(Info->PSN, Info->PID, Info->ProcessName);
 
     Info->State = Carbon_Application_State_In_Progress;
-    Info->Attempts = 0;
+    Info->TimeElapsed = 0;
 
     ConstructAndAddApplicationDispatch(Application, Info, 0.0f);
 }
