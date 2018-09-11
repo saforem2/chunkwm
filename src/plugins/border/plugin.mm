@@ -55,7 +55,9 @@ CreateBorder(int X, int Y, int W, int H)
     unsigned Color = CVarUnsignedValue("focused_border_color");
     int Width = CVarIntegerValue("focused_border_width");
     int Radius = CVarIntegerValue("focused_border_radius");
-    Border = CreateBorderWindow(X, Y, W, H, Width, Radius, Color);
+    bool Outline = CVarIntegerValue("focused_border_outline");
+
+    Border = CreateBorderWindow(X, Y, W, H, Width, Radius, Color, Outline);
 }
 
 internal inline void
