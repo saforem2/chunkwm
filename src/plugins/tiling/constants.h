@@ -56,6 +56,7 @@
 #define CVAR_PRE_BORDER_COLOR       "preselect_border_color"
 #define CVAR_PRE_BORDER_WIDTH       "preselect_border_width"
 #define CVAR_PRE_BORDER_RADIUS      "preselect_border_radius"
+#define CVAR_PRE_BORDER_OUTLINE     "preselect_border_outline"
 
 /*
  * NOTE(koekeishiya): The following cvars requires extended dock
