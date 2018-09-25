@@ -1685,6 +1685,7 @@ Init(chunkwm_api ChunkwmAPI)
     CreateCVar(CVAR_PRE_BORDER_COLOR, 0xffffff00);
     CreateCVar(CVAR_PRE_BORDER_WIDTH, 4);
     CreateCVar(CVAR_PRE_BORDER_RADIUS, 4);
+    CreateCVar(CVAR_PRE_BORDER_OUTLINE, 0);
 
     /*
      * NOTE(koekeishiya): The following cvars requires extended dock
