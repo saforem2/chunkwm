@@ -48,6 +48,7 @@ struct border_window_internal
     int Width;
     int Radius;
     unsigned Color;
+    bool Outline;
 
     NSWindow *Handle;
     OverlayView *View;
@@ -63,8 +64,15 @@ NSColor *ColorFromHex(unsigned int Color)
 }
 
 static void
-InitBorderWindow(border_window_internal *Border, int X, int Y, int W, int H, int BorderWidth, int BorderRadius, unsigned int BorderColor)
+InitBorderWindow(border_window_internal *Border, int X, int Y, int W, int H, int BorderWidth, int BorderRadius, unsigned int BorderColor, bool BorderOutline)
 {
+    if(BorderOutline) {
+        X = X - (BorderWidth / 2);
+        Y = Y - (BorderWidth / 2);
+        W = W + (BorderWidth);
+        H = H + (BorderWidth);
+    }
+
     NSRect GraphicsRect = NSMakeRect(X, Y, W, H);
     Border->Handle = [[NSWindow alloc] initWithContentRect: GraphicsRect
                                        styleMask: NSWindowStyleMaskBorderless
@@ -90,23 +98,24 @@ InitBorderWindow(border_window_internal *Border, int X, int Y, int W, int H, int
     [Border->View display];
 }
 
-border_window *CreateBorderWindow(int X, int Y, int W, int H, int BorderWidth, int BorderRadius, unsigned int BorderColor)
+border_window *CreateBorderWindow(int X, int Y, int W, int H, int BorderWidth, int BorderRadius, unsigned int BorderColor, bool BorderOutline)
 {
     border_window_internal *Border = (border_window_internal *) malloc(sizeof(border_window_internal));
 
     Border->Width = BorderWidth;
     Border->Radius = BorderRadius;
     Border->Color = BorderColor;
+    Border->Outline = BorderOutline;
 
     if ([NSThread isMainThread]) {
         NSAutoreleasePool *Pool = [[NSAutoreleasePool alloc] init];
-        InitBorderWindow(Border, X, Y, W, H, BorderWidth, BorderRadius, BorderColor);
+        InitBorderWindow(Border, X, Y, W, H, BorderWidth, BorderRadius, BorderColor, BorderOutline);
         [Pool release];
     } else {
         dispatch_async(dispatch_get_main_queue(), ^(void)
         {
             NSAutoreleasePool *Pool = [[NSAutoreleasePool alloc] init];
-            InitBorderWindow(Border, X, Y, W, H, BorderWidth, BorderRadius, BorderColor);
+            InitBorderWindow(Border, X, Y, W, H, BorderWidth, BorderRadius, BorderColor, BorderOutline);
             [Pool release];
         });
     }
@@ -117,6 +126,13 @@ border_window *CreateBorderWindow(int X, int Y, int W, int H, int BorderWidth, i
 void UpdateBorderWindowRect(border_window *Border, int X, int Y, int W, int H)
 {
     border_window_internal *BorderInternal = (border_window_internal *) Border;
+
+    if(Border->Outline) {
+        X = X - (Border->Width / 2);
+        Y = Y - (Border->Width / 2);
+        W = W + (Border->Width);
+        H = H + (Border->Width);
+    }
 
     if ([NSThread isMainThread]) {
         NSAutoreleasePool *Pool = [[NSAutoreleasePool alloc] init];

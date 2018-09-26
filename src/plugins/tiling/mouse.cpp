@@ -127,12 +127,13 @@ CreateResizeBorder(node *Node, macos_window *Window)
     unsigned PreselectBorderColor = CVarUnsignedValue(CVAR_PRE_BORDER_COLOR);
     int PreselectBorderWidth = CVarIntegerValue(CVAR_PRE_BORDER_WIDTH);
     int PreselectBorderRadius = CVarIntegerValue(CVAR_PRE_BORDER_RADIUS);
+    int PreselectBorderOutline = CVarIntegerValue(CVAR_PRE_BORDER_OUTLINE);
     region PreselRegion = RoundPreselRegion(Node->Region, Window->Position, Window->Size);
     int InvertY = FuckingMacOSMonitorBoundsChangingBetweenPrimaryAndMainMonitor(PreselRegion.Y, PreselRegion.Height);
     border_window *Border = CreateBorderWindow(PreselRegion.X, InvertY,
                                                PreselRegion.Width, PreselRegion.Height,
                                                PreselectBorderWidth, PreselectBorderRadius,
-                                               PreselectBorderColor);
+                                               PreselectBorderColor, PreselectBorderOutline);
     return (resize_border) { Border, Node, Window };
 }
 
