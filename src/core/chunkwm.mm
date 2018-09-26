@@ -168,7 +168,7 @@ ParseArguments(int Count, char **Args)
         case 'i': {
             if (IsRoot()) {
                 if (InstallSA()) {
-                    printf("chunkwm: successfully installed sa! you can now reenable SIP.\n");
+                    printf("chunkwm: successfully installed sa!\n");
                 } else {
                     printf("chunkwm: failed to install sa! make sure SIP is disabled.\n");
                 }
