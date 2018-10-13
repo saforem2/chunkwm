@@ -513,6 +513,7 @@ query_func QueryCommandDispatch(char Flag)
     case 'w': return QueryWindow;             break;
     case 'd': return QueryDesktop;            break;
     case 'm': return QueryMonitor;            break;
+    case 'W': return QueryWindowsForDesktop;  break;
     case 'D': return QueryDesktopsForMonitor; break;
     case 'M': return QueryMonitorForDesktop;  break;
 
@@ -534,6 +535,7 @@ ParseQueryCommand(const char *Message, command *Chain)
         { "window", required_argument, NULL, 'w' },
         { "desktop", required_argument, NULL, 'd' },
         { "monitor", required_argument, NULL, 'm' },
+        { "windows-for-desktop", required_argument, NULL, 'W' },
         { "desktops-for-monitor", required_argument, NULL, 'D' },
         { "monitor-for-desktop", required_argument, NULL, 'M' },
         { NULL, 0, NULL, 0 }
@@ -590,6 +592,7 @@ ParseQueryCommand(const char *Message, command *Chain)
                 goto End;
             }
         } break;
+        case 'W':
         case 'D':
         case 'M': {
             int Integer;

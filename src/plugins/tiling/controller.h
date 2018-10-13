@@ -60,6 +60,7 @@ void DestroyDesktop(char *Unused);
 void QueryWindow(char *Op, int SockFD);
 void QueryDesktop(char *Op, int SockFD);
 void QueryMonitor(char *Op, int SockFD);
+void QueryWindowsForDesktop(char *Op, int SockFD);
 void QueryDesktopsForMonitor(char *Op, int SockFD);
 void QueryMonitorForDesktop(char *Op, int SockFD);
 

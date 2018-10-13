@@ -2606,6 +2606,52 @@ void QueryMonitor(char *Op, int SockFD)
     }
 }
 
+void QueryWindowsForDesktop(char *Op, int SockFD)
+{
+    int DesktopId;
+    if (sscanf(Op, "%d", &DesktopId) != 1) return;
+
+    CGSSpaceID SpaceId;
+    unsigned Arrangement;
+    bool Success = AXLibCGSSpaceIDFromDesktopID(DesktopId, &Arrangement, &SpaceId);
+    ASSERT(Success);
+
+    macos_space Space;
+    Space.Id = SpaceId;
+
+    char *Cursor, *Buffer, *EndOfBuffer;
+    size_t BufferSize = sizeof(char) * 4096;
+    size_t BytesWritten = 0;
+
+    Cursor = Buffer = (char *) malloc(BufferSize);
+    EndOfBuffer = Buffer + BufferSize;
+
+    std::vector<uint32_t> Windows = GetAllVisibleWindowsForSpace(&Space, true, true);
+    for (int Index = 0; Index < Windows.size(); ++Index) {
+        ASSERT(Cursor < EndOfBuffer);
+
+        macos_window *Window = GetWindowByID(Windows[Index]);
+        ASSERT(Window);
+
+        if (IsWindowValid(Window)) {
+            BytesWritten = snprintf(Cursor, BufferSize, "%d, %s, %s\n", Window->Id, Window->Owner->Name, Window->Name);
+        } else {
+            BytesWritten = snprintf(Cursor, BufferSize, "%d, %s, %s (invalid)\n", Window->Id, Window->Owner->Name, Window->Name);
+        }
+
+        ASSERT(BytesWritten >= 0);
+        Cursor += BytesWritten;
+        BufferSize -= BytesWritten;
+    }
+
+    if (Windows.empty()) {
+        *Cursor = '\0';
+    }
+
+    WriteToSocket(Buffer, SockFD);
+    free(Buffer);
+}
+
 void QueryDesktopsForMonitor(char *Op, int SockFD)
 {
     int MonitorId, Arrangement;
