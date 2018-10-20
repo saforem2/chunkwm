@@ -4,6 +4,7 @@
   * [border color](#set-border-color)
   * [border width](#set-border-width)
   * [border radius](#set-border-radius)
+  * [border position](#set-border-position)
   * [skip border for floating windows and desktops](#skip-border-for-floating-windows-and-desktops)
   * [skip border for monocle desktops](#skip-border-for-monocle-desktops)
 * [runtime commands](#runtime-commands)
@@ -23,6 +24,11 @@
 ##### set border radius
 
     chunkc set focused_border_radius 4
+
+##### set border position
+
+    chunkc set focused_border_outline <option>
+    <option>: 1 | 0
 
 ##### skip border for floating windows and desktops
 

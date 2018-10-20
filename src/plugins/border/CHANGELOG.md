@@ -2,6 +2,14 @@
 
 ----------
 
+### version 0.3.5
+
+#### other changes
+
+ - new cvar `focused_border_outline` to specify border position (#508)
+
+----------
+
 ### version 0.3.4
 
 #### other changes

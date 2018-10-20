@@ -1,5 +1,9 @@
 ### HEAD -  not yet released
 
+----------
+
+### version 0.4.7
+
 ### other changes
 
  - some applications are incorrectly classified as support GUI (windows) but do not respond correctly.
