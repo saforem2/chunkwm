@@ -10,7 +10,7 @@ In addition to the above, a plugin must provide both a name and a version.
 
 The first step we have to do when creating a new plugin, is to include the necessary
 macros and definitions provided through the plugin api:
-```
+```C
 #include "../../api/plugin.api.h"
 ```
 
@@ -27,7 +27,7 @@ the config-file.
 The init function is defined through the *PLUGIN_BOOL_FUNC* macro and should return
 true if initialization succeeded, and false otherwise.
 
-```
+```C
 /*
  * parameter: chunkwm_api ChunkwmAPI
  * return: bool -> true if startup succeeded
@@ -48,7 +48,7 @@ PLUGIN_BOOL_FUNC(PluginInit)
 The deinit function is called when a plugin is unloaded and is responsible for teardown
 and cleanup. This function is defined through the *PLUGIN_VOID_FUNC* macro.
 
-```
+```C
 PLUGIN_VOID_FUNC(PluginDeInit)
 {
     //
@@ -62,7 +62,7 @@ events or events broadcasted by other plugins. This function is defined through 
 *PLUGIN_MAIN_FUNC* macro. The return value is currently unused, but should return true
 for events that were handled property, and false otherwise.
 
-```
+```C
 /*
  * NOTE(koekeishiya):
  * parameter: const char *Node
@@ -87,7 +87,7 @@ After the above functions have been implemented, it is time to construct the plu
 entry-point. First, we have to link our function pointers to the functions that have
 been implemented. This is done through the *CHUNKWM_PLUGIN_VTABLE* macro.
 
-```
+```C
 // NOTE(koekeishiya): Initialize plugin function pointers.
 CHUNKWM_PLUGIN_VTABLE(PluginInit, PluginDeInit, PluginMain)
 ```
@@ -96,7 +96,7 @@ Secondly, we specify which events our plugin should subscribe to, using the
 *CHUNKWM_PLUGIN_SUBSCRIBE* macro. The array can remain empty if no events are necessary
 for the plugin to do whatever its purpose is.
 
-```
+```C
 // NOTE(koekeishiya): Subscribe to ChunkWM events!
 chunkwm_plugin_export Subscriptions[] =
 {
@@ -108,7 +108,7 @@ CHUNKWM_PLUGIN_SUBSCRIBE(Subscriptions)
 
 Finally, we are ready to generate the plugin entry-point used by *chunkwm*
 
-```
+```C
 // NOTE(koekeishiya): Generate plugin
 static const char *PluginName = "template";
 static const char *PluginVersion = "0.0.1";
