@@ -1,4 +1,4 @@
-BUILD_FLAGS     = -O0 -g -DCHUNKWM_DEBUG -std=c++11 -Wall -Wno-deprecated -DVERSION=\"$(GIT_VERSION)\"
+BUILD_FLAGS     = -O0 -g -DCHUNKWM_DEBUG -std=c++11 -Wall -Wno-deprecated -DGIT_VERSION=\"$(GIT_VERSION)\"
 BUILD_PATH      = ./bin
 SRC             = ./src/core/chunkwm.mm
 BINS            = $(BUILD_PATH)/chunkwm
