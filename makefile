@@ -2,7 +2,9 @@ BUILD_FLAGS     = -O0 -g -DCHUNKWM_DEBUG -std=c++11 -Wall -Wno-deprecated
 BUILD_PATH      = ./bin
 SRC             = ./src/core/chunkwm.mm
 BINS            = $(BUILD_PATH)/chunkwm
-LINK            = -rdynamic -ldl -lpthread -framework Carbon -framework Cocoa -framework ScriptingBridge
+LINK            = -rdynamic -ldl -lpthread -framework Carbon -framework Cocoa -framework ScriptingBridge -DGIT_VERSION=\"$(GIT_VERSION)\"
+GIT_VERSION    := "$(shell git describe --abbrev=4 --dirty --always)"
+
 
 all: $(BINS)
 
