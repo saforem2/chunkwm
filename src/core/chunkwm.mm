@@ -208,7 +208,7 @@ ParseArguments(int Count, char **Args)
                     CHUNKWM_MAJOR,
                     CHUNKWM_MINOR,
                     CHUNKWM_PATCH,
-		    GIT_VERSION);
+                    GIT_VERSION);
             return true;
         } break;
         case 'c': {
