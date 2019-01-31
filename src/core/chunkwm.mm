@@ -204,10 +204,11 @@ ParseArguments(int Count, char **Args)
             return true;
         } break;
         case 'v': {
-            printf("chunkwm %d.%d.%d\n",
+            printf("chunkwm %d.%d.%d (%d)\n",
                     CHUNKWM_MAJOR,
                     CHUNKWM_MINOR,
-                    CHUNKWM_PATCH);
+                    CHUNKWM_PATCH,
+		    VERSION);
             return true;
         } break;
         case 'c': {
