@@ -13,9 +13,6 @@ install: clean $(BINS)
 
 .PHONY: all clean install
 
-gitversion.c: .git/HEAD .git/index
-    echo "const char *gitversion = \"$(shell git rev-parse HEAD)\";" > $@
-
 $(BINS): | $(BUILD_PATH)
 
 $(BUILD_PATH):
