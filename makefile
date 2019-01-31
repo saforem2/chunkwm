@@ -3,7 +3,7 @@ BUILD_PATH      = ./bin
 SRC             = ./src/core/chunkwm.mm
 BINS            = $(BUILD_PATH)/chunkwm
 LINK            = -rdynamic -ldl -lpthread -framework Carbon -framework Cocoa -framework ScriptingBridge
-GIT_VERSION := $(shell git describe --abbrev=4 --dirty --always --tags)
+GIT_VERSION    := "$(shell git describe --abbrev=4 --dirty --always)"
 
 
 all: $(BINS)
