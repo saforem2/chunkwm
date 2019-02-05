@@ -6,8 +6,9 @@
 
 enum window_rule_flags
 {
-    Rule_State_Tiled = (1 << 10),
-    Rule_Desktop_Changed = (1 << 11)
+    Rule_State_Tiled     = 1 << 10,
+    Rule_Desktop_Changed = 1 << 11,
+    Rule_Alpha_Changed   = 1 << 12
 };
 struct window_rule
 {

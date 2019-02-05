@@ -133,11 +133,15 @@ FadeWindows(uint32_t FocusedWindowId)
     float Duration = CVarFloatingPointValue(CVAR_WINDOW_FADE_DURATION);
     macos_window_map Copy = CopyWindowCache();
 
-    ExtendedDockSetWindowAlpha(FocusedWindowId, 1.0f, Duration);
     for (macos_window_map_it It = Copy.begin(); It != Copy.end(); ++It) {
         macos_window *Window = It->second;
-        if (Window->Id == FocusedWindowId) continue;
-        ExtendedDockSetWindowAlpha(Window->Id, Alpha, Duration);
+        if (!AXLibHasFlags(Window, Rule_Alpha_Changed)) {
+            if (Window->Id == FocusedWindowId) {
+                ExtendedDockSetWindowAlpha(FocusedWindowId, 1.0f, Duration);
+            } else {
+                ExtendedDockSetWindowAlpha(Window->Id, Alpha, Duration);
+            }
+        }
     }
 }
 

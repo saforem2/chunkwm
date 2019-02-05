@@ -124,6 +124,7 @@ ApplyWindowRuleAlpha(macos_window *Window, window_rule *Rule)
     float Alpha;
     if (sscanf(Rule->Alpha, "%f", &Alpha) == 1) {
         ExtendedDockSetWindowAlpha(Window->Id, Alpha);
+        AXLibAddFlags(Window, Rule_Alpha_Changed);
     }
 }
 
