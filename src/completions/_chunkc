@@ -162,8 +162,13 @@ function _chunkc {
             # border commands don't need any further completions
             [[ $line[1] == "border::"* ]] && return
 
-            _chunkc_${line[1]%::*}_${line[1]#*::}
+            local chunkc_cmd=_chunkc_${line[1]%::*}_${line[1]#*::}
 
+            if ! (( ${+functions[$chunkc_cmd]} )); then
+                _message "No completions provided for given chunkc command"
+            else
+                $chunkc_cmd
+            fi
         fi
     fi
 }
