@@ -137,6 +137,7 @@ function _chunkc_tiling_query {
         "--monitor:args:(id count)"
         "--desktops-for-monitor:args:($(__chunkc_monitors))"
         "--monitor-for-desktop:args:($(__chunkc_desktops))"
+        "--windows-for-desktop:args:($(__chunkc_desktops))"
     )
 
     _arguments - "(query)" $args
