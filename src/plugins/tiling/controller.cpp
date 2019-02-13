@@ -1882,6 +1882,8 @@ FocusMonitor(unsigned MonitorId)
     Space = AXLibActiveSpace(MonitorRef);
     ASSERT(Space);
 
+    Result = true;
+
     IncludeInvalidWindows = (Space->Type != kCGSSpaceUser);
 
     WindowIds = GetAllVisibleWindowsForSpace(Space, IncludeInvalidWindows, true);
@@ -1893,8 +1895,6 @@ FocusMonitor(unsigned MonitorId)
 
     Window = GetWindowByID(WindowIds[0]);
     FocusWindow(Window);
-
-    Result = true;
 
 space_free:
     AXLibDestroySpace(Space);
