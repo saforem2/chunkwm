@@ -2,6 +2,14 @@
 
 ----------
 
+### version 0.4.8
+
+#### other changes
+
+ - update spaces support for macOS Mojave (fast-switch, create and destroy) (#554)
+
+----------
+
 ### version 0.4.7
 
 ### other changes

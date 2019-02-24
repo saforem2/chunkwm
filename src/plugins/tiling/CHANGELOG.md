@@ -2,6 +2,16 @@
 
 ----------
 
+### version 0.3.15
+
+#### other changes
+
+ - fix switching to empty desktops not working properly through prev/next monitor command (#464)
+
+ - new command to query windows on a given desktop (#477)
+
+----------
+
 ### version 0.3.14
 
 #### other changes
