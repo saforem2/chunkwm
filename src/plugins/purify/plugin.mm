@@ -6,6 +6,7 @@
 #include "../../common/misc/carbon.h"
 #include "../../common/misc/workspace.h"
 #include "../../common/accessibility/application.h"
+#include "../../common/accessibility/display.h"
 #include "../../common/accessibility/window.h"
 #include "../../common/accessibility/element.h"
 #include "../../common/accessibility/observer.h"
@@ -14,6 +15,7 @@
 #include "../../common/misc/carbon.cpp"
 #include "../../common/misc/workspace.mm"
 #include "../../common/accessibility/application.cpp"
+#include "../../common/accessibility/display.mm"
 #include "../../common/accessibility/window.cpp"
 #include "../../common/accessibility/element.cpp"
 #include "../../common/accessibility/observer.cpp"
@@ -22,7 +24,7 @@
 #define internal static
 
 internal const char *PluginName = "purify";
-internal const char *PluginVersion = "0.0.2";
+internal const char *PluginVersion = "0.1.0";
 internal chunkwm_api API;
 
 internal void
@@ -31,7 +33,7 @@ ExtendedDockDisableWindowShadow(uint32_t WindowId)
     int SockFD;
     if (ConnectToDaemon(&SockFD, 5050)) {
         char Message[64];
-        sprintf(Message, "window_shadow %d 0", WindowId);
+        sprintf(Message, "window_shadow_irreversible %d", WindowId);
         WriteToSocket(Message, SockFD);
     }
     CloseSocket(SockFD);
@@ -83,24 +85,12 @@ PLUGIN_BOOL_FUNC(PluginInit)
 {
     API = ChunkwmAPI;
 
-    /*
-     * NOTE(koekeishiya): Disable shadows for existing windows.
-     * This only works for windows on the currently active desktop !!!
-     */
-    uint32_t ProcessPolicy = Process_Policy_Regular;
-    std::vector<macos_application *> Applications = AXLibRunningProcesses(ProcessPolicy);
-    for (size_t Index = 0; Index < Applications.size(); ++Index) {
-        macos_application *Application = Applications[Index];
-        macos_window **WindowList = AXLibWindowListForApplication(Application);
-        if (!WindowList) continue;
-
-        macos_window **List = WindowList;
-        macos_window *Window;
-        while ((Window = *List++)) {
-            ExtendedDockDisableWindowShadow(Window->Id);
-            AXLibDestroyWindow(Window);
+    int Count = 0;
+    int *WindowList = AXLibAllWindows(&Count);
+    if (WindowList) {
+        for (int Index = 0; Index < Count; ++Index) {
+            ExtendedDockDisableWindowShadow(WindowList[Index]);
         }
-
         free(WindowList);
     }
 

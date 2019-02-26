@@ -749,6 +749,40 @@ int *AXLibSpaceWindows(CGSSpaceID SpaceId, int *Count)
     return AXLibSpaceWindows(SpaceId, Count, false);
 }
 
+int *AXLibAllWindows(int *Count)
+{
+    NSMutableArray *SpaceIds = [[NSMutableArray alloc] init];
+
+    CFArrayRef DisplayDictionaries = CGSCopyManagedDisplaySpaces(CGSDefaultConnection);
+    for (NSDictionary *DisplayDictionary in (__bridge NSArray *) DisplayDictionaries) {
+        NSArray *SpaceDictionaries = DisplayDictionary[@"Spaces"];
+        for (NSDictionary *SpaceDictionary in SpaceDictionaries) {
+            CGSSpaceID SpaceId = [SpaceDictionary[@"id64"] intValue];
+            [SpaceIds addObject:@(SpaceId)];
+        }
+    }
+
+    unsigned long long SetTags = 0;
+    unsigned long long ClearTags = 0;
+
+    CFArrayRef Windows = CGSCopyWindowsWithOptionsAndTags(CGSDefaultConnection, 0, (__bridge CFArrayRef) SpaceIds, 1 << 1, &SetTags, &ClearTags);
+    if (!Windows) {
+        *Count = 0;
+        return NULL;
+    }
+
+    int NumberOfWindows = CFArrayGetCount(Windows);
+    int *Result = (int *) malloc(sizeof(int) * NumberOfWindows);
+
+    for (int Index = 0; Index < NumberOfWindows; ++Index) {
+        NSNumber *Id = (__bridge NSNumber *) CFArrayGetValueAtIndex(Windows, Index);
+        Result[Index] = [Id intValue];
+    }
+
+    *Count = NumberOfWindows;
+    return Result;
+}
+
 bool AXLibSpaceHasWindow(CGSSpaceID SpaceId, uint32_t WindowId)
 {
     bool Result = false;
