@@ -435,7 +435,7 @@ See the following sections for how to retrieve information about an open window:
 | --monitor     | -m         | monitor index                | send window to monitor                  |
 | --level       | -l         | integer (see link above)     | set window level based on the given key |
 | --alpha       | -a         | floating-point (0 <= a <= 1) | set window alpha                        |
-| --grid-layout | -g         | same as grid-layout command  | set window alpha                        |
+| --grid-layout | -g         | same as grid-layout command  | set window dimension through a grid     |
 
 | modifiers        | short flag | affected property | description                          |
 |------------------|:----------:|:-----------------:|:------------------------------------:|
