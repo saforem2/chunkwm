@@ -74,6 +74,7 @@
 /* NOTE(koekeishiya): These cvars are read-only !!               */
 
 #define CVAR_FOCUSED_WINDOW         "_focused_window"
+#define CVAR_LAST_FOCUSED_WINDOW    "_last_focused_window"
 #define CVAR_BSP_INSERTION_POINT    "_bsp_insertion_point"
 
 #define CVAR_ACTIVE_DESKTOP         "_active_desktop"

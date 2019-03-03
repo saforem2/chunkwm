@@ -1004,7 +1004,10 @@ internal void
 WindowFocusedHandler(uint32_t WindowId)
 {
     uint32_t FocusedWindowId = CVarUnsignedValue(CVAR_FOCUSED_WINDOW);
+
+    UpdateCVar(CVAR_LAST_FOCUSED_WINDOW, FocusedWindowId);
     UpdateCVar(CVAR_FOCUSED_WINDOW, WindowId);
+
     macos_window *Window = GetWindowByID(WindowId);
     if (Window && IsWindowFocusable(Window)) {
         __AppleGetDisplayIdentifierFromMacOSWindow(Window);
@@ -1120,7 +1123,16 @@ ApplicationUnhiddenHandler(void *Data)
         AddWindowToCollection(Window);
 
         if (Window && AXLibSpaceHasWindow(Space->Id, Window->Id)) {
+            uint32_t LastFocusedWindowId = CVarUnsignedValue(CVAR_LAST_FOCUSED_WINDOW);
+            if (LastFocusedWindowId) {
+                UpdateCVar(CVAR_BSP_INSERTION_POINT, LastFocusedWindowId);
+            }
+
             TileWindow(Window);
+
+            if (LastFocusedWindowId) {
+                UpdateCVar(CVAR_BSP_INSERTION_POINT, 0);
+            }
         }
     }
 
@@ -1191,6 +1203,12 @@ WindowMinimizedHandler(void *Data)
     macos_window *Copy = GetWindowByID(Window->Id);
     ASSERT(Copy);
 
+    uint32_t LastFocusedWindowId = CVarUnsignedValue(CVAR_LAST_FOCUSED_WINDOW);
+    if (LastFocusedWindowId == Copy->Id) {
+        uint32_t FocusedWindowId = CVarUnsignedValue(CVAR_FOCUSED_WINDOW);
+        UpdateCVar(CVAR_LAST_FOCUSED_WINDOW, FocusedWindowId);
+    }
+
     UntileWindow(Copy);
 }
 
@@ -1221,7 +1239,18 @@ WindowDeminimizedHandler(void *Data)
             AXLibClearFlags(Copy, Window_Init_Minimized);
         }
 
+        macos_window *LastFocusedWindow = GetWindowByID(CVarUnsignedValue(CVAR_LAST_FOCUSED_WINDOW));
+        bool OverrideInsertionPoint = LastFocusedWindow && LastFocusedWindow->Owner->PID != Window->Owner->PID;
+
+        if (OverrideInsertionPoint) {
+            UpdateCVar(CVAR_BSP_INSERTION_POINT, LastFocusedWindow->Id);
+        }
+
         TileWindow(Copy);
+
+        if (OverrideInsertionPoint) {
+            UpdateCVar(CVAR_BSP_INSERTION_POINT, 0);
+        }
     }
 
     AXLibDestroySpace(Space);
@@ -1665,6 +1694,7 @@ Init(chunkwm_api ChunkwmAPI)
     CreateCVar(CVAR_GAP_STEP_SIZE, 5.0f);
 
     CreateCVar(CVAR_FOCUSED_WINDOW, 0);
+    CreateCVar(CVAR_LAST_FOCUSED_WINDOW, 0);
     CreateCVar(CVAR_BSP_INSERTION_POINT, 0);
 
     CreateCVar(CVAR_ACTIVE_DESKTOP, 0);

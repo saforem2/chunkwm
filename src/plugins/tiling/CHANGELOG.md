@@ -4,6 +4,8 @@
 
  - fixed crash upon querying the monocle-index in a monocle desktop with only floating windows (#497)
 
+ - fixed an issue that caused minimized and hidden applications to be misplaced upon restoration (#560)
+
 ----------
 
 ### version 0.3.15
