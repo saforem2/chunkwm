@@ -2530,14 +2530,16 @@ QueryMonocleDesktopWindowIndex(int SockFD)
 
     VirtualSpace = AcquireVirtualSpace(Space);
     if (VirtualSpace->Mode == Virtual_Space_Monocle) {
-        ActiveNode = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
-        Node = VirtualSpace->Tree;
-        while (Node) {
-            ++Index;
-            if (ActiveNode == Node) {
-                break;
+        if (VirtualSpace->Tree) {
+            ActiveNode = GetNodeWithId(VirtualSpace->Tree, Window->Id, VirtualSpace->Mode);
+            Node = VirtualSpace->Tree;
+            while (Node) {
+                ++Index;
+                if (ActiveNode == Node) {
+                    break;
+                }
+                Node = Node->Right;
             }
-            Node = Node->Right;
         }
     }
     ReleaseVirtualSpace(VirtualSpace);

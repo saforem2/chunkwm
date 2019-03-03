@@ -1,5 +1,9 @@
 ### HEAD -  not yet released
 
+#### other changes
+
+ - fixed crash upon querying the monocle-index in a monocle desktop with only floating windows (#497)
+
 ----------
 
 ### version 0.3.15
