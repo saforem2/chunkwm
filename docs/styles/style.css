@@ -5,6 +5,7 @@ body {
     background-color: #202020;
     height: 100vh;
     overflow: hidden;
+    font-size: 14px;
 }
 
 pre {
@@ -67,13 +68,13 @@ a:hover {
 }
 
 #navbar-text h4 {
-    font-size: 2.19vmin;
+    font-size: 1.5em;
     margin-bottom: 0;
     color: #dfdfdf;
 }
 
 #navbar-text p {
-    font-size: 1.44vmin;
+    font-size: 1em;
     margin-top: 0;
     color: #8fee96;
 }
@@ -81,7 +82,7 @@ a:hover {
 #navbar-menu {
     float: right;
     padding-top: 4.4vmin;
-    font-size: 1.75vmin;
+    font-size: 1.2em;
 }
 
 #navbar-menu li {
@@ -120,7 +121,6 @@ a:hover {
 }
 
 #contents {
-    font-size: 1.5vmin;
     color: #d5c4a1;
     overflow-y: scroll;
     overflow-x: hidden;
@@ -146,7 +146,7 @@ a:hover {
 }
 
 #footer {
-    font-size: 1.08vmin;
+    font-size: .75em;
     color: #8fee96;
     overflow: hidden;
     position: absolute;
