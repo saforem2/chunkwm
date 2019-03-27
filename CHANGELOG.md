@@ -1,5 +1,9 @@
 ### HEAD -  not yet released
 
+#### other changes
+
+ - update spaces support for macOS Mojave 10.14.4 (fast-switch, create and destroy) (#571)
+
 ----------
 
 ### version 0.4.8
