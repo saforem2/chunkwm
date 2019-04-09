@@ -41,6 +41,9 @@
 * [desktop commands](#desktop-commands)
   * [desktop layout](#desktop-layout)
   * [focus desktop](#focus-desktop)
+  * [create desktop](#create-desktop)
+  * [destroy desktop](#destroy-desktop)
+  * [move desktop](#move-desktop)
   * [rotate desktop](#rotate-desktop)
   * [mirror desktop](#mirror-desktop)
   * [equalize desktop](#equalize-size-of-all-windows-on-desktop)
@@ -342,6 +345,13 @@
     chunkc tiling::desktop --annihilate
     short flag: -a
     desc: requires chwm-sa (https://github.com/koekeishiya/chwm-sa) and High Sierra / Mojave
+
+##### move desktop to monitor
+
+    chunkc tiling::desktop --move <option>
+    <option>: arrangement-index (1-based)
+    short flag: -M
+    desc: requires chwm-sa (https://github.com/koekeishiya/chwm-sa) and Mojave
 
 ##### rotate desktop
 

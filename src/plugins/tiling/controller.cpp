@@ -2116,14 +2116,17 @@ space_free:
     AXLibDestroySpace(Space);
 }
 
-internal inline void
+internal inline CGSSpaceID
 CurrentDesktopId(unsigned *DesktopId, unsigned *Arrangement, bool IncludeFullscreenSpaces)
 {
+    CGSSpaceID Result = 0;
     macos_space *Space = GetActiveSpace();
     if (Space) {
         AXLibCGSSpaceIDToDesktopID(Space->Id, Arrangement, DesktopId, IncludeFullscreenSpaces);
+        Result = Space->Id;
         AXLibDestroySpace(Space);
     }
+    return Result;
 }
 
 void FocusDesktop(char *Op)
@@ -2154,7 +2157,6 @@ void FocusDesktop(char *Op)
             char Message[64];
             sprintf(Message, "space %d", SpaceId);
             WriteToSocket(Message, SockFD);
-
 
             if (DestArrangement != Arrangement) {
                 /*
@@ -2233,6 +2235,89 @@ void DestroyDesktop(char *Unused)
 space_free:
     AXLibDestroySpace(Space);
 out:;
+}
+
+void MoveDesktop(char *Op)
+{
+    CGSSpaceID CurrentSpaceId = 0;
+    unsigned DesktopId = 0;
+    unsigned CurrentArrangement = 0;
+    unsigned Arrangement = 0;
+    bool IncludeFullscreenSpaces = 0;
+    if (StringEquals(Op, "prev")) {
+        IncludeFullscreenSpaces = true;
+        CurrentSpaceId = CurrentDesktopId(&DesktopId, &CurrentArrangement, IncludeFullscreenSpaces);
+        Arrangement = CurrentArrangement - 1;
+    } else if (StringEquals(Op, "next")) {
+        IncludeFullscreenSpaces = true;
+        CurrentSpaceId = CurrentDesktopId(&DesktopId, &CurrentArrangement, IncludeFullscreenSpaces);
+        Arrangement = CurrentArrangement + 1;
+    } else if (sscanf(Op, "%d", &Arrangement) == 1) {
+        IncludeFullscreenSpaces = true;
+        CurrentSpaceId = CurrentDesktopId(&DesktopId, &CurrentArrangement, IncludeFullscreenSpaces);
+        --Arrangement;
+    } else {
+        return;
+    }
+
+    // TODO(koekeishiya): Do we want to allow monitor wrapping ??
+    if (Arrangement == CurrentArrangement) return;
+    if (Arrangement < 0) return;
+    unsigned DisplayCount = AXLibDisplayCount();
+    if (Arrangement > DisplayCount) return;
+
+    CFStringRef DisplayRef = AXLibGetDisplayIdentifierFromArrangement(Arrangement);
+    if (!DisplayRef) return;
+
+    macos_space *Space = AXLibActiveSpace(DisplayRef);
+    ASSERT(Space);
+    CFRelease(DisplayRef);
+
+    int SockFD;
+    if (ConnectToDaemon(&SockFD, 5050)) {
+        char Message[64];
+        sprintf(Message, "space_move %d %d", CurrentSpaceId, Space->Id);
+        WriteToSocket(Message, SockFD);
+
+        struct pollfd fds[] = {
+            { SockFD, POLLIN, 0 },
+            { STDOUT_FILENO, POLLHUP, 0 },
+        };
+
+        char dummy[1];
+        int dummy_bytes = 0;
+
+        while (poll(fds, 2, -1) > 0) {
+            if (fds[1].revents & (POLLERR | POLLHUP)) {
+                break;
+            }
+
+            if (fds[0].revents & POLLIN) {
+                if ((dummy_bytes = recv(SockFD, dummy, sizeof(dummy) - 1, 0)) <= 0) {
+                    break;
+                }
+            }
+        }
+    }
+
+    AXLibDestroySpace(Space);
+    CloseSocket(SockFD);
+
+    DisplayRef = AXLibGetDisplayIdentifierFromArrangement(Arrangement);
+    if (DisplayRef) {
+        Space = AXLibActiveSpace(DisplayRef);
+        ASSERT(Space);
+        CFRelease(DisplayRef);
+        virtual_space *VirtualSpace = AcquireVirtualSpace(Space);
+        VirtualSpaceAddFlags(VirtualSpace, Virtual_Space_Require_Resize);
+        VirtualSpaceAddFlags(VirtualSpace, Virtual_Space_Require_Region_Update);
+        ReleaseVirtualSpace(VirtualSpace);
+        char Op[256] = {};
+        unsigned DesktopId = 0;
+        AXLibCGSSpaceIDToDesktopID(Space->Id, NULL, &DesktopId, true);
+        snprintf(Op, sizeof(Op), "%d", DesktopId);
+        FocusDesktop(Op);
+    }
 }
 
 internal void

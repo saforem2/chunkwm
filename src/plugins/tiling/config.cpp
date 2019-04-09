@@ -298,6 +298,7 @@ command_func SpaceCommandDispatch(char Flag)
     case 'f': return FocusDesktop;           break;
     case 'c': return CreateDesktop;          break;
     case 'a': return DestroyDesktop;         break;
+    case 'M': return MoveDesktop;            break;
 
     // NOTE(koekeishiya): silence compiler warning.
     default: return 0; break;
@@ -312,7 +313,7 @@ ParseSpaceCommand(const char *Message, command *Chain)
 
     int Option;
     bool Success = true;
-    const char *Short = "r:l:t:m:p:g:ef:ca";
+    const char *Short = "r:l:t:m:p:g:ef:caM:";
 
     struct option Long[] = {
         { "rotate", required_argument, NULL, 'r' },
@@ -327,13 +328,15 @@ ParseSpaceCommand(const char *Message, command *Chain)
         { "focus", required_argument, NULL, 'f' },
         { "create", no_argument, NULL, 'c' },
         { "annihilate", no_argument, NULL, 'a' },
+        { "move", required_argument, NULL, 'M' },
         { NULL, 0, NULL, 0 }
     };
 
     command *Command = Chain;
     while ((Option = getopt_long(Count, Args, Short, Long, NULL)) != -1) {
         switch (Option) {
-        case 'f': {
+        case 'f':
+        case 'M': {
             unsigned Unsigned;
             if ((StringEquals(optarg, "prev")) ||
                 (StringEquals(optarg, "next")) ||

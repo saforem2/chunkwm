@@ -6,6 +6,8 @@
 
  - fixed an issue that caused minimized and hidden applications to be misplaced upon restoration (#560)
 
+ - new command to move a desktop with all its current windows and layouts to a different monitor (#583)
+
 ----------
 
 ### version 0.3.15

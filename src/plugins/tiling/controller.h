@@ -56,6 +56,7 @@ void DeserializeDesktop(char *Op);
 void FocusDesktop(char *Op);
 void CreateDesktop(char *Unused);
 void DestroyDesktop(char *Unused);
+void MoveDesktop(char *Op);
 
 void QueryWindow(char *Op, int SockFD);
 void QueryDesktop(char *Op, int SockFD);
