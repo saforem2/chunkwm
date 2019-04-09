@@ -2253,7 +2253,6 @@ void MoveDesktop(char *Op)
         CurrentSpaceId = CurrentDesktopId(&DesktopId, &CurrentArrangement, IncludeFullscreenSpaces);
         Arrangement = CurrentArrangement + 1;
     } else if (sscanf(Op, "%d", &Arrangement) == 1) {
-        IncludeFullscreenSpaces = true;
         CurrentSpaceId = CurrentDesktopId(&DesktopId, &CurrentArrangement, IncludeFullscreenSpaces);
         --Arrangement;
     } else {
@@ -2314,7 +2313,7 @@ void MoveDesktop(char *Op)
         ReleaseVirtualSpace(VirtualSpace);
         char Op[256] = {};
         unsigned DesktopId = 0;
-        AXLibCGSSpaceIDToDesktopID(Space->Id, NULL, &DesktopId, true);
+        AXLibCGSSpaceIDToDesktopID(Space->Id, NULL, &DesktopId);
         snprintf(Op, sizeof(Op), "%d", DesktopId);
         FocusDesktop(Op);
     }
