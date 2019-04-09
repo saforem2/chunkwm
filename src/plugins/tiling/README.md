@@ -43,7 +43,7 @@
   * [focus desktop](#focus-desktop)
   * [create desktop](#create-desktop)
   * [destroy desktop](#destroy-desktop)
-  * [move desktop](#move-desktop)
+  * [move desktop](#move-desktop-to-monitor)
   * [rotate desktop](#rotate-desktop)
   * [mirror desktop](#mirror-desktop)
   * [equalize desktop](#equalize-size-of-all-windows-on-desktop)
@@ -349,7 +349,7 @@
 ##### move desktop to monitor
 
     chunkc tiling::desktop --move <option>
-    <option>: arrangement-index (1-based)
+    <option>: index (1-based) | prev | next
     short flag: -M
     desc: requires chwm-sa (https://github.com/koekeishiya/chwm-sa) and Mojave
 
