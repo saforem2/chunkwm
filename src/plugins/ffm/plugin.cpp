@@ -35,6 +35,7 @@ internal uint32_t MouseModifier;
 internal bool volatile IsActive;
 internal int Connection;
 internal uint32_t volatile FocusedWindowId;
+internal uint32_t volatile FocusedWindowPid;
 internal chunkwm_api API;
 internal AXUIElementRef SystemWideElement;
 internal float MouseMotionInterval;
@@ -59,6 +60,32 @@ IsWindowLevelAllowed(int WindowLevel)
     }
 
     return false;
+}
+
+internal void
+send_de_event(ProcessSerialNumber *WindowPsn, uint32_t WindowId)
+{
+    uint8_t bytes[0xf8] = {
+        [0x04] = 0xf8,
+        [0x08] = 0x0d,
+        [0x8a] = 0x02
+    };
+
+    memcpy(bytes + 0x3c, &WindowId, sizeof(uint32_t));
+    SLPSPostEventRecordTo(WindowPsn, bytes);
+}
+
+internal void
+send_re_event(ProcessSerialNumber *WindowPsn, uint32_t WindowId)
+{
+    uint8_t bytes[0xf8] = {
+        [0x04] = 0xf8,
+        [0x08] = 0x0d,
+        [0x8a] = 0x01
+    };
+
+    memcpy(bytes + 0x3c, &WindowId, sizeof(uint32_t));
+    SLPSPostEventRecordTo(WindowPsn, bytes);
 }
 
 internal void
@@ -136,7 +163,12 @@ FocusFollowsMouse(CGEventRef Event)
 
     if (DisableAutoraise) {
         send_pre_event(&WindowPsn, WindowId);
-        _SLPSSetFrontProcessWithOptions(&WindowPsn, WindowId, kCPSUserGenerated);
+        if (FocusedWindowPid != WindowPid) {
+            _SLPSSetFrontProcessWithOptions(&WindowPsn, WindowId, kCPSUserGenerated);
+        } else {
+            send_de_event(&WindowPsn, FocusedWindowId);
+            send_re_event(&WindowPsn, WindowId);
+        }
         send_post_event(&WindowPsn, WindowId);
     } else {
         AXLibSetFocusedWindow(WindowRef);
@@ -187,6 +219,7 @@ ApplicationActivatedHandler(void *Data)
     if (WindowRef) {
         uint32_t WindowId = AXLibGetWindowID(WindowRef);
         FocusedWindowId = WindowId;
+        FocusedWindowPid = Application->PID;
         CFRelease(WindowRef);
     }
 }
@@ -196,6 +229,7 @@ WindowFocusedHandler(void *Data)
 {
     macos_window *Window = (macos_window *) Data;
     FocusedWindowId = Window->Id;
+    FocusedWindowPid = Window->Owner->PID;
 }
 
 internal inline void
