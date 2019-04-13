@@ -3,7 +3,7 @@
 * [config settings](#config-settings)
   * [bypass ffm temporarily](#bypass-ffm-temporarily)
   * [standby on float](#standby-on-float)
-  * [disable raise](#disable-raise)]
+  * [disable raise](#disable-raise)
 
 #### config settings
 
