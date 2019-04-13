@@ -2,8 +2,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <mach/mach_time.h>
-
 #include "../../api/plugin_api.h"
 #include "../../common/accessibility/element.h"
 #include "../../common/accessibility/window.h"
@@ -71,6 +69,7 @@ send_pre_event(ProcessSerialNumber *WindowPsn, uint32_t WindowId)
         [0x08] = 0x0d,
         [0x8a] = 0x09
     };
+
     memcpy(bytes + 0x3c, &WindowId, sizeof(uint32_t));
     SLPSPostEventRecordTo(WindowPsn, bytes);
 }
@@ -90,21 +89,8 @@ send_post_event(ProcessSerialNumber *WindowPsn, uint32_t WindowId)
         [0x3a] = 0x10
     };
 
-    uint64_t time = mach_absolute_time();
-    memcpy(bytes1 + 0x2c, &time, sizeof(uint64_t));
     memcpy(bytes1 + 0x3c, &WindowId, sizeof(uint32_t));
-    memcpy(bytes1 + 0xbd, &WindowId, sizeof(uint32_t));
-    memcpy(bytes1 + 0xc1, &WindowId, sizeof(uint32_t));
-    memcpy(bytes1 + 0x40, &Connection, sizeof(uint32_t));
-    memcpy(bytes1 + 0x7d, &Connection, sizeof(uint32_t));
-    memcpy(bytes1 + 0xe9, &Connection, sizeof(uint32_t));
-    memcpy(bytes2 + 0x2c, &time, sizeof(uint64_t));
     memcpy(bytes2 + 0x3c, &WindowId, sizeof(uint32_t));
-    memcpy(bytes2 + 0xbd, &WindowId, sizeof(uint32_t));
-    memcpy(bytes2 + 0xc1, &WindowId, sizeof(uint32_t));
-    memcpy(bytes2 + 0x40, &Connection, sizeof(uint32_t));
-    memcpy(bytes2 + 0x7d, &Connection, sizeof(uint32_t));
-    memcpy(bytes2 + 0xe9, &Connection, sizeof(uint32_t));
     SLPSPostEventRecordTo(WindowPsn, bytes1);
     SLPSPostEventRecordTo(WindowPsn, bytes2);
 }
