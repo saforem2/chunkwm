@@ -122,45 +122,57 @@ send_post_event(ProcessSerialNumber *WindowPsn, uint32_t WindowId)
     SLPSPostEventRecordTo(WindowPsn, bytes2);
 }
 
-internal inline AXUIElementRef
-IsValidWindow(AXUIElementRef Element, int WindowId)
+internal inline bool
+IsValidWindow(AXUIElementRef *Element, int WindowId)
 {
-    AXUIElementRef WindowRef = NULL;
     CFStringRef Role = NULL;
     CFStringRef Subrole = NULL;
+    int ElementId = 0;
+    bool Result = false;
 
-    if (AXLibGetWindowRole(Element, &Role)) {
-        if (CFEqual(Role, kAXWindowRole)) {
-            WindowRef = Element;
+    if (!AXLibGetWindowRole(*Element, &Role)) {
+        goto err;
+    }
+
+    if (!CFEqual(Role, kAXWindowRole)) {
+        AXUIElementRef WindowRef = (AXUIElementRef) AXLibGetWindowProperty(*Element, kAXWindowAttribute);
+        if (WindowRef) {
+            CFRelease(*Element);
+            *Element = WindowRef;
         } else {
-            AXUIElementCopyAttributeValue(Element, kAXWindowAttribute, (CFTypeRef*)&WindowRef);
-            CFRelease(Element);
+            goto free_role;
         }
-        CFRelease(Role);
     }
-    if (!WindowRef) return NULL;
-
-    int ElementId = AXLibGetWindowID(WindowRef);
-    if (ElementId != WindowId) {
-        CFRelease(WindowRef);
-        return NULL;
-    }
-
-    if (!AXLibGetWindowRole(WindowRef, &Role)) {
-        CFRelease(WindowRef);
-        return NULL;
-    }
-
-    if (!AXLibGetWindowSubrole(WindowRef, &Subrole)) {
-        CFRelease(WindowRef);
-        return NULL;
-    }
-
-    bool Result = CFEqual(Role, kAXWindowRole) && CFEqual(Subrole, kAXStandardWindowSubrole);
-    CFRelease(Subrole);
     CFRelease(Role);
 
-    return Result ? WindowRef : NULL;
+    ElementId = AXLibGetWindowID(*Element);
+    if (ElementId != WindowId) {
+        goto err;
+    }
+
+    if (!AXLibGetWindowRole(*Element, &Role)) {
+        goto err;
+    }
+
+    if (!AXLibGetWindowSubrole(*Element, &Subrole)) {
+        goto free_role;
+    }
+
+    if (!CFEqual(Role, kAXWindowRole) ||
+        !CFEqual(Subrole, kAXStandardWindowSubrole)) {
+        goto free_subrole;
+    }
+
+    Result = true;
+
+free_subrole:
+    CFRelease(Subrole);
+
+free_role:
+    CFRelease(Role);
+
+err:
+    return Result;
 }
 
 internal inline void
@@ -189,7 +201,7 @@ FocusFollowsMouse(CGEventRef Event)
     AXUIElementCopyElementAtPosition(SystemWideElement, CursorPosition.x, CursorPosition.y, &Element);
     if (!Element) return;
 
-    if ((Element = IsValidWindow(Element, WindowId))) {
+    if (IsValidWindow(&Element, WindowId)) {
         if (DisableAutoraise) {
             send_pre_event(&WindowPsn, WindowId);
             if (FocusedWindowPid != WindowPid) {
@@ -203,8 +215,8 @@ FocusFollowsMouse(CGEventRef Event)
             AXLibSetFocusedWindow(Element);
             AXLibSetFocusedApplication(WindowPid);
         }
-        CFRelease(Element);
     }
+    CFRelease(Element);
 }
 
 internal bool
