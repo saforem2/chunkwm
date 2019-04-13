@@ -11,6 +11,7 @@
 #include "../../common/dispatch/cgeventtap.h"
 
 #include "../../common/accessibility/element.cpp"
+#include "../../common/accessibility/window.cpp"
 #include "../../common/config/cvar.cpp"
 #include "../../common/config/tokenize.cpp"
 #include "../../common/dispatch/cgeventtap.cpp"
@@ -24,7 +25,6 @@
 #define kCPSNoWindows     0x400
 
 extern "C" int CGSMainConnectionID(void);
-extern "C" CGError CGSGetWindowLevel(const int cid, int wid, int *wlvl);
 extern "C" OSStatus CGSFindWindowByGeometry(int cid, int zero, int one, int zero_again, CGPoint *screen_point, CGPoint *window_coords_out, int *wid_out, int *cid_out);
 extern "C" CGError CGSConnectionGetPID(const int cid, pid_t *pid);
 extern "C" CGError _SLPSSetFrontProcessWithOptions(ProcessSerialNumber *psn, unsigned int wid, unsigned int mode);
@@ -122,33 +122,12 @@ send_post_event(ProcessSerialNumber *WindowPsn, uint32_t WindowId)
     SLPSPostEventRecordTo(WindowPsn, bytes2);
 }
 
-internal inline void
-FocusFollowsMouse(CGEventRef Event)
+internal inline AXUIElementRef
+IsValidWindow(AXUIElementRef Element, int WindowId)
 {
-    int WindowId = 0;
-    int WindowLevel = 0;
-    pid_t WindowPid = 0;
-    int WindowConnection = 0;
-    CGPoint WindowPosition;
-    CFStringRef Role;
-    AXUIElementRef Element;
     AXUIElementRef WindowRef = NULL;
-    ProcessSerialNumber WindowPsn;
-
-    CGPoint CursorPosition = CGEventGetLocation(Event);
-    CGSFindWindowByGeometry(Connection, 0, 1, 0, &CursorPosition, &WindowPosition, &WindowId, &WindowConnection);
-
-    if (WindowId == 0)                  return;
-    if (Connection == WindowConnection) return;
-    if (WindowId == FocusedWindowId)    return;
-
-    CGSGetWindowLevel(Connection, WindowId, &WindowLevel);
-    if (!IsWindowLevelAllowed(WindowLevel)) return;
-    CGSConnectionGetPID(WindowConnection, &WindowPid);
-    GetProcessForPID(WindowPid, &WindowPsn);
-
-    AXUIElementCopyElementAtPosition(SystemWideElement, CursorPosition.x, CursorPosition.y, &Element);
-    if (!Element) return;
+    CFStringRef Role = NULL;
+    CFStringRef Subrole = NULL;
 
     if (AXLibGetWindowRole(Element, &Role)) {
         if (CFEqual(Role, kAXWindowRole)) {
@@ -159,26 +138,73 @@ FocusFollowsMouse(CGEventRef Event)
         }
         CFRelease(Role);
     }
-    if (!WindowRef) return;
+    if (!WindowRef) return NULL;
 
-    if (DisableAutoraise) {
-        send_pre_event(&WindowPsn, WindowId);
-        if (FocusedWindowPid != WindowPid) {
-            _SLPSSetFrontProcessWithOptions(&WindowPsn, WindowId, kCPSUserGenerated);
-        } else {
-            send_de_event(&WindowPsn, FocusedWindowId);
-            send_re_event(&WindowPsn, WindowId);
-        }
-        send_post_event(&WindowPsn, WindowId);
-    } else {
-        AXLibSetFocusedWindow(WindowRef);
-        AXLibSetFocusedApplication(WindowPid);
+    int ElementId = AXLibGetWindowID(WindowRef);
+    if (ElementId != WindowId) {
+        CFRelease(WindowRef);
+        return NULL;
     }
 
-    FocusedWindowId = WindowId;
-    FocusedWindowPid = WindowPid;
+    if (!AXLibGetWindowRole(WindowRef, &Role)) {
+        CFRelease(WindowRef);
+        return NULL;
+    }
 
-    CFRelease(WindowRef);
+    if (!AXLibGetWindowSubrole(WindowRef, &Subrole)) {
+        CFRelease(WindowRef);
+        return NULL;
+    }
+
+    bool Result = CFEqual(Role, kAXWindowRole) && CFEqual(Subrole, kAXStandardWindowSubrole);
+    CFRelease(Subrole);
+    CFRelease(Role);
+
+    return Result ? WindowRef : NULL;
+}
+
+internal inline void
+FocusFollowsMouse(CGEventRef Event)
+{
+    int WindowId = 0;
+    int WindowLevel = 0;
+    pid_t WindowPid = 0;
+    int WindowConnection = 0;
+    CGPoint WindowPosition;
+    AXUIElementRef Element;
+    ProcessSerialNumber WindowPsn;
+
+    CGPoint CursorPosition = CGEventGetLocation(Event);
+    CGSFindWindowByGeometry(Connection, 0, 1, 0, &CursorPosition, &WindowPosition, &WindowId, &WindowConnection);
+
+    if (WindowId == 0)                  return;
+    if (Connection == WindowConnection) return;
+    if (WindowId == FocusedWindowId)    return;
+
+    CGSGetWindowLevel(Connection, (uint32_t)WindowId, (uint32_t*)&WindowLevel);
+    if (!IsWindowLevelAllowed(WindowLevel)) return;
+    CGSConnectionGetPID(WindowConnection, &WindowPid);
+    GetProcessForPID(WindowPid, &WindowPsn);
+
+    AXUIElementCopyElementAtPosition(SystemWideElement, CursorPosition.x, CursorPosition.y, &Element);
+    if (!Element) return;
+
+    if ((Element = IsValidWindow(Element, WindowId))) {
+        if (DisableAutoraise) {
+            send_pre_event(&WindowPsn, WindowId);
+            if (FocusedWindowPid != WindowPid) {
+                _SLPSSetFrontProcessWithOptions(&WindowPsn, WindowId, kCPSUserGenerated);
+            } else {
+                send_de_event(&WindowPsn, FocusedWindowId);
+                send_re_event(&WindowPsn, WindowId);
+            }
+            send_post_event(&WindowPsn, WindowId);
+        } else {
+            AXLibSetFocusedWindow(Element);
+            AXLibSetFocusedApplication(WindowPid);
+        }
+        CFRelease(Element);
+    }
 }
 
 internal bool
@@ -231,8 +257,10 @@ internal inline void
 WindowFocusedHandler(void *Data)
 {
     macos_window *Window = (macos_window *) Data;
-    FocusedWindowId = Window->Id;
-    FocusedWindowPid = Window->Owner->PID;
+    if (AXLibIsWindowStandard(Window)) {
+        FocusedWindowId = Window->Id;
+        FocusedWindowPid = Window->Owner->PID;
+    }
 }
 
 internal inline void
