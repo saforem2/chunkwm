@@ -67,9 +67,9 @@ internal void
 send_pre_event(ProcessSerialNumber *WindowPsn, uint32_t WindowId)
 {
     uint8_t bytes[0xf8] = {
-        [0x4] = 0xf8,
-        [0x8] = 0xd,
-        [0x8a] = 0x9
+        [0x04] = 0xf8,
+        [0x08] = 0x0d,
+        [0x8a] = 0x09
     };
     memcpy(bytes + 0x3c, &WindowId, sizeof(uint32_t));
     SLPSPostEventRecordTo(WindowPsn, bytes);
