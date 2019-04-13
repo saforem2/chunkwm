@@ -1,5 +1,9 @@
 ### HEAD - not yet released
 
+#### other changes
+
+ - new config setting to disable raise, turning it into real autofocus instead (#332)
+
 ---------------
 
 ### version 0.3.5

@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <mach/mach_time.h>
+
 #include "../../api/plugin_api.h"
 #include "../../common/accessibility/element.h"
 #include "../../common/accessibility/window.h"
@@ -35,8 +37,6 @@ internal uint32_t MouseModifier;
 internal bool volatile IsActive;
 internal int Connection;
 internal uint32_t volatile FocusedWindowId;
-internal pid_t volatile FocusedWindowPid;
-internal ProcessSerialNumber volatile FocusedWindowPsn;
 internal chunkwm_api API;
 internal AXUIElementRef SystemWideElement;
 internal float MouseMotionInterval;
@@ -64,33 +64,65 @@ IsWindowLevelAllowed(int WindowLevel)
 }
 
 internal void
-send_event(ProcessSerialNumber *WindowPsn, uint32_t WindowId, uint8_t op)
+send_pre_event(ProcessSerialNumber *WindowPsn, uint32_t WindowId)
 {
     uint8_t bytes[0xf8] = {
         [0x4] = 0xf8,
         [0x8] = 0xd,
-        [0x8a] = op
+        [0x8a] = 0x9
     };
     memcpy(bytes + 0x3c, &WindowId, sizeof(uint32_t));
     SLPSPostEventRecordTo(WindowPsn, bytes);
 }
 
 internal void
-send_defer_ordering_event(ProcessSerialNumber *psn, uint32_t wid)
+send_post_event(ProcessSerialNumber *WindowPsn, uint32_t WindowId)
 {
-    send_event(psn, wid, 0x9);
-}
+    uint8_t bytes1[0xf8] = {
+        [0x04] = 0xF8,
+        [0x08] = 0x01,
+        [0x3a] = 0x10,
+        [0x48] = 0xA4,
+        [0x49] = 0x0A,
+        [0x4a] = 0x01,
+        [0x4c] = 0xF5,
+        [0x4d] = 0x01,
+        [0x50] = 0x14,
+        [0x64] = 0x3F,
+        [0x8c] = 0x01,
+        [0x90] = 0xFF
+    };
 
-internal void
-send_pseudo_activate_event(ProcessSerialNumber *psn)
-{
-    send_event(psn, 0, 0x2);
-}
+    uint8_t bytes2[0xf8] = {
+        [0x04] = 0xF8,
+        [0x08] = 0x02,
+        [0x3a] = 0x10,
+        [0x48] = 0xA4,
+        [0x49] = 0x0A,
+        [0x4a] = 0x01,
+        [0x4c] = 0xF5,
+        [0x4d] = 0x01,
+        [0x50] = 0x14,
+        [0x64] = 0x3F
+    };
 
-internal void
-send_reactivate_event(ProcessSerialNumber *psn, uint32_t wid)
-{
-    send_event(psn, wid, 0x12);
+    uint64_t time = mach_absolute_time();
+    memcpy(bytes1 + 0x2c, &time, sizeof(uint64_t));
+    memcpy(bytes1 + 0x3c, &WindowId, sizeof(uint32_t));
+    memcpy(bytes1 + 0xbd, &WindowId, sizeof(uint32_t));
+    memcpy(bytes1 + 0xc1, &WindowId, sizeof(uint32_t));
+    memcpy(bytes1 + 0x40, &Connection, sizeof(uint32_t));
+    memcpy(bytes1 + 0x7d, &Connection, sizeof(uint32_t));
+    memcpy(bytes1 + 0xe9, &Connection, sizeof(uint32_t));
+    memcpy(bytes2 + 0x2c, &time, sizeof(uint64_t));
+    memcpy(bytes2 + 0x3c, &WindowId, sizeof(uint32_t));
+    memcpy(bytes2 + 0xbd, &WindowId, sizeof(uint32_t));
+    memcpy(bytes2 + 0xc1, &WindowId, sizeof(uint32_t));
+    memcpy(bytes2 + 0x40, &Connection, sizeof(uint32_t));
+    memcpy(bytes2 + 0x7d, &Connection, sizeof(uint32_t));
+    memcpy(bytes2 + 0xe9, &Connection, sizeof(uint32_t));
+    SLPSPostEventRecordTo(WindowPsn, bytes1);
+    SLPSPostEventRecordTo(WindowPsn, bytes2);
 }
 
 internal inline void
@@ -133,14 +165,9 @@ FocusFollowsMouse(CGEventRef Event)
     if (!WindowRef) return;
 
     if (DisableAutoraise) {
+        send_pre_event(&WindowPsn, WindowId);
         _SLPSSetFrontProcessWithOptions(&WindowPsn, WindowId, kCPSUserGenerated);
-        send_reactivate_event(&WindowPsn, WindowId);
-
-#if 0
-        if (FocusedWindowPid == WindowPid) {
-        } else {
-        }
-#endif
+        send_post_event(&WindowPsn, WindowId);
     } else {
         AXLibSetFocusedWindow(WindowRef);
         AXLibSetFocusedApplication(WindowPid);
@@ -190,8 +217,6 @@ ApplicationActivatedHandler(void *Data)
     if (WindowRef) {
         uint32_t WindowId = AXLibGetWindowID(WindowRef);
         FocusedWindowId = WindowId;
-        FocusedWindowPid = Application->PID;
-        memcpy((void*)&FocusedWindowPsn, (void*)&Application->PSN, sizeof(ProcessSerialNumber));
         CFRelease(WindowRef);
     }
 }
@@ -201,8 +226,6 @@ WindowFocusedHandler(void *Data)
 {
     macos_window *Window = (macos_window *) Data;
     FocusedWindowId = Window->Id;
-    FocusedWindowPid = Window->Owner->PID;
-    memcpy((void*)&FocusedWindowPsn, (void*)&Window->Owner->PSN, sizeof(ProcessSerialNumber));
 }
 
 internal inline void
