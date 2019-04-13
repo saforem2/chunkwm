@@ -7,6 +7,8 @@
 
 #### config settings
 
+Changing config settings require a plugin reload to take affect.
+
 ##### bypass ffm temporarily
 
     chunkc set ffm_bypass_modifier <option>
@@ -21,6 +23,6 @@
 
 ##### disable raise
 
-    chunkc set ffm_disable_autoraise
+    chunkc set ffm_disable_autoraise <option>
     <option>: 1 | 0
     desc: alter behaviour between autoraise and autofocus
