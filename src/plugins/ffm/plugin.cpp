@@ -175,6 +175,9 @@ FocusFollowsMouse(CGEventRef Event)
         AXLibSetFocusedApplication(WindowPid);
     }
 
+    FocusedWindowId = WindowId;
+    FocusedWindowPid = WindowPid;
+
     CFRelease(WindowRef);
 }
 
