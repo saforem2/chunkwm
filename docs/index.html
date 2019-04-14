@@ -34,9 +34,9 @@
 
             <p>Development is happening on macOS Mojave (10.14), but OSX El Capitan (10.11.6) and newer should work fine. Older versions may or may not be compatible and will not be officially supported.</p>
 
-            <p><strong>chunkwm</strong> uses a pid-file stored as <em>/tmp/chunkwm_\<username\>-pid</em> to keep multiple instances from being launched by the same user.</p>
+            <p><strong>chunkwm</strong> uses a pid-file stored as <em>/tmp/chunkwm_$USER-pid</em> to keep multiple instances from being launched by the same user.</p>
 
-            <p><strong>chunkwm</strong> uses a unix domain socket stored as <em>/tmp/chunkwm_\<username\>-socket</em> to listen for runtime commands.</p>
+            <p><strong>chunkwm</strong> uses a unix domain socket stored as <em>/tmp/chunkwm_$USER-socket</em> to listen for runtime commands.</p>
 
             <p><strong>chunkc</strong> is a program that writes messages on <em>chunkwm&#39;s</em> socket.</p>
 
