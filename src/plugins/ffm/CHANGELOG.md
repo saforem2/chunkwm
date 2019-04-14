@@ -1,10 +1,14 @@
 ### HEAD - not yet released
 
+---------------
+
+### version 0.4.0
+
 #### other changes
 
  - new config setting to disable raise, turning it into real autofocus instead (#332)
 
- - ffm will now only consider windows that report a proper role of AXWindow and subrole of AXStandardWindow
+ - ffm will now only consider windows that report a proper role of AXWindow and subrole of AXStandardWindow (#332)
 
 ---------------
 
