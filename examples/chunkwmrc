@@ -88,7 +88,6 @@ chunkc set mouse_motion_interval         35
 
 chunkc set preselect_border_color        0xffd75f5f
 chunkc set preselect_border_width        5
-chunkc set preselect_border_radius       0
 chunkc set preselect_border_outline      0
 
 #
@@ -123,6 +122,7 @@ chunkc set focused_border_skip_monocle   0
 
 chunkc set ffm_bypass_modifier           fn
 chunkc set ffm_standby_on_float          1
+chunkc set ffm_disable_autoraise         0
 
 #
 # NOTE: specify plugins to load when chunkwm starts.
