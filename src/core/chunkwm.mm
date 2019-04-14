@@ -62,6 +62,9 @@
 #define internal static
 #define local_persist static
 
+#define SOCKET_PATH_FMT  "/tmp/chunkwm_%s-socket"
+#define PIDFILE_PATH_FMT "/tmp/chunkwm_%s-pid"
+
 internal carbon_event_handler Carbon;
 internal hotloader Hotloader;
 internal char *ConfigAbsolutePath;
@@ -147,6 +150,38 @@ CheckAccessibilityPrivileges()
     CFRelease(Options);
 
     return Result;
+}
+
+internal inline bool
+InitPidFileAndListener()
+{
+    char *User = getenv("USER");
+    if (!User) {
+        Fail("chunkwm: 'env USER' not set! abort..\n");
+    }
+
+    char PidPath[255];
+    snprintf(PidPath, sizeof(PidPath), PIDFILE_PATH_FMT, User);
+
+    pid_t Pid = getpid();
+    int Handle = open(PidPath, O_CREAT | O_WRONLY, 0600);
+    if (Handle == -1) {
+        Fail("chunkwm: could not create pid-file! abort..\n");
+    }
+
+    if (flock(Handle, LOCK_EX | LOCK_NB) == -1) {
+        Fail("chunkwm: could not lock pid-file! abort..\n");
+    } else if (write(Handle, &Pid, sizeof(pid_t)) == -1) {
+        Fail("chunkwm: could not write pid-file! abort..\n");
+    }
+
+    // NOTE(koekeishiya): we intentionally leave the handle open,
+    // as calling close(..) will release the lock we just acquired.
+
+    char SocketPath[255];
+    snprintf(SocketPath, sizeof(SocketPath), SOCKET_PATH_FMT, User);
+
+    return StartDaemon(SocketPath, DaemonCallback);
 }
 
 internal bool
@@ -235,7 +270,7 @@ int main(int Count, char **Args)
         Fail("chunkwm: could not access accessibility features! abort..\n");
     }
 
-    if (!StartDaemon(CHUNKWM_PORT, DaemonCallback)) {
+    if (!InitPidFileAndListener()) {
         Fail("chunkwm: failed to initialize daemon! abort..\n");
     }
 

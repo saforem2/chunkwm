@@ -11,8 +11,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-// NOTE(koekeishiya): 3920 is the port used by chunkwm.
-#define FALLBACK_PORT 3920
+#define SOCKET_PATH_FMT "/tmp/chunkwm_%s-socket"
 
 int main(int argc, char **argv)
 {
@@ -21,34 +20,27 @@ int main(int argc, char **argv)
         exit(1);
     }
 
-    int port;
-
-    char *port_env = getenv("CHUNKC_SOCKET");
-    if (port_env) {
-        sscanf(port_env, "%d", &port);
-    } else {
-        port = FALLBACK_PORT;
+    char *user = getenv("USER");
+    if (!user) {
+        fprintf(stderr, "chunkc: could not read env USER.\n");
+        exit(1);
     }
 
     int sock_fd;
-    struct sockaddr_in srv_addr;
-    struct hostent *server;
+	struct sockaddr_un sock_address;
+	sock_address.sun_family = AF_UNIX;
 
-    if ((sock_fd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
+	if ((sock_fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
         fprintf(stderr, "chunkc: could not create socket!\n");
         exit(1);
-    }
+	}
 
-    server = gethostbyname("localhost");
-    srv_addr.sin_family = AF_INET;
-    srv_addr.sin_port = htons(port);
-    memcpy(&srv_addr.sin_addr.s_addr, server->h_addr, server->h_length);
-    memset(&srv_addr.sin_zero, '\0', 8);
+    snprintf(sock_address.sun_path, sizeof(sock_address.sun_path), SOCKET_PATH_FMT, user);
 
-    if (connect(sock_fd, (struct sockaddr*) &srv_addr, sizeof(struct sockaddr)) == -1) {
+	if (connect(sock_fd, (struct sockaddr *) &sock_address, sizeof(sock_address)) == -1) {
         fprintf(stderr, "chunkc: connection failed!\n");
         exit(1);
-    }
+	}
 
     size_t message_length = argc - 1;
     size_t argl[argc];

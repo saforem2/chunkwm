@@ -32,6 +32,8 @@
             <h2 id="install">Install</h2>
             <p>The first time <strong>chunkwm</strong> is ran, it will request access to the <em>accessibility API</em>.</p>
             <p>After access has been granted, the application must be restarted.</p>
+            <p><strong>chunkwm</strong> uses a pid-file stored as <em>/tmp/chunkwm_\<username\>-pid</em> to keep multiple instances from being launched by the same user.</p>
+            <p><strong>chunkwm</strong> uses a unix domain socket stored as <em>/tmp/chunkwm_\<username\>-socket</em> to listen for runtime commands.</p>
             <p><strong>chunkwm</strong> requires <a href="https://support.apple.com/library/content/dam/edam/applecare/images/en_US/osx/separate_spaces.png">&#39;displays have separate spaces&#39;</a> to be enabled.</p>
             <h4 id="macports">MacPorts</h4>
             <p>There are no officially maintained ports in the MacPorts repository, however, <a href="https://github.com/terinjokes">terinjokes</a> has created

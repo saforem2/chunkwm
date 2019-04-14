@@ -4,6 +4,8 @@
 
  - update spaces support for macOS Mojave 10.14.4 (fast-switch, create and destroy) (#571)
 
+ - use unix domain socket (file) and pid-file instead of INET port when listening to commands (#434)
+
 ----------
 
 ### version 0.4.8

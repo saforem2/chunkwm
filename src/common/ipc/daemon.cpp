@@ -5,7 +5,10 @@
 #include <pthread.h>
 #include <string.h>
 
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <sys/socket.h>
+#include <sys/un.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <netdb.h>
@@ -54,10 +57,7 @@ internal void *
 HandleConnection(void *)
 {
     while (IsRunning) {
-        struct sockaddr_in ClientAddr;
-        local_persist socklen_t SinSize = sizeof(struct sockaddr);
-
-        int SockFD = accept(DaemonSockFD, (struct sockaddr*)&ClientAddr, &SinSize);
+        int SockFD = accept(DaemonSockFD, NULL, 0);
         if (SockFD != -1) {
             char *Message = ReadFromSocket(SockFD);
             if (Message) {
@@ -68,6 +68,20 @@ HandleConnection(void *)
     }
 
     return NULL;
+}
+
+bool ConnectToDaemon(int *SockFD, char *SocketPath)
+{
+    struct sockaddr_un SockAddress;
+	SockAddress.sun_family = AF_UNIX;
+
+	if ((*SockFD = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
+        return false;
+	}
+
+    snprintf(SockAddress.sun_path, sizeof(SockAddress.sun_path), "%s", SocketPath);
+
+	return connect(*SockFD, (struct sockaddr *) &SockAddress, sizeof(SockAddress)) != -1;
 }
 
 bool ConnectToDaemon(int *SockFD, int Port)
@@ -86,6 +100,36 @@ bool ConnectToDaemon(int *SockFD, int Port)
     memset(&SrvAddr.sin_zero, '\0', 8);
 
     return connect(*SockFD, (struct sockaddr*) &SrvAddr, sizeof(struct sockaddr)) != -1;
+}
+
+bool StartDaemon(char *SocketPath, daemon_callback *Callback)
+{
+    ConnectionCallback = Callback;
+
+	struct sockaddr_un SockAddress;
+    SockAddress.sun_family = AF_UNIX;
+
+    snprintf(SockAddress.sun_path, sizeof(SockAddress.sun_path), "%s", SocketPath);
+
+    if ((DaemonSockFD = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
+        return false;
+    }
+
+    unlink(SocketPath);
+
+    if (bind(DaemonSockFD, (struct sockaddr *) &SockAddress, sizeof(SockAddress)) == -1) {
+        return false;
+    }
+
+    chmod(SocketPath, 0600);
+
+    if (listen(DaemonSockFD, SOMAXCONN) == -1) {
+        return false;
+    }
+
+    IsRunning = true;
+    pthread_create(&Thread, NULL, &HandleConnection, NULL);
+    return true;
 }
 
 bool StartDaemon(int Port, daemon_callback *Callback)
