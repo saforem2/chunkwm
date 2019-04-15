@@ -63,6 +63,21 @@ PluginAbsolutepathFromDirectory(char *Filename, char *Directory)
     return Absolutepath;
 }
 
+internal char *
+SanitizePluginFilename(char *Filename)
+{
+    char *Result = Filename;
+    char *LastSlash = strrchr(Filename, '/');
+    if (LastSlash) {
+        size_t FilenameLength = strlen(LastSlash + 1);
+        Result = (char *) malloc(FilenameLength + 1);
+        Result[FilenameLength] = '\0';
+        memcpy(Result, LastSlash + 1, FilenameLength);
+        free(Filename);
+    }
+    return Result;
+}
+
 internal bool
 PopulatePluginPath(const char **Message, plugin_fs *PluginFs)
 {
@@ -71,7 +86,7 @@ PopulatePluginPath(const char **Message, plugin_fs *PluginFs)
     char *Directory = CVarStringValue(CVAR_PLUGIN_DIR);
 
     if (Directory) {
-        Filename = TokenToString(Token);
+        Filename = SanitizePluginFilename(TokenToString(Token));
         Absolutepath = PluginAbsolutepathFromDirectory(Filename, Directory);
         if (!Absolutepath) {
             free(Filename);

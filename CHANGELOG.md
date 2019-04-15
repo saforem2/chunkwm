@@ -1,5 +1,9 @@
 ### HEAD -  not yet released
 
+#### other changes
+
+ - sanitize plugin filename to prevent directory traversal when a plugin directory has been specified (#604)
+
 ----------
 
 ### version 0.4.9
