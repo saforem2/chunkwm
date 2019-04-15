@@ -136,7 +136,7 @@ HandleCore(chunkwm_delegate *Delegate)
     if (StringEquals(Delegate->Command, CVAR_PLUGIN_DIR)) {
         token Token = GetToken(&Delegate->Message);
         char *Directory = TokenToString(Token);
-        UpdateCVar(CVAR_PLUGIN_DIR, Directory);
+        CreateCVar(CVAR_PLUGIN_DIR, Directory);
         free(Directory);
     } else if (StringEquals(Delegate->Command, CVAR_PLUGIN_HOTLOAD)) {
         token Token = GetToken(&Delegate->Message);
