@@ -462,7 +462,7 @@ PLUGIN_BOOL_FUNC(PluginInit)
     SkipFloating = CVarIntegerValue("focused_border_skip_floating");
     SkipMonocle = CVarIntegerValue("focused_border_skip_monocle");
     DrawBorder = true;
-    CreateBorder(0, 0, 0, 0);
+    UpdateToFocusedWindow();
     return true;
 }
 
@@ -470,6 +470,7 @@ PLUGIN_VOID_FUNC(PluginDeInit)
 {
     if (Border) {
         DestroyBorderWindow(Border);
+        Border = NULL;
     }
 }
 

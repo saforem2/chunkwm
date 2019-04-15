@@ -1,5 +1,9 @@
 ### HEAD - not yet released
 
+#### other changes
+
+ - fixed an issue that caused the border to not draw after a plugin unload and load operation (#569)
+
 ----------
 
 ### version 0.3.5
