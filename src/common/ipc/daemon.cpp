@@ -121,7 +121,9 @@ bool StartDaemon(char *SocketPath, daemon_callback *Callback)
         return false;
     }
 
-    chmod(SocketPath, 0600);
+    if (chmod(SocketPath, 0600) != 0) {
+        return false;
+    }
 
     if (listen(DaemonSockFD, SOMAXCONN) == -1) {
         return false;
