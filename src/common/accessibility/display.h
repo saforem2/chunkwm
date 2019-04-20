@@ -159,7 +159,7 @@ bool AXLibIsMenuBarAutoHideEnabled();
 bool AXLibIsDockAutoHideEnabled();
 
 macos_dock_orientation AXLibGetDockOrientation();
-size_t AXLibGetDockTileSize();
+CGRect AXLibGetDockRect();
 
 bool AXLibDisplayHasSeparateSpaces();
 

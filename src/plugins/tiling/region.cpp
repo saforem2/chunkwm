@@ -88,7 +88,7 @@ void ConstrainRegion(CFStringRef DisplayRef, region *Region)
 
     if (!AXLibIsDockAutoHideEnabled()) {
         macos_dock_orientation Orientation = AXLibGetDockOrientation();
-        size_t TileSize = AXLibGetDockTileSize() + 16;
+        CGRect DockRect = AXLibGetDockRect();
 
         switch (Orientation) {
         case Dock_Orientation_Left: {
@@ -96,8 +96,8 @@ void ConstrainRegion(CFStringRef DisplayRef, region *Region)
             ASSERT(LeftMostDisplayRef);
 
             if (CFStringCompare(DisplayRef, LeftMostDisplayRef, 0) == kCFCompareEqualTo) {
-                Region->X += TileSize;
-                Region->Width -= TileSize;
+                Region->X += DockRect.size.width;
+                Region->Width -= DockRect.size.width;
             }
 
             CFRelease(LeftMostDisplayRef);
@@ -107,7 +107,7 @@ void ConstrainRegion(CFStringRef DisplayRef, region *Region)
             ASSERT(RightMostDisplayRef);
 
             if (CFStringCompare(DisplayRef, RightMostDisplayRef, 0) == kCFCompareEqualTo) {
-                Region->Width -= TileSize;
+                Region->Width -= DockRect.size.width;
             }
 
             CFRelease(RightMostDisplayRef);
@@ -117,7 +117,7 @@ void ConstrainRegion(CFStringRef DisplayRef, region *Region)
             ASSERT(BottomMostDisplayRef);
 
             if (CFStringCompare(DisplayRef, BottomMostDisplayRef, 0) == kCFCompareEqualTo) {
-                Region->Height -= TileSize;
+                Region->Height -= DockRect.size.height;
             }
 
             CFRelease(BottomMostDisplayRef);

@@ -1,5 +1,9 @@
 ### HEAD -  not yet released
 
+#### other changes
+
+ - properly detect size of Dock when calculating desktop offset (#607)
+
 ----------
 
 ### version 0.3.16

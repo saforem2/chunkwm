@@ -27,8 +27,9 @@ extern "C" bool CGSManagedDisplayIsAnimating(const CGSConnectionID Connection, C
 
 extern "C" void CGSGetMenuBarAutohideEnabled(CGSConnectionID Connection, int *Status);;
 extern "C" Boolean CoreDockGetAutoHideEnabled(void);
-extern "C" float CoreDockGetTileSize(void);
 extern "C" void  CoreDockGetOrientationAndPinning(macos_dock_orientation *Orientation, int *Pinning);
+extern "C" void CoreDockGetRect(CGRect *rect);
+
 
 extern "C" CFUUIDRef CGDisplayCreateUUIDFromDisplayID(uint32_t DisplayID);
 
@@ -838,18 +839,11 @@ macos_dock_orientation AXLibGetDockOrientation()
     return Orientation;
 }
 
-/*
- * NOTE(koekeishiya): CoreDock API returns a float in the range 0.0 -> 1.0
- * the minimum size of the Dock is 16 and the maximum size is 128. We translate
- * our value back into this number range.
- */
-#define DOCK_MAX_TILESIZE 128
-#define DOCK_MIN_TILESIZE  16
-size_t AXLibGetDockTileSize()
+CGRect AXLibGetDockRect()
 {
-    float Ratio = CoreDockGetTileSize();
-    size_t Result = (Ratio * (DOCK_MAX_TILESIZE - DOCK_MIN_TILESIZE)) + DOCK_MIN_TILESIZE;
-    return Result;
+    CGRect Rect = {};
+    CoreDockGetRect(&Rect);
+    return Rect;
 }
 
 bool AXLibDisplayHasSeparateSpaces()
