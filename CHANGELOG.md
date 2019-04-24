@@ -4,6 +4,8 @@
 
  - sanitize plugin filename to prevent directory traversal when a plugin directory has been specified (#604)
 
+ - some features of chunkwm-sa should once again work properly for macOS High Sierra (#611)
+
 ----------
 
 ### version 0.4.9
