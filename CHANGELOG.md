@@ -1,5 +1,9 @@
 ### HEAD -  not yet released
 
+----------
+
+### version 0.4.10
+
 #### other changes
 
  - sanitize plugin filename to prevent directory traversal when a plugin directory has been specified (#604)
@@ -9,6 +13,8 @@
 ----------
 
 ### version 0.4.9
+
+#### other changes
 
  - update spaces support for macOS Mojave 10.14.4 (fast-switch, create and destroy, move to monitor) (#571, #583)
 
