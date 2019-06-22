@@ -98,8 +98,19 @@ static bool IsSAInstalled(void)
     return false;
 }
 
+static inline bool IsMacOSCatalinaOrNewer(void)
+{
+    NSOperatingSystemVersion os_version = [[NSProcessInfo processInfo] operatingSystemVersion];
+    return os_version.minorVersion >= 15;
+}
+
 static bool InstallSA(void)
 {
+    if (IsMacOSCatalinaOrNewer()) {
+        fprintf(stderr, "The scripting-addition is not compatible with macOS Catalina and newer!\n");
+        return false;
+    }
+
     if (IsSAInstalled()) {
         if (!RemoveSA()) {
             return false;
