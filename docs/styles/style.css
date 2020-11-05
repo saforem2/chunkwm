@@ -1,0 +1,145 @@
+body {
+    width: 100vmin;
+    margin: 0 auto;
+    font-family: "Lucida Console", Monaco, monospace;
+    background-color: #202020;
+    height: 100%;
+    font-size: 14px;
+}
+
+pre {
+    border: 1px solid #404040;
+    background-color: #252525;
+}
+
+code {
+    background-color: #252525;
+}
+
+a {
+    color: #707070;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+a:hover {
+    color: #8fee96;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+.clear {
+    clear: both;
+}
+
+.scale-img {
+    width: 98vmin;
+}
+
+.scale-img-half {
+    width: 46vmin;
+    border: 1px solid #404040;
+}
+
+.build-img {
+    width: 10vmin;
+}
+
+#header {
+    width: 100vmin;
+    height: 10vh;
+}
+
+#logo {
+    float: left;
+    padding-top: 1vmin;
+}
+
+#logo-img {
+    width: 17.0vmin;
+}
+
+#navbar-text {
+    float: left;
+    margin-top: 3.4vmin;
+    padding-top: 3.4vmin;
+    padding-left: 2.5vmin;
+}
+
+#navbar-text h4 {
+    font-size: 1.5em;
+    margin-bottom: 0;
+    color: #dfdfdf;
+}
+
+#navbar-text p {
+    font-size: 1em;
+    margin-top: 0;
+    color: #8fee96;
+}
+
+#navbar-menu {
+    padding-top: 3em;
+    padding-left: 13em;
+    font-size: 1.2em;
+}
+
+#navbar-menu li {
+    display: block;
+    float: left;
+}
+
+#navbar-menu li:after {
+    content: '|';
+    color: #775759;
+    padding: 0.68vmin;
+}
+
+#navbar-menu li:last-child:after {
+    content: '';
+}
+
+#navbar-menu a {
+    padding: 0.68vmin;
+}
+
+#navbar-menu a:hover {
+    padding: 0.68vmin;
+}
+
+.active {
+    color: #dfdfdf;
+}
+
+#body {
+    width: 100vmin;
+    top: 18vmin;
+    padding-left: 1vmin;
+}
+
+#contents {
+    color: #d5c4a1;
+    width: 100vmin;
+    margin-right: -50px;
+    padding-right: 50px;
+}
+
+#contents h2, h3, h4 {
+    color: #dfdfdf;
+}
+
+#left-contents {
+    width: 48vmin;
+    float: left;
+}
+
+#right-contents {
+    width: 48vmin;
+    float: right;
+}
+
+#footer {
+    font-size: .75em;
+    color: #8fee96;
+    transform: translate(41%, 0);
+}

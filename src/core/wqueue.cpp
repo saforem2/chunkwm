@@ -1,26 +1,22 @@
 #include "wqueue.h"
+#include "clog.h"
 #include "../common/misc/assert.h"
 
 #include <stdio.h>
 #include <pthread.h>
 
 #define internal static
-#ifndef ArrayCount
+
 #define ArrayCount(Array) (sizeof(Array) / sizeof(*(Array)))
-#endif
 
 internal bool
 DoNextWorkQueueEntry(work_queue *Queue)
 {
     uint32_t EntryToRead = Queue->EntryToRead;
     uint32_t NextEntryToRead = (EntryToRead + 1) % ArrayCount(Queue->Entries);
-    if(EntryToRead != Queue->EntryToWrite)
-    {
-        int Index = __sync_val_compare_and_swap(&Queue->EntryToRead,
-                                                EntryToRead,
-                                                NextEntryToRead);
-        if(Index == EntryToRead)
-        {
+    if (EntryToRead != Queue->EntryToWrite) {
+        int Index = __sync_val_compare_and_swap(&Queue->EntryToRead, EntryToRead, NextEntryToRead);
+        if (Index == EntryToRead) {
             work_queue_entry Entry = Queue->Entries[Index];
             Entry.Callback(Entry.Data);
             __sync_fetch_and_add(&Queue->EntriesCompleted, 1);
@@ -50,16 +46,13 @@ void AddWorkQueueEntry(work_queue *Queue, work_queue_callback *Callback, void *D
 void *WorkQueueThreadProc(void *Data)
 {
     work_queue *Queue = (work_queue *) Data;
-    for(;;)
-    {
-        if(DoNextWorkQueueEntry(Queue))
-        {
+    for (;;) {
+        if (DoNextWorkQueueEntry(Queue)) {
             int Result = sem_wait(Queue->Semaphore);
-            if(Result)
-            {
+            if (Result) {
                 uint64_t ID;
                 pthread_threadid_np(NULL, &ID);
-                fprintf(stderr, "%lld: sem_wait(..) failed\n", ID);
+                c_log(C_LOG_LEVEL_DEBUG, "%lld: sem_wait(..) failed\n", ID);
             }
         }
     }
@@ -67,8 +60,7 @@ void *WorkQueueThreadProc(void *Data)
 
 void CompleteWorkQueue(work_queue *Queue)
 {
-    while(Queue->EntryCount != Queue->EntriesCompleted)
-    {
+    while (Queue->EntryCount != Queue->EntriesCompleted) {
         DoNextWorkQueueEntry(Queue);
     }
 

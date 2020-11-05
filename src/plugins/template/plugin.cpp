@@ -7,9 +7,8 @@
 #define internal static
 
 internal const char *PluginName = "template";
-internal const char *PluginVersion = "0.0.2";
-
-internal plugin_broadcast *ChunkWMBroadcastEvent;
+internal const char *PluginVersion = "0.1.0";
+internal chunkwm_api API;
 
 inline bool
 StringsAreEqual(const char *A, const char *B)
@@ -23,16 +22,13 @@ StringsAreEqual(const char *A, const char *B)
  * parameter: const char *Node
  * parameter: void *Data
  * return: bool
- * */
+ */
 PLUGIN_MAIN_FUNC(PluginMain)
 {
-    if(StringsAreEqual(Node, "chunkwm_export_application_launched"))
-    {
+    if (StringsAreEqual(Node, "chunkwm_export_application_launched")) {
         macos_application *Application = (macos_application *) Data;
         return true;
-    }
-    else if(StringsAreEqual(Node, "chunkwm_export_application_terminated"))
-    {
+    } else if (StringsAreEqual(Node, "chunkwm_export_application_terminated")) {
         macos_application *Application = (macos_application *) Data;
         return true;
     }
@@ -42,12 +38,12 @@ PLUGIN_MAIN_FUNC(PluginMain)
 
 /*
  * NOTE(koekeishiya):
- * parameter: plugin_broadcast *Broadcast
+ * parameter: chunkwm_api ChunkwmAPI
  * return: bool -> true if startup succeeded
  */
 PLUGIN_BOOL_FUNC(PluginInit)
 {
-    ChunkWMBroadcastEvent = Broadcast;
+    API = ChunkwmAPI;
     return true;
 }
 
@@ -57,8 +53,8 @@ PLUGIN_VOID_FUNC(PluginDeInit)
 
 // NOTE(koekeishiya): Enable to manually trigger ABI mismatch
 #if 0
-#undef PLUGIN_API_VERSION
-#define PLUGIN_API_VERSION 0
+#undef CHUNKWM_PLUGIN_API_VERSION
+#define CHUNKWM_PLUGIN_API_VERSION 0
 #endif
 
 // NOTE(koekeishiya): Initialize plugin function pointers.

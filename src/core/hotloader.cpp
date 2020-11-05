@@ -1,176 +1,53 @@
 #include "hotloader.h"
+#include "hotload.h"
 
-#include "plugin.h"
+#include "../common/ipc/daemon.h"
+
+#include "constants.h"
+#include "cvar.h"
+#include "clog.h"
 
 #include <sys/stat.h>
 #include <string.h>
-#include <vector>
 
 #define internal static
 
-#define HOTLOADER_CALLBACK(name) void name(ConstFSEventStreamRef Stream,\
-                                           void *Context,\
-                                           size_t Count,\
-                                           void *Paths,\
-                                           const FSEventStreamEventFlags *Flags,\
-                                           const FSEventStreamEventId *Ids)
-
-internal hotloader Hotloader;
-internal std::vector<const char *> Directories;
-
-internal
-HOTLOADER_CALLBACK(HotloadPluginCallback)
+internal void
+PerformIOOperation(const char *Op, char *Filename)
 {
-    char **Files = (char **) Paths;
-
-    for(size_t Index = 0;
-        Index < Count;
-        ++Index)
-    {
-        char *Fullpath = Files[Index];
-        bool ValidDirectory = false;
-
-        char *LastSlash = strrchr(Fullpath, '/');
-        if(LastSlash)
-        {
-            *LastSlash = '\0';
-
-            // NOTE(koekeishiya): We receive notifications for subdirectories, skip these.
-            for(size_t Index = 0;
-                Index < Directories.size();
-                ++Index)
-            {
-                if(strcmp(Fullpath, Directories[Index]) == 0)
-                {
-                    ValidDirectory = true;
-                    break;
-                }
-            }
-
-            *LastSlash = '/';
-        }
-
-        if(ValidDirectory)
-        {
-            char *Extension = strrchr(Fullpath, '.');
-            if((Extension) && (strcmp(Extension, ".so") == 0))
-            {
-                char *Filename = LastSlash + 1;
-#ifdef CHUNKWM_DEBUG
-                printf("hotloader: plugin '%s' changed!\n", Filename);
-#endif
-
-                UnloadPlugin(Fullpath, Filename);
-
-                // NOTE(koekeishiya): Try to load plugin if file exists)
-                struct stat Buffer;
-                if(stat(Fullpath, &Buffer) == 0)
-                {
-                    LoadPlugin(Fullpath, Filename);
-                }
-            }
-        }
+    int SockFD;
+    if (ConnectToDaemon(&SockFD, CHUNKWM_PORT)) {
+        char Message[256];
+        Message[0] = '\0';
+        snprintf(Message, sizeof(Message), "%s %s", Op, Filename);
+        WriteToSocket(Message, SockFD);
+        CloseSocket(SockFD);
     }
 }
 
-void HotloaderAddPath(const char *Path)
+internal HOTLOADER_CALLBACK(HotloadPluginCallback)
 {
-    if(!Hotloader.Enabled)
-    {
-        struct stat Buffer;
-        if(lstat(Path, &Buffer) == 0)
-        {
-            if(S_ISDIR(Buffer.st_mode))
-            {
-                // NOTE(koekeishiya): not a symlink.
-                Directories.push_back(Path);
-            }
-            else if(S_ISLNK(Buffer.st_mode))
-            {
-                ssize_t Size = Buffer.st_size + 1;
-                char Directory[Size];
-                ssize_t Result = readlink(Path, Directory, Size);
+    c_log(C_LOG_LEVEL_DEBUG, "hotloader: plugin '%s' changed!\n", filename);
 
-                if(Result != -1)
-                {
-                    Directory[Result] = '\0';
-                    Directories.push_back(strdup(Directory));
-                    printf("hotloader: symlink '%s' -> '%s'\n", Path, Directory);
-                }
-            }
-            else
-            {
-                fprintf(stderr, "hotloader: '%s' is not a directory!\n", Path);
-            }
-        }
-        else
-        {
-            fprintf(stderr, "hotloader: '%s' is not a valid path!\n", Path);
-        }
+    c_log(C_LOG_LEVEL_DEBUG, "hotloader: unloading plugin '%s'\n", filename);
+    PerformIOOperation("core::unload", filename);
+
+    struct stat Buffer;
+    if (stat(absolutepath, &Buffer) == 0) {
+        c_log(C_LOG_LEVEL_DEBUG, "hotloader: loading plugin '%s'\n", filename);
+        PerformIOOperation("core::load", filename);
     }
 }
 
-void HotloaderInit()
+void HotloadPlugins(hotloader *Hotloader, hotloader_callback Callback)
 {
-    if(!Hotloader.Enabled)
-    {
-        int Count = Directories.size();
-        if(Count)
-        {
-            CFStringRef StringRefs[Count];
-
-            for(size_t Index = 0;
-                Index < Count;
-                ++Index)
-            {
-                StringRefs[Index] = CFStringCreateWithCString(kCFAllocatorDefault,
-                                                              Directories[Index],
-                                                              kCFStringEncodingUTF8);
-            }
-
-            Hotloader.Enabled = true;
-            Hotloader.Path = (CFArrayRef) CFArrayCreate(NULL, (const void **) StringRefs, Count, &kCFTypeArrayCallBacks);
-
-            Hotloader.Flags = kFSEventStreamCreateFlagNoDefer |
-                              kFSEventStreamCreateFlagFileEvents;
-
-            Hotloader.Stream = FSEventStreamCreate(NULL,
-                                                   HotloadPluginCallback,
-                                                   NULL,
-                                                   Hotloader.Path,
-                                                   kFSEventStreamEventIdSinceNow,
-                                                   0.5,
-                                                   Hotloader.Flags);
-
-            FSEventStreamScheduleWithRunLoop(Hotloader.Stream, CFRunLoopGetMain(), kCFRunLoopDefaultMode);
-            FSEventStreamStart(Hotloader.Stream);
+    char *PluginDirectory = CVarStringValue(CVAR_PLUGIN_DIR);
+    if (PluginDirectory && CVarIntegerValue(CVAR_PLUGIN_HOTLOAD)) {
+        if (hotloader_add_catalog(Hotloader, PluginDirectory, ".so") &&
+            hotloader_begin(Hotloader, Callback)) {
+            c_log(C_LOG_LEVEL_DEBUG, "chunkwm: watching '%s' for changes to plugins!\n", PluginDirectory);
+        } else {
+            c_log(C_LOG_LEVEL_WARN, "chunkwm: could not watch directory '%s' for changes to plugins!\n", PluginDirectory);
         }
-        else
-        {
-            fprintf(stderr, "hotloader: no directories specified!\n");
-        }
-    }
-}
-
-void HotloaderTerminate()
-{
-    if(Hotloader.Enabled)
-    {
-        FSEventStreamStop(Hotloader.Stream);
-        FSEventStreamInvalidate(Hotloader.Stream);
-        FSEventStreamRelease(Hotloader.Stream);
-
-        CFIndex Count = CFArrayGetCount(Hotloader.Path);
-        for(size_t Index = 0;
-            Index < Count;
-            ++Index)
-        {
-            CFStringRef StringRef = (CFStringRef) CFArrayGetValueAtIndex(Hotloader.Path, Index);
-            CFRelease(StringRef);
-        }
-
-        CFRelease(Hotloader.Path);
-        Hotloader.Enabled = false;
-        Directories.clear();
     }
 }

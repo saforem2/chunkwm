@@ -15,7 +15,10 @@ bool AXLibIsWindowFullscreen(AXUIElementRef WindowRef);
 
 bool AXLibSetWindowPosition(AXUIElementRef WindowRef, float X, float Y);
 bool AXLibSetWindowSize(AXUIElementRef WindowRef, float Width, float Height);
+bool AXLibSetWindowFullscreen(AXUIElementRef WindowRef, bool Fullscreen);
+void AXLibCloseWindow(AXUIElementRef WindowRef);
 
+AXUIElementRef AXLibGetWindowAtPoint(CGPoint Point, pid_t *WindowPid);
 CFTypeRef AXLibGetWindowProperty(AXUIElementRef WindowRef, CFStringRef Property);
 AXError AXLibSetWindowProperty(AXUIElementRef WindowRef, CFStringRef Property, CFTypeRef Value);
 
@@ -29,11 +32,14 @@ void AXLibSetFocusedApplication(pid_t PID);
 char *AXLibGetWindowTitle(AXUIElementRef WindowRef);
 CGPoint AXLibGetWindowPosition(AXUIElementRef WindowRef);
 CGSize AXLibGetWindowSize(AXUIElementRef WindowRef);
+CGRect AXLibGetWindowRect(AXUIElementRef WindowRef);
 
-bool AXLibGetWindowRole(AXUIElementRef WindowRef, CFTypeRef *Role);
-bool AXLibGetWindowSubrole(AXUIElementRef WindowRef, CFTypeRef *Subrole);
+bool AXLibGetWindowRole(AXUIElementRef WindowRef, CFStringRef *Role);
+bool AXLibGetWindowSubrole(AXUIElementRef WindowRef, CFStringRef *Subrole);
 
 CGPoint AXLibGetCursorPos();
 char *CopyCFStringToC(CFStringRef String);
+
+const char *AXLibAXErrorToString(AXError Error);
 
 #endif

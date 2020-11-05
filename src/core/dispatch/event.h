@@ -2,6 +2,7 @@
 #define CHUNKWM_OSX_EVENT_H
 
 #include <pthread.h>
+#include <semaphore.h>
 #include <queue>
 
 struct chunk_event;
@@ -31,12 +32,14 @@ extern CHUNKWM_CALLBACK(Callback_ChunkWM_WindowMoved);
 extern CHUNKWM_CALLBACK(Callback_ChunkWM_WindowResized);
 extern CHUNKWM_CALLBACK(Callback_ChunkWM_WindowMinimized);
 extern CHUNKWM_CALLBACK(Callback_ChunkWM_WindowDeminimized);
-
-// NOTE(koekeishiya): This property is not exposed to plugins
 extern CHUNKWM_CALLBACK(Callback_ChunkWM_WindowTitleChanged);
+extern CHUNKWM_CALLBACK(Callback_ChunkWM_WindowSheetCreated);
 
 // NOTE(koekeishiya): This property is not exposed to plugins
+extern CHUNKWM_CALLBACK(Callback_ChunkWM_PluginCommand);
 extern CHUNKWM_CALLBACK(Callback_ChunkWM_PluginBroadcast);
+extern CHUNKWM_CALLBACK(Callback_ChunkWM_PluginLoad);
+extern CHUNKWM_CALLBACK(Callback_ChunkWM_PluginUnload);
 
 enum event_type
 {
@@ -61,11 +64,11 @@ enum event_type
     ChunkWM_WindowResized,
     ChunkWM_WindowMinimized,
     ChunkWM_WindowDeminimized,
-
-    // NOTE(koekeishiya): This property is not exposed to plugins
+    ChunkWM_WindowSheetCreated,
     ChunkWM_WindowTitleChanged,
 
     // NOTE(koekeishiya): This property is not exposed to plugins
+    ChunkWM_PluginCommand,
     ChunkWM_PluginBroadcast,
 };
 
@@ -73,19 +76,22 @@ struct chunk_event
 {
     chunkwm_callback *Handle;
     void *Context;
+    const char *Name;
 };
 
 struct event_loop
 {
-    pthread_cond_t State;
-    pthread_mutex_t StateLock;
-    pthread_mutex_t WorkerLock;
-    pthread_t Worker;
     bool Running;
+    pthread_t Thread;
+    sem_t *Semaphore;
+    pthread_mutex_t Lock;
     std::queue<chunk_event> Queue;
 };
 
-bool StartEventLoop();
+bool BeginEventLoop();
+void EndEventLoop();
+
+void StartEventLoop();
 void StopEventLoop();
 
 void PauseEventLoop();
@@ -98,6 +104,7 @@ void AddEvent(chunk_event Event);
     do { chunk_event Event = {}; \
          Event.Context = EventContext; \
          Event.Handle = &Callback_##EventType; \
+         Event.Name = #EventType; \
          AddEvent(Event); \
        } while(0)
 

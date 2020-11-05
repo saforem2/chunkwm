@@ -12,7 +12,7 @@ void UpdateWindowTitle(macos_window *Window);
 
 struct macos_application;
 macos_application *GetApplicationFromPID(pid_t PID);
-macos_application *ConstructAndAddApplication(ProcessSerialNumber PSN, pid_t PID, char *ProcessName);
+void ConstructAndAddApplication(carbon_application_details *Info);
 void RemoveAndDestroyApplication(macos_application *Application);
 
 bool InitState();

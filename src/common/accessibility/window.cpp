@@ -6,14 +6,18 @@
 
 #define internal static
 
+typedef int CGSConnectionID;
+extern "C" CGSConnectionID _CGSDefaultConnection(void);
+extern "C" CGError CGSGetWindowLevel(const CGSConnectionID Connection, uint32_t WindowId, uint32_t *WindowLevel);
+
 /*
  * NOTE(koekeishiya): The following files must also be linked against:
  *
  * common/accessibility/element.cpp
  *
- * */
+ */
 
-// NOTE(koekeishiya): Caller is responsible for calling 'AXLibDestroyWindow()'. */
+/* NOTE(koekeishiya): Caller is responsible for calling 'AXLibDestroyWindow()'. */
 macos_window *AXLibConstructWindow(macos_application *Application, AXUIElementRef WindowRef)
 {
     macos_window *Window = (macos_window *) malloc(sizeof(macos_window));
@@ -26,15 +30,23 @@ macos_window *AXLibConstructWindow(macos_application *Application, AXUIElementRe
     Window->Owner = Application;
     Window->Id = AXLibGetWindowID(Window->Ref);
     Window->Name = AXLibGetWindowTitle(Window->Ref);
+    CGSGetWindowLevel(_CGSDefaultConnection(), Window->Id, &Window->Level);
 
-    if(AXLibIsWindowMovable(Window->Ref))
+    Window->Position = AXLibGetWindowPosition(Window->Ref);
+    Window->Size = AXLibGetWindowSize(Window->Ref);
+
+    if (AXLibIsWindowMovable(Window->Ref)) {
         AXLibAddFlags(Window, Window_Movable);
+    }
 
-    if(AXLibIsWindowResizable(Window->Ref))
+    if (AXLibIsWindowResizable(Window->Ref)) {
         AXLibAddFlags(Window, Window_Resizable);
+    }
 
-    if(AXLibIsWindowMinimized(Window->Ref))
+    if (AXLibIsWindowMinimized(Window->Ref)) {
         AXLibAddFlags(Window, Window_Minimized);
+        AXLibAddFlags(Window, Window_Init_Minimized);
+    }
 
     return Window;
 }
@@ -49,15 +61,20 @@ macos_window *AXLibCopyWindow(macos_window *Window)
 
     Result->Ref = (AXUIElementRef) CFRetain(Window->Ref);
 
-    if(Window->Mainrole)
-        Result->Mainrole = (AXUIElementRef) CFRetain(Window->Mainrole);
+    if (Window->Mainrole) {
+        Result->Mainrole = (CFStringRef) CFRetain(Window->Mainrole);
+    }
 
-    if(Window->Subrole)
-        Result->Subrole = (AXUIElementRef) CFRetain(Window->Subrole);
+    if (Window->Subrole) {
+        Result->Subrole = (CFStringRef) CFRetain(Window->Subrole);
+    }
 
     Result->Owner = Window->Owner;
     Result->Id = Window->Id;
     Result->Name = strdup(Window->Name);
+    Result->Level = Window->Level;
+    Result->Position = Window->Position;
+    Result->Size = Window->Size;
     Result->Flags = Window->Flags;
 
     return Result;
@@ -79,38 +96,18 @@ bool AXLibWindowHasRole(macos_window *Window, CFTypeRef Role)
     return Result;
 }
 
-/* NOTE(koekeishiya): This is not yet a thing.
-bool AXLibIsWindowCustom(macos_window *Window)
-{
-    bool Result = ((Window->Customrole) &&
-                   ((Window->Mainrole && CFEqual(Window->Mainrole, Window->Customrole)) ||
-                    (Window->Subrole && CFEqual(Window->Subrole, Window->Customrole))));
-    return Result;
-}
-
-bool AXLibWindowHasCustomRole(macos_window *Window, CFTypeRef Role)
-{
-    bool Result = ((Window->Type.CustomRole) &&
-                   (CFEqual(Role, Window->Type.CustomRole)));
-    return Result;
-}
-
-*/
-
 // NOTE(koekeishiya): Caller is responsible for memory.
 macos_window **AXLibWindowListForApplication(macos_application *Application)
 {
     macos_window **WindowList = NULL;
 
     CFArrayRef Windows = (CFArrayRef) AXLibGetWindowProperty(Application->Ref, kAXWindowsAttribute);
-    if(Windows)
-    {
+    if (Windows) {
         CFIndex Count = CFArrayGetCount(Windows);
         WindowList = (macos_window **) malloc((Count + 1) * sizeof(macos_window *));
         WindowList[Count] = NULL;
 
-        for(CFIndex Index = 0; Index < Count; ++Index)
-        {
+        for (CFIndex Index = 0; Index < Count; ++Index) {
             AXUIElementRef Ref = (AXUIElementRef) CFArrayGetValueAtIndex(Windows, Index);
             macos_window *Window = AXLibConstructWindow(Application, Ref);
             WindowList[Index] = Window;
@@ -127,14 +124,9 @@ void AXLibDestroyWindow(macos_window *Window)
 {
     ASSERT(Window && Window->Ref);
 
-    if(Window->Mainrole)
-        CFRelease(Window->Mainrole);
-
-    if(Window->Subrole)
-        CFRelease(Window->Subrole);
-
-    if(Window->Name)
-        free(Window->Name);
+    if (Window->Mainrole) CFRelease(Window->Mainrole);
+    if (Window->Subrole)  CFRelease(Window->Subrole);
+    if (Window->Name)     free(Window->Name);
 
     CFRelease(Window->Ref);
     free(Window);
