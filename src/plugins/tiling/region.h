@@ -1,6 +1,8 @@
 #ifndef PLUGIN_REGION_H
 #define PLUGIN_REGION_H
 
+#include <CoreGraphics/CGGeometry.h>
+
 enum region_type
 {
     Region_Full = 0,
@@ -27,10 +29,20 @@ struct region_offset
 };
 
 struct node;
+struct preselect_node;
+struct macos_space;
+struct virtual_space;
 
-void CreateNodeRegion(node *Node, region_type Type);
-void CreateNodeRegionRecursive(node *Node, bool Optimal);
+region CGRectToRegion(CGRect Rect);
+region RoundPreselRegion(region Region, CGPoint Position, CGSize Size);
+void ConstrainRegion(CFStringRef DisplayRef, region *Region);
+region FullscreenRegion(CFStringRef DisplayRef, virtual_space *VirtualSpace);
 
-void ResizeNodeRegion(node *Node);
+void CreateNodeRegion(node *Node, region_type Type, macos_space *Space, virtual_space *VirtualSpace);
+void CreateNodeRegionRecursive(node *Node, bool Optimal, macos_space *Space, virtual_space *VirtualSpace);
+
+void CreatePreselectRegion(preselect_node *Preselect, region_type Type, macos_space *Space, virtual_space *VirtualSpace);
+
+void ResizeNodeRegion(node *Node, macos_space *Space, virtual_space *VirtualSpace);
 
 #endif

@@ -1,19 +1,8 @@
 #ifndef CHUNKWM_CORE_HOTLOADER_H
 #define CHUNKWM_CORE_HOTLOADER_H
 
-#include <Carbon/Carbon.h>
+#include "hotload.h"
 
-struct hotloader
-{
-    FSEventStreamRef Stream;
-    FSEventStreamEventFlags Flags;
-    CFArrayRef Path;
-    bool Enabled;
-};
-
-void HotloaderInit();
-void HotloaderTerminate();
-
-void HotloaderAddPath(const char *Path);
+void HotloadPlugins(hotloader *Hotloader, hotloader_callback Callback);
 
 #endif

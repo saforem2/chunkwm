@@ -1,0 +1,177 @@
+#compdef chunkc
+
+# Note for plugin authors:
+# You can make your own zsh completions, and include these by calling `_chunkc'
+# in the top-level function of the new completions and defining your subcommand
+# with syntax: _chunkc_<plugin>_<subcmd> like so:
+# (Entire following block can be copied to a new file _plugin)
+
+: << PLUGIN_SKELETON
+#compdef chunkc
+
+# Completion for fake chunkc plugin
+
+function _chunkc_plugin_set { return }
+function _chunkc_plugin_get { return }
+
+function _chunkc_plugin {
+    local context state state_descr line
+    typeset -A opt_args
+
+    _arguments -C \
+        "1:my new plugin:_sep_parts '(plugin)' :: '(set get)'"
+
+    if [[ ${line[1]} != "plugin::"* ]]; then
+        _chunkc
+    fi
+}
+
+_chunkc_plugin "$@"
+PLUGIN_SKELETON
+
+# ---- utility functions ----
+# query desktops, monitors, windows for completions
+
+function __chunkc_monitors {
+    echo $(seq $(chunkc tiling::query --monitor count))
+}
+
+function __chunkc_desktops {
+    echo $(chunkc tiling::query --desktops-for-monitor $(chunkc tiling::query --monitor id))
+}
+
+function __chunkc_windows {
+    # TODO add notify for floating ?
+    # not trivial - ::query -d doesn't tell you which windows are floating :/
+
+    local -a _windows
+    while read wintitle; do
+        _id=${wintitle%%,*}
+        _desc=${wintitle#*, }
+        _windows+=( "${_id}:'${_desc}'" )
+    done <<< $(chunkc tiling::query --desktop windows | sed '/, *(invalid)[^,]*$/ d')
+
+    _describe -t windows "windows" "($_windows $all)"
+}
+
+# ---- tiling ----
+# - window subcmds can get kind of complicated
+# - desktop, monitor, and query are fairly simple
+
+# _window doesn't provide option completions for:
+#   --grid-layout (numbers are fairly arbitrary)
+#   --use-temporary-ratio (-1.0 < number < 1.0)   # complete the word "FLOAT" instead
+function _chunkc_tiling_window {
+    local -a cardinal=(north south east west)
+    local -a relative=(next prev)
+    local -a all=($cardinal $relative biggest)
+    local -a toggle=(native-fullscreen fullscreen parent split float sticky fade)
+
+    # note on the format of these args:
+    # --argument[description of argument]:message:action
+    # where action is an array or completion function (can be chained, see -r in args)
+
+    typeset -A descs=(
+        c   "[invokes the window close button]"
+        f   "[focus a window]:focus choice:__chunkc_windows"
+        s   "[swap two windows in-place]:swap choice:($all)"
+        w   "[move window in direction and modifies layout]:warp choice:($all)"
+        g   "[split region to rows:cols:left:top:width:height grid]"
+        d   "[send window to desktop]:desktop choice:($relative $(__chunkc_desktops))"
+        m   "[send window to monitor]:monitor choice:($relative $(__chunkc_monitors))"
+        r   "[ratio -1.0 < r 1.0 for adjustment (must be used with -e)]:float:(FLOAT)"
+        #e   "[resize a window (must be used with -r)]:adjust choice:($cardinal)"
+        e   ":resize:((-e\:'resize window' --adjust-window-edge\:'resize window')):direction:($cardinal)"
+        i   "[set bsp-insertion point for the focused container]:insertion choice:($cardinal cancel)"
+        t   "[toggle various window options]:toggle choice:($toggle)"
+    )
+
+    # easiest way to add same description for multiple (long/short) options
+    args=(
+        "-c${descs[c]}" "--close${descs[c]}"
+        "-f${descs[f]}" "--focus${descs[f]}"
+        "-s${descs[s]}" "--swap${descs[s]}"
+        "-w${descs[w]}" "--warp${descs[w]}"
+        "-g${descs[g]}" "--grid-layout${descs[g]}"
+        "-d${descs[d]}" "--send-to-desktop${descs[d]}"
+        "-m${descs[m]}" "--send-to-monitor${descs[m]}"
+        # combine -r and -e, since order matters (-r first)
+        #"-r${descs[r]}" "--use-temporary-ratio${descs[r]}"
+        #"-e${descs[e]}" "--adjust-window-edge${descs[e]}"
+        "-r${descs[r]}${descs[e]}" "--use-temporary-ratio${descs[r]}${descs[e]}"
+        "-i${descs[i]}" "--use-insertion-point${descs[i]}"
+        "-t${descs[t]}" "--toggle${descs[t]}"
+    )
+
+    _arguments - "(window)" $args
+}
+
+function _chunkc_tiling_desktop {
+    args=(
+        "--layout[set the desktop layout]:layouts:(bsp monocle float)"
+        "--focus[focus a desktop]:options:($(__chunkc_desktops) prev next)"
+        "--create[create a desktop]"
+        "--annihilate[destroy a desktop]"
+        "--rotate[rotate a desktop]:options:(90 180 270)"
+        "--mirror[mirror a desktop]:options:(vertical horizontal)"
+        "--equalize[equalize size of windows on desktop]"
+        "--padding[adjust desktop padding]:options:(inc dec)"
+        "--gap[adjust desktop gap]:options:(inc dec)"
+        "--toggle[toggle desktop offset and window gap]:option:(offset)"
+        "--serialize[serialize desktop bsp-tree to file]:file:_files"
+        "--deserialize[deserialize desktop bsp-tree from file]:file:_files"
+    )
+
+    _arguments - "(desktop)" $args
+}
+
+function _chunkc_tiling_monitor {
+    _arguments \
+        "-f[focus monitor]:monitors:(prev next $(__chunkc_monitors))"
+}
+
+function _chunkc_tiling_query {
+    args=(
+        "--window:args:(id name owner tag float)"
+        "--desktop:args:(id uuid mode windows monocle-index monocle-count)"
+        "--monitor:args:(id count)"
+        "--desktops-for-monitor:args:($(__chunkc_monitors))"
+        "--monitor-for-desktop:args:($(__chunkc_desktops))"
+        "--windows-for-desktop:args:($(__chunkc_desktops))"
+    )
+
+    _arguments - "(query)" $args
+}
+
+# _chunkc puts it all together
+function _chunkc {
+    local curcontext="$curcontext" state state_descr line
+    typeset -A opt_args
+
+    _arguments -C \
+        "1:tiling:_sep_parts '(tiling)' :: '(window desktop monitor query)'"
+
+    _arguments -C \
+        "1:border:_sep_parts '(border)' :: '(clear color width)'"
+
+    _arguments -C \
+        "*::options:->options"
+
+    if [[ ${state} == "options" ]]; then
+        if (( CURRENT >= 2 )); then
+
+            # border commands don't need any further completions
+            [[ $line[1] == "border::"* ]] && return
+
+            local chunkc_cmd=_chunkc_${line[1]%::*}_${line[1]#*::}
+
+            if ! (( ${+functions[$chunkc_cmd]} )); then
+                _message "No completions provided for given chunkc command"
+            else
+                $chunkc_cmd
+            fi
+        fi
+    fi
+}
+
+_chunkc "$@"

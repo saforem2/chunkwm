@@ -1,116 +1,101 @@
 #include "event.h"
+#include "../clog.h"
 
 #define internal static
+
 internal event_loop EventLoop = {};
 
 /* NOTE(koekeishiya): Must be thread-safe! Called through ConstructEvent macro */
 void AddEvent(chunk_event Event)
 {
-    if(EventLoop.Running && Event.Handle)
-    {
-        pthread_mutex_lock(&EventLoop.WorkerLock);
+    if (Event.Handle) {
+        pthread_mutex_lock(&EventLoop.Lock);
         EventLoop.Queue.push(Event);
+        pthread_mutex_unlock(&EventLoop.Lock);
 
-        pthread_cond_signal(&EventLoop.State);
-        pthread_mutex_unlock(&EventLoop.WorkerLock);
+        if (EventLoop.Running) {
+            sem_post(EventLoop.Semaphore);
+        }
     }
 }
 
 internal void *
 ProcessEventQueue(void *)
 {
-    while(EventLoop.Running)
-    {
-        pthread_mutex_lock(&EventLoop.StateLock);
-        while(!EventLoop.Queue.empty())
-        {
-            pthread_mutex_lock(&EventLoop.WorkerLock);
+    while (EventLoop.Running) {
+        pthread_mutex_lock(&EventLoop.Lock);
+        bool HasWork = !EventLoop.Queue.empty();
+        pthread_mutex_unlock(&EventLoop.Lock);
+
+        while (HasWork) {
+            pthread_mutex_lock(&EventLoop.Lock);
             chunk_event Event = EventLoop.Queue.front();
             EventLoop.Queue.pop();
-            pthread_mutex_unlock(&EventLoop.WorkerLock);
 
+            HasWork = !EventLoop.Queue.empty();
+            pthread_mutex_unlock(&EventLoop.Lock);
+
+            c_log(C_LOG_LEVEL_DEBUG, "chunkwm: processing event of type '%s'\n", Event.Name);
             (*Event.Handle)(&Event);
         }
 
-        while(EventLoop.Queue.empty() && EventLoop.Running)
-            pthread_cond_wait(&EventLoop.State, &EventLoop.StateLock);
-
-        pthread_mutex_unlock(&EventLoop.StateLock);
+        int Result = sem_wait(EventLoop.Semaphore);
+        if (Result) {
+            uint64_t ID;
+            pthread_threadid_np(NULL, &ID);
+            c_log(C_LOG_LEVEL_DEBUG, "%lld: sem_wait(..) failed\n", ID);
+        }
     }
 
     return NULL;
 }
 
-/* NOTE(koekeishiya): Initialize required mutexes and condition for the event-loop */
-internal bool
-BeginEventLoop()
+/* NOTE(koekeishiya): Initialize required mutexes and semaphore for the eventloop */
+bool BeginEventLoop()
 {
-   if(pthread_mutex_init(&EventLoop.WorkerLock, NULL) != 0)
-   {
-       return false;
-   }
+    bool Result = true;
 
-   if(pthread_mutex_init(&EventLoop.StateLock, NULL) != 0)
-   {
-       pthread_mutex_destroy(&EventLoop.WorkerLock);
-       return false;
-   }
+    if ((EventLoop.Semaphore = sem_open("eventloop_semaphore", O_CREAT, 0644, 0)) == SEM_FAILED) {
+        c_log(C_LOG_LEVEL_ERROR, "chunkwm: could not initialize semaphore!");
+        goto sem_err;
+    }
 
-   if(pthread_cond_init(&EventLoop.State, NULL) != 0)
-   {
-        pthread_mutex_destroy(&EventLoop.WorkerLock);
-        pthread_mutex_destroy(&EventLoop.StateLock);
-        return false;
-   }
+    if (pthread_mutex_init(&EventLoop.Lock, NULL) != 0) {
+        c_log(C_LOG_LEVEL_ERROR, "chunkwm: could not initialize work mutex!");
+        goto work_err;
+    }
 
-   return true;
+    goto out;
+
+work_err:
+    sem_destroy(EventLoop.Semaphore);
+
+sem_err:
+    Result = false;
+
+out:
+    return Result;
 }
 
 /* NOTE(koekeishiya): Destroy mutexes and condition used by the event-loop */
-internal void
-EndEventLoop()
+void EndEventLoop()
 {
-    pthread_cond_destroy(&EventLoop.State);
-    pthread_mutex_destroy(&EventLoop.StateLock);
-    pthread_mutex_destroy(&EventLoop.WorkerLock);
+    pthread_mutex_destroy(&EventLoop.Lock);
+    sem_destroy(EventLoop.Semaphore);
 }
 
-void PauseEventLoop()
+void StartEventLoop()
 {
-    if(EventLoop.Running)
-    {
-        pthread_mutex_lock(&EventLoop.StateLock);
-    }
-}
-
-void ResumeEventLoop()
-{
-    if(EventLoop.Running)
-    {
-        pthread_mutex_unlock(&EventLoop.StateLock);
-    }
-}
-
-bool StartEventLoop()
-{
-    if((!EventLoop.Running) &&
-       (BeginEventLoop()))
-    {
+    if (!EventLoop.Running) {
         EventLoop.Running = true;
-        pthread_create(&EventLoop.Worker, NULL, &ProcessEventQueue, NULL);
-        return true;
+        pthread_create(&EventLoop.Thread, NULL, &ProcessEventQueue, NULL);
     }
-
-    return false;
 }
 
 void StopEventLoop()
 {
-    if(EventLoop.Running)
-    {
+    if (EventLoop.Running) {
         EventLoop.Running = false;
-        pthread_cond_signal(&EventLoop.State);
-        pthread_join(EventLoop.Worker, NULL);
-        EndEventLoop();
+        pthread_join(EventLoop.Thread, NULL);
     }
 }

@@ -1,6 +1,23 @@
 #ifndef CHUNKWM_PLUGIN_EXPORT_H
 #define CHUNKWM_PLUGIN_EXPORT_H
 
+struct chunkwm_payload
+{
+    int SockFD;
+    char *Command;
+    const char *Message;
+};
+
+#ifndef CHUNKWM_CORE
+enum c_log_level
+{
+    C_LOG_LEVEL_DEBUG   = 0,
+    C_LOG_LEVEL_PROFILE = 1,
+    C_LOG_LEVEL_WARN    = 2,
+    C_LOG_LEVEL_ERROR   = 3,
+};
+#endif
+
 static const char *chunkwm_plugin_export_str[] =
 {
     "chunkwm_export_application_launched",
@@ -25,6 +42,8 @@ static const char *chunkwm_plugin_export_str[] =
     "chunkwm_export_window_resized",
     "chunkwm_export_window_minimized",
     "chunkwm_export_window_deminimized",
+    "chunkwm_export_window_sheet_created",
+    "chunkwm_export_window_title_changed",
 
     "chunkwm_export_count"
 };
@@ -52,6 +71,8 @@ enum chunkwm_plugin_export
     chunkwm_export_window_resized,
     chunkwm_export_window_minimized,
     chunkwm_export_window_deminimized,
+    chunkwm_export_window_sheet_created,
+    chunkwm_export_window_title_changed,
 
     chunkwm_export_count
 };

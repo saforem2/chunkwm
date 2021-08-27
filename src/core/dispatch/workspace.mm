@@ -26,18 +26,19 @@ BeginWorkspaceApplicationDetails(NSNotification *Notification)
     const char *Name = [[[Notification.userInfo objectForKey:NSWorkspaceApplicationKey] localizedName] UTF8String];
     Info->PID = [[Notification.userInfo objectForKey:NSWorkspaceApplicationKey] processIdentifier];
     GetProcessForPID(Info->PID, &Info->PSN);
+    Info->ProcessName = Name ? strdup(Name) : strdup("<unknown>");
 
-    if(Name)
-    {
-        unsigned int Length = strlen(Name);
-        Info->ProcessName = (char *) malloc(Length + 1);
-        strncpy(Info->ProcessName, (char *) Name, Length);
-        Info->ProcessName[Length] = '\0';
-    }
-    else
-    {
-        Info->ProcessName = strdup("<unknown>");
-    }
+    return Info;
+}
+
+workspace_application_details *BeginWorkspaceApplicationDetails(char *ProcessName, ProcessSerialNumber PSN, pid_t PID)
+{
+    workspace_application_details *Info =
+                    (workspace_application_details *) malloc(sizeof(workspace_application_details));
+
+    Info->ProcessName = strdup(ProcessName);
+    Info->PID = PID;
+    Info->PSN = PSN;
 
     return Info;
 }
@@ -47,8 +48,7 @@ void EndWorkspaceApplicationDetails(workspace_application_details *Info)
 {
     ASSERT(Info);
 
-    if(Info->ProcessName)
-    {
+    if (Info->ProcessName) {
         free(Info->ProcessName);
     }
 
@@ -59,8 +59,7 @@ void EndWorkspaceApplicationDetails(workspace_application_details *Info)
 @implementation WorkspaceWatcher
 - (id)init
 {
-    if ((self = [super init]))
-    {
+    if ((self = [super init])) {
        [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver:self
                 selector:@selector(activeDisplayDidChange:)
                 name:@"NSWorkspaceActiveDisplayDidChangeNotification"

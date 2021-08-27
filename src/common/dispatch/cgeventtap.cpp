@@ -15,25 +15,20 @@ bool BeginEventTap(event_tap *EventTap, eventtap_callback *Callback)
                                         Callback,
                                         EventTap);
 
-    if(IsEventTapEnabled(EventTap))
-    {
+    if (IsEventTapEnabled(EventTap)) {
         EventTap->RunLoopSource = CFMachPortCreateRunLoopSource(kCFAllocatorDefault,
                                                                 EventTap->Handle,
                                                                 0);
         CFRunLoopAddSource(CFRunLoopGetMain(), EventTap->RunLoopSource, kCFRunLoopCommonModes);
         return true;
-    }
-    else
-    {
-        fprintf(stderr, "Could not create event tap!\n");
+    } else {
         return false;
     }
 }
 
 void EndEventTap(event_tap *EventTap)
 {
-    if(IsEventTapEnabled(EventTap))
-    {
+    if (IsEventTapEnabled(EventTap)) {
         CGEventTapEnable(EventTap->Handle, false);
         CFMachPortInvalidate(EventTap->Handle);
         CFRunLoopRemoveSource(CFRunLoopGetMain(), EventTap->RunLoopSource, kCFRunLoopCommonModes);

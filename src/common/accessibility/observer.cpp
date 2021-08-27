@@ -7,9 +7,9 @@
  *
  * common/accessibility/application.cpp
  *
- * */
+ */
 
-// NOTE(koekeishiya): Caller is responsible for calling 'AXLibDestroyObserver()'. */
+/* NOTE(koekeishiya): Caller is responsible for calling 'AXLibDestroyObserver()'. */
 void AXLibConstructObserver(macos_application *Application, ObserverCallback Callback)
 {
     macos_observer *Observer = &Application->Observer;
@@ -24,10 +24,9 @@ void AXLibStartObserver(macos_observer *Observer)
 {
     ASSERT(Observer && Observer->Ref);
 
-    if(!CFRunLoopContainsSource(CFRunLoopGetMain(),
-                                AXObserverGetRunLoopSource(Observer->Ref),
-                                kCFRunLoopDefaultMode))
-    {
+    if (!CFRunLoopContainsSource(CFRunLoopGetMain(),
+                                 AXObserverGetRunLoopSource(Observer->Ref),
+                                 kCFRunLoopDefaultMode)) {
         Observer->Enabled = true;
         CFRunLoopAddSource(CFRunLoopGetMain(),
                            AXObserverGetRunLoopSource(Observer->Ref),
@@ -69,8 +68,7 @@ void AXLibDestroyObserver(macos_observer *Observer)
 {
     ASSERT(Observer && Observer->Ref);
 
-    if(Observer->Enabled)
-    {
+    if (Observer->Enabled) {
         AXLibStopObserver(Observer);
     }
 
