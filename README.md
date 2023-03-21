@@ -2,7 +2,7 @@
 
 ### chunkwm - Tiling WM for macOS High Sierra & Mojave
 
-**chunkwm** was a tiling window manager for macOS High Sierra and Mojave developed by [koekeishiya](https://github.com/koekeishiya/). The project is **no longer in development** and has been superseded by **[yabai](#)** for macOS Big Sur and onwards.
+**chunkwm** was a tiling window manager for macOS High Sierra and Mojave developed by [koekeishiya](https://github.com/koekeishiya/). The project is **no longer in development** and has been superseded by **[yabai](https://github.com/koekeishiya/yabai)** for macOS Big Sur and onwards.
 
 The original repository has since been deleted, and the last known commits/accepted pull requests have been merged here.
 
